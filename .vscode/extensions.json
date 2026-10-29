@@ -1,0 +1,7 @@
+{
+  "recommendations": [
+    "lokalise.i18n-ally",
+    "tauri-apps.tauri-vscode",
+    "rust-lang.rust-analyzer"
+  ]
+}

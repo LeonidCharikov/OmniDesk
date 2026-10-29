@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Calculator, History, Trash2, RotateCcw, Copy, Check } from 'lucide-react';
+import { useI18n } from '../../i18n/context';
 
 export const ScientificCalculatorTool: React.FC = () => {
+  const { t, currentLanguage } = useI18n();
   const [mode, setMode] = useState<'standard' | 'scientific'>('scientific');
   const [display, setDisplay] = useState('0');
   const [expression, setExpression] = useState('');
@@ -117,9 +119,9 @@ export const ScientificCalculatorTool: React.FC = () => {
       {/* Title */}
       <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800 flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-white">Klasická & Vědecká Kalkulačka</h2>
+          <h2 className="text-lg font-semibold text-white">{t('tool_scientific_calc_title', 'Klasická & Vědecká Kalkulačka')}</h2>
           <p className="text-sm text-slate-400 mt-1">
-            Plná podpora goniometrických funkcí, logaritmů, mocnin a historie výpočtů s klávesovým ovládáním.
+            {t('tool_scientific_calc_desc', 'Standardní i vědecký režim, goniometrie, mocniny, paměť (M+/MR) a historie výpočtů.')}
           </p>
         </div>
         <div className="flex items-center gap-1 p-1 bg-slate-900 border border-slate-800 rounded-xl">
@@ -129,7 +131,7 @@ export const ScientificCalculatorTool: React.FC = () => {
               mode === 'standard' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
             }`}
           >
-            Klasická
+            {t('calc_standard', 'Klasická')}
           </button>
           <button
             onClick={() => setMode('scientific')}
@@ -137,7 +139,7 @@ export const ScientificCalculatorTool: React.FC = () => {
               mode === 'scientific' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
             }`}
           >
-            Vědecká
+            {t('calc_scientific', 'Vědecká')}
           </button>
         </div>
       </div>

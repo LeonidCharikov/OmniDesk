@@ -18,7 +18,7 @@ import { useI18n } from '../../i18n/context';
 type Matrix = number[][];
 
 export const MatrixCalculatorTool: React.FC = () => {
-  const { currentLanguage } = useI18n();
+  const { t, currentLanguage } = useI18n();
 
   // Dimension state for custom sizes (rows x cols) between 1 and 6
   const [rowsA, setRowsA] = useState<number>(3);
@@ -431,7 +431,7 @@ export const MatrixCalculatorTool: React.FC = () => {
 
         {/* Dimension Quick Presets */}
         <div className="flex flex-wrap items-center gap-1.5 bg-slate-950 p-1.5 rounded-xl border border-slate-800 text-xs">
-          <span className="text-slate-500 px-2 font-medium">Presety:</span>
+          <span className="text-slate-500 px-2 font-medium">{t('matrix_presets', 'Presety:')}</span>
           <button
             onClick={() => applyPreset(2, 2, 2, 2)}
             className="px-2 py-1 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 font-mono transition-colors"
@@ -473,11 +473,11 @@ export const MatrixCalculatorTool: React.FC = () => {
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
             <div className="flex items-center gap-2">
               <span className="px-2.5 py-1 rounded-md bg-indigo-500/20 text-indigo-400 font-bold text-xs">
-                Matice A ({rowsA} × {colsA})
+                {t('matrix_matrix_a', 'Matice A')} ({rowsA} × {colsA})
               </span>
               {rowsA === colsA && (
                 <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
-                  Čtvercová
+                  {t('matrix_square', 'Čtvercová')}
                 </span>
               )}
             </div>
@@ -532,19 +532,19 @@ export const MatrixCalculatorTool: React.FC = () => {
               onClick={() => fillRandom('A')}
               className="flex items-center gap-1 px-2 py-1 rounded bg-slate-950 text-slate-400 hover:text-white border border-slate-800 transition-colors"
             >
-              <Shuffle className="w-3 h-3" /> Náhodná
+              <Shuffle className="w-3 h-3" /> {t('matrix_random', 'Náhodná')}
             </button>
             <button
               onClick={() => fillIdentity('A')}
               className="flex items-center gap-1 px-2 py-1 rounded bg-slate-950 text-slate-400 hover:text-white border border-slate-800 transition-colors"
             >
-              Jednotková (I)
+              {t('matrix_identity', 'Jednotková (I)')}
             </button>
             <button
               onClick={() => fillZero('A')}
               className="flex items-center gap-1 px-2 py-1 rounded bg-slate-950 text-slate-400 hover:text-white border border-slate-800 transition-colors"
             >
-              <Trash2 className="w-3 h-3" /> Nulovat
+              <Trash2 className="w-3 h-3" /> {t('matrix_zero', 'Nulovat')}
             </button>
           </div>
 
@@ -609,11 +609,11 @@ export const MatrixCalculatorTool: React.FC = () => {
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
             <div className="flex items-center gap-2">
               <span className="px-2.5 py-1 rounded-md bg-rose-500/20 text-rose-400 font-bold text-xs">
-                Matice B ({rowsB} × {colsB})
+                {t('matrix_matrix_b', 'Matice B')} ({rowsB} × {colsB})
               </span>
               {rowsB === colsB && (
                 <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
-                  Čtvercová
+                  {t('matrix_square', 'Čtvercová')}
                 </span>
               )}
             </div>
@@ -668,26 +668,26 @@ export const MatrixCalculatorTool: React.FC = () => {
               onClick={() => fillRandom('B')}
               className="flex items-center gap-1 px-2 py-1 rounded bg-slate-950 text-slate-400 hover:text-white border border-slate-800 transition-colors"
             >
-              <Shuffle className="w-3 h-3" /> Náhodná
+              <Shuffle className="w-3 h-3" /> {t('matrix_random', 'Náhodná')}
             </button>
             <button
               onClick={() => fillIdentity('B')}
               className="flex items-center gap-1 px-2 py-1 rounded bg-slate-950 text-slate-400 hover:text-white border border-slate-800 transition-colors"
             >
-              Jednotková (I)
+              {t('matrix_identity', 'Jednotková (I)')}
             </button>
             <button
               onClick={() => fillZero('B')}
               className="flex items-center gap-1 px-2 py-1 rounded bg-slate-950 text-slate-400 hover:text-white border border-slate-800 transition-colors"
             >
-              <Trash2 className="w-3 h-3" /> Nulovat
+              <Trash2 className="w-3 h-3" /> {t('matrix_zero', 'Nulovat')}
             </button>
             <button
               onClick={swapMatrices}
               className="flex items-center gap-1 px-2 py-1 rounded bg-indigo-950/40 text-indigo-300 hover:text-white border border-indigo-800/40 ml-auto transition-colors"
               title="Prohodit matici A a matici B"
             >
-              <ArrowLeftRight className="w-3 h-3" /> Prohodit A ↔ B
+              <ArrowLeftRight className="w-3 h-3" /> {t('matrix_swap_ab', 'Prohodit A ↔ B')}
             </button>
           </div>
 

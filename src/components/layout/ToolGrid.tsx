@@ -80,8 +80,8 @@ export const ToolGrid: React.FC<ToolGridProps> = ({
       case 'favorites': return t('cat_favorites', 'Vaše oblíbené nástroje');
       case 'files': return t('cat_files', 'Soubory & Dokumenty');
       case 'math': return t('cat_math', 'Matematika & Kalkulačky');
-      case 'science': return t('cat_science', 'Věda, Fyzika & Převody');
-      case 'finance': return t('cat_finance', 'Finance & Hypoteční kalkulačky');
+      case 'science': return t('cat_science', 'Věda & Chemie');
+      case 'finance': return t('cat_finance', 'Finance & Kryptoměny');
       case 'utilities': return t('cat_utilities', 'Vývojářské a systémové utility');
       default: return t('catalog', 'Katalog nástrojů');
     }
@@ -89,12 +89,13 @@ export const ToolGrid: React.FC<ToolGridProps> = ({
 
   const getCategorySubtitle = () => {
     switch (activeCategory) {
+      case 'all': return t('subtitle_all', 'Všechny integrované nástroje pro okamžitou práci přímo na vašem zařízení.');
       case 'favorites': return t('subtitle_fav', 'Rychlý přístup k nástrojům uloženým ve vašem lokálním konfiguračním souboru.');
       case 'files': return t('subtitle_files', 'Univerzální konverze dokumentů, dat a optimalizace obrázků bez serveru.');
       case 'math': return t('subtitle_math', 'Klasické, vědecké, maticové a statistické výpočetní nástroje.');
-      case 'science': return t('subtitle_science', 'Vysoce přesné technické převody fyzikálních veličin a jednotek.');
-      case 'finance': return t('subtitle_finance', 'Anuitní splátky, úvěrová matematika a generování splátkových kalendářů.');
-      case 'utilities': return t('subtitle_utilities', 'Formátovače, lintery a hybridní síťové nástroje.');
+      case 'science': return t('subtitle_science', 'Vysoce přesné chemické a fyzikální výpočty, periodická tabulka a převody jednotek.');
+      case 'finance': return t('subtitle_finance', 'Konvertor měn, krypto-ceny v reálném čase, hypotéky a splátkové kalendáře.');
+      case 'utilities': return t('subtitle_utilities', 'Systémový hardware monitor, vývojářské utility, QR kódy a generátory hesel.');
       default: return t('subtitle_default', 'Vyberte nástroj pro okamžitou práci přímo na vašem zařízení.');
     }
   };
@@ -103,11 +104,11 @@ export const ToolGrid: React.FC<ToolGridProps> = ({
     return (
       <div className="p-12 text-center rounded-2xl bg-slate-900/20 border border-slate-800 space-y-3">
         <Star className="w-8 h-8 text-slate-600 mx-auto" />
-        <h3 className="text-base font-semibold text-slate-300">Žádné nástroje v této kategorii</h3>
+        <h3 className="text-base font-semibold text-slate-300">{t('no_tools_found', 'Žádné nástroje')}</h3>
         <p className="text-xs text-slate-500 max-w-sm mx-auto">
           {activeCategory === 'favorites' 
-            ? 'Zatím jste nepřidali žádný nástroj do oblíbených. Klikněte na hvězdičku u libovolného nástroje pro jeho připnutí.'
-            : 'V této sekci se nenachází žádné moduly.'}
+            ? t('no_favorites_hint', 'Zatím jste nepřidali žádný nástroj do oblíbených. Klikněte na hvězdičku u libovolného nástroje pro jeho připnutí.')
+            : t('no_tools_category', 'V této sekci se nenachází žádné moduly.')}
         </p>
       </div>
     );

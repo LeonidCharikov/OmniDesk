@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useId } from 'react';
 import { Coins, ArrowRightLeft, TrendingUp, ShieldCheck, RefreshCw, Globe, WifiOff, Edit3, Check } from 'lucide-react';
 
+import { useI18n } from '../../i18n/context';
+
 interface Props {
   isOffline: boolean;
 }
@@ -13,13 +15,13 @@ interface CryptoData {
 }
 
 const DEFAULT_FIAT_RATES: Record<string, { name: string; rate: number; flag: string }> = {
-  CZK: { name: 'Česká koruna', rate: 1, flag: '🇨🇿' },
-  EUR: { name: 'Euro', rate: 25.18, flag: '🇪🇺' },
-  USD: { name: 'Americký dolar', rate: 23.45, flag: '🇺🇸' },
-  GBP: { name: 'Britská libra', rate: 29.90, flag: '🇬🇧' },
-  CHF: { name: 'Švýcarský frank', rate: 26.35, flag: '🇨🇭' },
-  PLN: { name: 'Polský zlotý', rate: 5.86, flag: '🇵🇱' },
-  JPY: { name: 'Japonský jen', rate: 0.154, flag: '🇯🇵' },
+  CZK: { name: 'CZK', rate: 1, flag: '🇨🇿' },
+  EUR: { name: 'EUR', rate: 25.18, flag: '🇪🇺' },
+  USD: { name: 'USD', rate: 23.45, flag: '🇺🇸' },
+  GBP: { name: 'GBP', rate: 29.90, flag: '🇬🇧' },
+  CHF: { name: 'CHF', rate: 26.35, flag: '🇨🇭' },
+  PLN: { name: 'PLN', rate: 5.86, flag: '🇵🇱' },
+  JPY: { name: 'JPY', rate: 0.154, flag: '🇯🇵' },
 };
 
 const DEFAULT_CRYPTO: Record<string, CryptoData> = {
@@ -32,6 +34,7 @@ const DEFAULT_CRYPTO: Record<string, CryptoData> = {
 };
 
 export const CurrencyCryptoTool: React.FC<Props> = ({ isOffline }) => {
+  const { t, currentLanguage } = useI18n();
   const [activeTab, setActiveTab] = useState<'fiat' | 'crypto'>('fiat');
 
   // Rates state with localStorage persistence (Offline cache)
@@ -139,7 +142,7 @@ export const CurrencyCryptoTool: React.FC<Props> = ({ isOffline }) => {
                 activeTab === 'fiat' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
               }`}
             >
-              Měnový konvertor (Fiat)
+              {t('fiat_tab', 'Měnový konvertor (Fiat)')}
             </button>
             <button
               onClick={() => setActiveTab('crypto')}
@@ -147,7 +150,7 @@ export const CurrencyCryptoTool: React.FC<Props> = ({ isOffline }) => {
                 activeTab === 'crypto' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
               }`}
             >
-              Kryptoměny & Portfolio
+              {t('crypto_tab', 'Kryptoměny & Portfolio')}
             </button>
           </div>
         </div>
@@ -158,9 +161,15 @@ export const CurrencyCryptoTool: React.FC<Props> = ({ isOffline }) => {
         <div className="p-3.5 rounded-xl bg-amber-950/20 border border-amber-800/40 flex items-center justify-between text-xs text-amber-300">
           <div className="flex items-center gap-2">
             <WifiOff className="w-4 h-4 shrink-0" />
-            <span>Aplikace běží offline: Využívají se uložené směnné kurzy z disku (poslední cache: {lastUpdated}).</span>
+            <span>
+              {currentLanguage === 'ru' 
+                ? `Приложение работает офлайн: используются сохраненные курсы валют (${lastUpdated}).`
+                : `Aplikace běží offline: Využívají se uložené směnné kurzy z disku (${lastUpdated}).`}
+            </span>
           </div>
-          <span className="font-mono text-[10px] text-amber-400/80">Plná kalkulace bez sítě</span>
+          <span className="font-mono text-[10px] text-amber-400/80">
+            {currentLanguage === 'ru' ? 'Полный расчет без сети' : 'Plná kalkulace bez sítě'}
+          </span>
         </div>
       )}
 
