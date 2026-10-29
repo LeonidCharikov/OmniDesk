@@ -1,0 +1,6 @@
+{
+  "name": "OmniDesk - Desktop Multi-Tool Platform",
+  "description": "Univerzální modulární desktopová multi-tool platforma s offline zpracováním dokumentů, vědeckými kalkulačkami a Tauri architekturou.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
