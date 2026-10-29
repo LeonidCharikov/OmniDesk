@@ -1,8 +1,7 @@
-import React, { useId, useState } from 'react';
-import { Search, Star, ArrowLeft, ShieldCheck, Languages, FolderGit2 } from 'lucide-react';
+import React, { useId } from 'react';
+import { Search, Star, ArrowLeft, ShieldCheck, Languages } from 'lucide-react';
 import { ToolDefinition } from '../../types/tool';
 import { useI18n, SUPPORTED_LANGUAGES, SupportedLanguage } from '../../i18n/context';
-import { GitRepoModal } from '../modals/GitRepoModal';
 
 interface HeaderProps {
   currentCategoryName: string;
@@ -23,10 +22,8 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const { language, setLanguage, t } = useI18n();
   const langSelectId = useId();
-  const [isGitModalOpen, setIsGitModalOpen] = useState(false);
 
   return (
-    <>
       <header className="h-14 border-b border-slate-800/80 bg-slate-950/80 backdrop-blur px-6 flex items-center justify-between gap-6 shrink-0 select-none">
         {/* Zone 1: Breadcrumbs & Back Navigation */}
         <div className="flex items-center gap-3 min-w-0">
@@ -70,18 +67,8 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         </div>
 
-        {/* Zone 3: Language Selector, Git Repo & Primary Actions */}
+        {/* Zone 3: Language Selector & Primary Actions */}
         <div className="flex items-center gap-2.5 shrink-0">
-          {/* Git Repo Guide Button */}
-          <button
-            onClick={() => setIsGitModalOpen(true)}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-950/50 hover:bg-indigo-900/60 text-indigo-300 border border-indigo-800/50 text-xs font-medium transition-colors"
-            title="Zobrazit Git repozitář a exportní příkazy"
-          >
-            <FolderGit2 className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Git Repo</span>
-          </button>
-
           {/* Language selector */}
           <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-slate-900/80 border border-slate-800 text-xs">
             <label htmlFor={langSelectId} className="sr-only">Jazyk rozhraní</label>
@@ -120,12 +107,5 @@ export const Header: React.FC<HeaderProps> = ({
           )}
         </div>
       </header>
-
-      {/* Git Repo Modal */}
-      <GitRepoModal
-        isOpen={isGitModalOpen}
-        onClose={() => setIsGitModalOpen(false)}
-      />
-    </>
   );
 };

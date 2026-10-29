@@ -20,7 +20,8 @@ import { RegexEncoderTool } from './utilities/RegexEncoderTool';
 import { TimePomodoroTool } from './utilities/TimePomodoroTool';
 import { OnlineTranslatorTool } from './utilities/OnlineTranslatorTool';
 import { ColorPaletteWcagTool } from './utilities/ColorPaletteWcagTool';
-import { SystemHardwareMonitorTool } from './utilities/SystemHardwareMonitorTool';
+import { SystemMonitorTool } from './utilities/SystemMonitorTool';
+import { WcagContrastValidatorTool } from './utilities/WcagContrastValidatorTool';
 
 export const TOOLS_REGISTRY: ToolDefinition[] = [
   // 1. Files & Documents
@@ -174,23 +175,33 @@ export const TOOLS_REGISTRY: ToolDefinition[] = [
   // 5. Utility & Systém
   {
     id: 'system-monitor',
-    title: 'Systémový Hardware Monitor',
-    shortDesc: 'Nativní telemetrie CPU jader, využití RAM a disků přes Tauri Rust IPC (sysinfo) bez režie Electronu.',
+    title: 'System Monitor',
+    shortDesc: 'Nativní telemetrie CPU jader, využití RAM a disků přes Tauri @tauri-apps/plugin-os a Rust sysinfo.',
     category: 'utilities',
     icon: 'Activity',
     requiresOnline: false,
-    component: SystemHardwareMonitorTool,
-    tags: ['hardware', 'cpu', 'ram', 'system', 'tauri', 'monitor', 'rust'],
+    component: SystemMonitorTool,
+    tags: ['hardware', 'cpu', 'ram', 'system', 'tauri', 'monitor', 'rust', 'os', 'disk'],
+  },
+  {
+    id: 'wcag-validator',
+    title: 'WCAG Contrast Validator',
+    shortDesc: 'Ověření kontrastu barev podle WCAG 2.1 (AA/AAA), poměr L1/L2, simulace zrakových vad a automatické ladění.',
+    category: 'utilities',
+    icon: 'Eye',
+    requiresOnline: false,
+    component: WcagContrastValidatorTool,
+    tags: ['wcag', 'kontrast', 'pristupnost', 'barvy', 'aa', 'aaa', 'simulace', 'design'],
   },
   {
     id: 'color-palette-wcag',
-    title: 'Paletka Barev & WCAG Validátor',
-    shortDesc: 'Generování harmonických palet barev, převody formátů HEX/RGB/HSL a ověření přístupnosti WCAG 2.1 (AA/AAA).',
+    title: 'Paletka Barev & Generátor',
+    shortDesc: 'Generování harmonických palet barev, převody formátů HEX/RGB/HSL a pravidla barevných schémat.',
     category: 'utilities',
     icon: 'Palette',
     requiresOnline: false,
     component: ColorPaletteWcagTool,
-    tags: ['barvy', 'wcag', 'kontrast', 'paleta', 'design', 'hex', 'rgb', 'pristupnost'],
+    tags: ['barvy', 'wcag', 'kontrast', 'paleta', 'design', 'hex', 'rgb'],
   },
   {
     id: 'password-gen',

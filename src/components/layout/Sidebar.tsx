@@ -8,8 +8,6 @@ import {
   Coins, 
   Wrench, 
   Cpu, 
-  Wifi, 
-  WifiOff, 
   Settings,
   HardDrive
 } from 'lucide-react';
@@ -20,8 +18,6 @@ interface SidebarProps {
   activeCategory: ToolCategory;
   onSelectCategory: (category: ToolCategory) => void;
   favoritesCount: number;
-  isSimulatedOffline: boolean;
-  onToggleOffline: () => void;
   onOpenConfig: () => void;
   selectedToolId: string | null;
   onBackToOverview: () => void;
@@ -31,8 +27,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
   activeCategory,
   onSelectCategory,
   favoritesCount,
-  isSimulatedOffline,
-  onToggleOffline,
   onOpenConfig,
   selectedToolId,
   onBackToOverview,
@@ -109,43 +103,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </div>
 
-      {/* Footer / System Connectivity & Settings */}
+      {/* Footer / System Settings */}
       <div className="p-4 border-t border-slate-900 space-y-3 bg-slate-950/60">
-        {/* Offline Simulation Switcher */}
-        <div className="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800/80 space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-              {t('connectivity_status', 'Stav konektivity')}
-            </span>
-            <span className={`flex items-center gap-1 text-[11px] font-mono ${
-              isSimulatedOffline ? 'text-amber-400' : 'text-emerald-400'
-            }`}>
-              {isSimulatedOffline ? (
-                <>
-                  <WifiOff className="w-3 h-3" />
-                  {t('offline', 'Offline')}
-                </>
-              ) : (
-                <>
-                  <Wifi className="w-3 h-3" />
-                  {t('online', 'Online')}
-                </>
-              )}
-            </span>
-          </div>
-
-          <button
-            onClick={onToggleOffline}
-            className={`w-full py-1.5 px-2 text-[11px] font-medium rounded-lg border transition-colors ${
-              isSimulatedOffline
-                ? 'bg-amber-950/40 border-amber-800/60 text-amber-300 hover:bg-amber-900/40'
-                : 'bg-slate-800/60 border-slate-700/60 text-slate-300 hover:bg-slate-800 hover:text-white'
-            }`}
-          >
-            {isSimulatedOffline ? t('disable_simulation', 'Zrušit simulaci offline') : t('simulate_offline', 'Simulovat offline režim')}
-          </button>
-        </div>
-
         {/* Local JSON config button */}
         <button
           onClick={onOpenConfig}

@@ -22,7 +22,7 @@
 
 ---
 
-## 🛠️ Integrated Tools Catalog (22 Tools)
+## 🛠️ Integrated Tools Catalog (23 Tools)
 
 ### 📁 1. Files & Documents (Soubory & Dokumenty)
 1. **Multi-Format Converter**: Client-side document conversion (DOCX, Markdown, Plain Text to PDF), data transformation (CSV <-> JSON) and image re-encoding (WebP, PNG, JPEG).
@@ -47,14 +47,15 @@
 14. **Mortgage & Loan Calculator**: Annuity payment calculation, principal-to-interest breakdown, and downloadable CSV amortization schedule.
 
 ### ⚙️ 5. Utilities & System (Utility & Nástroje)
-15. **System Hardware Monitor**: Real-time CPU core telemetry, RAM usage, and disk partition monitoring via native Tauri Rust IPC (`sysinfo`).
-16. **Color Palette & WCAG Validator**: Color palette generation, HEX/RGB/HSL conversion, and WCAG 2.1 AA/AAA accessibility contrast auditing.
-17. **Cryptographic Password Generator**: Passwords with custom character sets and memorable Diceware-style passphrases with bit-entropy scoring.
-18. **Offline QR Code Generator**: Generate vector QR codes for URLs, Wi-Fi networks, and text with PNG download.
-19. **RegEx Tester & Base64 / URL Encoder**: Regular expression evaluation with capture groups and bidirectional Base64/URL encoding.
-20. **World Clock & Pomodoro Timer**: Global time zone clocks and customizable Pomodoro focus timer with Web Audio API sound signals.
-21. **JSON Formatter & Validator**: Beautify, minify, and validate JSON data structures with syntax error locator.
-22. **Hybrid Online Translator**: Translation tool with automatic connectivity status detection and offline fallback notification.
+15. **System Monitor**: Real-time CPU core telemetry, RAM usage, and disk partition monitoring via native Tauri `@tauri-apps/plugin-os` and Rust IPC (`sysinfo`).
+16. **WCAG Contrast Validator**: Foreground and background color input, WCAG 2.1 compliance checking (Level AA and AAA for normal text, large text, and graphical UI components), live typography preview, automated contrast tuner, and vision deficiency simulator (Protanopia, Deuteranopia, Tritanopia, Achromatopsia).
+17. **Color Palette Generator**: Harmonic palette generation, HEX/RGB/HSL conversion, and color harmony schemes.
+18. **Cryptographic Password Generator**: Passwords with custom character sets and memorable Diceware-style passphrases with bit-entropy scoring.
+19. **Offline QR Code Generator**: Generate vector QR codes for URLs, Wi-Fi networks, and text with PNG download.
+20. **RegEx Tester & Base64 / URL Encoder**: Regular expression evaluation with capture groups and bidirectional Base64/URL encoding.
+21. **World Clock & Pomodoro Timer**: Global time zone clocks and customizable Pomodoro focus timer with Web Audio API sound signals.
+22. **JSON Formatter & Validator**: Beautify, minify, and validate JSON data structures with syntax error locator.
+23. **Hybrid Online Translator**: Translation tool with automatic connectivity status detection and offline fallback notification.
 
 ---
 

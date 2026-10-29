@@ -24,7 +24,8 @@ import {
   Clock,
   LineChart,
   Palette,
-  Activity
+  Activity,
+  Eye
 } from 'lucide-react';
 import { ToolDefinition, ToolCategory } from '../../types/tool';
 
@@ -60,6 +61,7 @@ const ICON_MAP: Record<string, React.ReactNode> = {
   LineChart: <LineChart className="w-5 h-5 text-indigo-400" />,
   Palette: <Palette className="w-5 h-5 text-indigo-400" />,
   Activity: <Activity className="w-5 h-5 text-indigo-400" />,
+  Eye: <Eye className="w-5 h-5 text-indigo-400" />,
 };
 
 import { useI18n } from '../../i18n/context';

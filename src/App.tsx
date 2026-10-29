@@ -49,18 +49,11 @@ export default function App() {
     });
   };
 
-  const handleToggleOffline = () => {
-    updateConfig({
-      ...config,
-      simulatedOffline: !config.simulatedOffline,
-    });
-  };
-
   const handleResetDefaults = () => {
     updateConfig(DEFAULT_CONFIG);
   };
 
-  const isEffectiveOffline = config.simulatedOffline || !isBrowserOnline;
+  const isEffectiveOffline = !isBrowserOnline;
 
   // Filter tools based on active category
   const filteredTools = TOOLS_REGISTRY.filter(tool => {
@@ -97,8 +90,6 @@ export default function App() {
           setSelectedToolId(null);
         }}
         favoritesCount={config.favorites.length}
-        isSimulatedOffline={config.simulatedOffline}
-        onToggleOffline={handleToggleOffline}
         onOpenConfig={() => setIsConfigOpen(true)}
         selectedToolId={selectedToolId}
         onBackToOverview={() => setSelectedToolId(null)}
