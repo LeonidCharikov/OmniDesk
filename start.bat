@@ -1,41 +1,49 @@
 @echo off
+setlocal enabledelayedexpansion
 title OmniDesk Launcher
+
+:: Always ensure working directory is the repository root
+cd /d "%~dp0"
+
 echo ========================================================
-echo             Spousteni aplikace OmniDesk
+echo                OmniDesk Desktop Launcher
 echo ========================================================
 echo.
 
-:: 1. Kontrola pritomnosti Node.js
+:: 1. Check if Node.js is installed
 where node >nul 2>nul
 if %errorlevel% neq 0 (
-    echo [CHYBA] Node.js nebyl nalezen v tomto pocitaci!
-    echo Prosim stahnete si bezplatny instalator Node.js:
-    echo https://nodejs.org
-    echo Po jednoduche instalaci spustte tento soubor znovu.
+    echo [ERROR] Node.js was not found on this computer!
+    echo Please download and install the free Node.js LTS from:
+    echo   https://nodejs.org
+    echo.
+    echo After installation is complete, run start.bat again.
     echo.
     pause
     exit /b 1
 )
 
-:: 2. Jednorazova instalace balicku, pokud jeste neprobehla
+:: 2. Check and install npm dependencies if needed
 if not exist node_modules (
-    echo [1/2] Prvni spusteni: Pripravuji aplikaci a instaluji komponenty...
+    echo [1/2] First time launch: Installing dependencies...
+    echo (This is a one-time setup and takes about 30-60 seconds)
     call npm install
     if %errorlevel% neq 0 (
-        echo [CHYBA] Nepodarilo se nainstalovat knihovny. Zkontrolujte pripojeni k internetu.
+        echo.
+        echo [ERROR] Failed to install packages. Please check your internet connection.
         pause
         exit /b 1
     )
+    echo Dependencies successfully installed!
 ) else (
-    echo [1/2] Aplikace je pripravena.
+    echo [1/2] Dependencies verified.
 )
 
 echo.
-echo [2/2] Spoustim aplikaci OmniDesk...
-echo OmniDesk se automaticky otevre v samostatnem okne prohlizece.
-echo (Toto cerne okno muzete minimalizovat, zavrenim okna aplikaci ukoncite.)
+echo [2/2] Starting OmniDesk workstation...
+echo Browser window will open automatically as soon as the server is ready.
+echo (You can minimize this window. Closing it will shut down the app.)
 echo.
 
-:: 3. Otevreni okna a start serveru
-start "" http://localhost:3000
-call npm run dev
+:: 3. Launch dev server with automatic browser opening
+call npm run dev -- --open
