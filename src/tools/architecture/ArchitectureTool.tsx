@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { Terminal, FolderTree, Cpu, Shield, Copy, Check, ExternalLink, Code2 } from 'lucide-react';
+import { Terminal, Cpu, Shield, Copy, Check, ExternalLink, Code2 } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
 
 export const ArchitectureTool: React.FC = () => {
   const { t } = useI18n();
-  const [activeTab, setActiveTab] = useState<'compare' | 'structure' | 'commands' | 'ipc' | 'build' | 'git'>('compare');
+  const [activeTab, setActiveTab] = useState<'compare' | 'structure' | 'commands' | 'ipc' | 'build'>('compare');
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
   const copyCode = (code: string, index: number) => {
@@ -144,14 +144,6 @@ export async function saveConvertedFile(targetPath: string, data: Uint8Array): P
           }`}
         >
           Desktop (.exe / .dmg) vs. Web
-        </button>
-        <button
-          onClick={() => setActiveTab('git')}
-          className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 ${
-            activeTab === 'git' ? 'bg-indigo-600 text-white' : 'text-indigo-400 hover:text-indigo-300'
-          }`}
-        >
-          <span>Git Repozitář & Export</span>
         </button>
       </div>
 
@@ -363,64 +355,6 @@ export async function saveConvertedFile(targetPath: string, data: Uint8Array): P
                 </p>
               </div>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Tab 6: Git Repository */}
-      {activeTab === 'git' && (
-        <div className="space-y-4">
-          <div className="p-5 rounded-2xl bg-indigo-950/30 border border-indigo-900/40 space-y-3">
-            <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-              <FolderTree className="w-4 h-4 text-indigo-400" />
-              Kde přesně se nachází tento Git repozitář?
-            </h3>
-            <p className="text-xs text-slate-300 leading-relaxed">
-              Tento projekt má <strong>plně inicializovaný lokální Git repozitář</strong> se všemi commity, který se nachází přímo v kořenové složce cloudového kontejneru na cestě <code className="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800 font-mono text-indigo-300">/app/applet/.git</code>.
-            </p>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Protože tento sandbox běží v zabezpečeném prostředí Google Cloud Run, repozitář se <strong>automaticky neobjeví na vašem osobním GitHub účtu</strong>, dokud do něj nenastavíte odkaz (remote URL) a neodešlete kód.
-            </p>
-          </div>
-
-          <div className="p-5 rounded-2xl bg-slate-900/40 border border-slate-800 space-y-3">
-            <div className="flex items-center justify-between">
-              <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                <Terminal className="w-3.5 h-3.5 text-indigo-400" />
-                Jak nahrát tento projekt na váš osobní GitHub
-              </h4>
-              <button
-                onClick={() => copyCode(
-                  `git remote add origin https://github.com/VASE_UZIVATELSKE_JMENO/omnidesk.git\ngit branch -M main\ngit push -u origin main`,
-                  99
-                )}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-950 hover:bg-slate-800 text-slate-300 border border-slate-800 text-xs transition-colors"
-              >
-                {copiedIndex === 99 ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                <span>{copiedIndex === 99 ? 'Zkopírováno' : 'Kopírovat příkazy'}</span>
-              </button>
-            </div>
-
-            <pre className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 font-mono text-indigo-200 text-xs leading-relaxed overflow-x-auto">
-{`# 1. Na svém GitHubu klikněte na 'New repository' s názvem 'omnidesk' (ponechte prázdný bez README)
-# 2. V terminálu zadejte příkaz pro propojení:
-git remote add origin https://github.com/VASE_UZIVATELSKE_JMENO/omnidesk.git
-
-# 3. Nastavte hlavní větev na 'main':
-git branch -M main
-
-# 4. Odešlete všechny commity a větve:
-git push -u origin main`}
-            </pre>
-          </div>
-
-          <div className="p-5 rounded-2xl bg-slate-900/40 border border-slate-800 space-y-3">
-            <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
-              Nebo stáhněte projekt do svého počítače
-            </h4>
-            <p className="text-xs text-slate-300 leading-relaxed">
-              V rozhraní Google AI Studio Build můžete kdykoliv kliknout na tlačítko <strong>Export / Stáhnout projekt</strong> v horním panelu. Získáte archiv se všemi zdrojovými soubory i skrytou složkou <code>.git</code>.
-            </p>
           </div>
         </div>
       )}

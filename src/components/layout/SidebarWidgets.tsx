@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
 import { WidgetCustomization, DailyTask } from '../../types/tool';
+import { getSavedRates, FiatRateInfo, CryptoRateInfo } from '../../services/currencyService';
 
 interface SidebarWidgetsProps {
   widgets: WidgetCustomization;
@@ -30,6 +31,7 @@ interface SidebarWidgetsProps {
   onAddTask: (taskText: string) => void;
   onDeleteTask: (taskId: string) => void;
   onOpenWidgetSettings: () => void;
+  isCollapsed?: boolean;
 }
 
 // Sample live/cached prices for cryptocurrencies
@@ -128,6 +130,7 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
   onAddTask,
   onDeleteTask,
   onOpenWidgetSettings,
+  isCollapsed,
 }) => {
   const { t, language } = useI18n();
   const [now, setNow] = useState(new Date());
@@ -145,8 +148,26 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
   const [calcInput, setCalcInput] = useState('25 * 4');
   const [calcCopied, setCalcCopied] = useState(false);
 
-  // New task input state
   const [newTaskText, setNewTaskText] = useState('');
+
+  // Live rates for mini widget
+  const [ratesData, setRatesData] = useState(() => getSavedRates());
+
+  useEffect(() => {
+    const handleUpdate = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail) {
+        setRatesData(prev => ({
+          ...prev,
+          fiat: customEvent.detail.fiat || prev.fiat,
+          crypto: customEvent.detail.crypto || prev.crypto,
+          timestamp: customEvent.detail.timestamp || prev.timestamp,
+        }));
+      }
+    };
+    window.addEventListener('omnidesk-rates-updated', handleUpdate);
+    return () => window.removeEventListener('omnidesk-rates-updated', handleUpdate);
+  }, []);
 
   // Live clock tick
   useEffect(() => {
@@ -261,6 +282,10 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
 
   const dailyTasks = widgets.dailyTasks || [];
   const completedTasksCount = dailyTasks.filter(t => t.done).length;
+
+  if (isCollapsed) {
+    return null;
+  }
 
   return (
     <div className="px-3 py-2 space-y-2 border-t border-slate-900/80 bg-slate-950/40 max-[767px]:hidden">
