@@ -76,7 +76,7 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Language selector */}
         <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-slate-900/80 border border-slate-800 text-xs">
-          <label htmlFor={langSelectId} className="sr-only">Jazyk rozhraní</label>
+          <label htmlFor={langSelectId} className="sr-only">{t('interface_language', 'Jazyk rozhraní')}</label>
           <Languages className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
           <select
             id={langSelectId}
@@ -118,7 +118,7 @@ export const Header: React.FC<HeaderProps> = ({
         ) : (
           <div className="flex items-center gap-1.5 text-xs text-emerald-400 font-mono">
             <ShieldCheck className="w-3.5 h-3.5" />
-            <span>Local Sandboxed</span>
+            <span>{t('local_sandboxed', 'Lokální sandbox')}</span>
           </div>
         )}
       </div>

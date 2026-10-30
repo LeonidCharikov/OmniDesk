@@ -111,8 +111,6 @@ export const UnitConverterTool: React.FC = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const isRu = language === 'ru';
-
   return (
     <div className="space-y-6">
       <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800">
@@ -144,7 +142,7 @@ export const UnitConverterTool: React.FC = () => {
         {/* From */}
         <div className="space-y-3">
           <label htmlFor={fromSelectId} className="text-xs font-semibold uppercase tracking-wider text-slate-400 block">
-            {isRu ? 'Из единицы' : 'Z jednotky'}
+            {t('unit_from_label', 'Z jednotky')}
           </label>
           <select
             id={fromSelectId}
@@ -170,7 +168,7 @@ export const UnitConverterTool: React.FC = () => {
         <div className="flex justify-center pt-6">
           <button
             onClick={swapUnits}
-            title={isRu ? 'Поменять местами' : 'Prohodit jednotky'}
+            title={t('swap_units', 'Prohodit jednotky')}
             className="p-3 rounded-xl bg-slate-800/80 hover:bg-indigo-600 text-slate-300 hover:text-white transition-colors border border-slate-700"
           >
             <ArrowLeftRight className="w-5 h-5" />
@@ -180,7 +178,7 @@ export const UnitConverterTool: React.FC = () => {
         {/* To */}
         <div className="space-y-3">
           <label htmlFor={toSelectId} className="text-xs font-semibold uppercase tracking-wider text-slate-400 block">
-            {isRu ? 'В единицу' : 'Do jednotky'}
+            {t('unit_to_label', 'Do jednotky')}
           </label>
           <select
             id={toSelectId}
@@ -199,7 +197,7 @@ export const UnitConverterTool: React.FC = () => {
             <button
               onClick={copyResult}
               className="absolute right-3 p-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
-              title={isRu ? 'Копировать результат' : 'Kopírovat výsledek'}
+              title={t('copy_result', 'Kopírovat výsledek')}
             >
               {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
             </button>
@@ -210,9 +208,10 @@ export const UnitConverterTool: React.FC = () => {
       {/* Quick reference table of all units in this category */}
       <div className="p-4 rounded-xl bg-slate-900/30 border border-slate-800">
         <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 block mb-3">
-          {isRu 
-            ? `Сравнительная таблица для ${inputValue} ${getUnitName(fromDef)}` 
-            : `Srovnávací tabulka pro ${inputValue} ${getUnitName(fromDef)}`}
+          {t('comparison_table_for', 'Srovnávací tabulka pro {value} {unit}', {
+            value: inputValue,
+            unit: getUnitName(fromDef),
+          })}
         </span>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
           {Object.entries(currentCategory.units).map(([key, u]) => {

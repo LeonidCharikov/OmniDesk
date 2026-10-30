@@ -51,7 +51,7 @@ const RECENT_COMMITS: GitCommitInfo[] = [
 ];
 
 export const GitRepoModal: React.FC<GitRepoModalProps> = ({ isOpen, onClose }) => {
-  const { currentLanguage } = useI18n();
+  const { t } = useI18n();
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
   const [customRepoUrl, setCustomRepoUrl] = useState<string>('https://github.com/USERNAME/omnidesk.git');
 
@@ -63,28 +63,26 @@ export const GitRepoModal: React.FC<GitRepoModalProps> = ({ isOpen, onClose }) =
     setTimeout(() => setCopiedSection(null), 2000);
   };
 
-  const isRu = currentLanguage === 'ru';
-
-  const pushCommands = `# 1. ${isRu ? 'Перейдите в корень проекта' : 'Přejděte do kořene projektu'}:
+  const pushCommands = `# 1. ${t('git_cmd_project_root', 'Přejděte do kořene projektu')}:
 cd omnidesk
 
-# 2. ${isRu ? 'Добавьте ваш удаленный репозиторий (origin)' : 'Přidejte svůj vzdálený repozitář (origin)'}:
+# 2. ${t('git_cmd_add_remote', 'Přidejte svůj vzdálený repozitář (origin)')}:
 git remote add origin ${customRepoUrl}
 
-# 3. ${isRu ? 'Установите главную ветку main и отправьте все коммиты' : 'Nastavte hlavní větev main a odešlete commity'}:
+# 3. ${t('git_cmd_push_main', 'Nastavte hlavní větev main a odešlete commity')}:
 git branch -M main
 git push -u origin main`;
 
-  const localRunCommands = `# 1. ${isRu ? 'Установите зависимости' : 'Nainstalujte balíčky'}:
+  const localRunCommands = `# 1. ${t('git_cmd_install', 'Nainstalujte balíčky')}:
 npm install
 
-# 2. ${isRu ? 'Запуск в режиме веб-приложения (Vite)' : 'Spuštění v režimu webové aplikace'}:
+# 2. ${t('git_cmd_dev', 'Spuštění v režimu webové aplikace (Vite)')}:
 npm run dev
 
-# 3. ${isRu ? 'Запуск в качестве нативного десктопного приложения Tauri' : 'Spuštění jako nativní desktopová aplikace (Tauri)'}:
+# 3. ${t('git_cmd_tauri_dev', 'Spuštění jako nativní desktopová aplikace (Tauri)')}:
 npm run tauri dev
 
-# 4. ${isRu ? 'Сборка готового инсталлятора (.exe / .dmg / .deb / .AppImage)' : 'Sestavení finálního instalačního souboru (.exe / .dmg / .deb)'}:
+# 4. ${t('git_cmd_tauri_build', 'Sestavení finálního instalačního souboru (.exe / .dmg / .deb / .AppImage)')}:
 npm run tauri build`;
 
   return (
@@ -101,10 +99,10 @@ npm run tauri build`;
             </div>
             <div>
               <h3 className="text-base font-semibold text-white">
-                {isRu ? 'Git Репозиторий и Инструкция по Публикации' : 'Git Repozitář & Jak jej publikovat'}
+                {t('git_modal_title', 'Git Repozitář & Jak jej publikovat')}
               </h3>
               <p className="text-xs text-slate-400">
-                {isRu ? 'Ветка:' : 'Větev:'} <span className="font-mono text-indigo-400 font-bold">master / main</span> | {isRu ? 'Полная история коммитов сохранена' : 'Plná historie commitů uložena'}
+                {t('git_branch', 'Větev:')} <span className="font-mono text-indigo-400 font-bold">master / main</span> | {t('git_history_saved', 'Plná historie commitů uložena')}
               </p>
             </div>
           </div>
@@ -124,22 +122,18 @@ npm run tauri build`;
             <div className="flex items-center gap-2 text-indigo-300 font-semibold text-xs">
               <HelpCircle className="w-4 h-4 text-indigo-400 shrink-0" />
               <span>
-                {isRu 
-                  ? 'Где находится Git репозиторий и как связать его со своим GitHub / GitLab?' 
-                  : 'Kde se nachází Git repozitář & jak jej propojit se svým GitHubem?'}
+                {t('git_help_title', 'Kde se nachází Git repozitář & jak jej propojit se svým GitHubem?')}
               </span>
             </div>
             <p className="leading-relaxed text-slate-300 text-[11px]">
-              {isRu 
-                ? 'Репозиторий уже полностью инициализирован внутри контейнера (со всеми файлами, коммитами и историей). Чтобы отправить (push) все изменения в созданный вами удаленный репозиторий на GitHub или GitLab, вставьте ссылку на ваш репозиторий ниже:'
-                : 'Repozitář je kompletně inicializován uvnitř vývojového prostředí (se všemi soubory, commity i historií). Pro odeslání kódu na váš GitHub či GitLab vložte URL adresu vašeho repozitáře níže:'}
+              {t('git_help_description', 'Repozitář je kompletně inicializován uvnitř vývojového prostředí (se všemi soubory, commity i historií). Pro odeslání kódu na váš GitHub či GitLab vložte URL adresu vašeho repozitáře níže:')}
             </p>
           </div>
 
           {/* Interactive Remote URL Input */}
           <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
             <label className="text-xs font-semibold text-slate-300 block">
-              {isRu ? 'URL вашего созданного репозитория (GitHub / GitLab):' : 'URL vašeho vytvořeného repozitáře (GitHub / GitLab):'}
+              {t('git_repo_url_label', 'URL vašeho vytvořeného repozitáře (GitHub / GitLab):')}
             </label>
             <div className="flex gap-2">
               <input
@@ -157,14 +151,14 @@ npm run tauri build`;
             <div className="flex items-center justify-between">
               <span className="font-semibold text-slate-200 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
                 <Terminal className="w-3.5 h-3.5 text-indigo-400" />
-                {isRu ? 'Команды для терминала (Push в ваш репозиторий):' : 'Příkazy pro odeslání (Push do vašeho repozitáře):'}
+                {t('git_push_commands', 'Příkazy pro odeslání (Push do vašeho repozitáře):')}
               </span>
               <button
                 onClick={() => copyCode(pushCommands, 'push')}
                 className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-950 hover:bg-slate-800 text-slate-300 border border-slate-800 transition-colors"
               >
                 {copiedSection === 'push' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                <span>{copiedSection === 'push' ? (isRu ? 'Скопировано' : 'Zkopírováno') : (isRu ? 'Копировать' : 'Kopírovat')}</span>
+                <span>{copiedSection === 'push' ? t('copied', 'Zkopírováno') : t('copy', 'Kopírovat')}</span>
               </button>
             </div>
             <pre className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 font-mono text-indigo-200 leading-relaxed overflow-x-auto text-[11px]">
@@ -177,14 +171,14 @@ npm run tauri build`;
             <div className="flex items-center justify-between">
               <span className="font-semibold text-slate-200 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
                 <Terminal className="w-3.5 h-3.5 text-emerald-400" />
-                {isRu ? 'Сборка и запуск на вашем ПК (Desktop Tauri):' : 'Spuštění a sestavení na PC (Tauri Desktop):'}
+                {t('git_run_commands', 'Spuštění a sestavení na PC (Tauri Desktop):')}
               </span>
               <button
                 onClick={() => copyCode(localRunCommands, 'run')}
                 className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-950 hover:bg-slate-800 text-slate-300 border border-slate-800 transition-colors"
               >
                 {copiedSection === 'run' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                <span>{copiedSection === 'run' ? (isRu ? 'Скопировано' : 'Zkopírováno') : (isRu ? 'Копировать' : 'Kopírovat')}</span>
+                <span>{copiedSection === 'run' ? t('copied', 'Zkopírováno') : t('copy', 'Kopírovat')}</span>
               </button>
             </div>
             <pre className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 font-mono text-emerald-300 leading-relaxed overflow-x-auto text-[11px]">
@@ -196,7 +190,7 @@ npm run tauri build`;
           <div className="space-y-3">
             <span className="font-semibold text-slate-200 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
               <GitCommit className="w-3.5 h-3.5 text-slate-400" />
-              {isRu ? 'История коммитов в этом репозитории' : 'Historie commitů v tomto repozitáři'}
+              {t('git_commit_history', 'Historie commitů v tomto repozitáři')}
             </span>
 
             <div className="space-y-2">
@@ -233,7 +227,7 @@ npm run tauri build`;
             onClick={onClose}
             className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs transition-colors"
           >
-            {isRu ? 'Понятно, закрыть' : 'Rozumím, zavřít'}
+            {t('close', 'Zavřít')}
           </button>
         </div>
       </div>

@@ -350,7 +350,7 @@ fn main() {
             <button
               onClick={() => setIsRunning(!isRunning)}
               className="p-1 rounded text-slate-400 hover:text-white transition-colors"
-              title={isRunning ? 'Pozastavit' : 'Spustit'}
+              title={isRunning ? t('pause', 'Pozastavit') : t('start', 'Spustit')}
             >
               {isRunning ? <Pause className="w-3.5 h-3.5 text-amber-400" /> : <Play className="w-3.5 h-3.5 text-emerald-400" />}
             </button>
