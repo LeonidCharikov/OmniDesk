@@ -58,7 +58,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   ];
 
   return (
-    <aside className="w-64 h-screen bg-slate-950 border-r border-slate-800/80 flex flex-col justify-between shrink-0 select-none overflow-hidden sidebar-container">
+    <aside className="w-64 max-[767px]:w-16 h-screen bg-slate-950 border-r border-slate-800/80 flex flex-col justify-between shrink-0 select-none overflow-hidden sidebar-container">
       <div className="p-4 space-y-5 overflow-y-auto flex-1">
         {/* Brand Lockup */}
         <div 
@@ -68,7 +68,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-400 flex items-center justify-center text-white shadow-md shadow-indigo-500/20 group-hover:scale-105 transition-transform">
             <HardDrive className="w-5 h-5" />
           </div>
-          <div>
+          <div className="sidebar-brand-copy max-[767px]:hidden">
             <div className="flex items-center gap-1.5">
               <span className="text-sm font-bold tracking-tight text-white">OmniDesk</span>
               <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-indigo-950 text-indigo-400 border border-indigo-800/50">
@@ -81,7 +81,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Categories Navigation */}
         <div className="space-y-1">
-          <span className="px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 block mb-2">
+          <span className="px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 block mb-2 max-[767px]:hidden">
             {t('categories', 'Kategorie nástrojů')}
           </span>
           {categories.map(cat => {
@@ -99,12 +99,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/80'
                 }`}
               >
-                <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-2.5 max-[767px]:mx-auto">
                   {cat.icon}
-                  <span>{cat.label}</span>
+                  <span className="max-[767px]:hidden">{cat.label}</span>
                 </div>
                 {cat.count !== undefined && (
-                  <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${
+                  <span className={`max-[767px]:hidden text-[10px] font-mono px-1.5 py-0.5 rounded ${
                     isActive ? 'bg-indigo-700 text-white' : 'bg-slate-900 text-slate-400'
                   }`}>
                     {cat.count}
@@ -134,7 +134,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           className="w-full flex items-center justify-center gap-2 py-2 px-3 text-xs font-medium text-slate-300 hover:text-white bg-slate-900/60 hover:bg-slate-800 rounded-lg border border-slate-800 transition-colors"
         >
           <Settings className="w-3.5 h-3.5 text-indigo-400" />
-          <span>{t('settings_and_backup', 'Nastavení & Záloha')}</span>
+          <span className="max-[767px]:hidden">{t('settings_and_backup', 'Nastavení & Záloha')}</span>
         </button>
       </div>
     </aside>

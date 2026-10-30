@@ -83,12 +83,12 @@ export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     if (!template) {
-      const csDict = LOCALES.cs;
-      template = csDict && csDict[key];
-    }
-    if (!template) {
       const enDict = LOCALES.en;
       template = enDict && enDict[key];
+    }
+    if (!template) {
+      const csDict = LOCALES.cs;
+      template = csDict && csDict[key];
     }
     if (!template) {
       template = fallback || key;

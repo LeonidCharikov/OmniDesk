@@ -19,7 +19,7 @@ export default function App() {
   const [isConfigOpen, setIsConfigOpen] = useState(false);
   const [isBrowserOnline, setIsBrowserOnline] = useState(navigator.onLine);
 
-  const { t, setLanguage } = useI18n();
+  const { t } = useI18n();
 
   // Apply theme dynamically to document root
   useEffect(() => {
@@ -75,9 +75,6 @@ export default function App() {
 
   const handleUpdateConfig = (newConfig: UserConfig) => {
     updateConfig(newConfig);
-    if (newConfig.language && ['cs', 'en', 'de', 'es', 'ru'].includes(newConfig.language)) {
-      setLanguage(newConfig.language as any);
-    }
   };
 
   const handleToggleWidget = (widgetId: string) => {
@@ -194,7 +191,7 @@ export default function App() {
         />
 
         {/* Content Viewport */}
-        <main className="flex-1 overflow-y-auto p-6 md:p-8 bg-slate-950/40">
+        <main className="flex-1 overflow-y-auto p-3 sm:p-6 md:p-8 bg-slate-950/40">
           <div className="max-w-5xl mx-auto">
             {activeCategory === 'architecture' ? (
               <ArchitectureTool />

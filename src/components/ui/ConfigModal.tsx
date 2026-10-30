@@ -17,7 +17,6 @@ import {
   Cpu,
   Globe,
   HelpCircle,
-  Sparkles,
   CheckSquare,
   Calculator,
 } from 'lucide-react';
@@ -135,6 +134,9 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
       const text = event.target?.result as string;
       const res = validateConfigJson(text);
       if (res.valid && res.config) {
+        if (res.config.language && ['cs', 'en', 'de', 'es', 'ru'].includes(res.config.language)) {
+          setLanguage(res.config.language as 'cs' | 'en' | 'de' | 'es' | 'ru');
+        }
         onUpdateConfig(res.config);
         setImportStatus({
           success: true,
@@ -155,6 +157,9 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
   const handleApplyPastedJson = () => {
     const res = validateConfigJson(pastedJson);
     if (res.valid && res.config) {
+      if (res.config.language && ['cs', 'en', 'de', 'es', 'ru'].includes(res.config.language)) {
+        setLanguage(res.config.language as 'cs' | 'en' | 'de' | 'es' | 'ru');
+      }
       onUpdateConfig(res.config);
       setPastedJson('');
       setShowPasteArea(false);
@@ -228,8 +233,8 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
-      <div className="relative w-full max-w-3xl rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl flex flex-col max-h-[90vh] overflow-hidden text-slate-100">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-md animate-fade-in">
+      <div className="relative w-full max-w-3xl rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl flex flex-col max-h-[96vh] sm:max-h-[90vh] overflow-hidden text-slate-100">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-950/60">
           <div className="flex items-center gap-3">
@@ -254,7 +259,7 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex items-center gap-1 px-6 pt-3 border-b border-slate-800 bg-slate-950/30">
+        <div className="flex items-center gap-1 px-3 sm:px-6 pt-3 border-b border-slate-800 bg-slate-950/30 overflow-x-auto">
           <button
             onClick={() => setActiveTab('themes')}
             className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-t-lg transition-colors border-b-2 ${
@@ -556,19 +561,6 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
                 </div>
               </div>
 
-              {/* Ideas for further widgets */}
-              <div className="p-3.5 rounded-xl bg-indigo-950/20 border border-indigo-500/20 space-y-2">
-                <span className="text-xs font-semibold text-indigo-300 flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                  {t('future_widgets_title', 'Návrhy na další widgety do příštích verzí')}
-                </span>
-                <ul className="text-xs text-slate-400 space-y-1 list-disc list-inside">
-                  <li><strong>Rychlé převody jednotek</strong> (Quick SI / Imperial bar)</li>
-                  <li><strong>Baterie & Spotřeba</strong> (Battery level and charging status přes Tauri)</li>
-                  <li><strong>Počasí a teplota</strong> (Lokální offline meteo z cache)</li>
-                  <li><strong>Denní cíle a úkoly</strong> (Mini Checklist pro dnešní den)</li>
-                </ul>
-              </div>
             </div>
           )}
 

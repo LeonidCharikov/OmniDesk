@@ -263,7 +263,7 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
   const completedTasksCount = dailyTasks.filter(t => t.done).length;
 
   return (
-    <div className="px-3 py-2 space-y-2 border-t border-slate-900/80 bg-slate-950/40">
+    <div className="px-3 py-2 space-y-2 border-t border-slate-900/80 bg-slate-950/40 max-[767px]:hidden">
       <div className="flex items-center justify-between px-1">
         <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
           {t('sidebar_widgets', 'Mini widgety')}
