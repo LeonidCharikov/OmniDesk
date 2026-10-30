@@ -1,15 +1,22 @@
-import { UserConfig, WidgetCustomization, ThemeId } from '../types/tool';
+import { UserConfig, WidgetCustomization, ThemeId, DailyTask } from '../types/tool';
 
 const CONFIG_KEY = 'omnidesk_user_config_v2';
 const LEGACY_KEY = 'omnidesk_user_config_v1';
 
+export const DEFAULT_TASKS: DailyTask[] = [
+  { id: '1', text: 'Zkontrolovat denní úkoly', done: false },
+  { id: '2', text: 'Kalkulace a převod měn', done: true },
+  { id: '3', text: 'Pomodoro blok soustředění', done: false },
+];
+
 export const DEFAULT_WIDGETS: WidgetCustomization = {
-  enabledWidgets: ['clock', 'timer', 'crypto', 'notes'],
+  enabledWidgets: ['clock', 'timer', 'crypto', 'notes', 'tasks', 'calc'],
   selectedCity: 'Europe/Prague',
   selectedCityName: 'Praha',
   selectedFiat: 'CZK',
   selectedCrypto: 'BTC',
   quickNote: 'OmniDesk rychlá poznámka...',
+  dailyTasks: DEFAULT_TASKS,
 };
 
 export const DEFAULT_CONFIG: UserConfig = {
@@ -20,7 +27,7 @@ export const DEFAULT_CONFIG: UserConfig = {
   theme: 'dark',
   themeId: 'midnight',
   widgets: DEFAULT_WIDGETS,
-  enabledWidgets: ['clock', 'timer', 'crypto', 'notes'],
+  enabledWidgets: ['clock', 'timer', 'crypto', 'notes', 'tasks', 'calc'],
   language: 'cs',
 };
 
@@ -34,6 +41,9 @@ export function loadUserConfig(): UserConfig {
     const widgets: WidgetCustomization = {
       ...DEFAULT_WIDGETS,
       ...(parsed.widgets || {}),
+      dailyTasks: Array.isArray(parsed.widgets?.dailyTasks)
+        ? parsed.widgets.dailyTasks
+        : DEFAULT_TASKS,
       enabledWidgets: Array.isArray(parsed.widgets?.enabledWidgets)
         ? parsed.widgets.enabledWidgets
         : Array.isArray(parsed.enabledWidgets)
@@ -95,6 +105,7 @@ export function validateConfigJson(jsonString: string): { valid: boolean; config
         selectedFiat: parsed.widgets?.selectedFiat || DEFAULT_WIDGETS.selectedFiat,
         selectedCrypto: parsed.widgets?.selectedCrypto || DEFAULT_WIDGETS.selectedCrypto,
         quickNote: typeof parsed.widgets?.quickNote === 'string' ? parsed.widgets.quickNote : DEFAULT_WIDGETS.quickNote,
+        dailyTasks: Array.isArray(parsed.widgets?.dailyTasks) ? parsed.widgets.dailyTasks : DEFAULT_TASKS,
       },
       language: ['cs', 'en', 'ru', 'de', 'es'].includes(parsed.language) ? parsed.language : 'cs',
     };

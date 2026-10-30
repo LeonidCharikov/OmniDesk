@@ -15,6 +15,12 @@ export interface ToolDefinition {
 
 export type ThemeId = 'midnight' | 'oled' | 'graphite' | 'emerald' | 'purple' | 'light';
 
+export interface DailyTask {
+  id: string;
+  text: string;
+  done: boolean;
+}
+
 export interface WidgetCustomization {
   enabledWidgets: string[];
   selectedCity: string;
@@ -22,6 +28,7 @@ export interface WidgetCustomization {
   selectedFiat: string;
   selectedCrypto: string;
   quickNote: string;
+  dailyTasks?: DailyTask[];
 }
 
 export interface UserConfig {

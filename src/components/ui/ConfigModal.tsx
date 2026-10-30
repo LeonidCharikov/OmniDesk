@@ -18,6 +18,8 @@ import {
   Globe,
   HelpCircle,
   Sparkles,
+  CheckSquare,
+  Calculator,
 } from 'lucide-react';
 import { UserConfig, ThemeId, WidgetCustomization } from '../../types/tool';
 import { useI18n } from '../../i18n/context';
@@ -424,6 +426,18 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
                       title: t('widget_crypto_title', 'Kurzovní lístek & Krypto'),
                       desc: t('widget_crypto_desc', 'Sledování vybrané kryptoměny a měny'),
                       icon: <Coins className="w-4 h-4 text-emerald-400" />,
+                    },
+                    {
+                      id: 'calc',
+                      title: t('widget_calc_title', 'Rychlá kalkulačka & Převodník jednotek'),
+                      desc: t('widget_calc_desc', 'Okamžité výpočty a konverze měn či jednotek'),
+                      icon: <Calculator className="w-4 h-4 text-indigo-400" />,
+                    },
+                    {
+                      id: 'tasks',
+                      title: t('widget_tasks_title', 'Denní checklist úkolů'),
+                      desc: t('widget_tasks_desc', 'Rychlý seznam priorit a cílů pro dnešní den'),
+                      icon: <CheckSquare className="w-4 h-4 text-emerald-400" />,
                     },
                     {
                       id: 'notes',

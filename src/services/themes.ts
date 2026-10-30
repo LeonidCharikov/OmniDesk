@@ -63,10 +63,30 @@ export const THEMES: ThemeMeta[] = [
 ];
 
 export function applyTheme(themeId: ThemeId): void {
-  document.documentElement.setAttribute('data-theme', themeId);
+  const root = document.documentElement;
+  const body = document.body;
+
+  root.setAttribute('data-theme', themeId);
+  body.setAttribute('data-theme', themeId);
+
+  // Remove existing theme classes
+  THEMES.forEach(t => {
+    root.classList.remove(`theme-${t.id}`);
+    body.classList.remove(`theme-${t.id}`);
+  });
+
+  root.classList.add(`theme-${themeId}`);
+  body.classList.add(`theme-${themeId}`);
+
   if (themeId === 'light') {
-    document.documentElement.classList.remove('dark');
+    root.classList.remove('dark');
+    body.classList.remove('dark');
+    root.classList.add('light');
+    body.classList.add('light');
   } else {
-    document.documentElement.classList.add('dark');
+    root.classList.add('dark');
+    body.classList.add('dark');
+    root.classList.remove('light');
+    body.classList.remove('light');
   }
 }

@@ -11,14 +11,24 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Activity,
+  CheckSquare,
+  Square,
+  Plus,
+  Trash2,
+  Calculator,
+  Copy,
+  Check,
 } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
-import { WidgetCustomization } from '../../types/tool';
+import { WidgetCustomization, DailyTask } from '../../types/tool';
 
 interface SidebarWidgetsProps {
   widgets: WidgetCustomization;
   onToggleWidget: (widgetId: string) => void;
   onUpdateQuickNote: (text: string) => void;
+  onToggleTask: (taskId: string) => void;
+  onAddTask: (taskText: string) => void;
+  onDeleteTask: (taskId: string) => void;
   onOpenWidgetSettings: () => void;
 }
 
@@ -46,10 +56,77 @@ const FIAT_RATES: Record<string, { base: string; rate: string }> = {
   JPY: { base: '1 USD', rate: '154.6 JPY' },
 };
 
+function evaluateMiniCalc(input: string): string | null {
+  const trimmed = input.trim().toLowerCase();
+  if (!trimmed) return null;
+
+  // 1. Check unit conversions: "50 km to mi", "100 lbs in kg", "25 c to f", "100 eur in czk"
+  const convMatch = trimmed.match(/^([\d.]+)\s*([a-z]+)\s*(?:to|in|->)\s*([a-z]+)$/i);
+  if (convMatch) {
+    const val = parseFloat(convMatch[1]);
+    const from = convMatch[2];
+    const to = convMatch[3];
+    if (isNaN(val)) return null;
+
+    if (from === 'km' && to === 'mi') return `${(val * 0.621371).toFixed(2)} mi`;
+    if (from === 'mi' && to === 'km') return `${(val * 1.60934).toFixed(2)} km`;
+    if (from === 'm' && to === 'ft') return `${(val * 3.28084).toFixed(2)} ft`;
+    if (from === 'ft' && to === 'm') return `${(val * 0.3048).toFixed(2)} m`;
+    if (from === 'cm' && to === 'in') return `${(val * 0.393701).toFixed(2)} in`;
+    if (from === 'in' && to === 'cm') return `${(val * 2.54).toFixed(2)} cm`;
+
+    if (from === 'kg' && to === 'lbs') return `${(val * 2.20462).toFixed(2)} lbs`;
+    if (from === 'lbs' && to === 'kg') return `${(val * 0.453592).toFixed(2)} kg`;
+    if (from === 'g' && to === 'oz') return `${(val * 0.035274).toFixed(2)} oz`;
+    if (from === 'oz' && to === 'g') return `${(val * 28.3495).toFixed(2)} g`;
+
+    if (from === 'c' && to === 'f') return `${((val * 9) / 5 + 32).toFixed(1)} °F`;
+    if (from === 'f' && to === 'c') return `${(((val - 32) * 5) / 9).toFixed(1)} °C`;
+
+    if (from === 'eur' && to === 'czk') return `${(val * 25.18).toFixed(1)} CZK`;
+    if (from === 'czk' && to === 'eur') return `${(val / 25.18).toFixed(2)} EUR`;
+    if (from === 'usd' && to === 'czk') return `${(val * 23.45).toFixed(1)} CZK`;
+    if (from === 'czk' && to === 'usd') return `${(val / 23.45).toFixed(2)} USD`;
+    if (from === 'usd' && to === 'rub') return `${(val * 94.2).toFixed(1)} RUB`;
+    if (from === 'rub' && to === 'usd') return `${(val / 94.2).toFixed(2)} USD`;
+    if (from === 'eur' && to === 'usd') return `${(val * 1.08).toFixed(2)} USD`;
+    if (from === 'usd' && to === 'eur') return `${(val * 0.92).toFixed(2)} EUR`;
+  }
+
+  // 2. Percentage: "20% of 500"
+  const pctMatch = trimmed.match(/^([\d.]+)%\s*(?:of|z)\s*([\d.]+)$/i);
+  if (pctMatch) {
+    const pct = parseFloat(pctMatch[1]);
+    const total = parseFloat(pctMatch[2]);
+    if (!isNaN(pct) && !isNaN(total)) {
+      return `${((pct / 100) * total).toLocaleString()}`;
+    }
+  }
+
+  // 3. Simple math evaluation
+  const sanitized = trimmed.replace(/\^/g, '**');
+  if (/^[\d\s+\-*/().%]+$/.test(sanitized)) {
+    try {
+      const fn = new Function(`return (${sanitized})`);
+      const res = fn();
+      if (typeof res === 'number' && !isNaN(res) && isFinite(res)) {
+        return Number.isInteger(res) ? res.toString() : res.toFixed(4).replace(/\.?0+$/, '');
+      }
+    } catch {
+      return null;
+    }
+  }
+
+  return null;
+}
+
 export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
   widgets,
   onToggleWidget,
   onUpdateQuickNote,
+  onToggleTask,
+  onAddTask,
+  onDeleteTask,
   onOpenWidgetSettings,
 }) => {
   const { t, language } = useI18n();
@@ -63,6 +140,13 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
   // Mini system simulation stats
   const [cpuUsage, setCpuUsage] = useState(18);
   const [ramUsage, setRamUsage] = useState(42);
+
+  // Mini Calc state
+  const [calcInput, setCalcInput] = useState('25 * 4');
+  const [calcCopied, setCalcCopied] = useState(false);
+
+  // New task input state
+  const [newTaskText, setNewTaskText] = useState('');
 
   // Live clock tick
   useEffect(() => {
@@ -118,7 +202,6 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
 
   const locale = language === 'ru' ? 'ru-RU' : language === 'en' ? 'en-US' : language === 'de' ? 'de-DE' : language === 'es' ? 'es-ES' : 'cs-CZ';
 
-  // Format time using selected city timezone
   const targetTimezone = widgets.selectedCity || 'Europe/Prague';
   const cityName = widgets.selectedCityName || 'Praha';
 
@@ -150,13 +233,34 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
   const showCrypto = enabled.includes('crypto');
   const showNotes = enabled.includes('notes');
   const showSystem = enabled.includes('system');
+  const showTasks = enabled.includes('tasks');
+  const showCalc = enabled.includes('calc');
 
-  if (!showClock && !showTimer && !showCrypto && !showNotes && !showSystem) {
+  if (!showClock && !showTimer && !showCrypto && !showNotes && !showSystem && !showTasks && !showCalc) {
     return null;
   }
 
   const cryptoData = CRYPTO_PRICES[widgets.selectedCrypto] || CRYPTO_PRICES['BTC'];
   const fiatData = FIAT_RATES[widgets.selectedFiat] || FIAT_RATES['CZK'];
+
+  const calcResult = evaluateMiniCalc(calcInput);
+
+  const handleCopyCalcResult = () => {
+    if (!calcResult) return;
+    navigator.clipboard.writeText(calcResult);
+    setCalcCopied(true);
+    setTimeout(() => setCalcCopied(false), 2000);
+  };
+
+  const handleCreateTask = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTaskText.trim()) return;
+    onAddTask(newTaskText.trim());
+    setNewTaskText('');
+  };
+
+  const dailyTasks = widgets.dailyTasks || [];
+  const completedTasksCount = dailyTasks.filter(t => t.done).length;
 
   return (
     <div className="px-3 py-2 space-y-2 border-t border-slate-900/80 bg-slate-950/40">
@@ -276,7 +380,100 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
         </div>
       )}
 
-      {/* 4. Mini Scratchpad / Quick Sticky Note */}
+      {/* 4. Mini Calculator & Unit Converter Widget */}
+      {showCalc && (
+        <div className="p-2 rounded-lg bg-slate-900/40 border border-slate-800/60 space-y-1.5">
+          <div className="flex items-center justify-between text-[10px] text-slate-400">
+            <span className="flex items-center gap-1 text-slate-300 font-medium">
+              <Calculator className="w-2.5 h-2.5 text-indigo-400" />
+              <span>{t('mini_calc_title', 'Rychlý převodník / kalkulačka')}</span>
+            </span>
+          </div>
+          <input
+            type="text"
+            value={calcInput}
+            onChange={e => setCalcInput(e.target.value)}
+            placeholder="např. 50 km to mi, 25 * 4"
+            className="w-full text-xs font-mono px-2 py-1 bg-slate-950/80 border border-slate-800 rounded text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500"
+          />
+          {calcResult && (
+            <div className="flex items-center justify-between px-2 py-1 bg-indigo-950/30 border border-indigo-500/20 rounded text-[11px] font-mono">
+              <span className="text-indigo-200 font-semibold truncate max-w-[130px]">
+                = {calcResult}
+              </span>
+              <button
+                onClick={handleCopyCalcResult}
+                className="text-slate-400 hover:text-white transition-colors"
+                title={t('copy_result', 'Kopírovat výsledek')}
+              >
+                {calcCopied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 5. Daily Tasks Checklist Widget */}
+      {showTasks && (
+        <div className="p-2 rounded-lg bg-slate-900/40 border border-slate-800/60 space-y-1.5">
+          <div className="flex items-center justify-between text-[10px]">
+            <span className="flex items-center gap-1 text-slate-300 font-medium">
+              <CheckSquare className="w-2.5 h-2.5 text-emerald-400" />
+              <span>{t('daily_checklist_title', 'Denní checklist')}</span>
+            </span>
+            <span className="text-[9px] font-mono text-slate-500">
+              {completedTasksCount}/{dailyTasks.length}
+            </span>
+          </div>
+
+          <div className="space-y-1 max-h-24 overflow-y-auto pr-0.5">
+            {dailyTasks.map(task => (
+              <div
+                key={task.id}
+                className="flex items-center justify-between group text-[11px] text-slate-300 py-0.5"
+              >
+                <div
+                  onClick={() => onToggleTask(task.id)}
+                  className="flex items-center gap-1.5 cursor-pointer truncate flex-1"
+                >
+                  {task.done ? (
+                    <CheckSquare className="w-3 h-3 text-emerald-400 shrink-0" />
+                  ) : (
+                    <Square className="w-3 h-3 text-slate-500 shrink-0" />
+                  )}
+                  <span className={`truncate ${task.done ? 'line-through text-slate-500' : ''}`}>
+                    {task.text}
+                  </span>
+                </div>
+                <button
+                  onClick={() => onDeleteTask(task.id)}
+                  className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-rose-400 transition-opacity p-0.5"
+                >
+                  <Trash2 className="w-2.5 h-2.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+
+          <form onSubmit={handleCreateTask} className="flex items-center gap-1 pt-1 border-t border-slate-800/40">
+            <input
+              type="text"
+              value={newTaskText}
+              onChange={e => setNewTaskText(e.target.value)}
+              placeholder={t('add_task_placeholder', '+ Nový úkol...')}
+              className="flex-1 text-[10px] px-1.5 py-0.5 bg-slate-950/80 border border-slate-800 rounded text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500"
+            />
+            <button
+              type="submit"
+              className="p-1 rounded bg-indigo-600 hover:bg-indigo-500 text-white text-[10px]"
+            >
+              <Plus className="w-2.5 h-2.5" />
+            </button>
+          </form>
+        </div>
+      )}
+
+      {/* 6. Mini Scratchpad / Quick Sticky Note */}
       {showNotes && (
         <div className="p-2 rounded-lg bg-amber-950/15 border border-amber-500/20 space-y-1">
           <div className="flex items-center gap-1 text-[10px] text-amber-400 font-medium">
@@ -293,7 +490,7 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
         </div>
       )}
 
-      {/* 5. Mini System Monitor Gauge */}
+      {/* 7. Mini System Monitor Gauge */}
       {showSystem && (
         <div className="p-2 rounded-lg bg-slate-900/40 border border-slate-800/60 space-y-1.5">
           <div className="flex items-center justify-between text-[10px] text-slate-400">

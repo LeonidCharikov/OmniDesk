@@ -25,6 +25,9 @@ interface SidebarProps {
   widgets: WidgetCustomization;
   onToggleWidget: (widgetId: string) => void;
   onUpdateQuickNote: (text: string) => void;
+  onToggleTask: (taskId: string) => void;
+  onAddTask: (taskText: string) => void;
+  onDeleteTask: (taskId: string) => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -37,6 +40,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   widgets,
   onToggleWidget,
   onUpdateQuickNote,
+  onToggleTask,
+  onAddTask,
+  onDeleteTask,
 }) => {
   const { t } = useI18n();
 
@@ -52,7 +58,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   ];
 
   return (
-    <aside className="w-64 h-screen bg-slate-950 border-r border-slate-800/80 flex flex-col justify-between shrink-0 select-none overflow-hidden">
+    <aside className="w-64 h-screen bg-slate-950 border-r border-slate-800/80 flex flex-col justify-between shrink-0 select-none overflow-hidden sidebar-container">
       <div className="p-4 space-y-5 overflow-y-auto flex-1">
         {/* Brand Lockup */}
         <div 
@@ -110,11 +116,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </div>
 
-      {/* Mini-Widgets Area (Live Clock, Timer, Crypto, Notes, System) */}
+      {/* Mini-Widgets Area */}
       <SidebarWidgets
         widgets={widgets}
         onToggleWidget={onToggleWidget}
         onUpdateQuickNote={onUpdateQuickNote}
+        onToggleTask={onToggleTask}
+        onAddTask={onAddTask}
+        onDeleteTask={onDeleteTask}
         onOpenWidgetSettings={onOpenConfig}
       />
 

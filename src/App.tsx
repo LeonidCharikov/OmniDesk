@@ -105,6 +105,46 @@ export default function App() {
     });
   };
 
+  const handleToggleTask = (taskId: string) => {
+    const tasks = config.widgets?.dailyTasks || [];
+    const updated = tasks.map(t => (t.id === taskId ? { ...t, done: !t.done } : t));
+    updateConfig({
+      ...config,
+      widgets: {
+        ...config.widgets,
+        dailyTasks: updated,
+      },
+    });
+  };
+
+  const handleAddTask = (taskText: string) => {
+    const tasks = config.widgets?.dailyTasks || [];
+    const newTask = {
+      id: Date.now().toString(),
+      text: taskText,
+      done: false,
+    };
+    updateConfig({
+      ...config,
+      widgets: {
+        ...config.widgets,
+        dailyTasks: [...tasks, newTask],
+      },
+    });
+  };
+
+  const handleDeleteTask = (taskId: string) => {
+    const tasks = config.widgets?.dailyTasks || [];
+    const updated = tasks.filter(t => t.id !== taskId);
+    updateConfig({
+      ...config,
+      widgets: {
+        ...config.widgets,
+        dailyTasks: updated,
+      },
+    });
+  };
+
   const getCategoryDisplayName = (cat: ToolCategory) => {
     switch (cat) {
       case 'all': return t('cat_all', 'Všechny nástroje');
@@ -120,7 +160,7 @@ export default function App() {
   };
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-slate-950 font-sans text-slate-100">
+    <div className={`flex h-screen w-screen overflow-hidden font-sans text-slate-100 theme-${config.themeId || 'midnight'} bg-slate-950`}>
       {/* Sidebar */}
       <Sidebar
         activeCategory={activeCategory}
@@ -135,6 +175,9 @@ export default function App() {
         widgets={config.widgets}
         onToggleWidget={handleToggleWidget}
         onUpdateQuickNote={handleUpdateQuickNote}
+        onToggleTask={handleToggleTask}
+        onAddTask={handleAddTask}
+        onDeleteTask={handleDeleteTask}
       />
 
       {/* Main Workspace Area */}

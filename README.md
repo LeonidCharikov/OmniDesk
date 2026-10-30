@@ -48,16 +48,50 @@
 
 ### ⚙️ 5. Utilities & System (Utility & Nástroje)
 15. **System Monitor**: Real-time CPU core telemetry, RAM usage, and disk partition monitoring via native Tauri `@tauri-apps/plugin-os` and Rust IPC (`sysinfo`).
-16. **WCAG Contrast Validator**: Foreground and background color input, WCAG 2.1 compliance checking (Level AA and AAA for normal text, large text, and graphical UI components), live typography preview, automated contrast tuner, and vision deficiency simulator (Protanopia, Deuteranopia, Tritanopia, Achromatopsia).
+16. **WCAG Contrast Validator**: Foreground and background color input, WCAG 2.1 compliance checking (Level AA and AAA for normal text, large text, and graphical UI components), live typography preview, automated contrast tuner, and vision deficiency simulator.
 17. **Color Palette Generator**: Harmonic palette generation, HEX/RGB/HSL conversion, and color harmony schemes.
 18. **Cryptographic Password Generator**: Passwords with custom character sets and memorable Diceware-style passphrases with bit-entropy scoring.
 19. **Offline QR Code Generator**: Generate vector QR codes for URLs, Wi-Fi networks, and text with PNG download.
 20. **RegEx Tester & Base64 / URL Encoder**: Regular expression evaluation with capture groups and bidirectional Base64/URL encoding.
-21. **World Clock & Pomodoro Timer**: Global time zone clocks and customizable Pomodoro focus timer with Web Audio API sound signals.
-22. **JSON Formatter & Validator**: Beautify, minify, and validate JSON data structures with syntax error locator.
-23. **Hybrid Online Translator**: Translation tool with automatic connectivity status detection and offline fallback notification.
+21. **Pomodoro & Focus Timer**: Dedicated Pomodoro cycles (25/5/15 min), custom countdown timer, and split-lap stopwatch.
+22. **World Timezones & Meeting Planner**: Interactive world clock with 28 world cities across all continents and meeting time scrubber.
+23. **JSON Formatter & Validator**: Beautify, minify, and validate JSON data structures with syntax error locator.
+24. **Hybrid Online Translator**: Translation tool with automatic connectivity status detection and offline fallback notification.
 
 ---
+
+## 🎨 Barevné režimy a Vzhled (6 témat)
+
+OmniDesk disponuje propracovaným systémem vizuálních témat s okamžitým přepínáním v nastavení:
+- 🌌 **Půlnoční modrá (Midnight Navy)** — Hluboce modrá a břidlicová paleta s indigovými akcenty.
+- 🖤 **Čistě černá (OLED Black)** — Čistě černý `#000000` podklad ideální pro noční práci a úsporu energie na OLED/AMOLED displejích.
+- 🩶 **Grafitově šedá (Charcoal Slate)** — Matný technický tmavě šedý odstín pro čistou produktivitu.
+- 🌲 **Kybernetická smaragdová (Emerald Matrix)** — High-tech temně zelený styl inspirovaný maticovými terminály.
+- 🔮 **Temně fialová (Royal Twilight)** — Purpurový luxusní odstín s fialovými akcenty.
+- ☀️ **Čistý moderní světlý (Clean Light)** — Denní světlý režim s vysokým kontrastem pro slunné prostředí.
+
+---
+
+## 🧩 Konfigurovatelné Postranní Mini-Widgety
+
+Přímo pod seznamem kategorií se nachází přizpůsobitelný panel mini-widgetů:
+1. **Živé hodiny & Světový čas**: Digitální hodiny s volbou konkrétního světového města (Praha, Londýn, New York, Tokio, Moskva, Dubaj, Sydney, atd.).
+2. **Rychlý časovač / Pomodoro**: Spuštění, pozastavení a reset 25minutového bloku soustředění nebo 5minutové pauzy jedním kliknutím.
+3. **Kurzovní lístek (Krypto & Fiat)**: Real-time sledování vámi vybrané kryptoměny (BTC, ETH, SOL, TON, BNB, XRP, DOGE, AVAX) a fiat směnného kurzu (CZK, EUR, USD, RUB, GBP, CHF, PLN, JPY).
+4. **Denní checklist úkolů**: Rychlý seznam priorit dne s okamžitým odškrtáváním, přidáváním a mazáním úkolů.
+5. **Rychlá kalkulačka & Převodník jednotek**: Jednořádkové pole pro okamžité výpočty (`25 * 4`, `20% of 600`) a převody jednotek/měn (`50 km to mi`, `100 lbs to kg`, `25 c to f`, `100 eur to czk`).
+6. **Rychlý zápisník (Sticky Note)**: Okamžitá textová plocha pro odložení rychlé myšlenky či čísla bez přepínání oken.
+7. **Systémový hardware gauge**: Kompaktní real-time indikátory vytížení CPU a paměti RAM.
+
+---
+
+## 💾 JSON Konfigurátor a přenositelnost profilů
+
+Všechna nastavení, aktivní widgety, oblíbené nástroje i denní úkoly jsou plně exportovatelné:
+- **Export do souboru `.json` (`omnidesk-profile.json`)** jedním kliknutím.
+- **Kopírování do schránky** pro okamžitý přenos textem.
+- **Import ze souboru nebo vložení textem** s automatickou validací struktury pro bezproblémovou migraci na jiný počítač.
+- **Tovární reset** pro bezpečné obnovení výchozích hodnot.
 
 ## 🌍 i18n Ally & Localization Architecture
 

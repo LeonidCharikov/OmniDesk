@@ -569,6 +569,13 @@ const DICTIONARY: Record<string, Record<Exclude<SupportedLanguage, 'cs'>, string
   'Nastavení & Záloha': { ru: 'Настройки и Бэкап', en: 'Settings & Backup', de: 'Einstellungen & Backup', es: 'Configuración y Copia' },
   'Nastavení & Vzhled': { ru: 'Настройки и Внешний вид', en: 'Settings & Appearance', de: 'Einstellungen & Design', es: 'Configuración y Apariencia' },
   'Návrhy na další widgety do příštích verzí': { ru: 'Идеи для будущих виджетов', en: 'Ideas for future widgets', de: 'Ideen für zukünftige Widgets', es: 'Ideas para futuros widgets' },
+  'Rychlý převodník / kalkulačka': { ru: 'Быстрый калькулятор / конвертер', en: 'Quick Mini Calc & Converter', de: 'Schnellrechner / Einheitenumrechner', es: 'Calculadora rápida y conversor' },
+  'Rychlá kalkulačka & Převodník jednotek': { ru: 'Быстрый калькулятор и конвертер единиц', en: 'Quick Calculator & Unit Converter', de: 'Schnellrechner & Einheitenumrechner', es: 'Calculadora rápida y conversor de unidades' },
+  'Okamžité výpočty a konverze měn či jednotek': { ru: 'Мгновенные вычисления и конвертация валют и единиц', en: 'Instant calculations and unit/currency conversions', de: 'Sofortige Berechnungen und Einheitenumrechnungen', es: 'Cálculos instantáneos y conversiones de unidades' },
+  'Denní checklist': { ru: 'Список задач на день', en: 'Daily Checklist', de: 'Tages-Checkliste', es: 'Lista diaria de tareas' },
+  'Denní checklist úkolů': { ru: 'Ежедневный список задач', en: 'Daily Tasks Checklist', de: 'Tägliche Aufgabenliste', es: 'Lista de tareas diarias' },
+  'Rychlý seznam priorit a cílů pro dnešní den': { ru: 'Быстрый список приоритетов и целей на сегодня', en: 'Quick list of daily priorities and goals', de: 'Schnellübersicht über Tagesziele', es: 'Lista rápida de prioridades del día' },
+  '+ Nový úkol...': { ru: '+ Новая задача...', en: '+ New task...', de: '+ Neue Aufgabe...', es: '+ Nueva tarea...' },
 };
 
 // Word-level fallback vocabulary
