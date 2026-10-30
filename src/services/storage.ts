@@ -3,10 +3,12 @@ import { UserConfig } from '../types/tool';
 const CONFIG_KEY = 'omnidesk_user_config_v1';
 
 export const DEFAULT_CONFIG: UserConfig = {
-  favorites: ['docx-to-pdf', 'unit-converter', 'loan-calc'],
+  favorites: ['docx-to-pdf', 'unit-converter', 'currency-crypto', 'pomodoro-timer'],
   recentToolIds: ['docx-to-pdf'],
   simulatedOffline: false,
   theme: 'dark',
+  enabledWidgets: ['clock', 'timer', 'crypto'],
+  language: 'cs',
 };
 
 export function loadUserConfig(): UserConfig {

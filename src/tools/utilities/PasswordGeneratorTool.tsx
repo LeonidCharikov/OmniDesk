@@ -1,5 +1,6 @@
 import React, { useState, useId } from 'react';
-import { KeyRound, RefreshCw, Copy, Check, ShieldCheck, ShieldAlert, Sparkles } from 'lucide-react';
+import { KeyRound, RefreshCw, Copy, Check, ShieldCheck } from 'lucide-react';
+import { useI18n } from '../../i18n/context';
 
 const WORDS = [
   'alfa', 'delta', 'galaxy', 'falcon', 'matrix', 'silver', 'orbit', 'quantum',
@@ -9,6 +10,7 @@ const WORDS = [
 ];
 
 export const PasswordGeneratorTool: React.FC = () => {
+  const { t } = useI18n();
   const [mode, setMode] = useState<'random' | 'passphrase'>('random');
   const [length, setLength] = useState<number>(18);
   const [includeUpper, setIncludeUpper] = useState<boolean>(true);
@@ -75,10 +77,10 @@ export const PasswordGeneratorTool: React.FC = () => {
     : Math.round(length * Math.log2(Math.max(2, poolSize)));
 
   const getStrengthLabel = () => {
-    if (entropy < 40) return { label: 'Slabé', color: 'text-red-400', bg: 'bg-red-500' };
-    if (entropy < 65) return { label: 'Dobré', color: 'text-amber-400', bg: 'bg-amber-500' };
-    if (entropy < 90) return { label: 'Velmi silné', color: 'text-emerald-400', bg: 'bg-emerald-500' };
-    return { label: 'Vojenská síla (Nerozlousknutelné)', color: 'text-indigo-400', bg: 'bg-indigo-500' };
+    if (entropy < 40) return { label: t('pwd_weak', 'Slabé'), color: 'text-red-400', bg: 'bg-red-500' };
+    if (entropy < 65) return { label: t('pwd_good', 'Dobré'), color: 'text-amber-400', bg: 'bg-amber-500' };
+    if (entropy < 90) return { label: t('pwd_very_strong', 'Velmi silné'), color: 'text-emerald-400', bg: 'bg-emerald-500' };
+    return { label: t('pwd_military_grade', 'Vojenská síla (Nerozlousknutelné)'), color: 'text-indigo-400', bg: 'bg-indigo-500' };
   };
 
   const copyPassword = () => {
@@ -93,9 +95,11 @@ export const PasswordGeneratorTool: React.FC = () => {
     <div className="space-y-6">
       <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h2 className="text-lg font-semibold text-white">Generátor Bezpečných Hesel & Frází</h2>
+          <h2 className="text-lg font-semibold text-white">
+            {t('tool_password_gen_title', 'Generátor Bezpečných Hesel')}
+          </h2>
           <p className="text-sm text-slate-400 mt-1">
-            Kryptograficky bezpečné generování náhodných hesel (CSPRNG) a zapamatovatelných víceslovných frází.
+            {t('password_gen_desc', 'Kryptograficky bezpečné generování náhodných hesel (CSPRNG) a zapamatovatelných víceslovných frází.')}
           </p>
         </div>
 
@@ -106,7 +110,7 @@ export const PasswordGeneratorTool: React.FC = () => {
               mode === 'random' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
             }`}
           >
-            Náhodné znaky
+            {t('random_chars_mode', 'Náhodné znaky')}
           </button>
           <button
             onClick={() => setMode('passphrase')}
@@ -114,7 +118,7 @@ export const PasswordGeneratorTool: React.FC = () => {
               mode === 'passphrase' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
             }`}
           >
-            Slovní fráze (Passphrase)
+            {t('passphrase_mode', 'Slovní fráze (Passphrase)')}
           </button>
         </div>
       </div>
@@ -129,7 +133,7 @@ export const PasswordGeneratorTool: React.FC = () => {
             <button
               onClick={generatePassword}
               className="p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
-              title="Vygenerovat nové heslo"
+              title={t('generate_new_pwd', 'Vygenerovat nové heslo')}
             >
               <RefreshCw className="w-4 h-4" />
             </button>
@@ -138,7 +142,7 @@ export const PasswordGeneratorTool: React.FC = () => {
               className="inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl transition-colors shadow-sm"
             >
               {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-              {copied ? 'Zkopírováno' : 'Kopírovat'}
+              {copied ? t('copied', 'Zkopírováno') : t('copy', 'Kopírovat')}
             </button>
           </div>
         </div>
@@ -148,10 +152,10 @@ export const PasswordGeneratorTool: React.FC = () => {
           <div className="flex items-center justify-between text-xs">
             <span className="text-slate-400 flex items-center gap-1.5">
               <ShieldCheck className="w-3.5 h-3.5 text-indigo-400" />
-              Síla hesla: <strong className={strength.color}>{strength.label}</strong>
+              {t('password_strength', 'Síla hesla')}: <strong className={strength.color}>{strength.label}</strong>
             </span>
             <span className="font-mono text-slate-400 tabular-nums">
-              Entropie: {entropy} bitů
+              {t('entropy', 'Entropie')}: {entropy} {t('bits', 'bitů')}
             </span>
           </div>
           <div className="w-full h-2 rounded-full bg-slate-900 overflow-hidden">
@@ -166,15 +170,15 @@ export const PasswordGeneratorTool: React.FC = () => {
       {/* Settings Grid */}
       <div className="p-5 rounded-2xl bg-slate-900/40 border border-slate-800 space-y-4">
         <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
-          Parametry generátoru
+          {t('generator_parameters', 'Parametry generátoru')}
         </span>
 
         {mode === 'random' ? (
           <div className="space-y-4">
             <div className="space-y-2">
               <div className="flex justify-between text-xs">
-                <label htmlFor={lengthId} className="text-slate-300">Délka hesla:</label>
-                <span className="font-mono text-indigo-400 font-bold">{length} znaků</span>
+                <label htmlFor={lengthId} className="text-slate-300">{t('password_length', 'Délka hesla:')}</label>
+                <span className="font-mono text-indigo-400 font-bold">{length} {t('chars_short', 'znaků')}</span>
               </div>
               <input
                 id={lengthId}
@@ -195,7 +199,7 @@ export const PasswordGeneratorTool: React.FC = () => {
                   onChange={e => setIncludeUpper(e.target.checked)}
                   className="rounded bg-slate-900 text-indigo-600 focus:ring-0"
                 />
-                <span>Velká písmena (A–Z)</span>
+                <span>{t('include_uppercase', 'Velká písmena (A–Z)')}</span>
               </label>
 
               <label className="flex items-center gap-2 p-3 rounded-xl bg-slate-950 border border-slate-800/80 cursor-pointer text-xs text-slate-200">
@@ -205,7 +209,7 @@ export const PasswordGeneratorTool: React.FC = () => {
                   onChange={e => setIncludeLower(e.target.checked)}
                   className="rounded bg-slate-900 text-indigo-600 focus:ring-0"
                 />
-                <span>Malá písmena (a–z)</span>
+                <span>{t('include_lowercase', 'Malá písmena (a–z)')}</span>
               </label>
 
               <label className="flex items-center gap-2 p-3 rounded-xl bg-slate-950 border border-slate-800/80 cursor-pointer text-xs text-slate-200">
@@ -215,7 +219,7 @@ export const PasswordGeneratorTool: React.FC = () => {
                   onChange={e => setIncludeNumbers(e.target.checked)}
                   className="rounded bg-slate-900 text-indigo-600 focus:ring-0"
                 />
-                <span>Čísla (0–9)</span>
+                <span>{t('include_numbers', 'Čísla (0–9)')}</span>
               </label>
 
               <label className="flex items-center gap-2 p-3 rounded-xl bg-slate-950 border border-slate-800/80 cursor-pointer text-xs text-slate-200">
@@ -225,7 +229,7 @@ export const PasswordGeneratorTool: React.FC = () => {
                   onChange={e => setIncludeSymbols(e.target.checked)}
                   className="rounded bg-slate-900 text-indigo-600 focus:ring-0"
                 />
-                <span>Symboly (!@#$%)</span>
+                <span>{t('include_symbols', 'Symboly (!@#$%)')}</span>
               </label>
 
               <label className="flex items-center gap-2 p-3 rounded-xl bg-slate-950 border border-slate-800/80 cursor-pointer text-xs text-slate-200">
@@ -235,7 +239,7 @@ export const PasswordGeneratorTool: React.FC = () => {
                   onChange={e => setExcludeAmbiguous(e.target.checked)}
                   className="rounded bg-slate-900 text-indigo-600 focus:ring-0"
                 />
-                <span>Vynechat nejednoznačné (0, O, l, 1)</span>
+                <span>{t('exclude_ambiguous', 'Vynechat nejednoznačné (0, O, l, 1)')}</span>
               </label>
             </div>
           </div>
@@ -243,7 +247,7 @@ export const PasswordGeneratorTool: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <div className="flex justify-between text-xs">
-                <label htmlFor={wordCountId} className="text-slate-300">Počet slov:</label>
+                <label htmlFor={wordCountId} className="text-slate-300">{t('words_count', 'Počet slov:')}</label>
                 <span className="font-mono text-indigo-400 font-bold">{wordCount}</span>
               </div>
               <input
@@ -258,17 +262,17 @@ export const PasswordGeneratorTool: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-              <label htmlFor={separatorId} className="text-xs text-slate-300 block">Oddělovač slov:</label>
+              <label htmlFor={separatorId} className="text-xs text-slate-300 block">{t('words_separator', 'Oddělovač slov:')}</label>
               <select
                 id={separatorId}
                 value={separator}
                 onChange={e => setSeparator(e.target.value)}
                 className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white"
               >
-                <option value="-">Pomlčka (-)</option>
-                <option value=".">Tečka (.)</option>
-                <option value="_">Podtržítko (_)</option>
-                <option value=" ">Mezera ( )</option>
+                <option value="-">{t('hyphen', 'Pomlčka (-)')}</option>
+                <option value=".">{t('dot', 'Tečka (.)')}</option>
+                <option value="_">{t('underscore', 'Podtržítko (_)')}</option>
+                <option value=" ">{t('space', 'Mezera ( )')}</option>
               </select>
             </div>
           </div>

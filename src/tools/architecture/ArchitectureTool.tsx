@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { Terminal, FolderTree, Cpu, Shield, Copy, Check, ExternalLink, Code2 } from 'lucide-react';
+import { useI18n } from '../../i18n/context';
 
 export const ArchitectureTool: React.FC = () => {
+  const { t } = useI18n();
   const [activeTab, setActiveTab] = useState<'compare' | 'structure' | 'commands' | 'ipc' | 'build' | 'git'>('compare');
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 

@@ -12,8 +12,10 @@ import {
   Eye,
   FileCode
 } from 'lucide-react';
+import { useI18n } from '../../i18n/context';
 
 export const DocxToPdfTool: React.FC = () => {
+  const { t } = useI18n();
   const [file, setFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [extractedText, setExtractedText] = useState<string>('');
@@ -95,6 +97,34 @@ Všechna data podléhají nejpřísnějším standardům ochrany soukromí. Konv
       const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
       const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
+      const cyrillicMap: Record<string, string> = {
+        'А': 'A', 'Б': 'B', 'В': 'V', 'Г': 'G', 'Д': 'D', 'Е': 'E', 'Ё': 'Yo', 'Ж': 'Zh',
+        'З': 'Z', 'И': 'I', 'Й': 'Y', 'К': 'K', 'Л': 'L', 'М': 'M', 'Н': 'N', 'О': 'O',
+        'П': 'P', 'Р': 'R', 'С': 'S', 'Т': 'T', 'У': 'U', 'Ф': 'F', 'Х': 'Kh', 'Ц': 'Ts',
+        'Ч': 'Ch', 'Ш': 'Sh', 'Щ': 'Shch', 'Ъ': '', 'Ы': 'Y', 'Ь': '', 'Э': 'E', 'Ю': 'Yu',
+        'Я': 'Ya',
+        'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'yo', 'ж': 'zh',
+        'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm', 'н': 'n', 'о': 'o',
+        'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u', 'ф': 'f', 'х': 'kh', 'ц': 'ts',
+        'ч': 'ch', 'ш': 'sh', 'щ': 'shch', 'ъ': '', 'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu',
+        'я': 'ya',
+      };
+
+      const safeWinAnsi = (str: string): string => {
+        return str
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^\x00-\x7F\xA0-\xFF]/g, ch => cyrillicMap[ch] || '');
+      };
+
+      const safeWidth = (str: string, size: number) => {
+        try {
+          return font.widthOfTextAtSize(safeWinAnsi(str), size);
+        } catch {
+          return str.length * size * 0.55;
+        }
+      };
+
       const pageWidth = 595.28; // A4
       const pageHeight = 841.89;
       const margin = 50;
@@ -117,7 +147,7 @@ Všechna data podléhají nejpřísnějším standardům ochrany soukromí. Konv
 
         for (const word of words) {
           const testLine = currentLine ? `${currentLine} ${word}` : word;
-          const testWidth = font.widthOfTextAtSize(testLine, fontSize);
+          const testWidth = safeWidth(testLine, fontSize);
           if (testWidth > maxLineWidth) {
             lines.push(currentLine);
             currentLine = word;
@@ -137,7 +167,7 @@ Všechna data podléhají nejpřísnějším standardům ochrany soukromí. Konv
         const page = pdfDoc.addPage([pageWidth, pageHeight]);
         
         // Header
-        page.drawText(outputName, {
+        page.drawText(safeWinAnsi(outputName), {
           x: margin,
           y: pageHeight - margin + 15,
           size: 8,
@@ -161,7 +191,7 @@ Všechna data podléhají nejpřísnějším standardům ochrany soukromí. Konv
           if (line) {
             // Check if title-like
             const isHeading = line === line.toUpperCase() && line.length < 60 && line.length > 3;
-            page.drawText(line, {
+            page.drawText(safeWinAnsi(line), {
               x: margin,
               y,
               size: isHeading ? fontSize + 2 : fontSize,
@@ -173,7 +203,7 @@ Všechna data podléhají nejpřísnějším standardům ochrany soukromí. Konv
         }
 
         // Footer pagination
-        page.drawText(`Stránka ${pageNum + 1} z ${totalPages}`, {
+        page.drawText(safeWinAnsi(`Stránka ${pageNum + 1} z ${totalPages}`), {
           x: pageWidth - margin - 60,
           y: margin - 20,
           size: 8,
@@ -212,13 +242,15 @@ Všechna data podléhají nejpřísnějším standardům ochrany soukromí. Konv
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-4 rounded-xl bg-slate-900/40 border border-slate-800">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-lg font-semibold text-white">Offline DOCX &rarr; PDF Konvertor</h2>
+            <h2 className="text-lg font-semibold text-white">
+              {t('tool_docx_to_pdf_title', 'Offline DOCX → PDF Konvertor')}
+            </h2>
             <span className="text-xs font-mono text-emerald-400 bg-emerald-950/60 border border-emerald-800/60 px-2 py-0.5 rounded">
-              100% Offline / Bez odesílání
+              {t('offline_badge_clean', '100% Offline / Bez odesílání')}
             </span>
           </div>
           <p className="text-sm text-slate-400 mt-1">
-            Konverze probíhá přímo v paměti přes WebAssembly parser. Žádný bajt neopustí váš počítač.
+            {t('docx_privacy_hint', 'Konverze probíhá přímo v paměti přes WebAssembly parser. Žádný bajt neopustí váš počítač.')}
           </p>
         </div>
         <button
@@ -226,7 +258,7 @@ Všechna data podléhají nejpřísnějším standardům ochrany soukromí. Konv
           className="inline-flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 rounded-lg transition-colors shrink-0"
         >
           <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-          Vyzkoušet na ukázkovém dokumentu
+          {t('docx_sample', 'Vyzkoušet na ukázkovém dokumentu')}
         </button>
       </div>
 
@@ -243,10 +275,10 @@ Všechna data podléhají nejpřísnějším standardům ochrany soukromí. Konv
             <Upload className="w-6 h-6" />
           </div>
           <p className="text-base font-medium text-slate-200">
-            Přetáhněte sem soubor <span className="text-indigo-400 font-mono">.docx</span> nebo klikněte pro výběr
+            {t('docx_drag_drop', 'Přetáhněte sem soubor .docx nebo klikněte pro výběr')}
           </p>
           <p className="text-xs text-slate-500 mt-1">
-            Podporuje standardní Microsoft Word dokumenty i čisté textové soubory.
+            {t('docx_formats_hint', 'Podporuje standardní Microsoft Word dokumenty i čisté textové soubory.')}
           </p>
         </div>
       </div>
@@ -262,26 +294,28 @@ Všechna data podléhají nejpřísnějším standardům ochrany soukromí. Konv
       {isProcessing && (
         <div className="flex items-center justify-center gap-3 p-8 rounded-xl bg-slate-900/40 border border-slate-800">
           <RefreshCw className="w-5 h-5 animate-spin text-indigo-400" />
-          <span className="text-sm font-medium text-slate-300">Generuji PDF dokument v lokální paměti...</span>
+          <span className="text-sm font-medium text-slate-300">
+            {t('docx_converting', 'Generuji PDF dokument v lokální paměti...')}
+          </span>
         </div>
       )}
 
       {stats && !isProcessing && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-800">
-            <span className="text-xs text-slate-500 block">Doba konverze</span>
+            <span className="text-xs text-slate-500 block">{t('stat_conversion_time', 'Doba konverze')}</span>
             <span className="text-base font-semibold font-mono text-emerald-400">{stats.durationMs} ms</span>
           </div>
           <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-800">
-            <span className="text-xs text-slate-500 block">Počet stran PDF</span>
+            <span className="text-xs text-slate-500 block">{t('stat_pdf_pages', 'Počet stran PDF')}</span>
             <span className="text-base font-semibold font-mono text-slate-200">{stats.pageCount}</span>
           </div>
           <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-800">
-            <span className="text-xs text-slate-500 block">Počet slov</span>
+            <span className="text-xs text-slate-500 block">{t('stat_words', 'Počet slov')}</span>
             <span className="text-base font-semibold font-mono text-slate-200">{stats.wordCount.toLocaleString()}</span>
           </div>
           <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-800">
-            <span className="text-xs text-slate-500 block">Počet znaků</span>
+            <span className="text-xs text-slate-500 block">{t('stat_characters', 'Počet znaků')}</span>
             <span className="text-base font-semibold font-mono text-slate-200">{stats.charCount.toLocaleString()}</span>
           </div>
         </div>
@@ -292,7 +326,7 @@ Všechna data podléhají nejpřísnějším standardům ochrany soukromí. Konv
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm text-slate-300 font-medium">
               <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-              <span>PDF je připraveno ke stažení a náhledu</span>
+              <span>{t('docx_ready', 'PDF je připraveno ke stažení a náhledu')}</span>
             </div>
             <a
               href={pdfBlobUrl}
@@ -300,7 +334,7 @@ Všechna data podléhají nejpřísnějším standardům ochrany soukromí. Konv
               className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg transition-colors shadow-sm"
             >
               <Download className="w-4 h-4" />
-              Stáhnout PDF
+              {t('docx_download', 'Stáhnout PDF')}
             </a>
           </div>
 
@@ -309,7 +343,7 @@ Všechna data podléhají nejpřísnějším standardům ochrany soukromí. Konv
             <div className="h-96 w-full">
               <iframe
                 src={pdfBlobUrl}
-                title="Náhled PDF"
+                title={t('docx_preview', 'Náhled PDF')}
                 className="w-full h-full bg-slate-900"
               />
             </div>

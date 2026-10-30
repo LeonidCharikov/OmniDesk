@@ -18,4 +18,6 @@ export interface UserConfig {
   recentToolIds: string[];
   simulatedOffline: boolean;
   theme: 'dark' | 'light';
+  enabledWidgets?: string[];
+  language?: string;
 }

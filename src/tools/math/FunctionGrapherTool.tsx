@@ -32,7 +32,7 @@ const PRESET_FUNCTIONS: { name: string; expr: string }[] = [
 ];
 
 export const FunctionGrapherTool: React.FC = () => {
-  const { currentLanguage } = useI18n();
+  const { t, currentLanguage } = useI18n();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   // Functions state
@@ -358,31 +358,23 @@ export const FunctionGrapherTool: React.FC = () => {
       <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800 flex flex-wrap items-center justify-between gap-4">
         <div>
           <h2 className="text-lg font-semibold text-white">
-            {currentLanguage === 'cs' ? 'Generátor & Vykreslovač Grafů Funkcí 2D' :
-             currentLanguage === 'ru' ? '2D Графопостроитель & Анализатор Функций' :
-             currentLanguage === 'de' ? '2D-Funktionsplotter & Graph-Rechner' :
-             currentLanguage === 'es' ? 'Graficador de Funciones 2D' :
-             '2D Function Grapher & Plotter'}
+            {t('tool_function_grapher_title', 'Generátor & Vykreslovač Grafů Funkcí 2D')}
           </h2>
           <p className="text-sm text-slate-400 mt-1">
-            {currentLanguage === 'cs' ? 'Interaktivní vykreslování více funkcí f(x), g(x), h(x), posun tažením myší, zoom, tečna a export grafu do PNG.' :
-             currentLanguage === 'ru' ? 'Интерактивное построение функций f(x), g(x), масштабирование, касательная и экспорт в PNG.' :
-             currentLanguage === 'de' ? 'Interaktives Plotten von Funktionen mit Zoom, Tangentenberechnung und PNG-Export.' :
-             currentLanguage === 'es' ? 'Trazado interactivo de múltiples funciones f(x), zoom con ratón, tangente y exportación PNG.' :
-             'Interactive multi-function graphing, pan & zoom canvas, tangent slopes, and PNG export.'}
+            {t('tool_function_grapher_desc', 'Interaktivní vykreslování více funkcí f(x), g(x), h(x), posun tažením myší, zoom, tečna a export grafu do PNG.')}
           </p>
         </div>
 
         {/* Presets Button */}
         <div className="flex flex-wrap items-center gap-1.5 bg-slate-950 p-1.5 rounded-xl border border-slate-800 text-xs">
-          <span className="text-slate-500 px-2 font-medium">Vzory:</span>
+          <span className="text-slate-500 px-2 font-medium">{t('templates_label', 'Vzory:')}</span>
           {PRESET_FUNCTIONS.slice(0, 4).map((p, idx) => (
             <button
               key={idx}
               onClick={() => updateFunctionExpr('1', p.expr)}
               className="px-2 py-1 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 font-mono transition-colors"
             >
-              {p.name}
+              {t(p.name)}
             </button>
           ))}
         </div>
@@ -415,21 +407,21 @@ export const FunctionGrapherTool: React.FC = () => {
           <button
             onClick={zoomIn}
             className="p-1.5 rounded-lg bg-slate-900 text-slate-300 hover:bg-slate-800 transition-colors"
-            title="Přiblížit (Zoom In)"
+            title={t('zoom_in', 'Přiblížit (Zoom In)')}
           >
             <ZoomIn className="w-4 h-4" />
           </button>
           <button
             onClick={zoomOut}
             className="p-1.5 rounded-lg bg-slate-900 text-slate-300 hover:bg-slate-800 transition-colors"
-            title="Oddálit (Zoom Out)"
+            title={t('zoom_out', 'Oddálit (Zoom Out)')}
           >
             <ZoomOut className="w-4 h-4" />
           </button>
           <button
             onClick={resetView}
             className="p-1.5 rounded-lg bg-slate-900 text-slate-300 hover:bg-slate-800 transition-colors"
-            title="Resetovat zobrazení (0,0)"
+            title={t('reset_view', 'Resetovat zobrazení (0,0)')}
           >
             <RotateCcw className="w-4 h-4" />
           </button>
@@ -437,7 +429,7 @@ export const FunctionGrapherTool: React.FC = () => {
           <button
             onClick={downloadGraph}
             className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium transition-colors"
-            title="Stáhnout graf ve formátu PNG"
+            title={t('download_png', 'Stáhnout graf ve formátu PNG')}
           >
             <Download className="w-3.5 h-3.5" />
             <span>PNG</span>
@@ -450,7 +442,7 @@ export const FunctionGrapherTool: React.FC = () => {
         {/* Function Inputs */}
         <div className="lg:col-span-2 p-5 rounded-2xl bg-slate-900/40 border border-slate-800 space-y-4">
           <span className="text-xs font-semibold text-indigo-400 uppercase tracking-wider block">
-            Aktivní Funkční Výrazy
+            {t('active_functions', 'Aktivní Funkční Výrazy')}
           </span>
 
           <div className="space-y-3">
@@ -462,7 +454,7 @@ export const FunctionGrapherTool: React.FC = () => {
                 <button
                   onClick={() => toggleFunctionVisibility(fnObj.id)}
                   className="p-1.5 rounded-lg text-slate-400 hover:text-white transition-colors"
-                  title={fnObj.visible ? 'Skrýt funkci' : 'Zobrazit funkci'}
+                  title={fnObj.visible ? t('hide_function', 'Skrýt funkci') : t('show_function', 'Zobrazit funkci')}
                 >
                   {fnObj.visible ? <Eye className="w-4 h-4 text-emerald-400" /> : <EyeOff className="w-4 h-4" />}
                 </button>
@@ -480,7 +472,7 @@ export const FunctionGrapherTool: React.FC = () => {
                   type="text"
                   value={fnObj.expr}
                   onChange={e => updateFunctionExpr(fnObj.id, e.target.value)}
-                  placeholder="např. sin(x), x^2 - 3, 2*x"
+                  placeholder={t('function_placeholder', 'např. sin(x), x^2 - 3, 2*x')}
                   className="flex-1 px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-white font-mono text-sm focus:border-indigo-500 focus:outline-none"
                 />
               </div>
@@ -490,7 +482,7 @@ export const FunctionGrapherTool: React.FC = () => {
           <div className="text-xs text-slate-500 flex items-center gap-1.5 pt-1">
             <HelpCircle className="w-3.5 h-3.5" />
             <span>
-              Podporováno: sin(x), cos(x), tan(x), sqrt(x), exp(x), ln(x), abs(x), mocniny x^2, konstanty pi, e.
+              {t('function_support_hint', 'Podporováno: sin(x), cos(x), tan(x), sqrt(x), exp(x), ln(x), abs(x), mocniny x^2, konstanty pi, e.')}
             </span>
           </div>
         </div>
@@ -498,12 +490,14 @@ export const FunctionGrapherTool: React.FC = () => {
         {/* Tangent & Inspector Tool */}
         <div className="p-5 rounded-2xl bg-slate-900/40 border border-slate-800 space-y-4">
           <span className="text-xs font-semibold text-amber-400 uppercase tracking-wider block">
-            Inspektor Bodu & Tečna f(x)
+            {t('point_inspector_title', 'Inspektor Bodu & Tečna f(x)')}
           </span>
 
           <div className="space-y-3">
             <div>
-              <label className="text-xs text-slate-400 block mb-1.5">Zkoumaný bod x₀:</label>
+              <label className="text-xs text-slate-400 block mb-1.5">
+                {t('inspected_point_label', 'Zkoumaný bod x₀:')}
+              </label>
               <input
                 type="number"
                 step="0.1"
@@ -515,13 +509,13 @@ export const FunctionGrapherTool: React.FC = () => {
 
             <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-2 text-xs font-mono">
               <div className="flex items-center justify-between">
-                <span className="text-slate-400">Hodnota f(x₀):</span>
+                <span className="text-slate-400">{t('value_fx', 'Hodnota f(x₀):')}</span>
                 <span className="text-indigo-400 font-bold">
                   {evalResults.f !== null ? evalResults.f.toFixed(4) : 'N/A'}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-slate-400">Směrnice tečny f&apos;(x₀):</span>
+                <span className="text-slate-400">{t('tangent_slope', 'Směrnice tečny f\'(x₀):')}</span>
                 <span className="text-amber-400 font-bold">
                   {evalResults.df !== null ? evalResults.df.toFixed(4) : 'N/A'}
                 </span>
@@ -529,7 +523,7 @@ export const FunctionGrapherTool: React.FC = () => {
             </div>
 
             <p className="text-[11px] text-slate-500 leading-relaxed">
-              Žlutý bod na grafu zobrazuje polohu [x₀, f(x₀)] a čárkovaná linie znázorňuje tečnu funkce v daném bodě.
+              {t('tangent_hint', 'Žlutý bod na grafu zobrazuje polohu [x₀, f(x₀)] a čárkovaná linie znázorňuje tečnu funkce v daném bodě.')}
             </p>
           </div>
         </div>

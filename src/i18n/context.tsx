@@ -5,6 +5,8 @@ import de from '../locales/de.json';
 import es from '../locales/es.json';
 import ru from '../locales/ru.json';
 
+import { autoTranslate } from './autoTranslate';
+
 export type SupportedLanguage = 'cs' | 'en' | 'de' | 'es' | 'ru';
 
 export interface LanguageInfo {
@@ -68,6 +70,18 @@ export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const t = (key: string, fallback?: string, params?: Record<string, string | number>): string => {
     const langDict = LOCALES[language];
     let template = langDict && langDict[key];
+
+    // If key not in target dictionary and language is not Czech, auto-translate!
+    if (!template) {
+      if (language !== 'cs') {
+        const sourceText = fallback || (LOCALES.cs && LOCALES.cs[key]) || key;
+        const autoTranslated = autoTranslate(sourceText, language);
+        if (autoTranslated && autoTranslated !== sourceText) {
+          template = autoTranslated;
+        }
+      }
+    }
+
     if (!template) {
       const csDict = LOCALES.cs;
       template = csDict && csDict[key];
@@ -78,6 +92,10 @@ export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     if (!template) {
       template = fallback || key;
+      // Last chance auto-translate if fallback was plain Czech
+      if (language !== 'cs') {
+        template = autoTranslate(template, language);
+      }
     }
 
     if (params) {

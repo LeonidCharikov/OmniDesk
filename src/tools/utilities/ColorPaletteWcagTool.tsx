@@ -124,7 +124,7 @@ const getContrastRatio = (fgHex: string, bgHex: string): number => {
 };
 
 export const ColorPaletteWcagTool: React.FC = () => {
-  const { currentLanguage } = useI18n();
+  const { t, currentLanguage } = useI18n();
   const [baseColor, setBaseColor] = useState<string>('#6366f1'); // Indigo
   const [fgColor, setFgColor] = useState<string>('#ffffff');
   const [bgColor, setBgColor] = useState<string>('#0f172a');
@@ -221,7 +221,7 @@ export const ColorPaletteWcagTool: React.FC = () => {
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 text-xs font-medium transition-colors"
         >
           <Shuffle className="w-3.5 h-3.5" />
-          <span>Náhodná barva</span>
+          <span>{t('random_color', 'Náhodná barva')}</span>
         </button>
       </div>
 
@@ -229,11 +229,11 @@ export const ColorPaletteWcagTool: React.FC = () => {
       <div className="p-5 rounded-2xl bg-slate-900/40 border border-slate-800 space-y-5">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <span className="text-xs font-semibold text-indigo-400 uppercase tracking-wider block">
-            WCAG 2.1 Kontrola Kontrastu (Text vs. Pozadí)
+            {t('wcag_contrast_check', 'WCAG 2.1 Kontrola Kontrastu (Text vs. Pozadí)')}
           </span>
 
           <div className="flex items-center gap-3">
-            <span className="text-xs text-slate-400">Poměr kontrastu:</span>
+            <span className="text-xs text-slate-400">{t('contrast_ratio_label', 'Poměr kontrastu:')}</span>
             <span className="px-3 py-1 rounded-xl bg-slate-950 border border-slate-800 font-mono text-lg font-bold text-white tabular-nums">
               {contrastRatio.toFixed(2)} : 1
             </span>
@@ -245,7 +245,7 @@ export const ColorPaletteWcagTool: React.FC = () => {
           {/* Foreground Picker */}
           <div className="space-y-2">
             <label className="text-xs text-slate-400 flex items-center justify-between">
-              <span>Barva Textu (Popředí):</span>
+              <span>{t('fg_color_label', 'Barva Textu (Popředí):')}</span>
               <span className="font-mono text-slate-300">{fgColor.toUpperCase()}</span>
             </label>
             <div className="flex items-center gap-3 bg-slate-950 p-2 rounded-xl border border-slate-800">
@@ -267,7 +267,7 @@ export const ColorPaletteWcagTool: React.FC = () => {
           {/* Background Picker */}
           <div className="space-y-2">
             <label className="text-xs text-slate-400 flex items-center justify-between">
-              <span>Barva Pozadí:</span>
+              <span>{t('bg_color_label', 'Barva Pozadí:')}</span>
               <span className="font-mono text-slate-300">{bgColor.toUpperCase()}</span>
             </label>
             <div className="flex items-center gap-3 bg-slate-950 p-2 rounded-xl border border-slate-800">
@@ -296,7 +296,7 @@ export const ColorPaletteWcagTool: React.FC = () => {
               }}
               className="w-full py-2.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 text-xs font-medium transition-colors"
             >
-              Prohodit Popředí ↔ Pozadí
+              {t('swap_fg_bg', 'Prohodit Popředí ↔ Pozadí')}
             </button>
           </div>
         </div>
@@ -307,17 +307,17 @@ export const ColorPaletteWcagTool: React.FC = () => {
           style={{ backgroundColor: bgColor, color: fgColor, borderColor: fgColor + '33' }}
         >
           <div className="flex items-center justify-between">
-            <h3 className="text-xl font-bold">Vzorový Nadpis Komponenty (18pt+)</h3>
+            <h3 className="text-xl font-bold">{t('mock_heading', 'Vzorový Nadpis Komponenty (18pt+)')}</h3>
             <span 
               className="px-3 py-1 rounded-full text-xs font-semibold border"
               style={{ borderColor: fgColor + '55', backgroundColor: fgColor + '15' }}
             >
-              UI Odznak
+              {t('mock_badge', 'UI Odznak')}
             </span>
           </div>
 
           <p className="text-sm leading-relaxed opacity-90 max-w-2xl">
-            Tento text simuluje skutečný obsah v aplikaci. Přístupnost (Accessibility) zajišťuje, že uživatelé se zrakovými vadami a na méně kvalitních monitorech mohou text pohodlně číst bez únavy očí.
+            {t('mock_desc', 'Tento text simuluje skutečný obsah v aplikaci. Přístupnost (Accessibility) zajišťuje, že uživatelé se zrakovými vadami a na méně kvalitních monitorech mohou text pohodlně číst bez únavy očí.')}
           </p>
 
           <div className="flex items-center gap-3 pt-2">
@@ -325,13 +325,13 @@ export const ColorPaletteWcagTool: React.FC = () => {
               className="px-4 py-2 rounded-xl text-xs font-bold transition-transform"
               style={{ backgroundColor: fgColor, color: bgColor }}
             >
-              Primární Tlačítko
+              {t('sample_btn_primary', 'Primární Tlačítko')}
             </button>
             <button
               className="px-4 py-2 rounded-xl text-xs font-medium border"
               style={{ borderColor: fgColor + '66' }}
             >
-              Sekundární Tlačítko
+              {t('sample_btn_secondary', 'Sekundární Tlačítko')}
             </button>
           </div>
         </div>
@@ -340,28 +340,28 @@ export const ColorPaletteWcagTool: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
           {/* Normal Text */}
           <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
-            <span className="text-xs text-slate-400 block font-medium">Běžný text (&lt; 18pt)</span>
+            <span className="text-xs text-slate-400 block font-medium">{t('normal_text_label', 'Běžný text (< 18pt)')}</span>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-slate-300 font-mono">Úroveň AA (&ge; 4.5:1)</span>
+              <span className="text-xs text-slate-300 font-mono">Úroveň AA (≥ 4.5:1)</span>
               {normalAA ? (
                 <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-400">
-                  <CheckCircle2 className="w-3.5 h-3.5" /> Vyhovuje
+                  <CheckCircle2 className="w-3.5 h-3.5" /> {t('passes', 'Vyhovuje')}
                 </span>
               ) : (
                 <span className="flex items-center gap-1 text-[11px] font-bold text-rose-400">
-                  <XCircle className="w-3.5 h-3.5" /> Nevyhovuje
+                  <XCircle className="w-3.5 h-3.5" /> {t('fails', 'Nevyhovuje')}
                 </span>
               )}
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-slate-300 font-mono">Úroveň AAA (&ge; 7.0:1)</span>
+              <span className="text-xs text-slate-300 font-mono">Úroveň AAA (≥ 7.0:1)</span>
               {normalAAA ? (
                 <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-400">
-                  <CheckCircle2 className="w-3.5 h-3.5" /> Vyhovuje
+                  <CheckCircle2 className="w-3.5 h-3.5" /> {t('passes', 'Vyhovuje')}
                 </span>
               ) : (
                 <span className="flex items-center gap-1 text-[11px] font-bold text-rose-400">
-                  <XCircle className="w-3.5 h-3.5" /> Nevyhovuje
+                  <XCircle className="w-3.5 h-3.5" /> {t('fails', 'Nevyhovuje')}
                 </span>
               )}
             </div>
@@ -369,28 +369,28 @@ export const ColorPaletteWcagTool: React.FC = () => {
 
           {/* Large Text */}
           <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
-            <span className="text-xs text-slate-400 block font-medium">Velký text (&ge; 18pt / 14pt bold)</span>
+            <span className="text-xs text-slate-400 block font-medium">{t('large_text_label', 'Velký text (≥ 18pt / 14pt bold)')}</span>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-slate-300 font-mono">Úroveň AA (&ge; 3.0:1)</span>
+              <span className="text-xs text-slate-300 font-mono">Úroveň AA (≥ 3.0:1)</span>
               {largeAA ? (
                 <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-400">
-                  <CheckCircle2 className="w-3.5 h-3.5" /> Vyhovuje
+                  <CheckCircle2 className="w-3.5 h-3.5" /> {t('passes', 'Vyhovuje')}
                 </span>
               ) : (
                 <span className="flex items-center gap-1 text-[11px] font-bold text-rose-400">
-                  <XCircle className="w-3.5 h-3.5" /> Nevyhovuje
+                  <XCircle className="w-3.5 h-3.5" /> {t('fails', 'Nevyhovuje')}
                 </span>
               )}
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-slate-300 font-mono">Úroveň AAA (&ge; 4.5:1)</span>
+              <span className="text-xs text-slate-300 font-mono">Úroveň AAA (≥ 4.5:1)</span>
               {largeAAA ? (
                 <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-400">
-                  <CheckCircle2 className="w-3.5 h-3.5" /> Vyhovuje
+                  <CheckCircle2 className="w-3.5 h-3.5" /> {t('passes', 'Vyhovuje')}
                 </span>
               ) : (
                 <span className="flex items-center gap-1 text-[11px] font-bold text-rose-400">
-                  <XCircle className="w-3.5 h-3.5" /> Nevyhovuje
+                  <XCircle className="w-3.5 h-3.5" /> {t('fails', 'Nevyhovuje')}
                 </span>
               )}
             </div>

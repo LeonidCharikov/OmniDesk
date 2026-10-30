@@ -2,6 +2,7 @@ import React, { useId } from 'react';
 import { Search, Star, ArrowLeft, ShieldCheck, Languages } from 'lucide-react';
 import { ToolDefinition } from '../../types/tool';
 import { useI18n, SUPPORTED_LANGUAGES, SupportedLanguage } from '../../i18n/context';
+import { PWAInstallButton } from '../ui/PWAInstallButton';
 
 interface HeaderProps {
   currentCategoryName: string;
@@ -69,6 +70,8 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Zone 3: Language Selector & Primary Actions */}
         <div className="flex items-center gap-2.5 shrink-0">
+          <PWAInstallButton />
+
           {/* Language selector */}
           <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-slate-900/80 border border-slate-800 text-xs">
             <label htmlFor={langSelectId} className="sr-only">Jazyk rozhraní</label>

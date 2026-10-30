@@ -136,6 +136,10 @@
 
   "tool_time_pomodoro_title": "Světový Čas & Pomodoro",
   "tool_time_pomodoro_desc": "Světové hodiny pro globální města a produktivní časovač soustředění Pomodoro s audio notifikací.",
+  "tool_pomodoro_timer_title": "Pomodoro, Stopky & Časovač",
+  "tool_pomodoro_timer_desc": "Produktivní technika Pomodoro se zvukovými signály, přesný odpočítávací časovač a stopky s mezičasy kol.",
+  "tool_world_timezones_title": "Světový Čas & Časová Pásma",
+  "tool_world_timezones_desc": "Světové hodiny pro desítky měst a zemí, posuvník pro plánování mezinárodních schůzek a indikátor dne a noci.",
   "tool_time_title": "Světový Čas & Pomodoro",
   "tool_time_desc": "Světové hodiny pro globální města a produktivní časovač soustředění Pomodoro s audio notifikací.",
 
@@ -251,8 +255,30 @@
   "sys_stress_test": "Test zátěže",
   "sys_tab_dashboard": "Dashboard Telemetrie",
   "sys_tab_processes": "Aktivní Procesy",
-  "sys_tab_tauri_code": "Tauri Plugin-OS Architektura",
   "sys_host_os_meta": "Operační Systém & Hostitel (via @tauri-apps/plugin-os)",
   "sys_per_core_usage": "Vytížení jednotlivých CPU Jader",
-  "sys_active_processes": "Aktivní Procesy a Využití Paměti"
+  "sys_active_processes": "Aktivní Procesy a Využití Paměti",
+
+  "currency_crypto_subtitle": "Offline připravený konvertor fiat měn a live sledování kryptoměn s automatickou detekcí sítě.",
+  "realtime_live_rates": "Real-time živé kurzy",
+  "offline_local_cache": "Offline lokální cache",
+  "refresh_rates": "Aktualizovat živé kurzy",
+  "fiat_tab": "Měnový konvertor (Fiat)",
+  "crypto_tab": "Kryptoměny & Portfolio",
+  "offline_rates_notice": "Aplikace běží offline: Využívají se uložené směnné kurzy z disku ({date}).",
+  "calc_without_network": "Plná kalkulace bez sítě",
+  "from_currency": "Z měny",
+  "amount_to_convert": "Částka k převodu",
+  "swap_currencies": "Prohodit měny",
+  "to_currency": "Do měny",
+  "exchange_rates_overview": "Přehled směnných kurzů (Základ: 1 CZK)",
+  "today_cached_rates": "Dnes, 15:30 (Lokální cache)",
+  "live_rates_online": "Živá data z internetu",
+  "crypto_calculator_title": "Kalkulátor hodnoty kryptoměny",
+  "crypto_coins_amount": "Množství mincí",
+  "convert_to_currency": "Převést na měnu",
+  "total_value": "Celková hodnota",
+  "currency_czk": "Česká koruna",
+  "currency_usd": "Americký dolar",
+  "currency_eur": "Euro"
 }

@@ -1,14 +1,16 @@
 import React, { useState, useId } from 'react';
-import { Code2, Check, Copy, AlertCircle, Sparkles } from 'lucide-react';
+import { Code2, Check, Copy, AlertCircle } from 'lucide-react';
+import { useI18n } from '../../i18n/context';
 
 export const RegexEncoderTool: React.FC = () => {
+  const { t } = useI18n();
   const [activeTab, setActiveTab] = useState<'regex' | 'base64' | 'url'>('regex');
 
   // Regex state
   const [pattern, setPattern] = useState<string>('([a-zA-Z0-9._%+-]+)@([a-zA-Z0-9.-]+\\.[a-zA-Z]{2,})');
   const [flags, setFlags] = useState<{ g: boolean; i: boolean; m: boolean }>({ g: true, i: true, m: false });
   const [testText, setTestText] = useState<string>(
-    'Kontaktujte nás na podpora@omnidesk.app nebo obchod@firma.cz pro více informací.'
+    'Kontaktujte nás na support@omnidesk.app nebo sales@company.com pro více informací.'
   );
 
   // Base64 state
@@ -17,7 +19,7 @@ export const RegexEncoderTool: React.FC = () => {
   const [isBase64Encode, setIsBase64Encode] = useState<boolean>(true);
 
   // URL Encode state
-  const [urlInput, setUrlInput] = useState<string>('https://omnidesk.app/search?query=český text & kód=100%');
+  const [urlInput, setUrlInput] = useState<string>('https://omnidesk.app/search?query=offline tools & code=100%');
   const [urlOutput, setUrlOutput] = useState<string>('');
 
   const [copied, setCopied] = useState<boolean>(false);
@@ -54,7 +56,7 @@ export const RegexEncoderTool: React.FC = () => {
       }
     }
   } catch (err: unknown) {
-    regexError = err instanceof Error ? err.message : 'Neplatný regulární výraz';
+    regexError = err instanceof Error ? err.message : t('invalid_regex_pattern', 'Neplatný regulární výraz');
   }
 
   // Base64 transform
@@ -67,7 +69,7 @@ export const RegexEncoderTool: React.FC = () => {
         setBase64Output(decodeURIComponent(escape(atob(base64Input))));
       }
     } catch {
-      setBase64Output('Chyba: Neplatný Base64 řetězec');
+      setBase64Output(t('invalid_base64_string', 'Chyba: Neplatný Base64 řetězec'));
     }
   };
 
@@ -80,7 +82,7 @@ export const RegexEncoderTool: React.FC = () => {
         setUrlOutput(decodeURIComponent(urlInput));
       }
     } catch {
-      setUrlOutput('Chyba při dekódování URL');
+      setUrlOutput(t('url_decode_error', 'Chyba při dekódování URL'));
     }
   };
 
@@ -94,9 +96,11 @@ export const RegexEncoderTool: React.FC = () => {
     <div className="space-y-6">
       <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h2 className="text-lg font-semibold text-white">RegEx Tester & Base64 / URL Kódovač</h2>
+          <h2 className="text-lg font-semibold text-white">
+            {t('tool_regex_encoder_title', 'RegEx Tester & Base64 / URL')}
+          </h2>
           <p className="text-sm text-slate-400 mt-1">
-            Testování regulárních výrazů se skupinami a obousměrné kódování dat.
+            {t('regex_encoder_desc', 'Testování regulárních výrazů se skupinami a obousměrné kódování Base64 i URL.')}
           </p>
         </div>
 
@@ -134,7 +138,7 @@ export const RegexEncoderTool: React.FC = () => {
           <div className="p-5 rounded-2xl bg-slate-900/40 border border-slate-800 space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <label htmlFor={regexPatternId} className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
-                Regulární výraz (RegEx Pattern)
+                {t('regex_pattern', 'Regulární výraz (RegEx Pattern)')}
               </label>
 
               {/* Flags checkboxes */}
@@ -146,7 +150,7 @@ export const RegexEncoderTool: React.FC = () => {
                     onChange={e => setFlags({ ...flags, g: e.target.checked })}
                     className="rounded bg-slate-950 text-indigo-600"
                   />
-                  <span className="font-mono">g (globální)</span>
+                  <span className="font-mono">g ({t('flag_global', 'globální')})</span>
                 </label>
                 <label className="flex items-center gap-1 cursor-pointer">
                   <input
@@ -196,10 +200,10 @@ export const RegexEncoderTool: React.FC = () => {
           <div className="p-5 rounded-2xl bg-slate-900/40 border border-slate-800 space-y-2">
             <div className="flex items-center justify-between">
               <label htmlFor={regexTextId} className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
-                Testovací textový řetězec
+                {t('test_string', 'Testovací textový řetězec')}
               </label>
               <span className="text-xs font-mono text-emerald-400">
-                Nalezeno {regexMatches.length} shod
+                {t('matches_found_count', 'Nalezeno {count} shod', { count: regexMatches.length })}
               </span>
             </div>
             <textarea
@@ -215,7 +219,7 @@ export const RegexEncoderTool: React.FC = () => {
           {regexMatches.length > 0 && (
             <div className="p-5 rounded-2xl bg-slate-900/40 border border-slate-800 space-y-3">
               <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
-                Nalezené shody a zachycené skupiny (Capture Groups)
+                {t('matches_and_groups', 'Nalezené shody a zachycené skupiny (Capture Groups)')}
               </span>
 
               <div className="space-y-2 max-h-60 overflow-y-auto">
@@ -223,7 +227,7 @@ export const RegexEncoderTool: React.FC = () => {
                   <div key={idx} className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
                     <div className="flex items-center justify-between text-xs">
                       <span className="font-semibold text-indigo-400 font-mono">
-                        Shoda #{idx + 1}: "{m.match}"
+                        {t('match', 'Shoda')} #{idx + 1}: "{m.match}"
                       </span>
                       <span className="text-slate-500 font-mono text-[10px]">Index: {m.index}</span>
                     </div>
@@ -234,7 +238,7 @@ export const RegexEncoderTool: React.FC = () => {
                             key={gIdx}
                             className="text-[11px] font-mono px-2 py-0.5 rounded bg-slate-900 text-slate-300 border border-slate-800"
                           >
-                            Skupina {gIdx + 1}: {g}
+                            {t('group', 'Skupina')} {gIdx + 1}: {g}
                           </span>
                         ))}
                       </div>
@@ -255,19 +259,21 @@ export const RegexEncoderTool: React.FC = () => {
               onClick={() => handleBase64(true)}
               className="px-3.5 py-1.5 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg transition-colors"
             >
-              Zakódovat do Base64
+              {t('encode_to_base64', 'Zakódovat do Base64')}
             </button>
             <button
               onClick={() => handleBase64(false)}
               className="px-3.5 py-1.5 text-xs font-medium text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
             >
-              Dekódovat z Base64
+              {t('decode_from_base64', 'Dekódovat z Base64')}
             </button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label htmlFor={base64InputId} className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">Vstup</label>
+              <label htmlFor={base64InputId} className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
+                {t('input', 'Vstup')}
+              </label>
               <textarea
                 id={base64InputId}
                 value={base64Input}
@@ -278,13 +284,15 @@ export const RegexEncoderTool: React.FC = () => {
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">Výsledek</span>
+                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
+                  {t('result', 'Výsledek')}
+                </span>
                 <button
                   onClick={() => copyResult(base64Output)}
                   className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1"
                 >
                   {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                  {copied ? 'Zkopírováno' : 'Kopírovat'}
+                  {copied ? t('copied', 'Zkopírováno') : t('copy', 'Kopírovat')}
                 </button>
               </div>
               <textarea
@@ -318,7 +326,9 @@ export const RegexEncoderTool: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label htmlFor={urlInputId} className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">Vstupní URL</label>
+              <label htmlFor={urlInputId} className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
+                {t('input_url', 'Vstupní URL')}
+              </label>
               <textarea
                 id={urlInputId}
                 value={urlInput}
@@ -329,13 +339,15 @@ export const RegexEncoderTool: React.FC = () => {
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">Výsledek</span>
+                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
+                  {t('result', 'Výsledek')}
+                </span>
                 <button
                   onClick={() => copyResult(urlOutput)}
                   className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1"
                 >
                   {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                  {copied ? 'Zkopírováno' : 'Kopírovat'}
+                  {copied ? t('copied', 'Zkopírováno') : t('copy', 'Kopírovat')}
                 </button>
               </div>
               <textarea

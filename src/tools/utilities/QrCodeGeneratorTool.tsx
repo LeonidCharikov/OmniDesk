@@ -1,8 +1,10 @@
-import React, { useState, useEffect, useRef, useId } from 'react';
+import React, { useState, useEffect, useId } from 'react';
 import QRCode from 'qrcode';
-import { QrCode, Download, Wifi, Link, AlignLeft, Sparkles, Copy, Check } from 'lucide-react';
+import { QrCode, Download, Wifi, Link, AlignLeft, Copy, Check } from 'lucide-react';
+import { useI18n } from '../../i18n/context';
 
 export const QrCodeGeneratorTool: React.FC = () => {
+  const { t } = useI18n();
   const [qrType, setQrType] = useState<'url' | 'wifi' | 'text'>('url');
   const [url, setUrl] = useState<string>('https://github.com/tauri-apps/tauri');
   const [text, setText] = useState<string>('OmniDesk - 100% Offline Multi-Tool Platform');
@@ -25,7 +27,6 @@ export const QrCodeGeneratorTool: React.FC = () => {
   const getPayload = () => {
     if (qrType === 'url') return url || 'https://tauri.app';
     if (qrType === 'text') return text || 'OmniDesk';
-    // WiFi standard format: WIFI:T:WPA;S:MyNetwork;P:MyPassword;;
     return `WIFI:T:${encryption};S:${ssid};P:${wifiPassword};;`;
   };
 
@@ -62,7 +63,6 @@ export const QrCodeGeneratorTool: React.FC = () => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Fallback: copy raw payload text
       navigator.clipboard.writeText(getPayload());
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
@@ -73,9 +73,11 @@ export const QrCodeGeneratorTool: React.FC = () => {
     <div className="space-y-6">
       <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h2 className="text-lg font-semibold text-white">Generátor QR Kódů (100% Offline)</h2>
+          <h2 className="text-lg font-semibold text-white">
+            {t('tool_qr_code_title', 'Generátor QR Kódů')}
+          </h2>
           <p className="text-sm text-slate-400 mt-1">
-            Blesková tvorba QR kódů pro webové odkazy, Wi-Fi sítě i textové zprávy přímo v paměti.
+            {t('qr_code_desc', 'Okamžitá offline tvorba QR kódů pro webové adresy, Wi-Fi sítě a texty s exportem do PNG.')}
           </p>
         </div>
 
@@ -87,7 +89,7 @@ export const QrCodeGeneratorTool: React.FC = () => {
             }`}
           >
             <Link className="w-3.5 h-3.5" />
-            Webový odkaz
+            {t('qr_web_link', 'Webový odkaz')}
           </button>
           <button
             onClick={() => setQrType('wifi')}
@@ -96,7 +98,7 @@ export const QrCodeGeneratorTool: React.FC = () => {
             }`}
           >
             <Wifi className="w-3.5 h-3.5" />
-            Wi-Fi síť
+            {t('qr_wifi_network', 'Wi-Fi síť')}
           </button>
           <button
             onClick={() => setQrType('text')}
@@ -105,7 +107,7 @@ export const QrCodeGeneratorTool: React.FC = () => {
             }`}
           >
             <AlignLeft className="w-3.5 h-3.5" />
-            Volný text
+            {t('qr_plain_text', 'Volný text')}
           </button>
         </div>
       </div>
@@ -116,7 +118,7 @@ export const QrCodeGeneratorTool: React.FC = () => {
           {qrType === 'url' && (
             <div className="space-y-2">
               <label htmlFor={urlInputId} className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
-                Cílová URL adresa
+                {t('target_url_address', 'Cílová URL adresa')}
               </label>
               <input
                 id={urlInputId}
@@ -132,7 +134,7 @@ export const QrCodeGeneratorTool: React.FC = () => {
           {qrType === 'wifi' && (
             <div className="space-y-4">
               <div className="space-y-1.5">
-                <label htmlFor={ssidInputId} className="text-xs text-slate-400">Název sítě (SSID):</label>
+                <label htmlFor={ssidInputId} className="text-xs text-slate-400">{t('wifi_ssid', 'Název sítě (SSID):')}</label>
                 <input
                   id={ssidInputId}
                   type="text"
@@ -143,7 +145,7 @@ export const QrCodeGeneratorTool: React.FC = () => {
               </div>
 
               <div className="space-y-1.5">
-                <label htmlFor={wifiPasswordId} className="text-xs text-slate-400">Heslo k Wi-Fi:</label>
+                <label htmlFor={wifiPasswordId} className="text-xs text-slate-400">{t('wifi_password', 'Heslo k Wi-Fi:')}</label>
                 <input
                   id={wifiPasswordId}
                   type="text"
@@ -154,16 +156,16 @@ export const QrCodeGeneratorTool: React.FC = () => {
               </div>
 
               <div className="space-y-1.5">
-                <label htmlFor={encryptionSelectId} className="text-xs text-slate-400">Zabezpečení:</label>
+                <label htmlFor={encryptionSelectId} className="text-xs text-slate-400">{t('wifi_security', 'Zabezpečení:')}</label>
                 <select
                   id={encryptionSelectId}
                   value={encryption}
                   onChange={e => setEncryption(e.target.value as 'WPA' | 'WEP' | 'nopass')}
                   className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white"
                 >
-                  <option value="WPA">WPA / WPA2 / WPA3 (Doporučeno)</option>
+                  <option value="WPA">WPA / WPA2 / WPA3 ({t('recommended', 'Doporučeno')})</option>
                   <option value="WEP">WEP</option>
-                  <option value="nopass">Bez hesla (Otevřená síť)</option>
+                  <option value="nopass">{t('wifi_no_password', 'Bez hesla (Otevřená síť)')}</option>
                 </select>
               </div>
             </div>
@@ -172,7 +174,7 @@ export const QrCodeGeneratorTool: React.FC = () => {
           {qrType === 'text' && (
             <div className="space-y-2">
               <label htmlFor={textInputId} className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
-                Textový obsah
+                {t('text_content', 'Textový obsah')}
               </label>
               <textarea
                 id={textInputId}
@@ -185,7 +187,7 @@ export const QrCodeGeneratorTool: React.FC = () => {
           )}
 
           <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-400">
-            QR kód se generuje v reálném čase bez volání externích serverů nebo API.
+            {t('qr_offline_note', 'QR kód se generuje v reálném čase bez volání externích serverů nebo API.')}
           </div>
         </div>
 
@@ -193,9 +195,9 @@ export const QrCodeGeneratorTool: React.FC = () => {
         <div className="p-6 rounded-2xl bg-slate-900/40 border border-slate-800 flex flex-col items-center justify-center space-y-4">
           <div className="p-3 bg-white rounded-2xl shadow-xl flex items-center justify-center">
             {dataUrl ? (
-              <img src={dataUrl} alt="Vygenerovaný QR kód" className="w-56 h-56 object-contain" />
+              <img src={dataUrl} alt={t('qr_code_generated', 'Vygenerovaný QR kód')} className="w-56 h-56 object-contain" />
             ) : (
-              <div className="w-56 h-56 flex items-center justify-center text-slate-400">Generuji...</div>
+              <div className="w-56 h-56 flex items-center justify-center text-slate-400">{t('generating', 'Generuji...')}</div>
             )}
           </div>
 
@@ -205,14 +207,14 @@ export const QrCodeGeneratorTool: React.FC = () => {
               className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-medium text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-xl transition-colors"
             >
               {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-              {copied ? 'Zkopírováno' : 'Kopírovat'}
+              {copied ? t('copied', 'Zkopírováno') : t('copy', 'Kopírovat')}
             </button>
             <button
               onClick={downloadQrPng}
               className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl transition-colors shadow-sm"
             >
               <Download className="w-3.5 h-3.5" />
-              Stáhnout PNG
+              {t('download_png', 'Stáhnout PNG')}
             </button>
           </div>
         </div>

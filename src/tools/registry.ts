@@ -17,7 +17,8 @@ import { JsonFormatterTool } from './utilities/JsonFormatterTool';
 import { PasswordGeneratorTool } from './utilities/PasswordGeneratorTool';
 import { QrCodeGeneratorTool } from './utilities/QrCodeGeneratorTool';
 import { RegexEncoderTool } from './utilities/RegexEncoderTool';
-import { TimePomodoroTool } from './utilities/TimePomodoroTool';
+import { PomodoroTimerTool } from './utilities/PomodoroTimerTool';
+import { WorldTimezonesTool } from './utilities/WorldTimezonesTool';
 import { OnlineTranslatorTool } from './utilities/OnlineTranslatorTool';
 import { ColorPaletteWcagTool } from './utilities/ColorPaletteWcagTool';
 import { SystemMonitorTool } from './utilities/SystemMonitorTool';
@@ -234,14 +235,24 @@ export const TOOLS_REGISTRY: ToolDefinition[] = [
     tags: ['regex', 'regularni', 'base64', 'url', 'dekodovani', 'vyvoj'],
   },
   {
-    id: 'time-pomodoro',
-    title: 'Světový Čas & Pomodoro',
-    shortDesc: 'Světové hodiny pro globální města a produktivní časovač soustředění Pomodoro s audio notifikací.',
+    id: 'pomodoro-timer',
+    title: 'Pomodoro, Stopky & Časovač',
+    shortDesc: 'Produktivní technika Pomodoro se zvukovými signály, přesný odpočítávací časovač a stopky s mezičasy kol.',
     category: 'utilities',
-    icon: 'Clock',
+    icon: 'Flame',
     requiresOnline: false,
-    component: TimePomodoroTool,
-    tags: ['cas', 'hodiny', 'pomodoro', 'produktivita', 'pasma', 'timer'],
+    component: PomodoroTimerTool,
+    tags: ['cas', 'pomodoro', 'stopky', 'timer', 'produktivita', 'odpocet', 'kola'],
+  },
+  {
+    id: 'world-timezones',
+    title: 'Světový Čas & Časová Pásma',
+    shortDesc: 'Světové hodiny pro globální města, posuvník pro plánování mezinárodních schůzek a indikátor dne/noci.',
+    category: 'utilities',
+    icon: 'Globe',
+    requiresOnline: false,
+    component: WorldTimezonesTool,
+    tags: ['cas', 'hodiny', 'pasma', 'svet', 'mesta', 'schuzky', 'timezone'],
   },
   {
     id: 'json-formatter',

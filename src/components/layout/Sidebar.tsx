@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { ToolCategory } from '../../types/tool';
 import { useI18n } from '../../i18n/context';
+import { SidebarWidgets } from './SidebarWidgets';
 
 interface SidebarProps {
   activeCategory: ToolCategory;
@@ -21,6 +22,8 @@ interface SidebarProps {
   onOpenConfig: () => void;
   selectedToolId: string | null;
   onBackToOverview: () => void;
+  enabledWidgets?: string[];
+  onToggleWidget?: (widgetId: string) => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -30,6 +33,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onOpenConfig,
   selectedToolId,
   onBackToOverview,
+  enabledWidgets = ['clock', 'timer', 'crypto'],
+  onToggleWidget = () => {},
 }) => {
   const { t } = useI18n();
 
@@ -41,12 +46,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'science', label: t('cat_science', 'Věda & Technika'), icon: <FlaskConical className="w-4 h-4" /> },
     { id: 'finance', label: t('cat_finance', 'Finance & Měny'), icon: <Coins className="w-4 h-4" /> },
     { id: 'utilities', label: t('cat_utilities', 'Utility'), icon: <Wrench className="w-4 h-4" /> },
-    { id: 'architecture', label: t('cat_architecture', 'Tauri & Kód'), icon: <Cpu className="w-4 h-4" /> },
+    { id: 'architecture', label: t('cat_architecture', 'Tauri Blueprint'), icon: <Cpu className="w-4 h-4" /> },
   ];
 
   return (
-    <aside className="w-64 h-screen bg-slate-950 border-r border-slate-800/80 flex flex-col justify-between shrink-0 select-none">
-      <div className="p-4 space-y-6">
+    <aside className="w-64 h-screen bg-slate-950 border-r border-slate-800/80 flex flex-col justify-between shrink-0 select-none overflow-hidden">
+      <div className="p-4 space-y-5 overflow-y-auto flex-1">
         {/* Brand Lockup */}
         <div 
           onClick={onBackToOverview}
@@ -103,15 +108,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </div>
 
+      {/* Mini-Widgets Area (Live Clock, Timer, Crypto) */}
+      <SidebarWidgets
+        enabledWidgets={enabledWidgets}
+        onToggleWidget={onToggleWidget}
+        onOpenWidgetSettings={onOpenConfig}
+      />
+
       {/* Footer / System Settings */}
-      <div className="p-4 border-t border-slate-900 space-y-3 bg-slate-950/60">
-        {/* Local JSON config button */}
+      <div className="p-3 border-t border-slate-900 bg-slate-950/80 shrink-0">
         <button
           onClick={onOpenConfig}
-          className="w-full flex items-center justify-center gap-2 py-2 px-3 text-xs font-medium text-slate-400 hover:text-slate-200 bg-slate-900/40 hover:bg-slate-900 rounded-lg border border-slate-800 transition-colors"
+          className="w-full flex items-center justify-center gap-2 py-2 px-3 text-xs font-medium text-slate-300 hover:text-white bg-slate-900/60 hover:bg-slate-800 rounded-lg border border-slate-800 transition-colors"
         >
-          <Settings className="w-3.5 h-3.5" />
-          <span>{t('local_config', 'Lokální JSON konfigurace')}</span>
+          <Settings className="w-3.5 h-3.5 text-indigo-400" />
+          <span>{t('local_config_backup', 'Záloha & Konfigurátor')}</span>
         </button>
       </div>
     </aside>

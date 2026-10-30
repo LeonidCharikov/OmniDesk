@@ -64,7 +64,25 @@ export default function App() {
 
   const activeTool = selectedToolId ? TOOLS_REGISTRY.find(t => t.id === selectedToolId) || null : null;
 
-  const { t } = useI18n();
+  const { t, setLanguage } = useI18n();
+
+  const handleUpdateConfig = (newConfig: typeof config) => {
+    updateConfig(newConfig);
+    if (newConfig.language && ['cs', 'en', 'de', 'es', 'ru'].includes(newConfig.language)) {
+      setLanguage(newConfig.language as any);
+    }
+  };
+
+  const handleToggleWidget = (widgetId: string) => {
+    const current = config.enabledWidgets || ['clock', 'timer', 'crypto'];
+    const updated = current.includes(widgetId)
+      ? current.filter(id => id !== widgetId)
+      : [...current, widgetId];
+    updateConfig({
+      ...config,
+      enabledWidgets: updated,
+    });
+  };
 
   const getCategoryDisplayName = (cat: ToolCategory) => {
     switch (cat) {
@@ -93,6 +111,8 @@ export default function App() {
         onOpenConfig={() => setIsConfigOpen(true)}
         selectedToolId={selectedToolId}
         onBackToOverview={() => setSelectedToolId(null)}
+        enabledWidgets={config.enabledWidgets}
+        onToggleWidget={handleToggleWidget}
       />
 
       {/* Main Workspace Area */}
@@ -156,6 +176,7 @@ export default function App() {
         allTools={TOOLS_REGISTRY}
         onToggleFavorite={handleToggleFavorite}
         onResetDefaults={handleResetDefaults}
+        onUpdateConfig={handleUpdateConfig}
       />
     </div>
   );

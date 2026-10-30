@@ -572,14 +572,14 @@ export const MatrixCalculatorTool: React.FC = () => {
               onClick={() => handleTranspose('A')}
               className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono transition-colors"
             >
-              Transpozice Aᵀ
+              {t('matrix_transpose_a', 'Transpozice Aᵀ')}
             </button>
             <button
               onClick={() => handleInverse('A')}
               disabled={rowsA !== colsA}
               className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono disabled:opacity-40 transition-colors"
             >
-              Inverze A⁻¹
+              {t('matrix_inverse_a', 'Inverze A⁻¹')}
             </button>
             <button
               onClick={() => handleDeterminant('A')}
@@ -715,14 +715,14 @@ export const MatrixCalculatorTool: React.FC = () => {
               onClick={() => handleTranspose('B')}
               className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono transition-colors"
             >
-              Transpozice Bᵀ
+              {t('matrix_transpose_b', 'Transpozice Bᵀ')}
             </button>
             <button
               onClick={() => handleInverse('B')}
               disabled={rowsB !== colsB}
               className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono disabled:opacity-40 transition-colors"
             >
-              Inverze B⁻¹
+              {t('matrix_inverse_b', 'Inverze B⁻¹')}
             </button>
             <button
               onClick={() => handleDeterminant('B')}
@@ -752,11 +752,11 @@ export const MatrixCalculatorTool: React.FC = () => {
       <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <span className="text-xs font-semibold text-slate-300 uppercase tracking-wider block">
-            Maticové Binární Operace (A a B)
+            {t('matrix_binary_ops', 'Maticové Binární Operace (A a B)')}
           </span>
 
           <div className="flex items-center gap-2 text-xs">
-            <span className="text-slate-400">Skalár k:</span>
+            <span className="text-slate-400">{t('scalar_k', 'Skalár k:')}</span>
             <input
               type="number"
               step="any"
@@ -778,7 +778,7 @@ export const MatrixCalculatorTool: React.FC = () => {
                 : 'bg-slate-800/60 text-slate-500 cursor-not-allowed'
             }`}
           >
-            <span>Násobení A × B</span>
+            <span>{t('matrix_mult_ab', 'Násobení A × B')}</span>
             <span className="text-[10px] opacity-80 font-mono">
               ({rowsA}×{colsA} × {rowsB}×{colsB} {canMultiplyAB ? `→ ${rowsA}×${colsB}` : '≠'})
             </span>
@@ -794,7 +794,7 @@ export const MatrixCalculatorTool: React.FC = () => {
                 : 'bg-slate-800/60 text-slate-500 cursor-not-allowed'
             }`}
           >
-            <span>Násobení B × A</span>
+            <span>{t('matrix_mult_ba', 'Násobení B × A')}</span>
             <span className="text-[10px] opacity-80 font-mono">
               ({rowsB}×{colsB} × {rowsA}×{colsA} {canMultiplyBA ? `→ ${rowsB}×${colsA}` : '≠'})
             </span>
@@ -810,7 +810,7 @@ export const MatrixCalculatorTool: React.FC = () => {
                 : 'bg-slate-800/40 text-slate-500 cursor-not-allowed'
             }`}
           >
-            Součet (A + B)
+            {t('matrix_sum_ab', 'Součet (A + B)')}
           </button>
 
           {/* Subtraction */}
@@ -823,7 +823,7 @@ export const MatrixCalculatorTool: React.FC = () => {
                 : 'bg-slate-800/40 text-slate-500 cursor-not-allowed'
             }`}
           >
-            Rozdíl (A - B)
+            {t('matrix_diff_ab', 'Rozdíl (A - B)')}
           </button>
         </div>
 
@@ -831,11 +831,15 @@ export const MatrixCalculatorTool: React.FC = () => {
         <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400 pt-1 border-t border-slate-800/60">
           <div className="flex items-center gap-1.5">
             <span className={`w-2 h-2 rounded-full ${canMultiplyAB ? 'bg-emerald-400' : 'bg-amber-400'}`} />
-            <span>Násobení A × B: {canMultiplyAB ? `Kompatibilní (Sloupce A ${colsA} = Řádky B ${rowsB})` : `Nelze (Sloupce A ${colsA} ≠ Řádky B ${rowsB})`}</span>
+            <span>
+              {t('matrix_mult_ab', 'Násobení A × B')}: {canMultiplyAB ? `${t('matrix_compatible', 'Kompatibilní')} (${t('matrix_cols', 'Sloupce')} A ${colsA} = ${t('matrix_rows', 'Řádky')} B ${rowsB})` : `${t('matrix_incompatible', 'Nelze')} (${t('matrix_cols', 'Sloupce')} A ${colsA} ≠ ${t('matrix_rows', 'Řádky')} B ${rowsB})`}
+            </span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className={`w-2 h-2 rounded-full ${canAddSub ? 'bg-emerald-400' : 'bg-slate-600'}`} />
-            <span>Sčítání A ± B: {canAddSub ? `Stejný rozměr (${rowsA}×${colsA})` : `Různé rozměry`}</span>
+            <span>
+              {t('matrix_add_sub', 'Sčítání A ± B')}: {canAddSub ? `${t('matrix_same_dimension', 'Stejný rozměr')} (${rowsA}×${colsA})` : t('matrix_diff_dimensions', 'Různé rozměry')}
+            </span>
           </div>
         </div>
       </div>
@@ -862,13 +866,13 @@ export const MatrixCalculatorTool: React.FC = () => {
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 text-xs font-medium border border-indigo-500/30 transition-colors"
             >
               {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-              <span>{copied ? 'Zkopírováno' : 'Kopírovat výsledek'}</span>
+              <span>{copied ? t('copied', 'Zkopírováno') : t('copy_result', 'Kopírovat výsledek')}</span>
             </button>
           </div>
 
           {scalarResult !== null ? (
             <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 text-center">
-              <span className="text-xs text-slate-400 block mb-1">Skalární hodnota:</span>
+              <span className="text-xs text-slate-400 block mb-1">{t('scalar_value', 'Skalární hodnota:')}</span>
               <span className="text-3xl font-mono font-bold text-indigo-400 tabular-nums">
                 {Number.isInteger(scalarResult) ? scalarResult : scalarResult.toFixed(4)}
               </span>

@@ -15,11 +15,20 @@ import {
 } from 'lucide-react';
 import mammoth from 'mammoth';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
-import { writeHostBinaryFile, writeHostTextFile, openFileDialog } from '../../services/fileSystemService';
+import { useI18n } from '../../i18n/context';
 
 type ConversionCategory = 'docs' | 'data' | 'images';
 
+// Helper to make text safe for standard PDF Helvetica font (WinAnsi encoding)
+function makeWinAnsiSafe(text: string): string {
+  return text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // remove diacritics
+    .replace(/[^\x20-\x7E\xA0-\xFF]/g, '?'); // keep printable ASCII and Latin-1 supplement
+}
+
 export const MultiFormatConverterTool: React.FC = () => {
+  const { t } = useI18n();
   const [activeCategory, setActiveCategory] = useState<ConversionCategory>('docs');
   const [isProcessing, setIsProcessing] = useState(false);
   const [sourceFileName, setSourceFileName] = useState<string>('');
@@ -57,7 +66,7 @@ export const MultiFormatConverterTool: React.FC = () => {
       }
 
       if (!textContent.trim()) {
-        throw new Error('Soubor je prázdný nebo z něj nebylo možné vytáhnout text.');
+        throw new Error(t('file_empty_error', 'Soubor je prázdný nebo z něj nebylo možné vytáhnout text.'));
       }
 
       // Generate PDF
@@ -75,12 +84,13 @@ export const MultiFormatConverterTool: React.FC = () => {
       const paragraphs = textContent.split('\n');
       const lines: string[] = [];
 
-      for (const p of paragraphs) {
-        if (!p.trim()) {
+      for (const rawP of paragraphs) {
+        const safeP = makeWinAnsiSafe(rawP);
+        if (!safeP.trim()) {
           lines.push('');
           continue;
         }
-        const words = p.split(/\s+/);
+        const words = safeP.split(/\s+/);
         let currentLine = '';
         for (const w of words) {
           const test = currentLine ? `${currentLine} ${w}` : w;
@@ -99,7 +109,7 @@ export const MultiFormatConverterTool: React.FC = () => {
 
       for (let p = 0; p < totalPages; p++) {
         const page = pdfDoc.addPage([pageWidth, pageHeight]);
-        page.drawText(`${file.name} (OmniDesk Convert)`, {
+        page.drawText(`${makeWinAnsiSafe(file.name)} (OmniDesk Convert)`, {
           x: margin,
           y: pageHeight - margin + 12,
           size: 8,
@@ -122,7 +132,7 @@ export const MultiFormatConverterTool: React.FC = () => {
           y -= lineHeight;
         }
 
-        page.drawText(`Stránka ${p + 1} z ${totalPages}`, {
+        page.drawText(`${t('page', 'Stránka')} ${p + 1} / ${totalPages}`, {
           x: pageWidth - margin - 60,
           y: margin - 15,
           size: 8,
@@ -144,7 +154,7 @@ export const MultiFormatConverterTool: React.FC = () => {
         durationMs: Math.round(performance.now() - start),
       });
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Chyba při konverzi dokumentu');
+      setError(err instanceof Error ? err.message : t('doc_conv_error', 'Chyba při konverzi dokumentu'));
     } finally {
       setIsProcessing(false);
     }
@@ -165,7 +175,7 @@ export const MultiFormatConverterTool: React.FC = () => {
         // CSV to JSON
         const delimiter = file.name.endsWith('.tsv') ? '\t' : ',';
         const lines = text.trim().split('\n').filter(Boolean);
-        if (lines.length < 1) throw new Error('CSV soubor je prázdný');
+        if (lines.length < 1) throw new Error(t('csv_empty_error', 'CSV soubor je prázdný'));
         const headers = lines[0].split(delimiter).map(h => h.trim().replace(/^"|"$/g, ''));
         const rows = lines.slice(1).map(line => {
           const cols = line.split(delimiter).map(c => c.trim().replace(/^"|"$/g, ''));
@@ -186,7 +196,7 @@ export const MultiFormatConverterTool: React.FC = () => {
         // JSON to CSV
         const parsed = JSON.parse(text);
         const arrayData = Array.isArray(parsed) ? parsed : [parsed];
-        if (arrayData.length === 0) throw new Error('JSON pole je prázdné');
+        if (arrayData.length === 0) throw new Error(t('json_empty_error', 'JSON pole je prázdné'));
         const keys = Array.from(new Set(arrayData.flatMap(item => Object.keys(item))));
         const csvRows: string[] = [];
         csvRows.push(keys.map(k => `"${k}"`).join(','));
@@ -201,7 +211,7 @@ export const MultiFormatConverterTool: React.FC = () => {
         outName = file.name.replace(/\.[^/.]+$/, '') + '.csv';
         mime = 'text/csv';
       } else {
-        throw new Error('Pro převod dat vyberte soubor .csv, .tsv nebo .json');
+        throw new Error(t('data_format_error', 'Pro převod dat vyberte soubor .csv, .tsv nebo .json'));
       }
 
       const blob = new Blob([outputText], { type: mime });
@@ -215,7 +225,7 @@ export const MultiFormatConverterTool: React.FC = () => {
         durationMs: Math.round(performance.now() - start),
       });
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Chyba při konverzi dat');
+      setError(err instanceof Error ? err.message : t('data_conv_error', 'Chyba při konverzi dat'));
     } finally {
       setIsProcessing(false);
     }
@@ -231,7 +241,7 @@ export const MultiFormatConverterTool: React.FC = () => {
       const objectUrl = URL.createObjectURL(file);
       await new Promise((resolve, reject) => {
         img.onload = resolve;
-        img.onerror = () => reject(new Error('Nelze načíst obrázek'));
+        img.onerror = () => reject(new Error(t('image_load_error', 'Nelze načíst obrázek')));
         img.src = objectUrl;
       });
 
@@ -241,7 +251,7 @@ export const MultiFormatConverterTool: React.FC = () => {
       canvas.height = Math.max(1, Math.round(img.height * scaleFactor));
 
       const ctx = canvas.getContext('2d');
-      if (!ctx) throw new Error('Nelze vytvořit 2D canvas');
+      if (!ctx) throw new Error(t('canvas_context_error', 'Nelze vytvořit 2D canvas'));
 
       // White background for JPEG conversion if transparent
       if (targetImageFormat === 'image/jpeg') {
@@ -256,7 +266,7 @@ export const MultiFormatConverterTool: React.FC = () => {
         canvas.toBlob(
           b => {
             if (b) resolve(b);
-            else reject(new Error('Chyba při exportu canvasu'));
+            else reject(new Error(t('canvas_export_error', 'Chyba při exportu canvasu')));
           },
           targetImageFormat,
           quality
@@ -277,7 +287,7 @@ export const MultiFormatConverterTool: React.FC = () => {
         durationMs: Math.round(performance.now() - start),
       });
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Chyba při konverzi obrázku');
+      setError(err instanceof Error ? err.message : t('image_conv_error', 'Chyba při konverzi obrázku'));
     } finally {
       setIsProcessing(false);
     }
@@ -296,25 +306,25 @@ export const MultiFormatConverterTool: React.FC = () => {
 
   const loadPresetDemo = () => {
     if (activeCategory === 'docs') {
-      const mdContent = `# OmniDesk Technická Dokumentace
+      const mdContent = `# OmniDesk Technical Documentation
 
-## 1. Systémová Architektura
-Aplikace je navržena pro vysoký výkon s minimální režií:
-- Nativní okno: Tauri v2 (Rust backend)
-- UI vrstva: React 19, TypeScript, Tailwind CSS
-- Zpracování souborů: 100% lokální v paměti procesoru
+## 1. System Architecture
+Desktop multi-tool built with high performance and zero telemetry:
+- Native shell: Tauri v2 (Rust backend)
+- UI: React 19, TypeScript, Tailwind CSS
+- Data processing: 100% local in device memory
 
-## 2. Bezpečnostní Standardy
-Data nikdy neopouštějí zařízení. Všechny binární transformace probíhají bez externích API volání.`;
-      const file = new File([mdContent], 'Technicka_Dokumentace.md', { type: 'text/markdown' });
+## 2. Security Standards
+Zero external API calls for files. All binary transformations run locally.`;
+      const file = new File([mdContent], 'Technical_Document.md', { type: 'text/markdown' });
       setSourceFileName(file.name);
       handleDocConversion(file);
     } else if (activeCategory === 'data') {
-      const csv = `ID,Nazev,Kategorie,Cena,Skladem
+      const csv = `ID,Product,Category,Price,InStock
 1,Monitor 4K,Hardware,8990,true
-2,Mechanicka klavesnice,Periferie,2490,true
-3,Ergonomicka zidle,Nabytek,6800,false`;
-      const file = new File([csv], 'produkty_sklad.csv', { type: 'text/csv' });
+2,Mechanical Keyboard,Peripherals,2490,true
+3,Ergonomic Chair,Furniture,6800,false`;
+      const file = new File([csv], 'inventory_data.csv', { type: 'text/csv' });
       setSourceFileName(file.name);
       handleDataConversion(file);
     } else {
@@ -330,7 +340,7 @@ Data nikdy neopouštějí zařízení. Všechny binární transformace probíhaj
       ctx.fillText('OmniDesk Image Test', 50, 160);
       canvas.toBlob(blob => {
         if (blob) {
-          const file = new File([blob], 'ukazka_banner.png', { type: 'image/png' });
+          const file = new File([blob], 'sample_banner.png', { type: 'image/png' });
           setSourceFileName(file.name);
           handleImageConversion(file);
         }
@@ -342,9 +352,11 @@ Data nikdy neopouštějí zařízení. Všechny binární transformace probíhaj
     <div className="space-y-6">
       {/* Header */}
       <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800">
-        <h2 className="text-lg font-semibold text-white">Univerzální Multi-Formátový Konvertor</h2>
+        <h2 className="text-lg font-semibold text-white">
+          {t('tool_multi_converter_title', 'Univerzální Multi-Formátový Konvertor')}
+        </h2>
         <p className="text-sm text-slate-400 mt-1">
-          Převod mezi dokumenty (DOCX, MD, TXT &rarr; PDF), strukturovanými daty (CSV &harr; JSON) a optimalizace obrázků (PNG, JPG, WebP).
+          {t('multi_converter_desc', 'Převod mezi dokumenty (DOCX, MD, TXT → PDF), strukturovanými daty (CSV ↔ JSON) a optimalizace obrázků (PNG, JPG, WebP).')}
         </p>
       </div>
 
@@ -357,7 +369,7 @@ Data nikdy neopouštějí zařízení. Všechny binární transformace probíhaj
           }`}
         >
           <FileText className="w-3.5 h-3.5" />
-          Dokumenty (DOCX, MD, TXT &rarr; PDF)
+          {t('cat_docs_pdf', 'Dokumenty (DOCX, MD, TXT → PDF)')}
         </button>
         <button
           onClick={() => { setActiveCategory('data'); setResultBlobUrl(null); }}
@@ -366,7 +378,7 @@ Data nikdy neopouštějí zařízení. Všechny binární transformace probíhaj
           }`}
         >
           <Table className="w-3.5 h-3.5" />
-          Data (CSV &harr; JSON)
+          {t('cat_data_csv_json', 'Data (CSV ↔ JSON)')}
         </button>
         <button
           onClick={() => { setActiveCategory('images'); setResultBlobUrl(null); }}
@@ -375,7 +387,7 @@ Data nikdy neopouštějí zařízení. Všechny binární transformace probíhaj
           }`}
         >
           <ImageIcon className="w-3.5 h-3.5" />
-          Obrázky & Grafika (PNG, JPG &rarr; WebP)
+          {t('cat_images_webp', 'Obrázky & Grafika (PNG, JPG → WebP)')}
         </button>
       </div>
 
@@ -383,22 +395,26 @@ Data nikdy neopouštějí zařízení. Všechny binární transformace probíhaj
       {activeCategory === 'images' && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 rounded-xl bg-slate-900/40 border border-slate-800 text-xs">
           <div className="space-y-1.5">
-            <label htmlFor={targetFormatSelectId} className="font-semibold text-slate-400 uppercase tracking-wider block">Cílový formát</label>
+            <label htmlFor={targetFormatSelectId} className="font-semibold text-slate-400 uppercase tracking-wider block">
+              {t('target_format', 'Cílový formát')}
+            </label>
             <select
               id={targetFormatSelectId}
               value={targetImageFormat}
               onChange={e => setTargetImageFormat(e.target.value as 'image/webp' | 'image/png' | 'image/jpeg')}
               className="w-full px-2.5 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-slate-200"
             >
-              <option value="image/webp">WebP (Nejvyšší úspora)</option>
-              <option value="image/png">PNG (Bezztrátový)</option>
-              <option value="image/jpeg">JPEG (Fotografie)</option>
+              <option value="image/webp">WebP ({t('highest_saving', 'Nejvyšší úspora')})</option>
+              <option value="image/png">PNG ({t('lossless', 'Bezztrátový')})</option>
+              <option value="image/jpeg">JPEG ({t('photo_jpeg', 'Fotografie')})</option>
             </select>
           </div>
 
           <div className="space-y-1.5">
             <div className="flex justify-between">
-              <label htmlFor={qualityRangeId} className="font-semibold text-slate-400 uppercase tracking-wider">Kvalita komprese</label>
+              <label htmlFor={qualityRangeId} className="font-semibold text-slate-400 uppercase tracking-wider">
+                {t('compression_quality', 'Kvalita komprese')}
+              </label>
               <span className="font-mono text-indigo-400 font-semibold">{imageQuality} %</span>
             </div>
             <input
@@ -413,17 +429,19 @@ Data nikdy neopouštějí zařízení. Všechny binární transformace probíhaj
           </div>
 
           <div className="space-y-1.5">
-            <label htmlFor={scaleSelectId} className="font-semibold text-slate-400 uppercase tracking-wider block">Změna měřítka</label>
+            <label htmlFor={scaleSelectId} className="font-semibold text-slate-400 uppercase tracking-wider block">
+              {t('scale_resize', 'Změna měřítka')}
+            </label>
             <select
               id={scaleSelectId}
               value={imageScale}
               onChange={e => setImageScale(parseInt(e.target.value))}
               className="w-full px-2.5 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-slate-200"
             >
-              <option value="100">100 % (Původní velikost)</option>
-              <option value="75">75 % zmenšení</option>
-              <option value="50">50 % poloviční rozlišení</option>
-              <option value="25">25 % čtvrtinové rozlišení</option>
+              <option value="100">100 % ({t('original_size', 'Původní velikost')})</option>
+              <option value="75">75 % ({t('scale_75', '75 % zmenšení')})</option>
+              <option value="50">50 % ({t('scale_50', 'Poloviční rozlišení')})</option>
+              <option value="25">25 % ({t('scale_25', 'Čtvrtinové rozlišení')})</option>
             </select>
           </div>
         </div>
@@ -453,12 +471,12 @@ Data nikdy neopouštějí zařízení. Všechny binární transformace probíhaj
               <Upload className="w-5 h-5" />
             </div>
             <p className="text-sm font-medium text-slate-200">
-              Přetáhněte sem soubor pro okamžitou konverzi
+              {t('drag_file_here', 'Přetáhněte sem soubor pro okamžitou konverzi')}
             </p>
             <p className="text-xs text-slate-500 mt-1">
-              {activeCategory === 'docs' && 'Podporuje .docx, .md, .txt'}
-              {activeCategory === 'data' && 'Podporuje .csv, .tsv, .json'}
-              {activeCategory === 'images' && 'Podporuje .png, .jpg, .webp, .svg, .bmp'}
+              {activeCategory === 'docs' && t('supports_docs', 'Podporuje .docx, .md, .txt')}
+              {activeCategory === 'data' && t('supports_data', 'Podporuje .csv, .tsv, .json')}
+              {activeCategory === 'images' && t('supports_images', 'Podporuje .png, .jpg, .webp, .svg, .bmp')}
             </p>
           </div>
         </div>
@@ -468,7 +486,7 @@ Data nikdy neopouštějí zařízení. Všechny binární transformace probíhaj
             onClick={loadPresetDemo}
             className="text-xs text-indigo-400 hover:text-indigo-300 font-medium transition-colors"
           >
-            Vyzkoušet na ukázkovém souboru &rarr;
+            {t('try_sample_file', 'Vyzkoušet na ukázkovém souboru →')}
           </button>
         </div>
       </div>
@@ -483,7 +501,9 @@ Data nikdy neopouštějí zařízení. Všechny binární transformace probíhaj
       {isProcessing && (
         <div className="p-6 rounded-xl bg-slate-900/40 border border-slate-800 flex items-center justify-center gap-3">
           <RefreshCw className="w-4 h-4 animate-spin text-indigo-400" />
-          <span className="text-xs font-medium text-slate-300">Zpracovávám a optimalizuji soubor v paměti...</span>
+          <span className="text-xs font-medium text-slate-300">
+            {t('processing_file_in_memory', 'Zpracovávám a optimalizuji soubor v paměti...')}
+          </span>
         </div>
       )}
 
@@ -492,23 +512,23 @@ Data nikdy neopouštějí zařízení. Všechny binární transformace probíhaj
         <div className="space-y-4">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-800">
-              <span className="text-[11px] text-slate-500 block">Doba zpracování</span>
+              <span className="text-[11px] text-slate-500 block">{t('conversion_time', 'Doba zpracování')}</span>
               <span className="text-sm font-semibold font-mono text-emerald-400">{stats.durationMs} ms</span>
             </div>
             <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-800">
-              <span className="text-[11px] text-slate-500 block">Původní velikost</span>
+              <span className="text-[11px] text-slate-500 block">{t('original_size_label', 'Původní velikost')}</span>
               <span className="text-sm font-semibold font-mono text-slate-300">
                 {(stats.originalSize / 1024).toFixed(1)} KB
               </span>
             </div>
             <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-800">
-              <span className="text-[11px] text-slate-500 block">Výsledná velikost</span>
+              <span className="text-[11px] text-slate-500 block">{t('new_size_label', 'Výsledná velikost')}</span>
               <span className="text-sm font-semibold font-mono text-indigo-300">
                 {(stats.newSize / 1024).toFixed(1)} KB
               </span>
             </div>
             <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-800">
-              <span className="text-[11px] text-slate-500 block">Úspora / Změna</span>
+              <span className="text-[11px] text-slate-500 block">{t('savings_change', 'Úspora / Změna')}</span>
               <span className={`text-sm font-semibold font-mono ${
                 stats.newSize < stats.originalSize ? 'text-emerald-400' : 'text-slate-300'
               }`}>
@@ -521,7 +541,7 @@ Data nikdy neopouštějí zařízení. Všechny binární transformace probíhaj
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-emerald-400" />
               <span className="text-xs font-medium text-slate-200">
-                Převod dokončen: <strong className="text-white font-mono">{resultFileName}</strong>
+                {t('conversion_finished', 'Převod dokončen')}: <strong className="text-white font-mono">{resultFileName}</strong>
               </span>
             </div>
             <a
@@ -530,14 +550,14 @@ Data nikdy neopouštějí zařízení. Všechny binární transformace probíhaj
               className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg transition-colors shadow-sm"
             >
               <Download className="w-3.5 h-3.5" />
-              Stáhnout převedený soubor
+              {t('download_converted_file', 'Stáhnout převedený soubor')}
             </a>
           </div>
 
           {/* Preview based on category */}
           {activeCategory === 'docs' && (
             <div className="h-80 border border-slate-800 rounded-xl overflow-hidden bg-slate-950">
-              <iframe src={resultBlobUrl} title="Náhled PDF" className="w-full h-full bg-slate-900" />
+              <iframe src={resultBlobUrl} title={t('pdf_preview', 'Náhled PDF')} className="w-full h-full bg-slate-900" />
             </div>
           )}
 
@@ -545,7 +565,7 @@ Data nikdy neopouštějí zařízení. Všechny binární transformace probíhaj
             <div className="p-4 rounded-xl border border-slate-800 bg-slate-950/60 flex items-center justify-center">
               <img
                 src={imagePreviewUrl}
-                alt="Náhled převedeného obrázku"
+                alt={t('preview_converted_image', 'Náhled převedeného obrázku')}
                 className="max-h-64 rounded-lg object-contain border border-slate-800"
               />
             </div>

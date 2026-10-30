@@ -1,7 +1,9 @@
 import React, { useState, useId } from 'react';
-import { Divide, Layers, Hash, Check, Copy } from 'lucide-react';
+import { Divide, Layers, Hash } from 'lucide-react';
+import { useI18n } from '../../i18n/context';
 
 export const CombinatoricsTool: React.FC = () => {
+  const { t } = useI18n();
   const [n, setN] = useState<number>(6);
   const [k, setK] = useState<number>(3);
   const [withRepetition, setWithRepetition] = useState<boolean>(false);
@@ -35,7 +37,6 @@ export const CombinatoricsTool: React.FC = () => {
     const bigK = BigInt(k);
 
     if (withRepetition) {
-      // P' = n^n (pro variace n^k)
       variations = (bigN ** bigK).toLocaleString();
       combinations = (bigFact(n + k - 1) / (bigFact(k) * bigFact(n - 1))).toLocaleString();
       permutations = (bigN ** bigN).toLocaleString();
@@ -45,15 +46,15 @@ export const CombinatoricsTool: React.FC = () => {
         variations = (bigFact(n) / bigFact(n - k)).toLocaleString();
         combinations = (bigFact(n) / (bigFact(k) * bigFact(n - k))).toLocaleString();
       } else {
-        variations = 'Nelze (k > n)';
-        combinations = 'Nelze (k > n)';
+        variations = t('impossible_k_greater_n', 'Nelze (k > n)');
+        combinations = t('impossible_k_greater_n', 'Nelze (k > n)');
         permutations = bigFact(n).toLocaleString();
       }
     }
   } catch {
-    permutations = 'Příliš velké číslo';
-    variations = 'Příliš velké číslo';
-    combinations = 'Příliš velké číslo';
+    permutations = t('number_too_large', 'Příliš velké číslo');
+    variations = t('number_too_large', 'Příliš velké číslo');
+    combinations = t('number_too_large', 'Příliš velké číslo');
   }
 
   // GCD & LCM
@@ -61,9 +62,9 @@ export const CombinatoricsTool: React.FC = () => {
     a = Math.abs(a);
     b = Math.abs(b);
     while (b) {
-      const t = b;
+      const temp = b;
       b = a % b;
-      a = t;
+      a = temp;
     }
     return a;
   };
@@ -72,8 +73,8 @@ export const CombinatoricsTool: React.FC = () => {
   const currentLcm = numA && numB ? Math.abs(numA * numB) / currentGcd : 0;
 
   // Prime factorization
-  const primeFactors = (val: number): { factors: number[]; isPrime: boolean; formula: string } => {
-    if (val < 2) return { factors: [], isPrime: false, formula: 'Nemá prvočíselný rozklad' };
+  const primeFactors = (val: number): { factors: number[]; isPrime: boolean } => {
+    if (val < 2) return { factors: [], isPrime: false };
     const factors: number[] = [];
     let d = 2;
     let temp = val;
@@ -86,17 +87,8 @@ export const CombinatoricsTool: React.FC = () => {
       }
     }
     factors.push(temp);
-
     const isPrime = factors.length === 1 && factors[0] === val;
-
-    // Group exponents
-    const counts: Record<number, number> = {};
-    factors.forEach(f => { counts[f] = (counts[f] || 0) + 1; });
-    const formula = Object.entries(counts)
-      .map(([base, exp]) => (exp > 1 ? `${base}²` : `${base}`))
-      .join(' × ');
-
-    return { factors, isPrime, formula };
+    return { factors, isPrime };
   };
 
   const factorResult = primeFactors(factorNum);
@@ -104,9 +96,11 @@ export const CombinatoricsTool: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800">
-        <h2 className="text-lg font-semibold text-white">Kombinatorika & Teorie Čísel</h2>
+        <h2 className="text-lg font-semibold text-white">
+          {t('tool_combinatorics_tool_title', 'Kombinatorika & Teorie Čísel')}
+        </h2>
         <p className="text-sm text-slate-400 mt-1">
-          Permutace, kombinace, variace, Eukleidův algoritmus (NSD a NSN) a prvočíselný rozklad.
+          {t('combinatorics_tool_desc', 'Permutace, kombinace, variace, Eukleidův algoritmus (NSD a NSN) a prvočíselný rozklad.')}
         </p>
       </div>
 
@@ -115,7 +109,7 @@ export const CombinatoricsTool: React.FC = () => {
         <div className="flex flex-wrap items-center justify-between gap-4">
           <span className="text-xs font-semibold text-indigo-400 uppercase tracking-wider flex items-center gap-1.5">
             <Layers className="w-3.5 h-3.5" />
-            Kombinatorické počty: P(n), V(n, k), C(n, k)
+            {t('combinatorics_counts', 'Kombinatorické počty: P(n), V(n, k), C(n, k)')}
           </span>
 
           <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-300">
@@ -125,13 +119,15 @@ export const CombinatoricsTool: React.FC = () => {
               onChange={e => setWithRepetition(e.target.checked)}
               className="rounded bg-slate-950 border-slate-800 text-indigo-600 focus:ring-0"
             />
-            <span>S opakováním prvků</span>
+            <span>{t('with_repetition', 'S opakováním prvků')}</span>
           </label>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label htmlFor={nInputId} className="text-xs text-slate-400 font-mono">Celkový počet prvků (n):</label>
+            <label htmlFor={nInputId} className="text-xs text-slate-400 font-mono">
+              {t('total_elements_n', 'Celkový počet prvků (n):')}
+            </label>
             <input
               id={nInputId}
               type="number"
@@ -144,7 +140,9 @@ export const CombinatoricsTool: React.FC = () => {
           </div>
 
           <div className="space-y-1.5">
-            <label htmlFor={kInputId} className="text-xs text-slate-400 font-mono">Velikost výběru / třída (k):</label>
+            <label htmlFor={kInputId} className="text-xs text-slate-400 font-mono">
+              {t('subset_size_k', 'Velikost výběru / třída (k):')}
+            </label>
             <input
               id={kInputId}
               type="number"
@@ -159,27 +157,27 @@ export const CombinatoricsTool: React.FC = () => {
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800">
-            <span className="text-xs text-slate-400 block">Kombinace C({n}, {k})</span>
+            <span className="text-xs text-slate-400 block">{t('combinations', 'Kombinace')} C({n}, {k})</span>
             <span className="text-lg font-bold font-mono text-indigo-400 block mt-1 break-all">
               {combinations}
             </span>
-            <span className="text-[10px] text-slate-500 font-mono">Nezáleží na pořadí</span>
+            <span className="text-[10px] text-slate-500 font-mono">{t('order_does_not_matter', 'Nezáleží na pořadí')}</span>
           </div>
 
           <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800">
-            <span className="text-xs text-slate-400 block">Variace V({n}, {k})</span>
+            <span className="text-xs text-slate-400 block">{t('variations', 'Variace')} V({n}, {k})</span>
             <span className="text-lg font-bold font-mono text-white block mt-1 break-all">
               {variations}
             </span>
-            <span className="text-[10px] text-slate-500 font-mono">Záleží na pořadí</span>
+            <span className="text-[10px] text-slate-500 font-mono">{t('order_matters', 'Záleží na pořadí')}</span>
           </div>
 
           <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800">
-            <span className="text-xs text-slate-400 block">Permutace P({n}) = {n}!</span>
+            <span className="text-xs text-slate-400 block">{t('permutations', 'Permutace')} P({n}) = {n}!</span>
             <span className="text-lg font-bold font-mono text-amber-400 block mt-1 break-all">
               {permutations}
             </span>
-            <span className="text-[10px] text-slate-500 font-mono">Všechna možná pořadí</span>
+            <span className="text-[10px] text-slate-500 font-mono">{t('all_possible_orders', 'Všechna možná pořadí')}</span>
           </div>
         </div>
       </div>
@@ -189,12 +187,12 @@ export const CombinatoricsTool: React.FC = () => {
         <div className="p-5 rounded-2xl bg-slate-900/40 border border-slate-800 space-y-4">
           <span className="text-xs font-semibold text-indigo-400 uppercase tracking-wider flex items-center gap-1.5">
             <Divide className="w-3.5 h-3.5" />
-            Dělitelnost: NSD (GCD) & NSN (LCM)
+            {t('gcd_lcm_title', 'Dělitelnost: NSD (GCD) & NSN (LCM)')}
           </span>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label htmlFor={numAId} className="text-[11px] text-slate-400 font-mono">Číslo A:</label>
+              <label htmlFor={numAId} className="text-[11px] text-slate-400 font-mono">{t('number_a', 'Číslo A:')}</label>
               <input
                 id={numAId}
                 type="number"
@@ -204,7 +202,7 @@ export const CombinatoricsTool: React.FC = () => {
               />
             </div>
             <div className="space-y-1">
-              <label htmlFor={numBId} className="text-[11px] text-slate-400 font-mono">Číslo B:</label>
+              <label htmlFor={numBId} className="text-[11px] text-slate-400 font-mono">{t('number_b', 'Číslo B:')}</label>
               <input
                 id={numBId}
                 type="number"
@@ -217,11 +215,11 @@ export const CombinatoricsTool: React.FC = () => {
 
           <div className="grid grid-cols-2 gap-3">
             <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 text-center">
-              <span className="text-[10px] text-slate-400 uppercase block">Největší spol. dělitel (NSD)</span>
+              <span className="text-[10px] text-slate-400 uppercase block">{t('greatest_common_divisor', 'Největší spol. dělitel (NSD)')}</span>
               <span className="text-lg font-mono font-bold text-emerald-400">{currentGcd}</span>
             </div>
             <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 text-center">
-              <span className="text-[10px] text-slate-400 uppercase block">Nejmenší spol. násobek (NSN)</span>
+              <span className="text-[10px] text-slate-400 uppercase block">{t('least_common_multiple', 'Nejmenší spol. násobek (NSN)')}</span>
               <span className="text-lg font-mono font-bold text-indigo-300">{currentLcm}</span>
             </div>
           </div>
@@ -231,11 +229,13 @@ export const CombinatoricsTool: React.FC = () => {
         <div className="p-5 rounded-2xl bg-slate-900/40 border border-slate-800 space-y-4">
           <span className="text-xs font-semibold text-indigo-400 uppercase tracking-wider flex items-center gap-1.5">
             <Hash className="w-3.5 h-3.5" />
-            Prvočíselný rozklad & Test prvočíselnosti
+            {t('prime_factorization_title', 'Prvočíselný rozklad & Test prvočíselnosti')}
           </span>
 
           <div className="space-y-1">
-            <label htmlFor={factorInputId} className="text-[11px] text-slate-400 font-mono">Číslo k rozkladu:</label>
+            <label htmlFor={factorInputId} className="text-[11px] text-slate-400 font-mono">
+              {t('number_to_factor', 'Číslo k rozkladu:')}
+            </label>
             <input
               id={factorInputId}
               type="number"
@@ -249,12 +249,12 @@ export const CombinatoricsTool: React.FC = () => {
 
           <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
             <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-400">Status:</span>
+              <span className="text-slate-400">{t('status', 'Status')}:</span>
               <span className={`font-mono font-semibold ${factorResult.isPrime ? 'text-emerald-400' : 'text-amber-400'}`}>
-                {factorResult.isPrime ? 'Číslo je PRVOČÍSLO' : 'Složené číslo'}
+                {factorResult.isPrime ? t('is_prime_number', 'Číslo je PRVOČÍSLO') : t('is_composite_number', 'Složené číslo')}
               </span>
             </div>
-            <div className="text-xs text-slate-400">Rozklad:</div>
+            <div className="text-xs text-slate-400">{t('factorization', 'Rozklad')}:</div>
             <div className="p-2 rounded bg-slate-900/60 font-mono text-sm text-indigo-300 text-center border border-slate-800/80">
               {factorNum} = {factorResult.factors.join(' × ')}
             </div>

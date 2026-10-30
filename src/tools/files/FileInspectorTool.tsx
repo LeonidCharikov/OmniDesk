@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { Binary, ShieldCheck, FileText, Hash, Copy, Check } from 'lucide-react';
+import { Binary, Hash, Copy, Check } from 'lucide-react';
+import { useI18n } from '../../i18n/context';
 
 export const FileInspectorTool: React.FC = () => {
+  const { t } = useI18n();
   const [file, setFile] = useState<File | null>(null);
   const [sha256, setSha256] = useState<string>('');
   const [hexDump, setHexDump] = useState<string[]>([]);
@@ -40,9 +42,11 @@ export const FileInspectorTool: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800">
-        <h2 className="text-lg font-semibold text-white">Inspektor souborů & Hash kalkulátor</h2>
+        <h2 className="text-lg font-semibold text-white">
+          {t('tool_file_inspector_title', 'Inspektor Souborů & Hash')}
+        </h2>
         <p className="text-sm text-slate-400 mt-1">
-          Okamžitý výpočet kontrolních součtů (SHA-256), binární hex dump a analýza hlaviček bez odesílání na síť.
+          {t('file_inspector_desc', 'Okamžitý výpočet kontrolních součtů (SHA-256), binární hex dump a analýza hlaviček bez odesílání na síť.')}
         </p>
       </div>
 
@@ -54,7 +58,9 @@ export const FileInspectorTool: React.FC = () => {
         />
         <div className="flex flex-col items-center pointer-events-none">
           <Binary className="w-8 h-8 text-indigo-400 mb-2" />
-          <p className="text-sm font-medium text-slate-200">Vyberte libovolný soubor k prozkoumání</p>
+          <p className="text-sm font-medium text-slate-200">
+            {t('select_any_file_to_inspect', 'Vyberte libovolný soubor k prozkoumání')}
+          </p>
         </div>
       </div>
 
@@ -62,17 +68,17 @@ export const FileInspectorTool: React.FC = () => {
         <div className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-800">
-              <span className="text-xs text-slate-500 block">Název souboru</span>
+              <span className="text-xs text-slate-500 block">{t('file_name', 'Název souboru')}</span>
               <span className="text-sm font-medium text-slate-200 truncate block">{file.name}</span>
             </div>
             <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-800">
-              <span className="text-xs text-slate-500 block">Velikost</span>
+              <span className="text-xs text-slate-500 block">{t('file_size', 'Velikost')}</span>
               <span className="text-sm font-medium font-mono text-slate-200">
                 {(file.size / 1024).toFixed(2)} KB ({file.size.toLocaleString()} B)
               </span>
             </div>
             <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-800">
-              <span className="text-xs text-slate-500 block">MIME typ</span>
+              <span className="text-xs text-slate-500 block">{t('mime_type', 'MIME typ')}</span>
               <span className="text-sm font-medium text-slate-200">{file.type || 'application/octet-stream'}</span>
             </div>
           </div>
@@ -81,14 +87,14 @@ export const FileInspectorTool: React.FC = () => {
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                 <Hash className="w-3.5 h-3.5 text-indigo-400" />
-                Kryptografický otisk SHA-256
+                {t('sha256_hash', 'Kryptografický otisk SHA-256')}
               </span>
               <button
                 onClick={copyHash}
                 className="inline-flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-300"
               >
                 {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                {copied ? 'Zkopírováno' : 'Kopírovat hash'}
+                {copied ? t('copied', 'Zkopírováno') : t('copy_hash', 'Kopírovat hash')}
               </button>
             </div>
             <div className="p-2.5 rounded bg-slate-950 font-mono text-xs text-indigo-300 break-all select-all border border-slate-800">
@@ -99,7 +105,7 @@ export const FileInspectorTool: React.FC = () => {
           {hexDump.length > 0 && (
             <div className="space-y-2">
               <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
-                Hexadecimální náhled hlavičky (prvních 128 bajtů)
+                {t('hex_dump_preview', 'Hexadecimální náhled hlavičky (prvních 128 bajtů)')}
               </span>
               <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 font-mono text-xs text-slate-300 overflow-x-auto">
                 <pre>{hexDump.join('\n')}</pre>

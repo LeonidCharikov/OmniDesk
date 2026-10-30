@@ -95,6 +95,8 @@
 
   "tool_chemistry_tool_title": "Chemistry & Molecular Calculator",
   "tool_chemistry_tool_desc": "Molecular mass of compounds, elemental mass breakdown, periodic table, and solution molarity.",
+  "tool_chemistry_title": "Chemistry & Molecular Calculator",
+  "tool_chemistry_desc": "Molecular mass of compounds, elemental mass breakdown, periodic table, and solution molarity.",
   "tool_chem_title": "Chemistry & Molecular Calculator",
   "tool_chem_desc": "Molecular mass of compounds, elemental mass breakdown, periodic table, and solution molarity.",
 
@@ -136,6 +138,10 @@
 
   "tool_time_pomodoro_title": "World Clock & Pomodoro",
   "tool_time_pomodoro_desc": "World clocks for global time zones and a Pomodoro productivity focus timer with audio cues.",
+  "tool_pomodoro_timer_title": "Pomodoro, Timer & Stopwatch",
+  "tool_pomodoro_timer_desc": "Productive Pomodoro technique with sound alarms, high-precision countdown timer and split lap stopwatch.",
+  "tool_world_timezones_title": "World Time & Timezones",
+  "tool_world_timezones_desc": "World clocks for dozens of cities, interactive meeting planner slider, and day/night indicators.",
   "tool_time_title": "World Clock & Pomodoro",
   "tool_time_desc": "World clocks for global time zones and a Pomodoro productivity focus timer with audio cues.",
 
@@ -251,8 +257,30 @@
   "sys_stress_test": "Simulate CPU Load",
   "sys_tab_dashboard": "Telemetry Dashboard",
   "sys_tab_processes": "Active Processes",
-  "sys_tab_tauri_code": "Tauri Plugin-OS Architecture",
   "sys_host_os_meta": "Operating System & Host (via @tauri-apps/plugin-os)",
   "sys_per_core_usage": "Individual CPU Core Utilization",
-  "sys_active_processes": "Active Processes & Memory Footprint"
+  "sys_active_processes": "Active Processes & Memory Footprint",
+
+  "currency_crypto_subtitle": "Offline-ready fiat currency converter and live crypto tracking with auto network detection.",
+  "realtime_live_rates": "Real-time live rates",
+  "offline_local_cache": "Offline local cache",
+  "refresh_rates": "Refresh live rates",
+  "fiat_tab": "Currency converter (Fiat)",
+  "crypto_tab": "Cryptocurrencies & Portfolio",
+  "offline_rates_notice": "Running offline: Utilizing cached exchange rates from disk ({date}).",
+  "calc_without_network": "Full calculations offline",
+  "from_currency": "From currency",
+  "amount_to_convert": "Amount to convert",
+  "swap_currencies": "Swap currencies",
+  "to_currency": "To currency",
+  "exchange_rates_overview": "Exchange rates overview (Base: 1 CZK)",
+  "today_cached_rates": "Today, 15:30 (Local cache)",
+  "live_rates_online": "Live data from network",
+  "crypto_calculator_title": "Cryptocurrency value calculator",
+  "crypto_coins_amount": "Coin quantity",
+  "convert_to_currency": "Convert to currency",
+  "total_value": "Total value",
+  "currency_czk": "Czech Koruna",
+  "currency_usd": "US Dollar",
+  "currency_eur": "Euro"
 }

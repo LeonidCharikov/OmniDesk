@@ -103,7 +103,7 @@ const QUICK_INSERTS: QuickInsert[] = [
 ];
 
 export const LatexVisualizerTool: React.FC = () => {
-  const { currentLanguage } = useI18n();
+  const { t } = useI18n();
   const [latex, setLatex] = useState<string>('x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}');
   const [copiedType, setCopiedType] = useState<string | null>(null);
   const [scale, setScale] = useState<number>(1.2);
@@ -179,18 +179,10 @@ export const LatexVisualizerTool: React.FC = () => {
       <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800 flex flex-wrap items-center justify-between gap-4">
         <div>
           <h2 className="text-lg font-semibold text-white">
-            {currentLanguage === 'cs' ? 'LaTeX Matematický Vizualizátor & Editor' :
-             currentLanguage === 'ru' ? 'LaTeX Математический Визуализатор & Редактор' :
-             currentLanguage === 'de' ? 'LaTeX Formel-Visualisierer & Editor' :
-             currentLanguage === 'es' ? 'Visualizador y Editor de Fórmulas LaTeX' :
-             'LaTeX Math Formula Visualizer & Editor'}
+            {t('tool_latex_visualizer_title', 'LaTeX Matematický Vizualizátor & Editor')}
           </h2>
           <p className="text-sm text-slate-400 mt-1">
-            {currentLanguage === 'cs' ? 'Živý náhled vzorců, rychlé vkládání symbolů, export do SVG, MathML a knihovna slavných fyzikálních i matematických rovnic.' :
-             currentLanguage === 'ru' ? 'Живой предпросмотр формул, быстрый ввод символов, экспорт в SVG, MathML и библиотека уравнений.' :
-             currentLanguage === 'de' ? 'Echtzeit-Vorschau mathematischer Formeln, Symbolleiste, SVG-Export und Formelsammlung.' :
-             currentLanguage === 'es' ? 'Previsualización en vivo, barra de símbolos, exportación SVG y biblioteca de fórmulas.' :
-             'Real-time formula rendering, quick-insert symbol bar, SVG export, and library of famous equations.'}
+            {t('tool_latex_visualizer_desc', 'Živý náhled vzorců, rychlé vkládání symbolů, export do SVG, MathML a knihovna slavných fyzikálních i matematických rovnic.')}
           </p>
         </div>
 
@@ -199,7 +191,7 @@ export const LatexVisualizerTool: React.FC = () => {
           <button
             onClick={() => setScale(prev => Math.max(0.8, prev - 0.2))}
             className="p-1.5 rounded-lg bg-slate-900 text-slate-300 hover:bg-slate-800 transition-colors"
-            title="Zmenšit"
+            title={t('zoom_out', 'Zmenšit')}
           >
             <ZoomOut className="w-3.5 h-3.5" />
           </button>
@@ -209,7 +201,7 @@ export const LatexVisualizerTool: React.FC = () => {
           <button
             onClick={() => setScale(prev => Math.min(2.5, prev + 0.2))}
             className="p-1.5 rounded-lg bg-slate-900 text-slate-300 hover:bg-slate-800 transition-colors"
-            title="Zvětšit"
+            title={t('zoom_in', 'Zvětšit')}
           >
             <ZoomIn className="w-3.5 h-3.5" />
           </button>
@@ -220,7 +212,7 @@ export const LatexVisualizerTool: React.FC = () => {
               themeMode === 'light' ? 'bg-amber-400/20 text-amber-300' : 'bg-slate-900 text-slate-400'
             }`}
           >
-            {themeMode === 'dark' ? 'Tmavé' : 'Světlé'}
+            {themeMode === 'dark' ? t('theme_dark', 'Tmavé') : t('theme_light', 'Světlé')}
           </button>
         </div>
       </div>
@@ -249,7 +241,7 @@ export const LatexVisualizerTool: React.FC = () => {
             </div>
           ) : (
             <span className="text-slate-500 not-italic text-sm">
-              Zadejte vzorec v syntaxi LaTeX níže...
+              {t('latex_placeholder_canvas', 'Zadejte vzorec v syntaxi LaTeX níže...')}
             </span>
           )}
         </div>
@@ -261,7 +253,7 @@ export const LatexVisualizerTool: React.FC = () => {
             className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-900/80 hover:bg-slate-800 text-slate-300 text-xs border border-slate-700/60 backdrop-blur-md transition-colors"
           >
             {copiedType === 'latex' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-            <span>{copiedType === 'latex' ? 'Zkopírováno' : 'Kopírovat LaTeX'}</span>
+            <span>{copiedType === 'latex' ? t('copied', 'Zkopírováno') : t('copy_latex', 'Kopírovat LaTeX')}</span>
           </button>
           <button
             onClick={() => copyToClipboard(latexToMathML(latex), 'mathml')}
@@ -275,7 +267,7 @@ export const LatexVisualizerTool: React.FC = () => {
             className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-600/90 hover:bg-indigo-500 text-white text-xs shadow-sm transition-colors"
           >
             <Download className="w-3 h-3" />
-            <span>Stáhnout SVG</span>
+            <span>{t('download_svg', 'Stáhnout SVG')}</span>
           </button>
         </div>
       </div>
@@ -283,7 +275,7 @@ export const LatexVisualizerTool: React.FC = () => {
       {/* Symbol Toolbar / Quick Inserts */}
       <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800 space-y-3">
         <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
-          Rychlé vložení matematických symbolů a struktur
+          {t('quick_insert_title', 'Rychlé vložení matematických symbolů a struktur')}
         </span>
 
         <div className="flex flex-wrap items-center gap-1.5">
@@ -291,7 +283,7 @@ export const LatexVisualizerTool: React.FC = () => {
             <button
               key={idx}
               onClick={() => handleInsert(item.snippet)}
-              title={item.tooltip}
+              title={t(item.tooltip)}
               className="px-2.5 py-1.5 rounded-lg bg-slate-950 hover:bg-indigo-600 hover:text-white text-slate-300 border border-slate-800 font-mono text-xs transition-colors"
             >
               {item.label}
@@ -301,7 +293,7 @@ export const LatexVisualizerTool: React.FC = () => {
             onClick={() => setLatex('')}
             className="px-2.5 py-1.5 rounded-lg bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/40 font-mono text-xs ml-auto transition-colors flex items-center gap-1"
           >
-            <RotateCcw className="w-3 h-3" /> Vymazat
+            <RotateCcw className="w-3 h-3" /> {t('clear', 'Vymazat')}
           </button>
         </div>
       </div>
@@ -312,10 +304,10 @@ export const LatexVisualizerTool: React.FC = () => {
         <div className="lg:col-span-2 space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-indigo-400 uppercase tracking-wider flex items-center gap-1.5">
-              <Code2 className="w-3.5 h-3.5" /> LaTeX Kód
+              <Code2 className="w-3.5 h-3.5" /> {t('latex_code_label', 'LaTeX Kód')}
             </span>
             <span className="text-xs text-slate-500 font-mono">
-              {latex.length} znaků
+              {t('char_count', `${latex.length} znaků`, { count: latex.length })}
             </span>
           </div>
 
@@ -323,7 +315,7 @@ export const LatexVisualizerTool: React.FC = () => {
             value={latex}
             onChange={e => setLatex(e.target.value)}
             rows={5}
-            placeholder="Zadejte matematický vzorec v LaTeXu..."
+            placeholder={t('latex_input_placeholder', 'Zadejte matematický vzorec v LaTeXu...')}
             className="w-full p-4 font-mono text-sm bg-slate-950 border border-slate-800 rounded-xl text-indigo-100 focus:outline-none focus:border-indigo-500 leading-relaxed resize-y"
           />
         </div>
@@ -331,7 +323,7 @@ export const LatexVisualizerTool: React.FC = () => {
         {/* Famous Formulas Presets */}
         <div className="space-y-3">
           <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-            <BookOpen className="w-3.5 h-3.5" /> Knihovna slavných vzorců
+            <BookOpen className="w-3.5 h-3.5" /> {t('famous_formulas_title', 'Knihovna slavných vzorců')}
           </span>
 
           <div className="space-y-2 max-h-[170px] overflow-y-auto pr-1">
@@ -343,10 +335,10 @@ export const LatexVisualizerTool: React.FC = () => {
               >
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold text-slate-200 group-hover:text-indigo-400">
-                    {p.name}
+                    {t(p.name)}
                   </span>
                   <span className="text-[10px] text-slate-500 bg-slate-950 px-1.5 py-0.5 rounded">
-                    {p.category}
+                    {t(p.category)}
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-400 mt-1 line-clamp-1 font-mono">

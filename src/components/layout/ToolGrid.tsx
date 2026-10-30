@@ -25,7 +25,8 @@ import {
   LineChart,
   Palette,
   Activity,
-  Eye
+  Eye,
+  Flame
 } from 'lucide-react';
 import { ToolDefinition, ToolCategory } from '../../types/tool';
 
@@ -62,6 +63,7 @@ const ICON_MAP: Record<string, React.ReactNode> = {
   Palette: <Palette className="w-5 h-5 text-indigo-400" />,
   Activity: <Activity className="w-5 h-5 text-indigo-400" />,
   Eye: <Eye className="w-5 h-5 text-indigo-400" />,
+  Flame: <Flame className="w-5 h-5 text-indigo-400" />,
 };
 
 import { useI18n } from '../../i18n/context';
