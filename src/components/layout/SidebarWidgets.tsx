@@ -1,16 +1,55 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, Play, Pause, RotateCcw, TrendingUp, Sliders, ChevronDown, ChevronUp, Check, Flame } from 'lucide-react';
+import {
+  Clock,
+  Play,
+  Pause,
+  RotateCcw,
+  Sliders,
+  Flame,
+  FileEdit,
+  Cpu,
+  ArrowUpRight,
+  ArrowDownRight,
+  Activity,
+} from 'lucide-react';
 import { useI18n } from '../../i18n/context';
+import { WidgetCustomization } from '../../types/tool';
 
 interface SidebarWidgetsProps {
-  enabledWidgets: string[];
+  widgets: WidgetCustomization;
   onToggleWidget: (widgetId: string) => void;
+  onUpdateQuickNote: (text: string) => void;
   onOpenWidgetSettings: () => void;
 }
 
+// Sample live/cached prices for cryptocurrencies
+const CRYPTO_PRICES: Record<string, { price: string; change: string; positive: boolean }> = {
+  BTC: { price: '$68,940', change: '+3.2%', positive: true },
+  ETH: { price: '$3,485', change: '+2.1%', positive: true },
+  SOL: { price: '$182.40', change: '+5.7%', positive: true },
+  TON: { price: '$5.62', change: '+1.4%', positive: true },
+  BNB: { price: '$598.10', change: '-0.8%', positive: false },
+  XRP: { price: '$0.58', change: '-1.2%', positive: false },
+  DOGE: { price: '$0.145', change: '+4.3%', positive: true },
+  AVAX: { price: '$28.90', change: '+1.8%', positive: true },
+};
+
+// Sample fiat exchange rates
+const FIAT_RATES: Record<string, { base: string; rate: string }> = {
+  CZK: { base: '1 EUR', rate: '25.18 CZK' },
+  EUR: { base: '1 USD', rate: '0.92 EUR' },
+  USD: { base: '1 EUR', rate: '1.08 USD' },
+  RUB: { base: '1 USD', rate: '94.20 RUB' },
+  GBP: { base: '1 EUR', rate: '0.86 GBP' },
+  CHF: { base: '1 EUR', rate: '0.96 CHF' },
+  PLN: { base: '1 EUR', rate: '4.32 PLN' },
+  JPY: { base: '1 USD', rate: '154.6 JPY' },
+};
+
 export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
-  enabledWidgets,
+  widgets,
   onToggleWidget,
+  onUpdateQuickNote,
   onOpenWidgetSettings,
 }) => {
   const { t, language } = useI18n();
@@ -21,9 +60,21 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [timerTotal, setTimerTotal] = useState(25 * 60);
 
+  // Mini system simulation stats
+  const [cpuUsage, setCpuUsage] = useState(18);
+  const [ramUsage, setRamUsage] = useState(42);
+
   // Live clock tick
   useEffect(() => {
     const interval = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // System load jitter
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCpuUsage(prev => Math.min(95, Math.max(8, prev + Math.floor(Math.random() * 9) - 4)));
+    }, 3000);
     return () => clearInterval(interval);
   }, []);
 
@@ -42,7 +93,7 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
         osc.start();
         osc.stop(audioCtx.currentTime + 0.3);
       } catch {
-        // audio context blocked
+        // blocked
       }
     }
     return () => {
@@ -67,28 +118,45 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
 
   const locale = language === 'ru' ? 'ru-RU' : language === 'en' ? 'en-US' : language === 'de' ? 'de-DE' : language === 'es' ? 'es-ES' : 'cs-CZ';
 
-  const timeString = new Intl.DateTimeFormat(locale, {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false,
-  }).format(now);
+  // Format time using selected city timezone
+  const targetTimezone = widgets.selectedCity || 'Europe/Prague';
+  const cityName = widgets.selectedCityName || 'Praha';
 
-  const dateString = new Intl.DateTimeFormat(locale, {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-  }).format(now);
+  let timeString = '';
+  let dateString = '';
+  try {
+    timeString = new Intl.DateTimeFormat(locale, {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+      timeZone: targetTimezone,
+    }).format(now);
 
-  const timezoneName = Intl.DateTimeFormat().resolvedOptions().timeZone.replace('_', ' ');
+    dateString = new Intl.DateTimeFormat(locale, {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+      timeZone: targetTimezone,
+    }).format(now);
+  } catch {
+    timeString = now.toLocaleTimeString();
+    dateString = now.toLocaleDateString();
+  }
 
-  const showClock = enabledWidgets.includes('clock');
-  const showTimer = enabledWidgets.includes('timer');
-  const showCrypto = enabledWidgets.includes('crypto');
+  const enabled = widgets.enabledWidgets || [];
+  const showClock = enabled.includes('clock');
+  const showTimer = enabled.includes('timer');
+  const showCrypto = enabled.includes('crypto');
+  const showNotes = enabled.includes('notes');
+  const showSystem = enabled.includes('system');
 
-  if (!showClock && !showTimer && !showCrypto) {
+  if (!showClock && !showTimer && !showCrypto && !showNotes && !showSystem) {
     return null;
   }
+
+  const cryptoData = CRYPTO_PRICES[widgets.selectedCrypto] || CRYPTO_PRICES['BTC'];
+  const fiatData = FIAT_RATES[widgets.selectedFiat] || FIAT_RATES['CZK'];
 
   return (
     <div className="px-3 py-2 space-y-2 border-t border-slate-900/80 bg-slate-950/40">
@@ -105,7 +173,7 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
         </button>
       </div>
 
-      {/* 1. Live Clock Widget */}
+      {/* 1. Live Clock Widget with Selected City */}
       {showClock && (
         <div className="p-2.5 rounded-lg bg-slate-900/40 border border-slate-800/60 space-y-1">
           <div className="flex items-center justify-between">
@@ -113,8 +181,8 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
               <Clock className="w-3 h-3 text-indigo-400" />
               <span className="text-[11px] font-medium">{dateString}</span>
             </div>
-            <span className="text-[9px] font-mono text-slate-500 truncate max-w-[80px]">
-              {timezoneName}
+            <span className="text-[10px] font-medium text-indigo-300 truncate max-w-[85px] px-1 py-0.5 rounded bg-indigo-950/40 border border-indigo-800/40">
+              {cityName}
             </span>
           </div>
           <div className="text-lg font-mono font-bold text-white tracking-tight tabular-nums">
@@ -179,7 +247,6 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
             </div>
           </div>
 
-          {/* Mini progress line */}
           <div className="w-full h-1 rounded-full bg-slate-900 overflow-hidden">
             <div
               style={{ width: `${timerPercent}%` }}
@@ -189,18 +256,70 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
         </div>
       )}
 
-      {/* 3. Mini Crypto & Fiat Ticker Widget */}
+      {/* 3. Customizable Crypto & Fiat Ticker Widget */}
       {showCrypto && (
-        <div className="p-2 rounded-lg bg-slate-900/40 border border-slate-800/60 space-y-1">
-          <div className="flex items-center justify-between text-[10px] text-slate-400">
-            <span className="font-mono font-semibold text-slate-300">BTC</span>
-            <span className="text-emerald-400 font-mono text-[9px]">+3.2%</span>
-            <span className="font-mono text-indigo-300 font-semibold">$68,920</span>
+        <div className="p-2 rounded-lg bg-slate-900/40 border border-slate-800/60 space-y-1.5">
+          <div className="flex items-center justify-between text-[10px]">
+            <span className="font-mono font-semibold text-slate-200 flex items-center gap-1">
+              {widgets.selectedCrypto}
+            </span>
+            <span className={`font-mono text-[9px] flex items-center ${cryptoData.positive ? 'text-emerald-400' : 'text-rose-400'}`}>
+              {cryptoData.positive ? <ArrowUpRight className="w-2.5 h-2.5" /> : <ArrowDownRight className="w-2.5 h-2.5" />}
+              {cryptoData.change}
+            </span>
+            <span className="font-mono text-indigo-300 font-semibold">{cryptoData.price}</span>
           </div>
+          <div className="flex items-center justify-between text-[10px] pt-1 border-t border-slate-800/40">
+            <span className="font-mono text-slate-400 text-[9px]">{fiatData.base}</span>
+            <span className="font-mono text-slate-200 font-medium">{fiatData.rate}</span>
+          </div>
+        </div>
+      )}
+
+      {/* 4. Mini Scratchpad / Quick Sticky Note */}
+      {showNotes && (
+        <div className="p-2 rounded-lg bg-amber-950/15 border border-amber-500/20 space-y-1">
+          <div className="flex items-center gap-1 text-[10px] text-amber-400 font-medium">
+            <FileEdit className="w-2.5 h-2.5" />
+            <span>{t('quick_scratchpad', 'Rychlá poznámka')}</span>
+          </div>
+          <textarea
+            value={widgets.quickNote}
+            onChange={e => onUpdateQuickNote(e.target.value)}
+            placeholder={t('scratchpad_placeholder', 'Napište rychlou myšlenku...')}
+            rows={2}
+            className="w-full text-[11px] p-1.5 bg-slate-900/60 border border-amber-500/20 rounded text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-400 resize-none font-mono"
+          />
+        </div>
+      )}
+
+      {/* 5. Mini System Monitor Gauge */}
+      {showSystem && (
+        <div className="p-2 rounded-lg bg-slate-900/40 border border-slate-800/60 space-y-1.5">
           <div className="flex items-center justify-between text-[10px] text-slate-400">
-            <span className="font-mono font-semibold text-slate-300">EUR</span>
-            <span className="text-slate-500 font-mono text-[9px]">CZK</span>
-            <span className="font-mono text-slate-200">25.18</span>
+            <span className="flex items-center gap-1 text-slate-300">
+              <Cpu className="w-2.5 h-2.5 text-cyan-400" /> CPU
+            </span>
+            <span className="font-mono text-cyan-300">{cpuUsage}%</span>
+          </div>
+          <div className="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-cyan-500 transition-all duration-500"
+              style={{ width: `${cpuUsage}%` }}
+            />
+          </div>
+
+          <div className="flex items-center justify-between text-[10px] text-slate-400 pt-0.5">
+            <span className="flex items-center gap-1 text-slate-300">
+              <Activity className="w-2.5 h-2.5 text-purple-400" /> RAM
+            </span>
+            <span className="font-mono text-purple-300">{ramUsage}%</span>
+          </div>
+          <div className="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-purple-500 transition-all duration-500"
+              style={{ width: `${ramUsage}%` }}
+            />
           </div>
         </div>
       )}

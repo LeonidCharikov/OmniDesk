@@ -7,6 +7,72 @@
   --font-mono: 'JetBrains Mono', monospace;
 }
 
+:root, [data-theme="midnight"] {
+  --app-bg: #030712;
+  --app-sidebar: #090e17;
+  --app-card: #0d1527;
+  --app-card-border: #1e293b;
+  --app-border: #1e293b;
+  --app-text: #f8fafc;
+  --app-text-muted: #94a3b8;
+  --app-accent: #6366f1;
+}
+
+[data-theme="oled"] {
+  --app-bg: #000000;
+  --app-sidebar: #09090b;
+  --app-card: #121214;
+  --app-card-border: #27272a;
+  --app-border: #27272a;
+  --app-text: #fafafa;
+  --app-text-muted: #a1a1aa;
+  --app-accent: #3b82f6;
+}
+
+[data-theme="graphite"] {
+  --app-bg: #121417;
+  --app-sidebar: #181b20;
+  --app-card: #1f232b;
+  --app-card-border: #2c323d;
+  --app-border: #2c323d;
+  --app-text: #f1f5f9;
+  --app-text-muted: #94a3b8;
+  --app-accent: #38bdf8;
+}
+
+[data-theme="emerald"] {
+  --app-bg: #030d09;
+  --app-sidebar: #061811;
+  --app-card: #0b2319;
+  --app-card-border: #123829;
+  --app-border: #123829;
+  --app-text: #ecfdf5;
+  --app-text-muted: #6ee7b7;
+  --app-accent: #10b981;
+}
+
+[data-theme="purple"] {
+  --app-bg: #090412;
+  --app-sidebar: #110822;
+  --app-card: #190c33;
+  --app-card-border: #2c1556;
+  --app-border: #2c1556;
+  --app-text: #faf5ff;
+  --app-text-muted: #c084fc;
+  --app-accent: #a855f7;
+}
+
+[data-theme="light"] {
+  --app-bg: #f8fafc;
+  --app-sidebar: #ffffff;
+  --app-card: #ffffff;
+  --app-card-border: #e2e8f0;
+  --app-border: #e2e8f0;
+  --app-text: #0f172a;
+  --app-text-muted: #64748b;
+  --app-accent: #4f46e5;
+}
+
 /* Custom scrollbars for native desktop feel */
 ::-webkit-scrollbar {
   width: 6px;

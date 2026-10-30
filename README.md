@@ -88,54 +88,57 @@ When you open this repository in VS Code or Cursor with the [i18n Ally extension
 
 ---
 
-## 🚀 Setup & Installation Instructions
+## 🚀 Jak spustit OmniDesk jako normální aplikaci (3 způsoby)
 
-### Prerequisites
-- [Node.js](https://nodejs.org/) (version 18 or higher recommended)
-- [Rust & Cargo](https://rustup.rs/) (required only if building desktop binaries with Tauri)
+Pokud jste si stáhli repozitář z GitHubu, **nemusíte vůbec otevírat VS Code ani psát příkazy do terminálu**! Zde jsou 3 způsoby:
 
-### 1. Clone & Install
+### ⚡ 1. Nejrychlejší: Spuštění jedním kliknutím přes `start.bat` (Windows)
+1. Rozbalte stažený ZIP nebo otevřete složku repozitáře.
+2. Dvakrát klikněte na soubor **`start.bat`** (na Windows) nebo spusťte **`./start.sh`** (na Mac/Linux).
+3. Skript sám zkontroluje Node.js, při prvním spuštění automaticky stáhne potřebné balíčky a okamžitě vám otevře aplikaci OmniDesk v okně prohlížeče.
+*(Předpoklad: Mít nainstalovaný bezplatný [Node.js](https://nodejs.org), který stačí stáhnout a nainstalovat jednou).*
+
+### 🖥️ 2. Nainstalovat jako samostatnou desktopovou aplikaci na Plochu (PWA)
+1. Jakmile aplikaci poprvé otevřete (nebo ji otevřete na webu), v pravém horním rohu klikněte na tlačítko **„Instalovat aplikaci“** (nebo na ikonu instalace v adresním řádku Chrome / Edge / Brave).
+2. Potvrďte **Instalovat**.
+3. Na ploše i v nabídce Start (nebo Launchpadu na Macu) se vám vytvoří **klasická ikona OmniDesk**.
+4. Od té chvíle ji můžete spouštět přímo z Plochy jako běžný program — běží v samostatném okně bez adresních řádků prohlížeče a funguje i 100% offline.
+
+### 📦 3. Vytvoření nativního instalátoru `.exe` / `.msi` (přes Tauri)
+Pokud chcete vygenerovat čistý samostatný instalátor `OmniDesk.exe`, který lze poslat kamkoliv bez nutnosti mít Node.js:
 ```bash
-# Clone the repository
-git clone https://github.com/YOUR_USERNAME/omnidesk.git
-cd omnidesk
-
-# Install npm dependencies
-npm install
-```
-
-### 2. Run in Web Development Mode (Vite)
-```bash
-npm run dev
-```
-Open [http://localhost:3000](http://localhost:3000) in your browser.
-
-### 3. Run in Desktop Development Mode (Tauri + Rust Window)
-```bash
-npm run tauri dev
-```
-
-### 4. Build Production Desktop Installer (.exe, .dmg, .deb, .AppImage)
-```bash
+# Jednorázový build do instalačního souboru .exe:
 npm run tauri build
 ```
-Stand-alone platform installers are output to `src-tauri/target/release/bundle/`.
+Výsledný instalátor naleznete ve složce:
+`src-tauri/target/release/bundle/msi/` nebo `bundle/nsis/`.
 
 ---
 
-## 📤 Publishing to Your Remote Git Repository
-
-The project repository is fully initialized with clean git history. To link it with your GitHub or GitLab remote:
+## 🛠️ Vývojářské spuštění (pro úpravy kódu)
 
 ```bash
-# 1. Add your remote repository URL (replace with your URL):
-git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPOSITORY.git
+# 1. Instalace závislostí
+npm install
 
-# 2. Rename default branch to main:
+# 2. Spuštění vývojového serveru
+npm run dev
+```
+Aplikace běží na [http://localhost:3000](http://localhost:3000).
+
+---
+
+## 📤 Jak nahrát změny do vašeho GitHub repozitáře
+
+Pokud jste si na GitHubu vytvořili nový repozitář, propojíte ho a nahrajete kód těmito dvěma příkazy v terminálu složky:
+
+```bash
+# 1. Přidejte adresu vašeho GitHub repozitáře (nahraďte svou URL):
+git remote add origin https://github.com/VASE_JMENO/VASE_REPOZITAR.git
+
+# 2. Přejmenujte větev na main a nahrajte všechny commity:
 git branch -M main
-
-# 3. Push all commits and branches:
-git push -u origin main
+git push -u origin main --force
 ```
 
 ---

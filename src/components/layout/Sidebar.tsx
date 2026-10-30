@@ -11,7 +11,7 @@ import {
   Settings,
   HardDrive
 } from 'lucide-react';
-import { ToolCategory } from '../../types/tool';
+import { ToolCategory, WidgetCustomization } from '../../types/tool';
 import { useI18n } from '../../i18n/context';
 import { SidebarWidgets } from './SidebarWidgets';
 
@@ -22,8 +22,9 @@ interface SidebarProps {
   onOpenConfig: () => void;
   selectedToolId: string | null;
   onBackToOverview: () => void;
-  enabledWidgets?: string[];
-  onToggleWidget?: (widgetId: string) => void;
+  widgets: WidgetCustomization;
+  onToggleWidget: (widgetId: string) => void;
+  onUpdateQuickNote: (text: string) => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -33,8 +34,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onOpenConfig,
   selectedToolId,
   onBackToOverview,
-  enabledWidgets = ['clock', 'timer', 'crypto'],
-  onToggleWidget = () => {},
+  widgets,
+  onToggleWidget,
+  onUpdateQuickNote,
 }) => {
   const { t } = useI18n();
 
@@ -108,10 +110,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </div>
 
-      {/* Mini-Widgets Area (Live Clock, Timer, Crypto) */}
+      {/* Mini-Widgets Area (Live Clock, Timer, Crypto, Notes, System) */}
       <SidebarWidgets
-        enabledWidgets={enabledWidgets}
+        widgets={widgets}
         onToggleWidget={onToggleWidget}
+        onUpdateQuickNote={onUpdateQuickNote}
         onOpenWidgetSettings={onOpenConfig}
       />
 
@@ -122,7 +125,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           className="w-full flex items-center justify-center gap-2 py-2 px-3 text-xs font-medium text-slate-300 hover:text-white bg-slate-900/60 hover:bg-slate-800 rounded-lg border border-slate-800 transition-colors"
         >
           <Settings className="w-3.5 h-3.5 text-indigo-400" />
-          <span>{t('local_config_backup', 'Záloha & Konfigurátor')}</span>
+          <span>{t('settings_and_backup', 'Nastavení & Záloha')}</span>
         </button>
       </div>
     </aside>

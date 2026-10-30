@@ -6,19 +6,27 @@ import { CommandPalette } from './components/layout/CommandPalette';
 import { ConfigModal } from './components/ui/ConfigModal';
 import { ArchitectureTool } from './tools/architecture/ArchitectureTool';
 import { TOOLS_REGISTRY } from './tools/registry';
-import { ToolCategory, ToolDefinition } from './types/tool';
+import { ToolCategory, UserConfig } from './types/tool';
 import { loadUserConfig, saveUserConfig, DEFAULT_CONFIG } from './services/storage';
+import { applyTheme } from './services/themes';
 import { useI18n } from './i18n/context';
 
 export default function App() {
-  const [config, setConfig] = useState(loadUserConfig);
+  const [config, setConfig] = useState<UserConfig>(loadUserConfig);
   const [activeCategory, setActiveCategory] = useState<ToolCategory>('all');
   const [selectedToolId, setSelectedToolId] = useState<string | null>(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isConfigOpen, setIsConfigOpen] = useState(false);
   const [isBrowserOnline, setIsBrowserOnline] = useState(navigator.onLine);
 
-  // Monitor real browser network status
+  const { t, setLanguage } = useI18n();
+
+  // Apply theme dynamically to document root
+  useEffect(() => {
+    applyTheme(config.themeId || 'midnight');
+  }, [config.themeId]);
+
+  // Monitor network status
   useEffect(() => {
     const handleOnline = () => setIsBrowserOnline(true);
     const handleOffline = () => setIsBrowserOnline(false);
@@ -31,8 +39,8 @@ export default function App() {
     };
   }, []);
 
-  // Save config whenever it changes
-  const updateConfig = (newConfig: typeof config) => {
+  // Save config
+  const updateConfig = (newConfig: UserConfig) => {
     setConfig(newConfig);
     saveUserConfig(newConfig);
   };
@@ -51,6 +59,7 @@ export default function App() {
 
   const handleResetDefaults = () => {
     updateConfig(DEFAULT_CONFIG);
+    applyTheme(DEFAULT_CONFIG.themeId);
   };
 
   const isEffectiveOffline = !isBrowserOnline;
@@ -64,9 +73,7 @@ export default function App() {
 
   const activeTool = selectedToolId ? TOOLS_REGISTRY.find(t => t.id === selectedToolId) || null : null;
 
-  const { t, setLanguage } = useI18n();
-
-  const handleUpdateConfig = (newConfig: typeof config) => {
+  const handleUpdateConfig = (newConfig: UserConfig) => {
     updateConfig(newConfig);
     if (newConfig.language && ['cs', 'en', 'de', 'es', 'ru'].includes(newConfig.language)) {
       setLanguage(newConfig.language as any);
@@ -74,13 +81,27 @@ export default function App() {
   };
 
   const handleToggleWidget = (widgetId: string) => {
-    const current = config.enabledWidgets || ['clock', 'timer', 'crypto'];
+    const current = config.widgets?.enabledWidgets || ['clock', 'timer', 'crypto', 'notes'];
     const updated = current.includes(widgetId)
       ? current.filter(id => id !== widgetId)
       : [...current, widgetId];
     updateConfig({
       ...config,
+      widgets: {
+        ...config.widgets,
+        enabledWidgets: updated,
+      },
       enabledWidgets: updated,
+    });
+  };
+
+  const handleUpdateQuickNote = (noteText: string) => {
+    updateConfig({
+      ...config,
+      widgets: {
+        ...config.widgets,
+        quickNote: noteText,
+      },
     });
   };
 
@@ -111,8 +132,9 @@ export default function App() {
         onOpenConfig={() => setIsConfigOpen(true)}
         selectedToolId={selectedToolId}
         onBackToOverview={() => setSelectedToolId(null)}
-        enabledWidgets={config.enabledWidgets}
+        widgets={config.widgets}
         onToggleWidget={handleToggleWidget}
+        onUpdateQuickNote={handleUpdateQuickNote}
       />
 
       {/* Main Workspace Area */}
@@ -125,6 +147,7 @@ export default function App() {
           isFavorite={selectedToolId ? config.favorites.includes(selectedToolId) : false}
           onToggleFavorite={() => selectedToolId && handleToggleFavorite(selectedToolId)}
           onOpenSearch={() => setIsSearchOpen(true)}
+          onOpenSettings={() => setIsConfigOpen(true)}
         />
 
         {/* Content Viewport */}
@@ -168,13 +191,11 @@ export default function App() {
         isOffline={isEffectiveOffline}
       />
 
-      {/* Config Modal */}
+      {/* Settings & Config Modal */}
       <ConfigModal
         isOpen={isConfigOpen}
         onClose={() => setIsConfigOpen(false)}
         config={config}
-        allTools={TOOLS_REGISTRY}
-        onToggleFavorite={handleToggleFavorite}
         onResetDefaults={handleResetDefaults}
         onUpdateConfig={handleUpdateConfig}
       />
