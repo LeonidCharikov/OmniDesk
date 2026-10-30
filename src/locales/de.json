@@ -54,8 +54,8 @@
   "disable_simulation": "Simulation beenden",
   "online": "Online",
   "offline": "Offline",
-  "offline_badge": "100% Offline / Kein Upload",
-  "online_badge": "Online-Verbindung erforderlich",
+  "offline_badge": "Offline",
+  "online_badge": "Online",
   "copy": "Kopieren",
   "copied": "Kopiert",
   "download": "Herunterladen",
@@ -82,9 +82,9 @@
   "tool_multi_desc": "Konvertierung von Dokumenten (DOCX, MD, TXT -> PDF), Daten (CSV <-> JSON) und Bildern.",
 
   "tool_docx_to_pdf_title": "DOCX-zu-PDF-Konverter",
-  "tool_docx_to_pdf_desc": "100% offline Word-zu-PDF-Konvertierung direkt im Gerätespeicher.",
+  "tool_docx_to_pdf_desc": "Offline Word-zu-PDF-Konvertierung direkt im Gerätespeicher.",
   "tool_docx_title": "DOCX-zu-PDF-Konverter",
-  "tool_docx_desc": "100% offline Word-zu-PDF-Konvertierung direkt im Gerätespeicher.",
+  "tool_docx_desc": "Offline Word-zu-PDF-Konvertierung direkt im Gerätespeicher.",
 
   "tool_text_diff_title": "Text- und Datei-Diff-Vergleich",
   "tool_text_diff_desc": "Visueller Vergleich zweier Texte oder Konfigurationsdateien Zeile für Zeile.",

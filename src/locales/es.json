@@ -54,8 +54,8 @@
   "disable_simulation": "Desactivar simulación",
   "online": "En línea",
   "offline": "Sin conexión",
-  "offline_badge": "100% Fuera de línea / Sin envíos",
-  "online_badge": "Requiere conexión en línea",
+  "offline_badge": "Offline",
+  "online_badge": "Online",
   "copy": "Copiar",
   "copied": "Copiado",
   "download": "Descargar",
@@ -82,9 +82,9 @@
   "tool_multi_desc": "Conversión de documentos (DOCX, MD, TXT -> PDF), datos (CSV <-> JSON) e imágenes (WebP, PNG, JPG).",
 
   "tool_docx_to_pdf_title": "Convertidor DOCX a PDF",
-  "tool_docx_to_pdf_desc": "Conversión 100% offline de documentos Word a PDF en la memoria local.",
+  "tool_docx_to_pdf_desc": "Conversión offline de documentos Word a PDF en la memoria local.",
   "tool_docx_title": "Convertidor DOCX a PDF",
-  "tool_docx_desc": "Conversión 100% offline de documentos Word a PDF en la memoria local.",
+  "tool_docx_desc": "Conversión offline de documentos Word a PDF en la memoria local.",
 
   "tool_diff_title": "Comparador de Textos y Archivos (Diff)",
   "tool_diff_desc": "Comparación visual de textos o archivos de configuración línea por línea.",

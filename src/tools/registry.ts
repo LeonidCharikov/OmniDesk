@@ -23,6 +23,7 @@ import { OnlineTranslatorTool } from './utilities/OnlineTranslatorTool';
 import { ColorPaletteWcagTool } from './utilities/ColorPaletteWcagTool';
 import { SystemMonitorTool } from './utilities/SystemMonitorTool';
 import { WcagContrastValidatorTool } from './utilities/WcagContrastValidatorTool';
+import { CalendarTool } from './utilities/CalendarTool';
 
 export const TOOLS_REGISTRY: ToolDefinition[] = [
   // 1. Files & Documents
@@ -39,7 +40,7 @@ export const TOOLS_REGISTRY: ToolDefinition[] = [
   {
     id: 'docx-to-pdf',
     title: 'DOCX do PDF Konvertor',
-    shortDesc: '100% offline převod Word dokumentů do PDF přímo v paměti zařízení.',
+    shortDesc: 'Offline převod Word dokumentů do PDF přímo v paměti zařízení.',
     category: 'files',
     icon: 'FileText',
     requiresOnline: false,
@@ -263,6 +264,16 @@ export const TOOLS_REGISTRY: ToolDefinition[] = [
     requiresOnline: false,
     component: JsonFormatterTool,
     tags: ['json', 'formatovani', 'lint', 'data', 'vyvoj'],
+  },
+  {
+    id: 'calendar',
+    title: 'Kalendář & Plánovač',
+    shortDesc: 'Interaktivní denní, týdenní a měsíční kalendář s hodinovými sloty pro poznámky a úkoly.',
+    category: 'utilities',
+    icon: 'Calendar',
+    requiresOnline: false,
+    component: CalendarTool,
+    tags: ['kalendar', 'planovac', 'schuzky', 'cas', 'hodiny', 'poznamky', 'google calendar', 'agenda'],
   },
   {
     id: 'online-translator',

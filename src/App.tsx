@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
 import { ToolGrid } from './components/layout/ToolGrid';
@@ -18,6 +18,16 @@ export default function App() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isConfigOpen, setIsConfigOpen] = useState(false);
   const [isBrowserOnline, setIsBrowserOnline] = useState(navigator.onLine);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  const toggleSidebar = useCallback(() => setIsSidebarOpen(prev => !prev), []);
+
+  // Close sidebar overlay on mobile when navigating
+  const closeSidebarOnMobile = useCallback(() => {
+    if (window.innerWidth < 640) {
+      setIsSidebarOpen(false);
+    }
+  }, []);
 
   const { t } = useI18n();
 
@@ -158,23 +168,34 @@ export default function App() {
 
   return (
     <div className={`flex h-screen w-screen overflow-hidden font-sans text-slate-100 theme-${config.themeId || 'midnight'} bg-slate-950`}>
+      {/* Mobile sidebar backdrop overlay */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-30 sm:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
       <Sidebar
         activeCategory={activeCategory}
         onSelectCategory={cat => {
           setActiveCategory(cat);
           setSelectedToolId(null);
+          closeSidebarOnMobile();
         }}
         favoritesCount={config.favorites.length}
         onOpenConfig={() => setIsConfigOpen(true)}
         selectedToolId={selectedToolId}
-        onBackToOverview={() => setSelectedToolId(null)}
+        onBackToOverview={() => { setSelectedToolId(null); closeSidebarOnMobile(); }}
         widgets={config.widgets}
         onToggleWidget={handleToggleWidget}
         onUpdateQuickNote={handleUpdateQuickNote}
         onToggleTask={handleToggleTask}
         onAddTask={handleAddTask}
         onDeleteTask={handleDeleteTask}
+        isOpen={isSidebarOpen}
+        onToggle={toggleSidebar}
       />
 
       {/* Main Workspace Area */}
@@ -188,15 +209,17 @@ export default function App() {
           onToggleFavorite={() => selectedToolId && handleToggleFavorite(selectedToolId)}
           onOpenSearch={() => setIsSearchOpen(true)}
           onOpenSettings={() => setIsConfigOpen(true)}
+          onToggleSidebar={toggleSidebar}
+          isSidebarOpen={isSidebarOpen}
         />
 
         {/* Content Viewport */}
-        <main className="flex-1 overflow-y-auto p-3 sm:p-6 md:p-8 bg-slate-950/40">
-          <div className="max-w-5xl mx-auto">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-6 md:p-8 bg-slate-950/40">
+          <div className="max-w-7xl mx-auto">
             {activeCategory === 'architecture' ? (
               <ArchitectureTool />
             ) : activeTool ? (
-              <div>
+              <div className="overflow-x-hidden">
                 {/* Active Tool Renderer */}
                 {React.createElement(activeTool.component, {
                   isOffline: isEffectiveOffline,

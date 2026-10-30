@@ -1,5 +1,5 @@
 import React, { useId } from 'react';
-import { Search, Star, ArrowLeft, ShieldCheck, Languages, Sliders } from 'lucide-react';
+import { Search, Star, ArrowLeft, ShieldCheck, Languages, Sliders, Menu } from 'lucide-react';
 import { ToolDefinition } from '../../types/tool';
 import { useI18n, SUPPORTED_LANGUAGES, SupportedLanguage } from '../../i18n/context';
 
@@ -11,6 +11,8 @@ interface HeaderProps {
   onToggleFavorite: () => void;
   onOpenSearch: () => void;
   onOpenSettings?: () => void;
+  onToggleSidebar?: () => void;
+  isSidebarOpen?: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -21,14 +23,26 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleFavorite,
   onOpenSearch,
   onOpenSettings,
+  onToggleSidebar,
+  isSidebarOpen,
 }) => {
   const { language, setLanguage, t } = useI18n();
   const langSelectId = useId();
 
   return (
     <header className="min-h-14 border-b border-slate-800/80 bg-slate-950/80 backdrop-blur px-3 sm:px-6 py-2 flex items-center justify-between gap-2 sm:gap-6 shrink-0 select-none">
-      {/* Zone 1: Breadcrumbs & Back Navigation */}
-      <div className="flex items-center gap-3 min-w-0">
+      {/* Zone 1: Hamburger + Breadcrumbs & Back Navigation */}
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+        {/* Hamburger toggle */}
+        {onToggleSidebar && (
+          <button
+            onClick={onToggleSidebar}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors shrink-0"
+            title={isSidebarOpen ? t('close_sidebar', 'Zavřít panel') : t('open_sidebar', 'Otevřít panel')}
+          >
+            <Menu className="w-4 h-4" />
+          </button>
+        )}
         {activeTool && (
           <button
             onClick={onBack}
@@ -44,8 +58,8 @@ export const Header: React.FC<HeaderProps> = ({
           <span className="truncate">{currentCategoryName}</span>
           {activeTool && (
             <>
-              <span aria-hidden="true" className="text-slate-600">/</span>
-              <span className="text-indigo-400 font-medium truncate">
+              <span aria-hidden="true" className="text-slate-600 hidden min-[480px]:inline">/</span>
+              <span className="text-indigo-400 font-medium truncate hidden min-[480px]:inline">
                 {t(`tool_${activeTool.id.replace(/-/g, '_')}_title`, activeTool.title)}
               </span>
             </>
@@ -53,11 +67,12 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* Zone 2: Search Affordance */}
-      <div className="flex-1 min-w-0 max-w-md">
+      {/* Zone 2: Search Affordance – full bar on >=480px, icon-only below */}
+      <div className="flex-1 min-w-0 max-w-md flex items-center justify-end min-[480px]:justify-stretch">
+        {/* Full search bar – hidden below 480px */}
         <button
           onClick={onOpenSearch}
-          className="w-full flex items-center justify-between px-3 py-1.5 rounded-lg bg-slate-900/60 border border-slate-800 text-xs text-slate-400 hover:border-slate-700 hover:text-slate-200 transition-colors"
+          className="hidden min-[480px]:flex w-full items-center justify-between px-3 py-1.5 rounded-lg bg-slate-900/60 border border-slate-800 text-xs text-slate-400 hover:border-slate-700 hover:text-slate-200 transition-colors"
         >
           <div className="flex items-center gap-2">
             <Search className="w-3.5 h-3.5 text-slate-500" />
@@ -66,6 +81,14 @@ export const Header: React.FC<HeaderProps> = ({
           <kbd className="hidden sm:block font-mono text-[10px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded border border-slate-700">
             Ctrl+K
           </kbd>
+        </button>
+        {/* Icon-only search button – visible below 480px */}
+        <button
+          onClick={onOpenSearch}
+          className="min-[480px]:hidden p-1.5 rounded-lg bg-slate-900/60 border border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200 transition-colors"
+          title={t('search_placeholder', 'Hledat')}
+        >
+          <Search className="w-4 h-4" />
         </button>
       </div>
 

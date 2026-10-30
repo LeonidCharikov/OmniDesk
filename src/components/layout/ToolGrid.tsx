@@ -26,7 +26,8 @@ import {
   Palette,
   Activity,
   Eye,
-  Flame
+  Flame,
+  Calendar
 } from 'lucide-react';
 import { ToolDefinition, ToolCategory } from '../../types/tool';
 
@@ -64,6 +65,7 @@ const ICON_MAP: Record<string, React.ReactNode> = {
   Activity: <Activity className="w-5 h-5 text-indigo-400" />,
   Eye: <Eye className="w-5 h-5 text-indigo-400" />,
   Flame: <Flame className="w-5 h-5 text-indigo-400" />,
+  Calendar: <Calendar className="w-5 h-5 text-indigo-400" />,
 };
 
 import { useI18n } from '../../i18n/context';
@@ -127,7 +129,7 @@ export const ToolGrid: React.FC<ToolGridProps> = ({
       </div>
 
       {/* Grid of Tool Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {tools.map(tool => {
           const isFav = favorites.includes(tool.id);
           const isLocked = tool.requiresOnline && isOffline;
@@ -184,7 +186,7 @@ export const ToolGrid: React.FC<ToolGridProps> = ({
                 <div className="flex items-center gap-1.5 truncate">
                   <span className="uppercase font-mono tracking-wider">{tool.category}</span>
                   <span aria-hidden="true">·</span>
-                  <span>{tool.requiresOnline ? t('online_badge', 'Hybridní') : t('offline_badge', '100% Offline')}</span>
+                  <span>{tool.requiresOnline ? t('online_badge', 'Online') : t('offline_badge', 'Offline')}</span>
                 </div>
                 <span className="font-mono text-slate-600 group-hover:text-slate-400 transition-colors">
                   {t('open', 'Otevřít')} &rarr;

@@ -1,12 +1,12 @@
 import React from 'react';
 
-export type ToolCategory = 'all' | 'favorites' | 'files' | 'math' | 'science' | 'finance' | 'utilities' | 'architecture';
+export type ToolCategory = 'all' | 'favorites' | 'files' | 'math' | 'science' | 'finance' | 'utilities' | 'productivity' | 'architecture';
 
 export interface ToolDefinition {
   id: string;
   title: string;
   shortDesc: string;
-  category: 'files' | 'math' | 'science' | 'finance' | 'utilities';
+  category: 'files' | 'math' | 'science' | 'finance' | 'utilities' | 'productivity';
   icon: string;
   requiresOnline?: boolean;
   component: React.ComponentType;
