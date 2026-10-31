@@ -1,4 +1,6 @@
+import React from 'react';
 import { ToolDefinition } from '../types/tool';
+import { TextEditorTool } from './files/TextEditorTool';
 import { DocxToPdfTool } from './files/DocxToPdfTool';
 import { MultiFormatConverterTool } from './files/MultiFormatConverterTool';
 import { FileInspectorTool } from './files/FileInspectorTool';
@@ -26,7 +28,17 @@ import { WcagContrastValidatorTool } from './utilities/WcagContrastValidatorTool
 import { CalendarTool } from './utilities/CalendarTool';
 
 export const TOOLS_REGISTRY: ToolDefinition[] = [
-  // 1. Files & Documents
+  // 1. Soubory & Dokumenty (files)
+  {
+    id: 'text-editor',
+    title: 'Textový Editor & Poznámkový blok (.txt)',
+    shortDesc: 'Vytváření, úprava a ukládání .txt souborů s UTF-8, vyhledáváním, nahrazováním a formátováním.',
+    category: 'files',
+    icon: 'FileText',
+    requiresOnline: false,
+    component: TextEditorTool,
+    tags: ['text', 'txt', 'editor', 'poznamky', 'soubor', 'vytvorit', 'upravit', 'psani'],
+  },
   {
     id: 'multi-converter',
     title: 'Multi-Formátový Konvertor',
@@ -47,28 +59,82 @@ export const TOOLS_REGISTRY: ToolDefinition[] = [
     component: DocxToPdfTool,
     tags: ['word', 'docx', 'pdf', 'konverze', 'dokumenty', 'tisk'],
   },
+
+  // 2. Programování & Kód (programming)
+  {
+    id: 'regex-encoder',
+    title: 'RegEx Tester & Base64 / URL',
+    shortDesc: 'Testování regulárních výrazů se skupinami a obousměrné kódování Base64 i URL.',
+    category: 'programming',
+    icon: 'Code2',
+    requiresOnline: false,
+    component: RegexEncoderTool,
+    tags: ['regex', 'regularni', 'base64', 'url', 'dekodovani', 'vyvoj', 'kod'],
+  },
+  {
+    id: 'json-formatter',
+    title: 'JSON Formátovač & Validátor',
+    shortDesc: 'Odsazení, minifikace a okamžitá syntaktická kontrola struktur.',
+    category: 'programming',
+    icon: 'FileCode',
+    requiresOnline: false,
+    component: JsonFormatterTool,
+    tags: ['json', 'formatovani', 'lint', 'data', 'vyvoj', 'programovani'],
+  },
   {
     id: 'text-diff',
     title: 'Text & Souborový Diff Porovnávač',
     shortDesc: 'Vizuální porovnání dvou textů nebo konfiguračních souborů řádek po řádce s detekcí změn.',
-    category: 'files',
+    category: 'programming',
     icon: 'GitCompare',
     requiresOnline: false,
     component: TextDiffTool,
-    tags: ['diff', 'porovnani', 'text', 'soubory', 'git', 'zmeny'],
+    tags: ['diff', 'porovnani', 'text', 'soubory', 'git', 'zmeny', 'kod'],
   },
   {
     id: 'file-inspector',
     title: 'Inspektor Souborů & Hash',
     shortDesc: 'Kryptografické SHA-256 kontrolní součty, MIME detekce a binární hex dump.',
-    category: 'files',
+    category: 'programming',
     icon: 'Binary',
     requiresOnline: false,
     component: FileInspectorTool,
     tags: ['hash', 'sha256', 'hex', 'binarni', 'inspektor', 'bezpecnost'],
   },
 
-  // 2. Matematika
+  // 3. Plánování & Produktivita (planning)
+  {
+    id: 'calendar',
+    title: 'Kalendář & Plánovač',
+    shortDesc: 'Interaktivní denní, týdenní a měsíční kalendář s hodinovými sloty pro poznámky a úkoly.',
+    category: 'planning',
+    icon: 'Calendar',
+    requiresOnline: false,
+    component: CalendarTool,
+    tags: ['kalendar', 'planovac', 'schuzky', 'cas', 'hodiny', 'poznamky', 'agenda', 'planovani'],
+  },
+  {
+    id: 'pomodoro-timer',
+    title: 'Pomodoro, Stopky & Časovač',
+    shortDesc: 'Produktivní technika Pomodoro se zvukovými signály, přesný odpočítávací časovač a stopky s mezičasy kol.',
+    category: 'planning',
+    icon: 'Flame',
+    requiresOnline: false,
+    component: PomodoroTimerTool,
+    tags: ['cas', 'pomodoro', 'stopky', 'timer', 'produktivita', 'odpocet', 'kola'],
+  },
+  {
+    id: 'world-timezones',
+    title: 'Světový Čas & Časová Pásma',
+    shortDesc: 'Světové hodiny pro globální města, posuvník pro plánování mezinárodních schůzek a indikátor dne/noci.',
+    category: 'planning',
+    icon: 'Globe',
+    requiresOnline: false,
+    component: WorldTimezonesTool,
+    tags: ['cas', 'hodiny', 'pasma', 'svet', 'mesta', 'schuzky', 'timezone'],
+  },
+
+  // 4. Matematika (math)
   {
     id: 'scientific-calc',
     title: 'Klasická & Vědecká Kalkulačka',
@@ -130,16 +196,16 @@ export const TOOLS_REGISTRY: ToolDefinition[] = [
     tags: ['kombinatorika', 'permutace', 'variace', 'nsd', 'nsn', 'prvocisla'],
   },
 
-  // 3. Věda & Technika
+  // 5. Věda & Technika (science)
   {
     id: 'chemistry-tool',
-    title: 'Chemie & Molární Kalkulačka',
-    shortDesc: 'Molární hmotnost sloučenin, procentuální složení prvků, periodická tabulka a koncentrace roztoků.',
+    title: 'Chemie & Periodická Tabulka (118 prvků)',
+    shortDesc: 'Oficiální 18-sloupcová periodická tabulka všech 118 prvků, molární hmotnost a příprava roztoků.',
     category: 'science',
     icon: 'FlaskConical',
     requiresOnline: false,
     component: ChemistryTool,
-    tags: ['chemie', 'molarni', 'prvky', 'periodicka', 'hmotnost', 'vzorec', 'roztoky'],
+    tags: ['chemie', 'molarni', 'prvky', 'periodicka', 'hmotnost', 'vzorec', 'roztoky', 'iupac'],
   },
   {
     id: 'unit-converter',
@@ -152,11 +218,11 @@ export const TOOLS_REGISTRY: ToolDefinition[] = [
     tags: ['jednotky', 'fyzika', 'metry', 'stopy', 'celsius', 'kelvin', 'si'],
   },
 
-  // 4. Finance
+  // 6. Finance & Kryptoměny (finance)
   {
     id: 'currency-crypto',
     title: 'Měny & Sledování Krypto',
-    shortDesc: 'Konvertor fiat měn (CZK, EUR, USD, GBP...) a live/offline kalkulátor cen kryptoměn (BTC, ETH, SOL...).',
+    shortDesc: 'Konvertor fiat měn a live/offline kalkulátor kryptoměn s možností manuální úpravy.',
     category: 'finance',
     icon: 'TrendingUp',
     requiresOnline: false,
@@ -174,11 +240,31 @@ export const TOOLS_REGISTRY: ToolDefinition[] = [
     tags: ['uver', 'hypoteka', 'finance', 'splatky', 'urok', 'amortizace'],
   },
 
-  // 5. Utility & Systém
+  // 7. Utility & Nástroje (utilities)
+  {
+    id: 'password-gen',
+    title: 'Generátor Bezpečných Hesel',
+    shortDesc: 'Kryptografická hesla a zapamatovatelné víceslovné fráze (Passphrase) s výpočtem entropie.',
+    category: 'utilities',
+    icon: 'KeyRound',
+    requiresOnline: false,
+    component: PasswordGeneratorTool,
+    tags: ['heslo', 'bezpecnost', 'passphrase', 'entropie', 'generator'],
+  },
+  {
+    id: 'qr-code',
+    title: 'Generátor QR Kódů',
+    shortDesc: 'Okamžitá offline tvorba QR kódů pro webové adresy, Wi-Fi sítě a texty s exportem do PNG.',
+    category: 'utilities',
+    icon: 'QrCode',
+    requiresOnline: false,
+    component: QrCodeGeneratorTool,
+    tags: ['qr', 'qrcode', 'wifi', 'odkaz', 'kod', 'generator'],
+  },
   {
     id: 'system-monitor',
     title: 'System Monitor',
-    shortDesc: 'Nativní telemetrie CPU jader, využití RAM a disků přes Tauri @tauri-apps/plugin-os a Rust sysinfo.',
+    shortDesc: 'Nativní telemetrie CPU jader, využití RAM a disků přes Tauri systémové API.',
     category: 'utilities',
     icon: 'Activity',
     requiresOnline: false,
@@ -204,76 +290,6 @@ export const TOOLS_REGISTRY: ToolDefinition[] = [
     requiresOnline: false,
     component: ColorPaletteWcagTool,
     tags: ['barvy', 'wcag', 'kontrast', 'paleta', 'design', 'hex', 'rgb'],
-  },
-  {
-    id: 'password-gen',
-    title: 'Generátor Bezpečných Hesel',
-    shortDesc: 'Kryptografická hesla a zapamatovatelné víceslovné fráze (Passphrase) s výpočtem entropie.',
-    category: 'utilities',
-    icon: 'KeyRound',
-    requiresOnline: false,
-    component: PasswordGeneratorTool,
-    tags: ['heslo', 'bezpecnost', 'passphrase', 'entropie', 'generator'],
-  },
-  {
-    id: 'qr-code',
-    title: 'Generátor QR Kódů',
-    shortDesc: 'Okamžitá offline tvorba QR kódů pro webové adresy, Wi-Fi sítě a texty s exportem do PNG.',
-    category: 'utilities',
-    icon: 'QrCode',
-    requiresOnline: false,
-    component: QrCodeGeneratorTool,
-    tags: ['qr', 'qrcode', 'wifi', 'odkaz', 'kod', 'generator'],
-  },
-  {
-    id: 'regex-encoder',
-    title: 'RegEx Tester & Base64 / URL',
-    shortDesc: 'Testování regulárních výrazů se skupinami a obousměrné kódování Base64 i URL.',
-    category: 'utilities',
-    icon: 'Code2',
-    requiresOnline: false,
-    component: RegexEncoderTool,
-    tags: ['regex', 'regularni', 'base64', 'url', 'dekodovani', 'vyvoj'],
-  },
-  {
-    id: 'pomodoro-timer',
-    title: 'Pomodoro, Stopky & Časovač',
-    shortDesc: 'Produktivní technika Pomodoro se zvukovými signály, přesný odpočítávací časovač a stopky s mezičasy kol.',
-    category: 'utilities',
-    icon: 'Flame',
-    requiresOnline: false,
-    component: PomodoroTimerTool,
-    tags: ['cas', 'pomodoro', 'stopky', 'timer', 'produktivita', 'odpocet', 'kola'],
-  },
-  {
-    id: 'world-timezones',
-    title: 'Světový Čas & Časová Pásma',
-    shortDesc: 'Světové hodiny pro globální města, posuvník pro plánování mezinárodních schůzek a indikátor dne/noci.',
-    category: 'utilities',
-    icon: 'Globe',
-    requiresOnline: false,
-    component: WorldTimezonesTool,
-    tags: ['cas', 'hodiny', 'pasma', 'svet', 'mesta', 'schuzky', 'timezone'],
-  },
-  {
-    id: 'json-formatter',
-    title: 'JSON Formátovač & Validátor',
-    shortDesc: 'Odsazení, minifikace a okamžitá syntaktická kontrola struktur.',
-    category: 'utilities',
-    icon: 'FileCode',
-    requiresOnline: false,
-    component: JsonFormatterTool,
-    tags: ['json', 'formatovani', 'lint', 'data', 'vyvoj'],
-  },
-  {
-    id: 'calendar',
-    title: 'Kalendář & Plánovač',
-    shortDesc: 'Interaktivní denní, týdenní a měsíční kalendář s hodinovými sloty pro poznámky a úkoly.',
-    category: 'utilities',
-    icon: 'Calendar',
-    requiresOnline: false,
-    component: CalendarTool,
-    tags: ['kalendar', 'planovac', 'schuzky', 'cas', 'hodiny', 'poznamky', 'google calendar', 'agenda'],
   },
   {
     id: 'online-translator',

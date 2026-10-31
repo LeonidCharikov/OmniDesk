@@ -21,11 +21,12 @@ export const DEFAULT_WIDGETS: WidgetCustomization = {
 
 export const DEFAULT_CONFIG: UserConfig = {
   version: 2,
-  favorites: ['docx-to-pdf', 'unit-converter', 'currency-crypto', 'pomodoro-timer'],
-  recentToolIds: ['docx-to-pdf'],
+  favorites: ['text-editor', 'docx-to-pdf', 'unit-converter', 'currency-crypto', 'pomodoro-timer'],
+  recentToolIds: ['text-editor'],
   simulatedOffline: false,
   theme: 'dark',
   themeId: 'midnight',
+  defaultCurrency: 'CZK',
   widgets: DEFAULT_WIDGETS,
   enabledWidgets: ['clock', 'timer', 'crypto', 'notes', 'tasks', 'calc'],
   language: 'cs',
@@ -56,6 +57,7 @@ export function loadUserConfig(): UserConfig {
     return {
       ...DEFAULT_CONFIG,
       ...parsed,
+      defaultCurrency: parsed.defaultCurrency || 'CZK',
       themeId,
       widgets,
       enabledWidgets: widgets.enabledWidgets,
@@ -94,6 +96,7 @@ export function validateConfigJson(jsonString: string): { valid: boolean; config
       themeId: ['midnight', 'oled', 'graphite', 'emerald', 'purple', 'light'].includes(parsed.themeId)
         ? parsed.themeId
         : 'midnight',
+      defaultCurrency: parsed.defaultCurrency || 'CZK',
       widgets: {
         enabledWidgets: Array.isArray(parsed.widgets?.enabledWidgets)
           ? parsed.widgets.enabledWidgets

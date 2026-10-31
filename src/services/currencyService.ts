@@ -1,13 +1,15 @@
 /**
  * Real-time currency & crypto live data service
  * Fetches real Forex rates from open.er-api.com / Frankfurter
- * and real Crypto rates from CoinGecko / Binance / CryptoCompare
+ * and real Crypto rates from CryptoCompare / Coinbase / CoinGecko
+ * Supports custom manual price overrides and persistent caching.
  */
 
 export interface FiatRateInfo {
   name: string;
   rate: number; // 1 unit in CZK
   flag: string;
+  isCustom?: boolean;
 }
 
 export interface CryptoRateInfo {
@@ -16,67 +18,52 @@ export interface CryptoRateInfo {
   usdPrice: number;
   czkPrice?: number;
   change24h: number;
+  isCustom?: boolean;
 }
 
 export const INITIAL_FIAT_RATES: Record<string, FiatRateInfo> = {
   CZK: { name: 'Česká koruna', rate: 1, flag: '🇨🇿' },
-  EUR: { name: 'Euro', rate: 25.25, flag: '🇪🇺' },
-  USD: { name: 'Americký dolar', rate: 23.65, flag: '🇺🇸' },
+  EUR: { name: 'Euro', rate: 25.28, flag: '🇪🇺' },
+  USD: { name: 'Americký dolar', rate: 23.42, flag: '🇺🇸' },
   GBP: { name: 'Britská libra', rate: 30.15, flag: '🇬🇧' },
   CHF: { name: 'Švýcarský frank', rate: 26.85, flag: '🇨🇭' },
-  PLN: { name: 'Polský zlotý', rate: 5.92, flag: '🇵🇱' },
-  RUB: { name: 'Ruský rubl', rate: 0.25, flag: '🇷🇺' },
-  JPY: { name: 'Japonský jen', rate: 0.155, flag: '🇯🇵' },
-  CAD: { name: 'Kanadský dolar', rate: 17.10, flag: '🇨🇦' },
-  AUD: { name: 'Australský dolar', rate: 15.45, flag: '🇦🇺' },
+  PLN: { name: 'Polský zlotý', rate: 5.89, flag: '🇵🇱' },
+  RUB: { name: 'Ruský rubl', rate: 0.24, flag: '🇷🇺' },
+  JPY: { name: 'Japonský jen', rate: 0.153, flag: '🇯🇵' },
+  CAD: { name: 'Kanadský dolar', rate: 16.85, flag: '🇨🇦' },
+  AUD: { name: 'Australský dolar', rate: 15.35, flag: '🇦🇺' },
   HUF: { name: 'Maďarský forint', rate: 0.062, flag: '🇭🇺' },
-  SEK: { name: 'Švédská koruna', rate: 2.22, flag: '🇸🇪' },
-  NOK: { name: 'Norská koruna', rate: 2.16, flag: '🇳🇴' },
-  DKK: { name: 'Dánská koruna', rate: 3.38, flag: '🇩🇰' },
+  SEK: { name: 'Švédská koruna', rate: 2.19, flag: '🇸🇪' },
+  NOK: { name: 'Norská koruna', rate: 2.14, flag: '🇳🇴' },
+  DKK: { name: 'Dánská koruna', rate: 3.39, flag: '🇩🇰' },
   CNY: { name: 'Čínský jüan', rate: 3.28, flag: '🇨🇳' },
   INR: { name: 'Indická rupie', rate: 0.28, flag: '🇮🇳' },
-  BRL: { name: 'Brazilský real', rate: 4.15, flag: '🇧🇷' },
+  BRL: { name: 'Brazilský real', rate: 4.08, flag: '🇧🇷' },
   KRW: { name: 'Jihokorejský won', rate: 0.017, flag: '🇰🇷' },
-  TRY: { name: 'Turecká lira', rate: 0.69, flag: '🇹🇷' },
+  TRY: { name: 'Turecká lira', rate: 0.68, flag: '🇹🇷' },
 };
 
 export const INITIAL_CRYPTO_RATES: Record<string, CryptoRateInfo> = {
-  BTC: { name: 'Bitcoin', symbol: 'BTC', usdPrice: 71200, change24h: 3.4 },
-  ETH: { name: 'Ethereum', symbol: 'ETH', usdPrice: 2650, change24h: 2.1 },
-  SOL: { name: 'Solana', symbol: 'SOL', usdPrice: 185, change24h: 4.8 },
-  BNB: { name: 'BNB Chain', symbol: 'BNB', usdPrice: 605, change24h: 0.9 },
-  XRP: { name: 'Ripple', symbol: 'XRP', usdPrice: 0.52, change24h: -1.2 },
-  ADA: { name: 'Cardano', symbol: 'ADA', usdPrice: 0.36, change24h: 1.1 },
-  DOGE: { name: 'Dogecoin', symbol: 'DOGE', usdPrice: 0.165, change24h: 6.2 },
-  AVAX: { name: 'Avalanche', symbol: 'AVAX', usdPrice: 27.5, change24h: 2.4 },
-  DOT: { name: 'Polkadot', symbol: 'DOT', usdPrice: 4.25, change24h: -0.5 },
-  LINK: { name: 'Chainlink', symbol: 'LINK', usdPrice: 11.9, change24h: 3.1 },
-  TON: { name: 'Toncoin', symbol: 'TON', usdPrice: 5.2, change24h: 1.8 },
-  NEAR: { name: 'NEAR Protocol', symbol: 'NEAR', usdPrice: 4.95, change24h: 5.6 },
-  SUI: { name: 'Sui Network', symbol: 'SUI', usdPrice: 2.05, change24h: 7.4 },
-  SHIB: { name: 'Shiba Inu', symbol: 'SHIB', usdPrice: 0.000019, change24h: 3.2 },
+  BTC: { name: 'Bitcoin', symbol: 'BTC', usdPrice: 71500, change24h: 2.8 },
+  ETH: { name: 'Ethereum', symbol: 'ETH', usdPrice: 2620, change24h: 1.6 },
+  SOL: { name: 'Solana', symbol: 'SOL', usdPrice: 184, change24h: 4.2 },
+  BNB: { name: 'BNB Chain', symbol: 'BNB', usdPrice: 595, change24h: 0.7 },
+  XRP: { name: 'Ripple', symbol: 'XRP', usdPrice: 0.525, change24h: -0.8 },
+  ADA: { name: 'Cardano', symbol: 'ADA', usdPrice: 0.355, change24h: 1.2 },
+  DOGE: { name: 'Dogecoin', symbol: 'DOGE', usdPrice: 0.168, change24h: 5.4 },
+  AVAX: { name: 'Avalanche', symbol: 'AVAX', usdPrice: 26.8, change24h: 2.1 },
+  DOT: { name: 'Polkadot', symbol: 'DOT', usdPrice: 4.18, change24h: -0.4 },
+  LINK: { name: 'Chainlink', symbol: 'LINK', usdPrice: 11.85, change24h: 3.5 },
+  TON: { name: 'Toncoin', symbol: 'TON', usdPrice: 5.15, change24h: 1.6 },
+  NEAR: { name: 'NEAR Protocol', symbol: 'NEAR', usdPrice: 4.85, change24h: 4.9 },
+  SUI: { name: 'Sui Network', symbol: 'SUI', usdPrice: 2.12, change24h: 6.8 },
+  SHIB: { name: 'Shiba Inu', symbol: 'SHIB', usdPrice: 0.0000185, change24h: 2.9 },
 };
 
-const COINGECKO_MAP: Record<string, string> = {
-  bitcoin: 'BTC',
-  ethereum: 'ETH',
-  solana: 'SOL',
-  binancecoin: 'BNB',
-  ripple: 'XRP',
-  cardano: 'ADA',
-  dogecoin: 'DOGE',
-  'avalanche-2': 'AVAX',
-  polkadot: 'DOT',
-  chainlink: 'LINK',
-  'the-open-network': 'TON',
-  near: 'NEAR',
-  sui: 'SUI',
-  'shiba-inu': 'SHIB',
-};
-
-const STORAGE_KEY_FIAT = 'omnidesk_cached_fiat_rates_v1';
-const STORAGE_KEY_CRYPTO = 'omnidesk_cached_crypto_rates_v1';
-const STORAGE_KEY_TIME = 'omnidesk_rates_timestamp_v1';
+const STORAGE_KEY_FIAT = 'omnidesk_cached_fiat_rates_v2';
+const STORAGE_KEY_CRYPTO = 'omnidesk_cached_crypto_rates_v2';
+const STORAGE_KEY_TIME = 'omnidesk_rates_timestamp_v2';
+const STORAGE_KEY_CUSTOM_CRYPTO = 'omnidesk_custom_crypto_overrides_v2';
 
 /**
  * Loads cached rates from localStorage
@@ -93,6 +80,21 @@ export function getSavedRates() {
     const rawCrypto = localStorage.getItem(STORAGE_KEY_CRYPTO);
     if (rawCrypto) crypto = { ...INITIAL_CRYPTO_RATES, ...JSON.parse(rawCrypto) };
 
+    // Apply any user custom overrides
+    const rawCustom = localStorage.getItem(STORAGE_KEY_CUSTOM_CRYPTO);
+    if (rawCustom) {
+      const customMap = JSON.parse(rawCustom);
+      Object.entries(customMap).forEach(([sym, price]) => {
+        if (crypto[sym] && typeof price === 'number') {
+          crypto[sym] = {
+            ...crypto[sym],
+            usdPrice: price,
+            isCustom: true,
+          };
+        }
+      });
+    }
+
     timestamp = localStorage.getItem(STORAGE_KEY_TIME) || '';
   } catch {
     // fallback to defaults
@@ -105,9 +107,9 @@ export function getSavedRates() {
  * Fetch real live fiat rates relative to CZK
  */
 export async function fetchLiveFiatRates(): Promise<Record<string, FiatRateInfo> | null> {
+  // 1. Primary: open.er-api.com
   try {
-    // 1. Primary: open.er-api.com
-    const res = await fetch('https://open.er-api.com/v6/latest/CZK', { signal: AbortSignal.timeout(5000) });
+    const res = await fetch('https://open.er-api.com/v6/latest/CZK', { signal: AbortSignal.timeout(6000) });
     if (res.ok) {
       const data = await res.json();
       if (data && data.rates) {
@@ -121,7 +123,7 @@ export async function fetchLiveFiatRates(): Promise<Record<string, FiatRateInfo>
           if (rateFromCZK && rateFromCZK > 0) {
             nextFiat[curr] = {
               ...nextFiat[curr],
-              rate: +(1 / rateFromCZK).toFixed(4), // 1 curr in CZK
+              rate: +(1 / rateFromCZK).toFixed(4),
             };
           }
         });
@@ -129,11 +131,11 @@ export async function fetchLiveFiatRates(): Promise<Record<string, FiatRateInfo>
         return nextFiat;
       }
     }
-  } catch (err) {
-    // try fallback
+  } catch {
+    // fallback
   }
 
-  // 2. Fallback: Frankfurter API (EUR base)
+  // 2. Fallback: Frankfurter API
   try {
     const res = await fetch('https://api.frankfurter.app/latest?from=EUR', { signal: AbortSignal.timeout(5000) });
     if (res.ok) {
@@ -146,7 +148,6 @@ export async function fetchLiveFiatRates(): Promise<Record<string, FiatRateInfo>
           if (curr === 'CZK' || curr === 'EUR') return;
           const eurRate = data.rates[curr];
           if (eurRate) {
-            // 1 EUR = eurRate curr => 1 curr = (eurInCzk / eurRate) CZK
             nextFiat[curr] = {
               ...nextFiat[curr],
               rate: +(eurInCzk / eurRate).toFixed(4),
@@ -165,45 +166,51 @@ export async function fetchLiveFiatRates(): Promise<Record<string, FiatRateInfo>
 }
 
 /**
- * Fetch real live crypto rates from CoinGecko or Binance
+ * Fetch real live crypto rates using multiple high-reliability CORS APIs
  */
 export async function fetchLiveCryptoRates(): Promise<Record<string, CryptoRateInfo> | null> {
-  const ids = Object.keys(COINGECKO_MAP).join(',');
+  const symbols = ['BTC', 'ETH', 'SOL', 'BNB', 'XRP', 'ADA', 'DOGE', 'AVAX', 'DOT', 'LINK', 'TON', 'NEAR', 'SUI', 'SHIB'];
+  const symbolsParam = symbols.join(',');
 
-  // 1. Primary: CoinGecko
+  // 1. Primary: CryptoCompare multi-price API (Unrestricted CORS, real-time)
   try {
-    const url = `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd,czk&include_24hr_change=true`;
+    const url = `https://min-api.cryptocompare.com/data/pricemultifull?fsyms=${symbolsParam}&tsyms=USD,CZK`;
     const res = await fetch(url, { signal: AbortSignal.timeout(6000) });
     if (res.ok) {
-      const data = await res.json();
-      const nextCrypto: Record<string, CryptoRateInfo> = { ...INITIAL_CRYPTO_RATES };
+      const json = await res.json();
+      if (json && json.RAW) {
+        const nextCrypto: Record<string, CryptoRateInfo> = { ...INITIAL_CRYPTO_RATES };
+        symbols.forEach(sym => {
+          if (json.RAW[sym] && json.RAW[sym].USD) {
+            const rawUSD = json.RAW[sym].USD;
+            const rawCZK = json.RAW[sym].CZK;
+            const usdPrice = rawUSD.PRICE;
+            const change24h = +(rawUSD.CHANGEPCT24HOUR || 0).toFixed(2);
+            const czkPrice = rawCZK?.PRICE;
 
-      Object.entries(COINGECKO_MAP).forEach(([cgId, sym]) => {
-        if (data[cgId]) {
-          const coinData = data[cgId];
-          const usdPrice = coinData.usd;
-          const czkPrice = coinData.czk;
-          const change24h = coinData.usd_24h_change !== undefined ? +coinData.usd_24h_change.toFixed(2) : 0;
-
-          if (nextCrypto[sym]) {
-            nextCrypto[sym] = {
-              ...nextCrypto[sym],
-              usdPrice,
-              czkPrice,
-              change24h,
-            };
+            if (nextCrypto[sym]) {
+              nextCrypto[sym] = {
+                ...nextCrypto[sym],
+                usdPrice,
+                czkPrice,
+                change24h,
+                isCustom: false,
+              };
+            }
           }
-        }
-      });
+        });
 
-      localStorage.setItem(STORAGE_KEY_CRYPTO, JSON.stringify(nextCrypto));
-      return nextCrypto;
+        // Re-apply any user custom overrides
+        applyUserOverrides(nextCrypto);
+        localStorage.setItem(STORAGE_KEY_CRYPTO, JSON.stringify(nextCrypto));
+        return nextCrypto;
+      }
     }
   } catch {
     // fallback
   }
 
-  // 2. Fallback: Binance Public 24hr Ticker
+  // 2. Secondary: Binance public spot price ticker
   try {
     const res = await fetch('https://api.binance.com/api/v3/ticker/24hr', { signal: AbortSignal.timeout(6000) });
     if (res.ok) {
@@ -217,25 +224,119 @@ export async function fetchLiveCryptoRates(): Promise<Record<string, CryptoRateI
       });
 
       const nextCrypto: Record<string, CryptoRateInfo> = { ...INITIAL_CRYPTO_RATES };
-      Object.keys(nextCrypto).forEach(sym => {
+      symbols.forEach(sym => {
         const pair = `${sym}USDT`;
         if (tickerMap[pair]) {
           nextCrypto[sym] = {
             ...nextCrypto[sym],
             usdPrice: tickerMap[pair].lastPrice,
             change24h: +tickerMap[pair].change.toFixed(2),
+            isCustom: false,
           };
         }
       });
 
+      applyUserOverrides(nextCrypto);
       localStorage.setItem(STORAGE_KEY_CRYPTO, JSON.stringify(nextCrypto));
       return nextCrypto;
     }
   } catch {
-    // ignored
+    // fallback
+  }
+
+  // 3. Tertiary: Coinbase public prices for core assets
+  try {
+    const coreCoins = ['BTC', 'ETH', 'SOL', 'DOGE', 'XRP', 'ADA', 'AVAX', 'LINK', 'DOT', 'NEAR', 'SUI', 'SHIB'];
+    const responses = await Promise.allSettled(
+      coreCoins.map(sym =>
+        fetch(`https://api.coinbase.com/v2/prices/${sym}-USD/spot`, { signal: AbortSignal.timeout(4000) })
+          .then(r => r.json())
+          .then(data => ({ sym, amount: parseFloat(data.data.amount) }))
+      )
+    );
+
+    const nextCrypto: Record<string, CryptoRateInfo> = { ...INITIAL_CRYPTO_RATES };
+    let gotAtLeastOne = false;
+
+    responses.forEach(result => {
+      if (result.status === 'fulfilled' && result.value && result.value.amount > 0) {
+        const { sym, amount } = result.value;
+        if (nextCrypto[sym]) {
+          nextCrypto[sym] = {
+            ...nextCrypto[sym],
+            usdPrice: amount,
+            isCustom: false,
+          };
+          gotAtLeastOne = true;
+        }
+      }
+    });
+
+    if (gotAtLeastOne) {
+      applyUserOverrides(nextCrypto);
+      localStorage.setItem(STORAGE_KEY_CRYPTO, JSON.stringify(nextCrypto));
+      return nextCrypto;
+    }
+  } catch {
+    // fallback
   }
 
   return null;
+}
+
+function applyUserOverrides(cryptoMap: Record<string, CryptoRateInfo>) {
+  try {
+    const rawCustom = localStorage.getItem(STORAGE_KEY_CUSTOM_CRYPTO);
+    if (rawCustom) {
+      const customMap = JSON.parse(rawCustom);
+      Object.entries(customMap).forEach(([sym, price]) => {
+        if (cryptoMap[sym] && typeof price === 'number') {
+          cryptoMap[sym].usdPrice = price;
+          cryptoMap[sym].isCustom = true;
+        }
+      });
+    }
+  } catch {
+    // ignore
+  }
+}
+
+/**
+ * Allows user to manually set or override any crypto price
+ */
+export function setManualCryptoPrice(symbol: string, newUsdPrice: number): Record<string, CryptoRateInfo> {
+  const { crypto, fiat, timestamp } = getSavedRates();
+  try {
+    const rawCustom = localStorage.getItem(STORAGE_KEY_CUSTOM_CRYPTO);
+    const customMap = rawCustom ? JSON.parse(rawCustom) : {};
+    customMap[symbol] = newUsdPrice;
+    localStorage.setItem(STORAGE_KEY_CUSTOM_CRYPTO, JSON.stringify(customMap));
+
+    if (crypto[symbol]) {
+      crypto[symbol] = {
+        ...crypto[symbol],
+        usdPrice: newUsdPrice,
+        isCustom: true,
+      };
+    }
+    localStorage.setItem(STORAGE_KEY_CRYPTO, JSON.stringify(crypto));
+
+    window.dispatchEvent(new CustomEvent('omnidesk-rates-updated', { detail: { fiat, crypto, timestamp } }));
+  } catch {
+    // ignore
+  }
+  return crypto;
+}
+
+/**
+ * Resets any custom overrides to live exchange values
+ */
+export function clearManualCryptoOverrides() {
+  try {
+    localStorage.removeItem(STORAGE_KEY_CUSTOM_CRYPTO);
+  } catch {
+    // ignore
+  }
 }
 
 /**
@@ -260,7 +361,6 @@ export async function refreshAllRates(): Promise<{
   const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   if (success) {
     localStorage.setItem(STORAGE_KEY_TIME, timestamp);
-    // Notify any listeners
     window.dispatchEvent(new CustomEvent('omnidesk-rates-updated', { detail: { fiat, crypto, timestamp } }));
   }
 

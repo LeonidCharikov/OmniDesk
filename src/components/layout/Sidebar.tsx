@@ -14,6 +14,8 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  Code2,
+  CalendarCheck,
 } from 'lucide-react';
 import { ToolCategory, WidgetCustomization } from '../../types/tool';
 import { useI18n } from '../../i18n/context';
@@ -60,6 +62,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'all', label: t('cat_all', 'Všechny nástroje'), icon: <LayoutGrid className="w-4 h-4" /> },
     { id: 'favorites', label: t('cat_favorites', 'Oblíbené'), icon: <Star className="w-4 h-4" />, count: favoritesCount },
     { id: 'files', label: t('cat_files', 'Soubory & Dokumenty'), icon: <FileBox className="w-4 h-4" /> },
+    { id: 'programming', label: t('cat_programming', 'Programování & Kód'), icon: <Code2 className="w-4 h-4" /> },
+    { id: 'planning', label: t('cat_planning', 'Plánování & Produktivita'), icon: <CalendarCheck className="w-4 h-4" /> },
     { id: 'math', label: t('cat_math', 'Matematika'), icon: <Calculator className="w-4 h-4" /> },
     { id: 'science', label: t('cat_science', 'Věda & Technika'), icon: <FlaskConical className="w-4 h-4" /> },
     { id: 'finance', label: t('cat_finance', 'Finance & Měny'), icon: <Coins className="w-4 h-4" /> },

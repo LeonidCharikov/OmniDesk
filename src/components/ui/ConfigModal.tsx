@@ -33,7 +33,24 @@ interface ConfigModalProps {
   onResetDefaults: () => void;
 }
 
-type TabType = 'themes' | 'widgets' | 'backup' | 'language';
+type TabType = 'themes' | 'currency' | 'widgets' | 'backup' | 'language';
+
+const ALL_CURRENCIES = [
+  { code: 'CZK', name: 'Česká koruna', flag: '🇨🇿', symbol: 'Kč' },
+  { code: 'EUR', name: 'Euro', flag: '🇪🇺', symbol: '€' },
+  { code: 'USD', name: 'Americký dolar', flag: '🇺🇸', symbol: '$' },
+  { code: 'GBP', name: 'Britská libra', flag: '🇬🇧', symbol: '£' },
+  { code: 'CHF', name: 'Švýcarský frank', flag: '🇨🇭', symbol: 'CHF' },
+  { code: 'PLN', name: 'Polský zlotý', flag: '🇵🇱', symbol: 'zł' },
+  { code: 'JPY', name: 'Japonský jen', flag: '🇯🇵', symbol: '¥' },
+  { code: 'CAD', name: 'Kanadský dolar', flag: '🇨🇦', symbol: 'C$' },
+  { code: 'AUD', name: 'Australský dolar', flag: '🇦🇺', symbol: 'A$' },
+  { code: 'HUF', name: 'Maďarský forint', flag: '🇭🇺', symbol: 'Ft' },
+  { code: 'SEK', name: 'Švédská koruna', flag: '🇸🇪', symbol: 'kr' },
+  { code: 'NOK', name: 'Norská koruna', flag: '🇳🇴', symbol: 'kr' },
+  { code: 'DKK', name: 'Dánská koruna', flag: '🇩🇰', symbol: 'kr' },
+  { code: 'RUB', name: 'Ruský rubl', flag: '🇷🇺', symbol: '₽' },
+];
 
 const CITIES = [
   { id: 'Europe/Prague', name: 'Praha', label: '🇨🇿 Praha (UTC+1)' },
@@ -273,6 +290,18 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
           </button>
 
           <button
+            onClick={() => setActiveTab('currency')}
+            className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-t-lg transition-colors border-b-2 ${
+              activeTab === 'currency'
+                ? 'text-indigo-400 border-indigo-500 bg-slate-800/40'
+                : 'text-slate-400 border-transparent hover:text-slate-200'
+            }`}
+          >
+            <Coins className="w-3.5 h-3.5" />
+            <span>{t('tab_currency', 'Výchozí měna')}</span>
+          </button>
+
+          <button
             onClick={() => setActiveTab('widgets')}
             className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-t-lg transition-colors border-b-2 ${
               activeTab === 'widgets'
@@ -389,6 +418,71 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
                           />
                         </div>
                       </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* TAB: DEFAULT CURRENCY */}
+          {activeTab === 'currency' && (
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <h3 className="text-sm font-semibold text-white">
+                    {t('choose_default_currency', 'Výchozí měna aplikace')}
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    {t('currency_description', 'Tato měna bude předvyplněna v měnovém konvertoru, kalkulátoru kryptoměn i v postranních widgetech.')}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 px-3 py-1 rounded-xl bg-indigo-950/60 border border-indigo-500/40 text-indigo-300 text-xs font-mono">
+                  <span>Aktivní výchozí měna:</span>
+                  <strong className="text-white font-bold">{config.defaultCurrency || 'CZK'}</strong>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                {ALL_CURRENCIES.map(curr => {
+                  const isSelected = (config.defaultCurrency || 'CZK') === curr.code;
+                  return (
+                    <div
+                      key={curr.code}
+                      onClick={() => {
+                        onUpdateConfig({
+                          ...config,
+                          defaultCurrency: curr.code,
+                          widgets: {
+                            ...currentWidgets,
+                            selectedFiat: curr.code,
+                          },
+                        });
+                      }}
+                      className={`cursor-pointer p-3.5 rounded-xl border flex items-center justify-between transition-all ${
+                        isSelected
+                          ? 'border-indigo-500 ring-2 ring-indigo-500/30 bg-indigo-950/30'
+                          : 'border-slate-800 hover:border-slate-700 bg-slate-950/40'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl">{curr.flag}</span>
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs font-bold text-white font-mono">{curr.code}</span>
+                            <span className="text-[10px] text-slate-400 font-mono">({curr.symbol})</span>
+                          </div>
+                          <span className="text-[11px] text-slate-400 block">{curr.name}</span>
+                        </div>
+                      </div>
+
+                      {isSelected ? (
+                        <span className="w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center shadow-md">
+                          <Check className="w-3 h-3" />
+                        </span>
+                      ) : (
+                        <span className="w-5 h-5 rounded-full border border-slate-700 bg-slate-900" />
+                      )}
                     </div>
                   );
                 })}

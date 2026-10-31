@@ -9,6 +9,8 @@ import {
   Check,
   AlertCircle,
   Clock,
+  Edit3,
+  RotateCcw,
   Sparkles,
 } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
@@ -17,7 +19,10 @@ import {
   CryptoRateInfo,
   getSavedRates,
   refreshAllRates,
+  setManualCryptoPrice,
+  clearManualCryptoOverrides,
 } from '../../services/currencyService';
+import { loadUserConfig } from '../../services/storage';
 
 interface Props {
   isOffline: boolean;
@@ -26,6 +31,10 @@ interface Props {
 export const CurrencyCryptoTool: React.FC<Props> = ({ isOffline }) => {
   const { t, language } = useI18n();
   const [activeTab, setActiveTab] = useState<'fiat' | 'crypto'>('fiat');
+
+  // Load user config for default currency
+  const userConfig = loadUserConfig();
+  const defaultAppCurrency = userConfig.defaultCurrency || 'CZK';
 
   // Rates initialized from disk cache
   const initialData = getSavedRates();
@@ -38,12 +47,16 @@ export const CurrencyCryptoTool: React.FC<Props> = ({ isOffline }) => {
   // Fiat converter state
   const [fiatAmount, setFiatAmount] = useState<number>(1000);
   const [fromCurrency, setFromCurrency] = useState<string>('EUR');
-  const [toCurrency, setToCurrency] = useState<string>('CZK');
+  const [toCurrency, setToCurrency] = useState<string>(defaultAppCurrency);
 
   // Crypto tracker state
   const [selectedCrypto, setSelectedCrypto] = useState<string>('BTC');
-  const [cryptoAmount, setCryptoAmount] = useState<number>(0.5);
-  const [targetFiat, setTargetFiat] = useState<string>('CZK');
+  const [cryptoAmount, setCryptoAmount] = useState<number>(1);
+  const [targetFiat, setTargetFiat] = useState<string>(defaultAppCurrency);
+
+  // Custom price override modal state
+  const [isEditingPrice, setIsEditingPrice] = useState(false);
+  const [editPriceInput, setEditPriceInput] = useState<string>('');
 
   const fiatAmountId = useId();
   const fromCurrencyId = useId();
@@ -91,11 +104,11 @@ export const CurrencyCryptoTool: React.FC<Props> = ({ isOffline }) => {
   const cryptoInfo = cryptoRates[selectedCrypto] || cryptoRates.BTC || {
     name: 'Bitcoin',
     symbol: 'BTC',
-    usdPrice: 70000,
+    usdPrice: 71500,
     change24h: 0,
   };
 
-  const usdInCzk = fiatRates.USD?.rate || 23.65;
+  const usdInCzk = fiatRates.USD?.rate || 23.42;
   const cryptoPriceInTargetFiat =
     targetFiat === 'USD'
       ? cryptoInfo.usdPrice
@@ -108,6 +121,26 @@ export const CurrencyCryptoTool: React.FC<Props> = ({ isOffline }) => {
   const swapFiat = () => {
     setFromCurrency(toCurrency);
     setToCurrency(fromCurrency);
+  };
+
+  const handleOpenEditPrice = () => {
+    setEditPriceInput(cryptoInfo.usdPrice.toString());
+    setIsEditingPrice(true);
+  };
+
+  const handleSaveCustomPrice = () => {
+    const parsed = parseFloat(editPriceInput);
+    if (!isNaN(parsed) && parsed > 0) {
+      const updated = setManualCryptoPrice(selectedCrypto, parsed);
+      setCryptoRates(updated);
+      setIsEditingPrice(false);
+    }
+  };
+
+  const handleResetToLive = () => {
+    clearManualCryptoOverrides();
+    executeRefresh();
+    setIsEditingPrice(false);
   };
 
   const locale =
@@ -152,7 +185,7 @@ export const CurrencyCryptoTool: React.FC<Props> = ({ isOffline }) => {
           <p className="text-sm text-slate-400 mt-1">
             {t(
               'currency_crypto_subtitle',
-              'Oficiální mezibankovní devizové kurzy v reálném čase a živé sledování kryptoměn s automatickým obnovováním a offline cache.'
+              'Oficiální devizové kurzy a kryptoměny v reálném čase. Možnost okamžité aktualizace nebo nastavení vlastního kurzu.'
             )}
           </p>
         </div>
@@ -164,12 +197,10 @@ export const CurrencyCryptoTool: React.FC<Props> = ({ isOffline }) => {
               onClick={executeRefresh}
               disabled={isRefreshing}
               className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:border-slate-700 transition-colors flex items-center gap-1.5 text-xs font-medium"
-              title="Aktualizovat živé kurzy z internetu"
+              title="Aktualizovat živé kurzy z burzy"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-indigo-400' : ''}`} />
-              <span className="hidden sm:inline">
-                {isRefreshing ? 'Stahuji...' : 'Aktualizovat nyní'}
-              </span>
+              <span>{isRefreshing ? 'Stahuji...' : 'Aktualizovat kurzy'}</span>
             </button>
           )}
 
@@ -200,7 +231,7 @@ export const CurrencyCryptoTool: React.FC<Props> = ({ isOffline }) => {
           <div className="flex items-center gap-2">
             <WifiOff className="w-4 h-4 shrink-0" />
             <span>
-              Aplikace běží offline: Využívají se uložené směnné kurzy z disku ({lastUpdated || 'Lokální data'}).
+              Aplikace běží offline: Využívají se uložené směnné kurzy z disku ({lastUpdated || 'Lokální cache'}).
             </span>
           </div>
           <span className="font-mono text-[10px] text-amber-400/80">
@@ -263,12 +294,19 @@ export const CurrencyCryptoTool: React.FC<Props> = ({ isOffline }) => {
 
             {/* To currency input & converted value */}
             <div className="space-y-2">
-              <label
-                htmlFor={toCurrencyId}
-                className="text-xs font-semibold text-slate-400 uppercase tracking-wider block"
-              >
-                {t('to_currency', 'Do měny')}
-              </label>
+              <div className="flex items-center justify-between">
+                <label
+                  htmlFor={toCurrencyId}
+                  className="text-xs font-semibold text-slate-400 uppercase tracking-wider block"
+                >
+                  {t('to_currency', 'Do měny')}
+                </label>
+                {toCurrency === defaultAppCurrency && (
+                  <span className="text-[10px] font-mono text-indigo-400 px-1.5 py-0.2 rounded bg-indigo-950/60 border border-indigo-800/50">
+                    Výchozí měna
+                  </span>
+                )}
+              </div>
               <select
                 id={toCurrencyId}
                 value={toCurrency}
@@ -300,10 +338,10 @@ export const CurrencyCryptoTool: React.FC<Props> = ({ isOffline }) => {
           <div className="p-4 rounded-xl bg-slate-900/30 border border-slate-800 space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                {t('exchange_rates_overview', 'Živé směnné kurzy (Hodnota v CZK)')}
+                {t('exchange_rates_overview', 'Směnné kurzy k CZK')}
               </span>
               <span className="text-[10px] font-mono text-slate-500">
-                Zdroje: Open Exchange Rates & ECB • {lastUpdated || 'Živě'}
+                Zdroj: Open Exchange Rates & ECB • {lastUpdated || 'Živě'}
               </span>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
@@ -314,7 +352,7 @@ export const CurrencyCryptoTool: React.FC<Props> = ({ isOffline }) => {
                     key={code}
                     onClick={() => {
                       setFromCurrency(code);
-                      setToCurrency('CZK');
+                      setToCurrency(defaultAppCurrency);
                     }}
                     className="p-2.5 rounded-lg bg-slate-950/60 border border-slate-800/80 hover:border-indigo-500/40 cursor-pointer transition-colors"
                   >
@@ -349,7 +387,14 @@ export const CurrencyCryptoTool: React.FC<Props> = ({ isOffline }) => {
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold font-mono text-white">{c.symbol}</span>
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs font-bold font-mono text-white">{c.symbol}</span>
+                    {c.isCustom && (
+                      <span className="text-[8px] px-1 rounded bg-amber-500/20 text-amber-300 font-mono">
+                        Vlastní
+                      </span>
+                    )}
+                  </div>
                   <span
                     className={`text-[10px] font-mono ${
                       c.change24h >= 0 ? 'text-emerald-400' : 'text-red-400'
@@ -372,16 +417,70 @@ export const CurrencyCryptoTool: React.FC<Props> = ({ isOffline }) => {
 
           {/* Calculator and portfolio value */}
           <div className="p-6 rounded-2xl bg-slate-900/40 border border-slate-800 space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
                 {t('crypto_calculator_title', 'Kalkulátor hodnoty kryptoměny')}: {cryptoInfo.name} (
                 {cryptoInfo.symbol})
               </span>
-              <span className="text-xs font-mono text-slate-500">
-                1 {cryptoInfo.symbol} = ${cryptoInfo.usdPrice.toLocaleString()} USD (
-                {(cryptoInfo.usdPrice * usdInCzk).toLocaleString(locale, { maximumFractionDigits: 0 })} CZK)
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-mono text-slate-400">
+                  Cena: <strong>${cryptoInfo.usdPrice.toLocaleString()} USD</strong>
+                  {cryptoInfo.isCustom && ' (Ručně nastaveno)'}
+                </span>
+
+                <button
+                  onClick={handleOpenEditPrice}
+                  className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs text-indigo-300 hover:text-white transition-colors flex items-center gap-1"
+                  title="Ručně upravit cenu kryptoměny"
+                >
+                  <Edit3 className="w-3 h-3" />
+                  <span>Upravit cenu</span>
+                </button>
+
+                {cryptoInfo.isCustom && (
+                  <button
+                    onClick={handleResetToLive}
+                    className="px-2 py-1 rounded-lg bg-amber-950/40 hover:bg-amber-900/60 border border-amber-800 text-xs text-amber-300 transition-colors flex items-center gap-1"
+                    title="Obnovit živý burzovní kurz"
+                  >
+                    <RotateCcw className="w-3 h-3" />
+                    <span>Obnovit live</span>
+                  </button>
+                )}
+              </div>
             </div>
+
+            {/* Custom Price Editor Inline */}
+            {isEditingPrice && (
+              <div className="p-3.5 rounded-xl bg-slate-950 border border-indigo-500/40 flex flex-wrap items-center gap-3 animate-fade-in">
+                <span className="text-xs text-slate-300 font-medium">
+                  Zadejte vlastní cenu pro {cryptoInfo.name} ({cryptoInfo.symbol}) v USD:
+                </span>
+                <div className="flex items-center gap-2 flex-1 min-w-[160px] max-w-xs">
+                  <span className="text-slate-400 font-mono text-sm">$</span>
+                  <input
+                    type="number"
+                    step="any"
+                    value={editPriceInput}
+                    onChange={e => setEditPriceInput(e.target.value)}
+                    placeholder="Např. 71500"
+                    className="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-sm font-mono text-white focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+                <button
+                  onClick={handleSaveCustomPrice}
+                  className="px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-colors"
+                >
+                  Uložit cenu
+                </button>
+                <button
+                  onClick={() => setIsEditingPrice(false)}
+                  className="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-white text-xs transition-colors"
+                >
+                  Zrušit
+                </button>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="space-y-1">
@@ -400,7 +499,7 @@ export const CurrencyCryptoTool: React.FC<Props> = ({ isOffline }) => {
 
               <div className="space-y-1">
                 <label htmlFor={targetFiatId} className="text-xs text-slate-400">
-                  {t('convert_to_currency', 'Převést na cílovou měnu')}:
+                  {t('convert_to_currency', 'Převést na měnu')}:
                 </label>
                 <select
                   id={targetFiatId}

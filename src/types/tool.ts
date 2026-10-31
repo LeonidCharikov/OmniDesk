@@ -1,12 +1,22 @@
 import React from 'react';
 
-export type ToolCategory = 'all' | 'favorites' | 'files' | 'math' | 'science' | 'finance' | 'utilities' | 'productivity' | 'architecture';
+export type ToolCategory =
+  | 'all'
+  | 'favorites'
+  | 'files'
+  | 'programming'
+  | 'planning'
+  | 'math'
+  | 'science'
+  | 'finance'
+  | 'utilities'
+  | 'architecture';
 
 export interface ToolDefinition {
   id: string;
   title: string;
   shortDesc: string;
-  category: 'files' | 'math' | 'science' | 'finance' | 'utilities' | 'productivity';
+  category: 'files' | 'programming' | 'planning' | 'math' | 'science' | 'finance' | 'utilities';
   icon: string;
   requiresOnline?: boolean;
   component: React.ComponentType;
@@ -39,6 +49,7 @@ export interface UserConfig {
   simulatedOffline: boolean;
   theme: 'dark' | 'light';
   themeId: ThemeId;
+  defaultCurrency?: string; // e.g. 'CZK', 'EUR', 'USD'
   widgets: WidgetCustomization;
   enabledWidgets?: string[];
   language?: string;

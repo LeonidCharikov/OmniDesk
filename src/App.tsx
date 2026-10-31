@@ -157,10 +157,12 @@ export default function App() {
       case 'all': return t('cat_all', 'Všechny nástroje');
       case 'favorites': return t('cat_favorites', 'Oblíbené');
       case 'files': return t('cat_files', 'Soubory & Dokumenty');
-      case 'math': return t('cat_math', 'Matematika');
-      case 'science': return t('cat_science', 'Věda & Technika');
-      case 'finance': return t('cat_finance', 'Finance & Měny');
-      case 'utilities': return t('cat_utilities', 'Utility');
+      case 'programming': return t('cat_programming', 'Programování & Kód');
+      case 'planning': return t('cat_planning', 'Plánování & Produktivita');
+      case 'math': return t('cat_math', 'Matematika & Kalkulačky');
+      case 'science': return t('cat_science', 'Věda & Chemie');
+      case 'finance': return t('cat_finance', 'Finance & Kryptoměny');
+      case 'utilities': return t('cat_utilities', 'Utility & Nástroje');
       case 'architecture': return t('cat_architecture', 'Tauri Blueprint');
       default: return t('catalog', 'Katalog');
     }
