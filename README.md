@@ -12,6 +12,24 @@
 
 The application defaults to **English** out-of-the-box, with dynamic, first-class localization across 5 languages (**English**, **Čeština**, **Deutsch**, **Español**, and **Русский**).
 
+<p align="center">
+  <img src="docs/screenshots/dashboard.png" alt="OmniDesk Main Dashboard" width="100%" style="border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.4);" />
+</p>
+
+---
+
+## 📸 Screenshots & Visual Showcase
+
+| 🖥️ Main Dashboard (All Tools) | 📈 2D Function Grapher & Plotter |
+| :---: | :---: |
+| [![Main Dashboard](docs/screenshots/dashboard.png)](docs/screenshots/dashboard.png) | [![2D Function Grapher](docs/screenshots/function-grapher.png)](docs/screenshots/function-grapher.png) |
+| *Categorized workstation with mini-widgets & search* | *Interactive curves, tangent slopes & math formulas* |
+
+| 💱 Live Crypto & Currency Rates | ⚙️ Application Settings & Configurator |
+| :---: | :---: |
+| [![Crypto & Currency Tracker](docs/screenshots/crypto-rates.png)](docs/screenshots/crypto-rates.png) | [![Settings & Configurator](docs/screenshots/settings-configurator.png)](docs/screenshots/settings-configurator.png) |
+| *Real-time cryptocurrency ticker & value calculator* | *Themes, currency preferences, widgets & JSON backup* |
+
 ---
 
 ## 🚀 How to Run OmniDesk
@@ -202,6 +220,8 @@ All dictionaries are organized under `src/locales/*.json` and are fully compatib
 ├── .vscode/
 │   ├── settings.json       # i18n Ally & VS Code preferences
 │   └── extensions.json     # Recommended extensions (i18n Ally, Tauri, Rust)
+├── docs/
+│   └── screenshots/        # High-resolution application screenshots for GitHub
 ├── public/                 # Static assets, logos, and PWA manifest
 ├── src/
 │   ├── components/

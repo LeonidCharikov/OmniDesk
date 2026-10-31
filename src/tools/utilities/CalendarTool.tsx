@@ -565,6 +565,7 @@ const EventModal: React.FC<{
   onDelete: (id: string) => void;
   onClose: () => void;
 }> = ({ slot, event, onSave, onDelete, onClose }) => {
+  const { t } = useI18n();
   const [title, setTitle] = useState(event?.title || '');
   const [description, setDescription] = useState(event?.description || '');
   const [date, setDate] = useState(event?.date || slot?.date || dateToStr(new Date()));
