@@ -67,6 +67,20 @@ const CITIES = [
   { id: 'Europe/Berlin', name: 'Berlín', label: '🇩🇪 Berlín (UTC+1)' },
 ];
 
+const CITY_NAMES: Record<string, Record<'cs' | 'en' | 'de' | 'es' | 'ru', string>> = {
+  'Europe/Prague': { cs: 'Praha', en: 'Prague', de: 'Prag', es: 'Praga', ru: 'Прага' },
+  'Europe/London': { cs: 'Londýn', en: 'London', de: 'London', es: 'Londres', ru: 'Лондон' },
+  'America/New_York': { cs: 'New York', en: 'New York', de: 'New York', es: 'Nueva York', ru: 'Нью-Йорк' },
+  'Asia/Tokyo': { cs: 'Tokio', en: 'Tokyo', de: 'Tokio', es: 'Tokio', ru: 'Токио' },
+  'Europe/Moscow': { cs: 'Moskva', en: 'Moscow', de: 'Moskau', es: 'Moscú', ru: 'Москва' },
+  'Asia/Dubai': { cs: 'Dubaj', en: 'Dubai', de: 'Dubai', es: 'Dubái', ru: 'Дубай' },
+  'Australia/Sydney': { cs: 'Sydney', en: 'Sydney', de: 'Sydney', es: 'Sídney', ru: 'Сидней' },
+  'Asia/Singapore': { cs: 'Singapur', en: 'Singapore', de: 'Singapur', es: 'Singapur', ru: 'Сингапур' },
+  'America/Los_Angeles': { cs: 'Los Angeles', en: 'Los Angeles', de: 'Los Angeles', es: 'Los Ángeles', ru: 'Лос-Анджелес' },
+  'Europe/Paris': { cs: 'Paříž', en: 'Paris', de: 'Paris', es: 'París', ru: 'Париж' },
+  'Europe/Berlin': { cs: 'Berlín', en: 'Berlin', de: 'Berlin', es: 'Berlín', ru: 'Берлин' },
+};
+
 const FIATS = [
   { code: 'CZK', name: 'Česká koruna (CZK)' },
   { code: 'EUR', name: 'Euro (EUR)' },
@@ -77,6 +91,23 @@ const FIATS = [
   { code: 'PLN', name: 'Polský zlotý (PLN)' },
   { code: 'JPY', name: 'Japonský jen (JPY)' },
 ];
+
+const CURRENCY_NAMES: Record<string, Record<'cs' | 'en' | 'de' | 'es' | 'ru', string>> = {
+  CZK: { cs: 'Česká koruna', en: 'Czech koruna', de: 'Tschechische Krone', es: 'Corona checa', ru: 'Чешская крона' },
+  EUR: { cs: 'Euro', en: 'Euro', de: 'Euro', es: 'Euro', ru: 'Евро' },
+  USD: { cs: 'Americký dolar', en: 'US dollar', de: 'US-Dollar', es: 'Dólar estadounidense', ru: 'Доллар США' },
+  GBP: { cs: 'Britská libra', en: 'British pound', de: 'Britisches Pfund', es: 'Libra esterlina', ru: 'Британский фунт' },
+  CHF: { cs: 'Švýcarský frank', en: 'Swiss franc', de: 'Schweizer Franken', es: 'Franco suizo', ru: 'Швейцарский франк' },
+  PLN: { cs: 'Polský zlotý', en: 'Polish zloty', de: 'Polnischer Złoty', es: 'Zloty polaco', ru: 'Польский злотый' },
+  JPY: { cs: 'Japonský jen', en: 'Japanese yen', de: 'Japanischer Yen', es: 'Yen japonés', ru: 'Японская иена' },
+  CAD: { cs: 'Kanadský dolar', en: 'Canadian dollar', de: 'Kanadischer Dollar', es: 'Dólar canadiense', ru: 'Канадский доллар' },
+  AUD: { cs: 'Australský dolar', en: 'Australian dollar', de: 'Australischer Dollar', es: 'Dólar australiano', ru: 'Австралийский доллар' },
+  HUF: { cs: 'Maďarský forint', en: 'Hungarian forint', de: 'Ungarischer Forint', es: 'Forinto húngaro', ru: 'Венгерский форинт' },
+  SEK: { cs: 'Švédská koruna', en: 'Swedish krona', de: 'Schwedische Krone', es: 'Corona sueca', ru: 'Шведская крона' },
+  NOK: { cs: 'Norská koruna', en: 'Norwegian krone', de: 'Norwegische Krone', es: 'Corona noruega', ru: 'Норвежская крона' },
+  DKK: { cs: 'Dánská koruna', en: 'Danish krone', de: 'Dänische Krone', es: 'Corona danesa', ru: 'Датская крона' },
+  RUB: { cs: 'Ruský rubl', en: 'Russian ruble', de: 'Russischer Rubel', es: 'Rublo ruso', ru: 'Российский рубль' },
+};
 
 const CRYPTOS = [
   { code: 'BTC', name: 'Bitcoin (BTC)' },
@@ -114,8 +145,15 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
     selectedCityName: 'Praha',
     selectedFiat: 'CZK',
     selectedCrypto: 'BTC',
+    selectedCities: ['Europe/Prague'],
+    selectedFiats: ['CZK'],
+    selectedCryptos: ['BTC'],
+    timerDurationMinutes: 25,
     quickNote: '',
   };
+  const selectedCities = currentWidgets.selectedCities?.length ? currentWidgets.selectedCities : [currentWidgets.selectedCity];
+  const selectedFiats = currentWidgets.selectedFiats?.length ? currentWidgets.selectedFiats : [currentWidgets.selectedFiat];
+  const selectedCryptos = currentWidgets.selectedCryptos?.length ? currentWidgets.selectedCryptos : [currentWidgets.selectedCrypto];
 
   const jsonExportPayload: UserConfig = {
     ...config,
@@ -233,6 +271,20 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
         selectedCityName: found?.name || 'Praha',
       },
     });
+  };
+
+  const updateWidgetList = (key: 'selectedCities' | 'selectedFiats' | 'selectedCryptos', index: number, value: string) => {
+    const source = key === 'selectedCities' ? selectedCities : key === 'selectedFiats' ? selectedFiats : selectedCryptos;
+    const updated = [...source];
+    updated[index] = value;
+    const next = { ...currentWidgets, [key]: updated };
+    if (key === 'selectedCities' && index === 0) {
+      next.selectedCity = value;
+      next.selectedCityName = CITIES.find(city => city.id === value)?.name || 'Praha';
+    }
+    if (key === 'selectedFiats' && index === 0) next.selectedFiat = value;
+    if (key === 'selectedCryptos' && index === 0) next.selectedCrypto = value;
+    onUpdateConfig({ ...config, widgets: next });
   };
 
   const handleFiatChange = (fiatCode: string) => {
@@ -478,7 +530,7 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
                             <span className="text-xs font-bold text-white font-mono">{curr.code}</span>
                             <span className="text-[10px] text-slate-400 font-mono">({curr.symbol})</span>
                           </div>
-                          <span className="text-[11px] text-slate-400 block">{curr.name}</span>
+                          <span className="text-[11px] text-slate-400 block">                          {CURRENCY_NAMES[curr.code]?.[language] || curr.name}</span>
                         </div>
                       </div>
 
@@ -610,17 +662,13 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
                     <label className="text-xs font-medium text-slate-300">
                       {t('selected_city_for_clock', 'Město pro hodiny')}
                     </label>
-                    <select
-                      value={currentWidgets.selectedCity}
-                      onChange={(e) => handleCityChange(e.target.value)}
-                      className="w-full text-xs p-2 rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-indigo-500"
-                    >
-                      {CITIES.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.label}
-                        </option>
+                    <div className="space-y-1">
+                      {Array.from({ length: 3 }, (_, index) => (
+                        <select key={index} value={selectedCities[index] || selectedCities[0]} onChange={e => updateWidgetList('selectedCities', index, e.target.value)} className="w-full text-xs p-2 rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-indigo-500">
+                          {CITIES.map(c => <option key={c.id} value={c.id}>{c.label.replace(c.name, CITY_NAMES[c.id]?.[language] || c.name)}</option>)}
+                        </select>
                       ))}
-                    </select>
+                    </div>
                   </div>
 
                   {/* Fiat selector */}
@@ -628,17 +676,13 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
                     <label className="text-xs font-medium text-slate-300">
                       {t('selected_fiat', 'Sledovaná fiat měna')}
                     </label>
-                    <select
-                      value={currentWidgets.selectedFiat}
-                      onChange={(e) => handleFiatChange(e.target.value)}
-                      className="w-full text-xs p-2 rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-indigo-500"
-                    >
-                      {FIATS.map((f) => (
-                        <option key={f.code} value={f.code}>
-                          {f.name}
-                        </option>
+                    <div className="space-y-1">
+                      {Array.from({ length: 3 }, (_, index) => (
+                        <select key={index} value={selectedFiats[index] || selectedFiats[0]} onChange={e => updateWidgetList('selectedFiats', index, e.target.value)} className="w-full text-xs p-2 rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-indigo-500">
+                          {FIATS.map(f => <option key={f.code} value={f.code}>{CURRENCY_NAMES[f.code]?.[language] || f.name} ({f.code})</option>)}
+                        </select>
                       ))}
-                    </select>
+                    </div>
                   </div>
 
                   {/* Crypto selector */}
@@ -646,17 +690,17 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
                     <label className="text-xs font-medium text-slate-300">
                       {t('selected_crypto', 'Sledovaná kryptoměna')}
                     </label>
-                    <select
-                      value={currentWidgets.selectedCrypto}
-                      onChange={(e) => handleCryptoChange(e.target.value)}
-                      className="w-full text-xs p-2 rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-indigo-500"
-                    >
-                      {CRYPTOS.map((c) => (
-                        <option key={c.code} value={c.code}>
-                          {c.name}
-                        </option>
+                    <div className="space-y-1">
+                      {Array.from({ length: 3 }, (_, index) => (
+                        <select key={index} value={selectedCryptos[index] || selectedCryptos[0]} onChange={e => updateWidgetList('selectedCryptos', index, e.target.value)} className="w-full text-xs p-2 rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-indigo-500">
+                          {CRYPTOS.map(c => <option key={c.code} value={c.code}>{c.name}</option>)}
+                        </select>
                       ))}
-                    </select>
+                      <label className="text-xs font-medium text-slate-300 sm:col-span-3">
+                        {t('widget_timer_custom', 'Vlastní délka timeru (minuty)')}
+                        <input type="number" min="1" max="180" value={currentWidgets.timerDurationMinutes || 25} onChange={e => onUpdateConfig({ ...config, widgets: { ...currentWidgets, timerDurationMinutes: Math.min(180, Math.max(1, Number(e.target.value) || 1)) } })} className="mt-1 w-full text-xs p-2 rounded-lg bg-slate-900 border border-slate-700 text-white" />
+                      </label>
+                    </div>
                   </div>
                 </div>
               </div>

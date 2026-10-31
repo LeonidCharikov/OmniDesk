@@ -15,6 +15,10 @@ export const DEFAULT_WIDGETS: WidgetCustomization = {
   selectedCityName: 'Praha',
   selectedFiat: 'CZK',
   selectedCrypto: 'BTC',
+  selectedCities: ['Europe/Prague'],
+  selectedFiats: ['CZK'],
+  selectedCryptos: ['BTC'],
+  timerDurationMinutes: 25,
   quickNote: 'OmniDesk rychlá poznámka...',
   dailyTasks: DEFAULT_TASKS,
 };
@@ -50,6 +54,18 @@ export function loadUserConfig(): UserConfig {
         : Array.isArray(parsed.enabledWidgets)
         ? parsed.enabledWidgets
         : DEFAULT_WIDGETS.enabledWidgets,
+      selectedCities: Array.isArray(parsed.widgets?.selectedCities) && parsed.widgets.selectedCities.length
+        ? parsed.widgets.selectedCities.slice(0, 3)
+        : [parsed.widgets?.selectedCity || DEFAULT_WIDGETS.selectedCity],
+      selectedFiats: Array.isArray(parsed.widgets?.selectedFiats) && parsed.widgets.selectedFiats.length
+        ? parsed.widgets.selectedFiats.slice(0, 3)
+        : [parsed.widgets?.selectedFiat || DEFAULT_WIDGETS.selectedFiat],
+      selectedCryptos: Array.isArray(parsed.widgets?.selectedCryptos) && parsed.widgets.selectedCryptos.length
+        ? parsed.widgets.selectedCryptos.slice(0, 3)
+        : [parsed.widgets?.selectedCrypto || DEFAULT_WIDGETS.selectedCrypto],
+      timerDurationMinutes: typeof parsed.widgets?.timerDurationMinutes === 'number'
+        ? Math.min(180, Math.max(1, parsed.widgets.timerDurationMinutes))
+        : DEFAULT_WIDGETS.timerDurationMinutes,
     };
 
     const themeId: ThemeId = parsed.themeId || (parsed.theme === 'light' ? 'light' : 'midnight');
@@ -107,6 +123,10 @@ export function validateConfigJson(jsonString: string): { valid: boolean; config
         selectedCityName: parsed.widgets?.selectedCityName || DEFAULT_WIDGETS.selectedCityName,
         selectedFiat: parsed.widgets?.selectedFiat || DEFAULT_WIDGETS.selectedFiat,
         selectedCrypto: parsed.widgets?.selectedCrypto || DEFAULT_WIDGETS.selectedCrypto,
+        selectedCities: Array.isArray(parsed.widgets?.selectedCities) ? parsed.widgets.selectedCities.slice(0, 3) : [parsed.widgets?.selectedCity || DEFAULT_WIDGETS.selectedCity],
+        selectedFiats: Array.isArray(parsed.widgets?.selectedFiats) ? parsed.widgets.selectedFiats.slice(0, 3) : [parsed.widgets?.selectedFiat || DEFAULT_WIDGETS.selectedFiat],
+        selectedCryptos: Array.isArray(parsed.widgets?.selectedCryptos) ? parsed.widgets.selectedCryptos.slice(0, 3) : [parsed.widgets?.selectedCrypto || DEFAULT_WIDGETS.selectedCrypto],
+        timerDurationMinutes: typeof parsed.widgets?.timerDurationMinutes === 'number' ? Math.min(180, Math.max(1, parsed.widgets.timerDurationMinutes)) : DEFAULT_WIDGETS.timerDurationMinutes,
         quickNote: typeof parsed.widgets?.quickNote === 'string' ? parsed.widgets.quickNote : DEFAULT_WIDGETS.quickNote,
         dailyTasks: Array.isArray(parsed.widgets?.dailyTasks) ? parsed.widgets.dailyTasks : DEFAULT_TASKS,
       },

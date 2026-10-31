@@ -141,6 +141,41 @@ const CITY_NAMES_LOCALE: Record<string, Record<string, string>> = {
     de: 'Dubai',
     es: 'Dubái',
   },
+  'Europe/Moscow': {
+    en: 'Moscow',
+    cs: 'Moskva',
+    ru: 'Москва',
+    de: 'Moskau',
+    es: 'Moscú',
+  },
+  'Asia/Singapore': {
+    en: 'Singapore',
+    cs: 'Singapur',
+    ru: 'Сингапур',
+    de: 'Singapur',
+    es: 'Singapur',
+  },
+  'America/Los_Angeles': {
+    en: 'Los Angeles',
+    cs: 'Los Angeles',
+    ru: 'Лос-Анджелес',
+    de: 'Los Angeles',
+    es: 'Los Ángeles',
+  },
+  'Europe/Paris': {
+    en: 'Paris',
+    cs: 'Paříž',
+    ru: 'Париж',
+    de: 'Paris',
+    es: 'París',
+  },
+  'Europe/Berlin': {
+    en: 'Berlin',
+    cs: 'Berlín',
+    ru: 'Берлин',
+    de: 'Berlin',
+    es: 'Berlín',
+  },
 };
 
 export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
@@ -157,9 +192,9 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
   const [now, setNow] = useState(new Date());
 
   // Mini timer state
-  const [timerSecondsLeft, setTimerSecondsLeft] = useState(25 * 60);
+  const [timerSecondsLeft, setTimerSecondsLeft] = useState((widgets.timerDurationMinutes || 25) * 60);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
-  const [timerTotal, setTimerTotal] = useState(25 * 60);
+  const [timerTotal, setTimerTotal] = useState((widgets.timerDurationMinutes || 25) * 60);
 
   // Mini system simulation stats
   const [cpuUsage, setCpuUsage] = useState(18);
@@ -247,9 +282,10 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
 
   const locale = language === 'ru' ? 'ru-RU' : language === 'en' ? 'en-US' : language === 'de' ? 'de-DE' : language === 'es' ? 'es-ES' : 'cs-CZ';
 
-  const targetTimezone = widgets.selectedCity || 'Europe/Prague';
-  const localizedCity = CITY_NAMES_LOCALE[targetTimezone]?.[language];
-  const cityName = localizedCity || widgets.selectedCityName || 'Praha';
+  const selectedCityKeys = (widgets.selectedCities?.length ? widgets.selectedCities : [widgets.selectedCity || 'Europe/Prague']).slice(0, 3);
+  const selectedCryptoKeys = (widgets.selectedCryptos?.length ? widgets.selectedCryptos : [widgets.selectedCrypto || 'BTC']).slice(0, 3);
+  const selectedFiatKeys = (widgets.selectedFiats?.length ? widgets.selectedFiats : [widgets.selectedFiat || 'CZK']).slice(0, 3);
+  const customTimerSeconds = Math.min(180, Math.max(1, widgets.timerDurationMinutes || 25)) * 60;
 
   let timeString = '';
   let dateString = '';
@@ -259,14 +295,14 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
       minute: '2-digit',
       second: '2-digit',
       hour12: false,
-      timeZone: targetTimezone,
+      timeZone: selectedCityKeys[0],
     }).format(now);
 
     dateString = new Intl.DateTimeFormat(locale, {
       weekday: 'short',
       day: 'numeric',
       month: 'short',
-      timeZone: targetTimezone,
+      timeZone: selectedCityKeys[0],
     }).format(now);
   } catch {
     timeString = now.toLocaleTimeString();
@@ -287,7 +323,7 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
   }
 
   // Live crypto computation
-  const selectedCryptoKey = widgets.selectedCrypto || 'BTC';
+  const selectedCryptoKey = selectedCryptoKeys[0];
   const cryptoItem = ratesData.crypto[selectedCryptoKey] || ratesData.crypto['BTC'] || {
     name: 'Bitcoin',
     symbol: 'BTC',
@@ -295,7 +331,7 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
     change24h: 2.8,
   };
 
-  const selectedFiatKey = widgets.selectedFiat || 'CZK';
+  const selectedFiatKey = selectedFiatKeys[0];
   const fiatItem = ratesData.fiat[selectedFiatKey] || ratesData.fiat['CZK'] || {
     name: 'Česká koruna',
     rate: 1,
@@ -355,6 +391,13 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
     return task.text;
   };
 
+  const cityCards = selectedCityKeys.map(timezone => {
+    const city = CITY_NAMES_LOCALE[timezone]?.[language] || timezone;
+    const clockTime = new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false, timeZone: timezone }).format(now);
+    const clockDate = new Intl.DateTimeFormat(locale, { weekday: 'short', day: 'numeric', month: 'short', timeZone: timezone }).format(now);
+    return { city, clockTime, clockDate };
+  });
+
   if (isCollapsed) {
     return null;
   }
@@ -375,22 +418,22 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
       </div>
 
       {/* 1. Live Clock Widget with Selected City */}
-      {showClock && (
-        <div className="p-2.5 rounded-lg bg-slate-900/40 border border-slate-800/60 space-y-1">
+      {showClock && cityCards.map(card => (
+        <div key={card.city} className="p-2.5 rounded-lg bg-slate-900/40 border border-slate-800/60 space-y-1">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5 text-slate-400 text-xs">
               <Clock className="w-3 h-3 text-indigo-400" />
-              <span className="text-[11px] font-medium">{dateString}</span>
+              <span className="text-[11px] font-medium">{card.clockDate}</span>
             </div>
             <span className="text-[10px] font-medium text-indigo-300 truncate max-w-[85px] px-1 py-0.5 rounded bg-indigo-950/40 border border-indigo-800/40">
-              {cityName}
+              {card.city}
             </span>
           </div>
           <div className="text-lg font-mono font-bold text-white tracking-tight tabular-nums">
-            {timeString}
+            {card.clockTime}
           </div>
         </div>
-      )}
+      ))}
 
       {/* 2. Mini Timer / Pomodoro Widget */}
       {showTimer && (
@@ -402,13 +445,13 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
             </div>
             <div className="flex items-center gap-1">
               <button
-                onClick={() => resetTimer(25 * 60)}
+                onClick={() => resetTimer(customTimerSeconds)}
                 className={`text-[9px] font-mono px-1 py-0.5 rounded transition-colors ${
-                  timerTotal === 25 * 60 ? 'bg-indigo-700 text-white' : 'text-slate-400 hover:text-white'
+                  timerTotal === customTimerSeconds ? 'bg-indigo-700 text-white' : 'text-slate-400 hover:text-white'
                 }`}
                 title={t('pomodoro_25_min', '25 min Pomodoro')}
               >
-                25m
+                {Math.round(customTimerSeconds / 60)}m
               </button>
               <button
                 onClick={() => resetTimer(5 * 60)}
@@ -460,28 +503,27 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
       {/* 3. Customizable Crypto & Fiat Ticker Widget */}
       {showCrypto && (
         <div className="p-2 rounded-lg bg-slate-900/40 border border-slate-800/60 space-y-1.5">
-          <div className="flex items-center justify-between text-[10px]">
-            <span className="font-mono font-semibold text-slate-200 flex items-center gap-1">
-              {cryptoItem.symbol}
-            </span>
-            <span
-              className={`font-mono text-[9px] flex items-center ${
-                cryptoItem.change24h >= 0 ? 'text-emerald-400' : 'text-rose-400'
-              }`}
-            >
-              {cryptoItem.change24h >= 0 ? (
-                <ArrowUpRight className="w-2.5 h-2.5" />
-              ) : (
-                <ArrowDownRight className="w-2.5 h-2.5" />
-              )}
-              {cryptoItem.change24h >= 0 ? `+${cryptoItem.change24h}%` : `${cryptoItem.change24h}%`}
-            </span>
-            <span className="font-mono text-indigo-300 font-semibold">{formattedCryptoPrice}</span>
-          </div>
-          <div className="flex items-center justify-between text-[10px] pt-1 border-t border-slate-800/40">
-            <span className="font-mono text-slate-400 text-[9px]">{fiatBaseText}</span>
-            <span className="font-mono text-slate-200 font-medium">{fiatRateValue}</span>
-          </div>
+          {selectedCryptoKeys.map((cryptoKey, index) => {
+            const item = ratesData.crypto[cryptoKey] || ratesData.crypto.BTC || cryptoItem;
+            const fiatKey = selectedFiatKeys[index] || selectedFiatKeys[0];
+            const fiat = ratesData.fiat[fiatKey] || ratesData.fiat.CZK || fiatItem;
+            const price = fiatKey === 'USD' ? item.usdPrice : item.usdPrice * usdRateInCzk / (fiat.rate || 1);
+            const priceText = fiatKey === 'USD' ? `$${Math.round(price).toLocaleString()}` : `${price >= 100 ? Math.round(price).toLocaleString() : price.toFixed(price < 1 ? 4 : 2)} ${fiatKey}`;
+            return <div key={cryptoKey} className="space-y-1">
+              <div className="flex items-center justify-between text-[10px]">
+                <span className="font-mono font-semibold text-slate-200">{item.symbol}</span>
+                <span className={`font-mono text-[9px] flex items-center ${item.change24h >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  {item.change24h >= 0 ? <ArrowUpRight className="w-2.5 h-2.5" /> : <ArrowDownRight className="w-2.5 h-2.5" />}
+                  {item.change24h >= 0 ? `+${item.change24h}%` : `${item.change24h}%`}
+                </span>
+                <span className="font-mono text-indigo-300 font-semibold">{priceText}</span>
+              </div>
+              {index === 0 && <div className="flex items-center justify-between text-[10px] pt-1 border-t border-slate-800/40">
+                <span className="font-mono text-slate-400 text-[9px]">{fiatBaseText}</span>
+                <span className="font-mono text-slate-200 font-medium">{fiatRateValue}</span>
+              </div>}
+            </div>;
+          })}
         </div>
       )}
 

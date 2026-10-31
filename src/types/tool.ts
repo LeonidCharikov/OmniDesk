@@ -37,6 +37,10 @@ export interface WidgetCustomization {
   selectedCityName: string;
   selectedFiat: string;
   selectedCrypto: string;
+  selectedCities?: string[];
+  selectedFiats?: string[];
+  selectedCryptos?: string[];
+  timerDurationMinutes?: number;
   quickNote: string;
   dailyTasks?: DailyTask[];
 }
