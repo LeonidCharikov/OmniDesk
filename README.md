@@ -8,233 +8,181 @@
 [![i18n Ally](https://img.shields.io/badge/i18n--Ally-Supported-success?logo=visualstudiocode)](https://marketplace.visualstudio.com/items?itemName=lokalise.i18n-ally)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-**OmniDesk** is a modern, high-performance, all-in-one desktop workstation designed to replace dozens of single-purpose utilities. Built with **Tauri v2 (Rust backend)** and **React 19 / TypeScript / Vite / Tailwind CSS**, it operates primarily **100% offline** directly in device memory with zero server dependencies, while providing native OS hardware telemetry, local file system processing, and instant keyboard navigation (`Ctrl+K`).
+**OmniDesk** je moderní, vysoce výkonná a všestranná desktopová pracovní stanice sdružující **31 integrovaných nástrojů** do jednoho přehledného prostředí. Je postavena na technologiích **Tauri v2 (Rust backend)** a **React 19 / TypeScript / Vite / Tailwind CSS**. Běží primárně **100% offline** přímo v paměti zařízení s nulovou závislostí na cloudu, podporuje nativní telemetrii OS, zpracování lokálních souborů, průhledný horní panel sladěný s aktivním motivem a bleskovou navigaci klávesnicí (`Ctrl+K`).
 
 ---
 
-## 🌟 Key Architectural Highlights
+## 🚀 Jak spustit OmniDesk / How to Run OmniDesk
 
-- **Ultra-Lightweight Desktop Footprint**: Uses the OS Webview via Tauri v2 instead of bundled Chromium, keeping the binary size under ~15 MB and RAM usage under ~35 MB (compared to 150+ MB / 400+ MB in Electron).
-- **100% Offline-First Engine**: Document conversion (DOCX/MD/TXT to PDF), image transcoding (WebP/PNG/JPEG), cryptographic hash calculation (SHA-256), matrix algebra, unit conversions, and chemical molar mass computation run entirely in client-side WebAssembly / JS without sending a single byte to external servers.
-- **Hybrid Online Mode**: Features like live cryptocurrency rates and machine translation detect network connectivity gracefully and cache data locally for seamless offline fallback.
-- **Portable JSON Profiles**: Export your full workstation state (themes, widgets, city/currency preferences, daily tasks, and favorites) into an interchangeable `omnidesk-profile.json` file for instant migration across devices.
-- **i18n Ally Localization Architecture**: Standardized JSON locale format (`src/locales/*.json`) configured with VS Code / Cursor i18n Ally for live translation editing across 5 languages (**Čeština**, **English**, **Русский**, **Deutsch**, **Español**).
+Aplikaci OmniDesk můžete spustit několika způsoby:
+
+### 📦 1. Stažení hotového instalátoru z GitHubu (Releases)
+Nejjednodušší způsob pro běžné uživatele bez nutnosti instalace vývojářských nástrojů:
+1. Přejděte na záložku **Releases** na GitHubu daného repozitáře.
+2. Stáhněte nejnovější sestavený instalátor (`.exe` nebo `.msi` pro Windows, případně balíček pro macOS / Linux).
+3. Spusťte instalátor a OmniDesk se nainstaluje jako standardní aplikace do systému.
 
 ---
 
-## 🚀 How to Run OmniDesk as a Normal Application (3 Ways)
+### 💻 2. Spuštění ve Visual Studio Code / PowerShell (Tauri Dev s MSVC)
+Pokud projekt vyvíjíte nebo spouštíte ze zdrojových kódů v PowerShellu / VS Code na Windows s MSVC Build Tools a Windows SDK:
 
-If you downloaded this repository from GitHub, **you do not need to open VS Code or write terminal commands**! Choose the method that suits you best:
+Zkopírujte a vložte následující příkaz do **PowerShell** terminálu ve VS Code:
 
-### ⚡ 1. Fastest: One-Click Startup Script (`start.bat` for Windows / `start.sh` for Mac & Linux)
-1. Extract the downloaded ZIP or open the repository folder.
-2. Double-click **`start.bat`** on Windows (or run **`./start.sh`** on macOS/Linux).
-3. The script automatically:
-   - Verifies if [Node.js](https://nodejs.org) is installed on your computer.
-   - Installs required dependencies on the very first run (takes ~30-60 seconds once).
-   - Starts the local server and **automatically opens OmniDesk in your browser once the server is completely ready and listening** (eliminating connection-refused errors).
-*(Prerequisite: Download and install free [Node.js LTS](https://nodejs.org) once if you don't have it yet).*
+```powershell
+$msvc="C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Tools\MSVC\14.44.35207"
+$sdk="C:\Program Files (x86)\Windows Kits\10"
+$sdkver="10.0.26100.0"
 
-### 🖥️ 2. Install as a Standalone Desktop App (PWA — Desktop Icon)
-1. Once OmniDesk opens in your browser (Google Chrome, Microsoft Edge, Brave, etc.):
-2. Click the **"Install App"** button in the top right corner of the header (or click the install icon in your browser's address bar).
-3. Click **Install**.
-4. An **OmniDesk desktop shortcut and Start Menu launcher** will be created on your system.
-5. From now on, you can launch OmniDesk directly from your desktop like any normal installed program — it opens in its own window without browser toolbars and works 100% offline.
+$env:Path="$msvc\bin\HostX64\x64;$env:Path"
+$env:INCLUDE="$msvc\include;$sdk\Include\$sdkver\ucrt;$sdk\Include\$sdkver\shared;$sdk\Include\$sdkver\um"
+$env:LIB="$msvc\lib\x64;$sdk\Lib\$sdkver\ucrt\x64;$sdk\Lib\$sdkver\um\x64"
 
-### 📦 3. Compile a Standalone Native Installer (`.exe` / `.msi` via Tauri)
-To package a standalone executable installer that can be shared with anyone without requiring Node.js:
-```bash
-npm run tauri build
+cd "C:\OmniDesk-main\OmniDesk-main"
+npm run tauri dev
 ```
-The compiled native installer will be generated in:
-`src-tauri/target/release/bundle/msi/` or `bundle/nsis/`.
+
+*(Cesty k `msvc` a `sdk` můžete případně upravit podle verze Visual Studio a Windows SDK nainstalované na vašem počítači).*
 
 ---
 
-## 🎨 Visual Themes & Appearance (6 Built-In Themes)
-
-OmniDesk includes a dedicated theme engine that alters the entire UI in real time:
-- 🌌 **Midnight Navy** — The default deep slate and navy palette with vibrant indigo accents.
-- 🖤 **OLED Pure Black** — True `#000000` pitch black background designed for dark rooms and maximum power efficiency on OLED/AMOLED screens.
-- 🩶 **Graphite Charcoal** — Matte technical dark grey styling tailored for developer focus.
-- 🌲 **Cyber Emerald** — High-tech dark forest aesthetic inspired by classic green-screen terminal interfaces.
-- 🔮 **Royal Twilight** — Luxurious deep violet and purple palette.
-- ☀️ **Clean Light** — Modern, high-contrast daylight theme with crisp white panels and clear typography for brightly lit workspaces.
-
-Themes can be switched in real time via the **Settings & Appearance** dialog (accessible via the sliders icon in the header or sidebar).
+### ⚡ 3. Jedno-klikové spuštění skriptem (`start.bat` pro Windows / `start.sh` pro Linux & Mac)
+1. Dvakrát klikněte na soubor **`start.bat`** ve Windows (nebo spusťte `./start.sh` na macOS/Linuxu).
+2. Skript automaticky ověří přítomnost Node.js, při prvním spuštění doinstaluje závislosti a spustí lokální server.
+3. Jakmile je server připraven, automaticky otevře OmniDesk ve výchozím prohlížeči.
 
 ---
 
-## 🧩 Customizable Sidebar Mini-Widgets
-
-Beneath the tool categories in the left sidebar sits a configurable mini-dashboard:
-1. **Live Clock & World Time**: Real-time digital clock displaying the date and exact local time for your chosen world city (**Prague, London, New York, Tokyo, Moscow, Dubai, Sydney, Singapore, Los Angeles, Paris, Berlin**).
-2. **Quick Focus Timer / Pomodoro**: One-click 25-minute focus session, 5-minute break, live countdown progress bar, and pause/reset controls.
-3. **Live Rates Ticker (Crypto & Fiat)**: Real-time price tracking for your chosen cryptocurrency (**BTC, ETH, SOL, TON, BNB, XRP, DOGE, AVAX**) and fiat currency (**CZK, EUR, USD, RUB, GBP, CHF, PLN, JPY**).
-4. **Daily Tasks Checklist**: Quick daily priority tracker with interactive checkboxes, task counter, and one-click task addition/deletion.
-5. **Quick Calculator & Unit Converter**: Single-line quick math evaluator (`25 * 4`, `20% of 600`, `2^8`) and instant unit/currency conversion (`50 km to mi`, `100 lbs to kg`, `25 c to f`, `100 eur to czk`).
-6. **Quick Sticky Note (Scratchpad)**: Auto-saving notepad for temporary numbers, notes, and thoughts without leaving your current workspace.
-7. **System Hardware Gauge**: Real-time CPU and RAM utilization meters.
-
-*Each widget can be enabled or disabled in the Settings modal to fit your screen size.*
+### 🌐 4. Spuštění ve webovém režimu (Web Dev)
+```bash
+npm install
+npm run dev
+```
+Otevřete [http://localhost:3000](http://localhost:3000) ve vašem prohlížeči. Odtud můžete aplikaci nainstalovat také jako **PWA (Desktopovou aplikaci)** jedním kliknutím na tlačítko *Instalovat aplikaci* v záhlaví.
 
 ---
 
-## 🛠️ Complete Integrated Tools Catalog (24 Tools)
+## 🌟 Novinky a nedávné aktualizace v OmniDesk
 
-### 📁 1. Files & Documents
-1. **Multi-Format Converter**: Client-side document conversion (DOCX, Markdown, Plain Text to PDF), data transformation (CSV <-> JSON), and image transcoding (WebP, PNG, JPEG).
-2. **DOCX to PDF Converter**: Local Word document rendering and vector PDF generation with zero server uploads.
-3. **Text & File Diff Comparator**: Visual side-by-side and inline diff with line-by-line change detection.
-4. **File Inspector & Hasher**: Instant SHA-256 cryptographic checksums, binary hex dump, and MIME detection.
-
-### 📐 2. Mathematics & Calculators
-5. **Standard & Scientific Calculator**: Trigonometry (sin, cos, tan), logarithms, powers, roots, memory controls (M+/MR), and history log.
-6. **Dynamic Matrix Calculator**: Dynamic dimensions from $1 \times 1$ up to $6 \times 6$, matrix multiplication ($A \times B$ and $B \times A$), determinants ($\det$), inverses ($A^{-1}$), transposes ($A^T$), and trace ($\text{tr}$).
-7. **2D Function Grapher & Plotter**: Interactive canvas plotting $f(x)$, $g(x)$, $h(x)$, mouse drag panning, smooth zooming, point inspection with tangent line, and PNG export.
-8. **LaTeX Formula Visualizer**: Real-time mathematical formula rendering, quick-insert symbol palette, SVG/MathML export, and equation reference library.
-9. **Statistics & Data Analysis**: Arithmetic mean, median, mode, sample variance, standard deviation, quartiles (Q1, Q3, IQR), and dynamic histogram generator.
-10. **Combinatorics & Number Theory**: Permutations, combinations ($nCr$), variations, Euclidean algorithm (GCD / LCM), and prime factorization.
-
-### 🔬 3. Science & Chemistry
-11. **Chemistry & Molar Mass Calculator**: Chemical formula parser ($H_2O$, $C_6H_{12}O_6$, $Ca(OH)_2$), elemental mass percentage breakdown, interactive periodic table, and solution molarity calculator ($c = n/V$).
-12. **Scientific Unit Converter**: SI and imperial conversions for length, mass, temperature, pressure, and digital data storage.
-
-### 💰 4. Finance & Crypto
-13. **Currency Converter & Crypto Tracker**: 19 fiat currencies with offline caching (including RUB, CZK, EUR, USD, GBP, CHF, PLN, JPY) and real-time live tracker for 14 major cryptocurrencies (BTC, ETH, SOL, TON, BNB, XRP, DOGE, etc.).
-14. **Mortgage & Loan Calculator**: Annuity payment calculation, principal-to-interest breakdown, and downloadable CSV amortization schedule.
-
-### ⚙️ 5. Utilities & System
-15. **System Hardware Monitor**: Real-time CPU core telemetry, RAM usage, and disk partition monitoring via native Tauri `@tauri-apps/plugin-os` and Rust IPC (`sysinfo`).
-16. **WCAG Contrast Validator**: Foreground and background color input, WCAG 2.1 compliance checking (Level AA and AAA), live typography preview, automated contrast tuner, and color vision deficiency simulator (Protanopia, Deuteranopia, Tritanopia, Achromatopsia).
-17. **Color Palette Generator**: Harmonic palette generation, HEX/RGB/HSL conversion, and color harmony schemes.
-18. **Cryptographic Password Generator**: Passwords with custom character sets and memorable Diceware-style passphrases with bit-entropy scoring.
-19. **Offline QR Code Generator**: Vector QR code generation for URLs, Wi-Fi credentials, and plain text with PNG download.
-20. **RegEx Tester & Base64 / URL Encoder**: Regular expression evaluation with capture groups and bidirectional Base64/URL encoding.
-21. **Pomodoro & Focus Timer**: Dedicated Pomodoro cycles (25/5/15 min), custom countdown timer, and split-lap stopwatch.
-22. **World Timezones & Meeting Planner**: Interactive world clock with 28 world cities across all continents and meeting time scrubber slider.
-23. **JSON Formatter & Validator**: Beautify, minify, and validate JSON data structures with syntax error locator.
-24. **Hybrid Online Translator**: Translation tool with automatic network status detection and offline fallback notification.
+- 🧪 **Plná periodická tabulka prvků (všech 118 prvků)**:
+  - Kompletní periodická tabulka v oficiálním standardu IUPAC (periody 1–7, skupiny 1–18, včetně oddělených řad lanthanoidů a aktinoidů).
+  - Přehledné barevné odlišení orbitalových bloků (*s, p, d, f*) a chemických skupin (alkalické kovy, halogeny, vzácné plyny atd.).
+  - Interaktivní detail prvků: protonové číslo, molární hmotnost, elektronegativita, elektronová konfigurace, skupenství a hustota.
+- 💱 **Vždy aktuální živé kurzy měn a kryptoměn**:
+  - Přímé živé propojení s CoinGecko API pro ceny kryptoměn (BTC, ETH, SOL, TON, BNB, XRP, ADA, DOGE, AVAX atd.) s manuálním i automatickým osvěžením.
+  - Volba výchozí měny uživatelem v Nastavení (CZK, EUR, USD, GBP, CHF, PLN, JPY, RUB) – vybraná měna se promítá jak do kalkulaček a převodníků, tak do widgetů v postranním panelu.
+- 📝 **Pokročilý textový editor & poznámkový blok (.txt / .md)**:
+  - Vytváření, otevírání a ukládání textových souborů s kódováním UTF-8.
+  - Změna velikosti písma i formátování velkých/malých písmen **pouze pro konkrétní vybraný text**.
+  - Tvorba nadpisů (H1, H2, H3), zarovnání textu (vlevo, na střed, vpravo).
+  - Vyhledávání a nahrazování s podporou regulárních výrazů, živé statistiky (znaky, slova, řádky, čas čtení) a automatické ukládání.
+- 🗂️ **Kategorizovaná hlavní obrazovka**:
+  - Všechny nástroje jsou na hlavní ploše uspořádány do logických bloků s přehlednými nadpisy kategorií (Soubory & Dokumenty, Matematika, Věda, Finance, Plánování, Utility).
+- 🪟 **Průhledný horní pruh aplikace**:
+  - Horní panel okna s tlačítky pro zavření, minimalizaci a maximalizaci má adaptivní průhledný vzhled sladěný s aktuálně aktivním motivem barev.
+- 🌐 **Plná multijazyčnost bez pevné vazby na češtinu**:
+  - Dynamická lokalizace do 5 jazyků (**čeština, angličtina, němčina, španělština, ruština**) s plným pokrytím všech popisků, nápověd, tlačítek a jednotek.
 
 ---
 
-## 💾 JSON Backup & Profile Migration
+## 🛠️ Kompletní katalog 31 integrovaných nástrojů
 
-All user data and settings are stored locally on your device:
-- **Export Backup `.json` (`omnidesk-profile.json`)**: Download your complete configuration with a single click.
-- **Copy JSON to Clipboard**: Easily transfer your settings as text.
-- **Upload & Restore from `.json`**: Select a backup file to instantly restore your workstation preferences on any new machine.
-- **Paste JSON**: Direct text paste with automatic schema validation.
-- **Factory Reset**: Restore default settings at any time with confirmation.
+### 📁 1. Soubory & Dokumenty (`files`)
+1. **Textový Editor & Poznámkový blok (.txt / .md)**: Úprava a tvorba souborů, selektivní velikost a transformace vybraného textu, nadpisy H1-H3, zarovnání, vyhledávání a nahrazování.
+2. **Rychlý offline diktafon & Hlasové poznámky**: Záznam hlasových poznámek přímo z mikrofonu, živý audio vizualizér, přehrávání, přejmenování a stažení ve formátu WebM.
+3. **Jednoduchý skicák & Podpisový arch**: Kreslicí plátno na bázi HTML5 Canvas (pero, guma, volba tloušťky a barev), linka pro podpis, průhledné/bílé pozadí, Undo a export do PNG.
+4. **Multi-Formátový Konvertor**: Univerzální převod dokumentů (DOCX, MD, TXT -> PDF), datových formátů (CSV <-> JSON) a obrázků (WebP, PNG, JPG).
+5. **DOCX do PDF Konvertor**: Klientský offline převod Word dokumentů do PDF přímo v paměti zařízení bez nahrávání na server.
+6. **Porovnávač Textů a Souborů (Diff Checker)**: Vizuální side-by-side a inline porovnání s detekcí změn řádek po řádku.
+7. **Inspektor Souborů & Kontrolní Součty**: Výpočet kryptografických hashů (SHA-256), binární hex dump a MIME analýza souboru.
+
+### 📐 2. Matematika & Výpočty (`math`)
+8. **Vědecká Kalkulačka**: Trigonometrické funkce (sin, cos, tan), logaritmy, mocniny, odmocniny, paměť (M+/MR) a historie výpočtů.
+9. **Maticová Kalkulačka**: Dynamické matice od $1 \times 1$ do $6 \times 6$, násobení ($A \times B$, $B \times A$), determinanty, inverze, transpozice a stopa matice.
+10. **2D Vykreslovač Funkcí & Grafů**: Interaktivní plátno pro funkce $f(x)$, $g(x)$, $h(x)$, plynulý zoom, posun tažením, tečny a export do PNG.
+11. **LaTeX Editor & Vykreslovač Vzorců**: Real-time renderování matematických vzorců s paletou symbolů, knihovnou rovnic a exportem SVG/MathML.
+12. **Statistika a Analýza Dat**: Aritmetický průměr, medián, modus, rozptyl, směrodatná odchylka, kvartily a generátor histogramů.
+13. **Kombinatorika & Teorie Čísel**: Permutace, kombinace, variace, Eukleidův algoritmus (NSD / NSN) a rozklad na prvočísla.
+
+### 🔬 3. Věda & Přírodní Vědy (`science`)
+14. **Chemie & Periodická Tabulka Prvků**: Kompletní periodická tabulka všech 118 prvků (IUPAC), kalkulačka molární hmotnosti sloučenin, hmotnostní podíly a výpočet molarity roztoků ($c = n/V$).
+15. **Převodník Fyzikálních Jednotek**: Převody pro délku, hmotnost, teplotu, tlak, plochu, objem, rychlost a digitální datové kapacity.
+
+### 💰 4. Finance & Slevy (`finance`)
+16. **Kalkulačka slev, DPH a spropitného**:
+    - Výpočet procentuálních slev a akcí typu 2+1 zdarma (BOGO).
+    - Obousměrná kalkulačka DPH (přidání DPH k základu i vyjmutí daně z celkové ceny s kopií rekapitulace).
+    - Výpočet spropitného a rozpočítání útraty v restauraci na jednotlivé osoby se zaokrouhlováním.
+17. **Kurzy Měn & Krypto Tracker**: 19 světových měn (CZK, EUR, USD, GBP, CHF, PLN, JPY, RUB atd.) a 14 kryptoměn s živými cenami a volbou uživatelské výchozí měny.
+18. **Úvěrová a Hypoteční Kalkulačka**: Výpočet anuitních splátek, poměr jistiny a úroků, amortizační tabulka s exportem do CSV.
+
+### 📋 5. Plánování & Organizace (`planning`)
+19. **Chytrý nákupní lístek & Čeklist**: Kategorizovaný nákupní seznam s odhadem celkové ceny a ceny zboží v košíku, 1-klikové rychlé šablony (mléko, pečivo, káva...) a export do schránky.
+20. **Interaktivní Kalendář & Plánovač**: Měsíční zobrazení, přepínání roků a měsíců, zvýraznění dnešního dne a rychlé plánování událostí.
+
+### ⚙️ 6. Utility & Běžné Použití (`utilities`)
+21. **Převodník velikostí oblečení a obuvi**: Mezinárodní převod velikostí pro pánskou a dámskou obuv (EU, US, UK, CM, palce) s vyhledáním podle délky chodidla a převodník konfekčních velikostí oděvů (XS–3XL).
+22. **Systémový & Hardwarový Monitor**: Využití CPU jader, spotřeba RAM a diskové oddíly přes nativní Tauri IPC.
+23. **WCAG Kontrastní Validátor**: Validace přístupnosti dle WCAG 2.1 (úrovně AA a AAA), simulace poruch barvocitu (protanopie, deuteranopie, tritanopie) a automatické ladění kontrastu.
+24. **Generátor Barevných Palet**: Harmonické palety barev, převody mezi HEX, RGB a HSL, generování schémat.
+25. **Generátor Bezpečných Hesel**: Náhodná hesla s volitelnými sadami znaků a mnemotechnické Diceware fráze s výpočtem entropie.
+26. **Offline QR Kód Generátor**: Vektorové generování QR kódů pro webové odkazy, Wi-Fi přihlášení i libovolný text s exportem do PNG.
+27. **RegEx Tester & Base64 / URL Kodér**: Testování regulárních výrazů se zvýrazněním skupin a obousměrné kódování Base64/URL.
+28. **Pomodoro & Stopky**: Nastavitelné cykly soustředění a přestávek, odpočítávací časovač a mezičasové stopky.
+29. **Světové Časy & Plánovač Schůzek**: Světové hodiny s 28 metropolemi a posuvník pro plánování mezinárodních hovorů v různých časových pásmech.
+30. **JSON Formátovač & Validátor**: Formátování, zmenšení (minifikace) a kontrola syntaktických chyb v JSON struktuře.
+31. **Online Překladač**: Rychlý překladač s automatickou detekcí stavu připojení k internetu.
 
 ---
 
-## 🌍 i18n Ally Localization Architecture
+## 🎨 Vzhled & Motivy (6 integrovaných témat)
 
-OmniDesk features native multi-language localization supporting 5 languages:
-- 🇨🇿 **Čeština** (`cs`) — Default / Source language
+V nastavení vzhledu (ikona posuvníků) lze okamžitě přepínat mezi 6 kompletními barevnými paletami:
+- 🌌 **Midnight Navy** — Výchozí hluboká břidlicová a námořnická paleta s indigovými akcenty.
+- 🖤 **OLED Pure Black** — Černočerné pozadí (`#000000`) optimalizované pro OLED/AMOLED displeje a šetření energie.
+- 🩶 **Graphite Charcoal** — Matná technická tmavě šedá pro maximální soustředění.
+- 🌲 **Cyber Emerald** — Futuristická tmavě zelená paleta inspirovaná terminálovým stylem.
+- 🔮 **Royal Twilight** — Fialový a ametystový odstín s elegantním kontrastem.
+- ☀️ **Clean Light** — Světlý denní režim s vysokým kontrastem pro práci v jasně osvětlených prostorech.
+
+---
+
+## 🧩 Přizpůsobitelné Mini-Widgety v Postranním Panelu
+
+V levém postranním panelu si můžete zapnout nebo vypnout tyto widgety:
+1. **Světový čas a datum** — Hodiny pro vybrané světové město.
+2. **Rychlý Pomodoro časovač** — Spuštění 25minutového bloku jedním kliknutím.
+3. **Živý ticker kurzů měn a kryptoměn** — Přepínatelná výchozí měna a live cena BTC, ETH, SOL atd.
+4. **Denní úkoly (To-Do checklist)** — Rychlý odškrtávací seznam úkolů dne.
+5. **Rychlá kalkulačka a převodník** — Vyhodnocení jednoduchých výrazů (`25 * 4`, `100 EUR to CZK`).
+6. **Rychlé poznámky (Scratchpad)** — Automaticky ukládaný textový zápisník.
+7. **Stav systému (CPU & RAM)** — Okamžitý přehled zatížení počítače.
+
+---
+
+## 💾 Zálohování a přenos profilu v JSON
+
+Veškerá data a nastavení zůstávají lokálně ve vašem počítači:
+- **Export do souboru `omnidesk-profile.json`**: Uložení kompletní konfigurace včetně oblíbených položek, úkolů a nastavení jedním kliknutím.
+- **Kopírování a vložení JSON**: Možnost přenosu nastavení přes schránku.
+- **Obnova ze zálohy**: Nahrání souboru a okamžité načtení pracovního prostředí na novém počítači.
+- **Reset do továrního nastavení**: Bezpečné obnovení výchozího stavu po potvrzení.
+
+---
+
+## 🌍 Podporované Jazyky (i18n)
+
+OmniDesk plně podporuje přepínání mezi 5 jazyky:
+- 🇨🇿 **Čeština** (`cs`)
 - 🇬🇧 **English** (`en`)
-- 🇷🇺 **Русский** (`ru`)
 - 🇩🇪 **Deutsch** (`de`)
 - 🇪🇸 **Español** (`es`)
+- 🇷🇺 **Русский** (`ru`)
 
-### VS Code Integration via i18n Ally:
-Pre-configured in `.vscode/settings.json`:
-```json
-{
-  "i18n-ally.localesPaths": ["src/locales"],
-  "i18n-ally.keystyle": "nested",
-  "i18n-ally.sourceLanguage": "cs",
-  "i18n-ally.displayLanguage": "en",
-  "i18n-ally.enabledParsers": ["json"],
-  "i18n-ally.extract.autoDetect": true
-}
-```
-
-When opened in VS Code or Cursor with the [i18n Ally extension](https://marketplace.visualstudio.com/items?itemName=lokalise.i18n-ally):
-1. **Inline Annotations**: Translations appear as subtle labels right next to `t('...')` calls.
-2. **Translation Matrix**: Shows key coverage across all 5 languages.
-3. **Key Extraction**: Extract any hardcoded string into all locale files automatically.
+Lokalizační slovníky jsou uloženy ve standardním formátu v `src/locales/*.json` a jsou plně kompatibilní s rozšířením **i18n Ally** pro VS Code / Cursor.
 
 ---
 
-## 🛠️ Developer Setup & Commands
+## 📄 Licence
 
-For developers wanting to inspect or modify the source code:
-
-```bash
-# 1. Install dependencies
-npm install
-
-# 2. Run in web development mode
-npm run dev
-
-# 3. Type check & build
-npm run build
-```
-Open [http://localhost:3000](http://localhost:3000) in your browser.
-
----
-
-## 📤 Publishing to Your Remote Git Repository
-
-To connect your local OmniDesk clone with your GitHub repository:
-
-```bash
-# 1. Add your remote GitHub repository URL (replace with your URL):
-git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPOSITORY.git
-
-# 2. Rename default branch to main:
-git branch -M main
-
-# 3. Push all commits to your repository:
-git push -u origin main --force
-```
-
----
-
-## 🤝 Contribution Guidelines
-
-We welcome community contributions, new tools, and translation improvements!
-- **Offline First**: Tools must perform heavy processing (parsing, calculation, hashing, conversion) locally without cloud dependencies.
-- **Modern Desktop Aesthetic**: Sleek dark/light UI with high contrast and zero telemetry.
-- **Strict Typing**: All code must pass `tsc --noEmit` with zero errors.
-
----
-
-## 📁 Repository Structure
-
-```text
-├── .vscode/
-│   ├── settings.json       # i18n Ally & VS Code preferences
-│   └── extensions.json     # Recommended extensions (i18n Ally, Tauri, Rust)
-├── public/                 # Static assets, logos, and manifest
-├── src/
-│   ├── components/
-│   │   ├── layout/         # Header, Sidebar, ToolGrid, CommandPalette, SidebarWidgets
-│   │   └── ui/             # ConfigModal, PWAInstallButton
-│   ├── i18n/               # Reactive translation context & autoTranslate engine
-│   ├── locales/            # Translation dictionaries (cs, en, ru, de, es)
-│   ├── services/           # Storage, theme definitions, and tauriBridge
-│   ├── tools/              # 24 Modular tool implementations
-│   │   ├── files/          # DOCX converter, Diff checker, Inspector, Multi-Format
-│   │   ├── math/           # Calculator, Matrix, Grapher, LaTeX, Stats, Combinatorics
-│   │   ├── science/        # Chemistry molar mass, Unit converter
-│   │   ├── finance/        # Currency & Crypto tracker, Loan calculator
-│   │   └── utilities/      # Hardware monitor, WCAG, Passwords, QR, RegEx, Pomodoro, Timezones
-│   ├── types/              # TypeScript interfaces
-│   ├── App.tsx             # Root desktop workspace layout
-│   └── index.css           # Tailwind CSS styles & theme overrides
-├── package.json
-├── start.bat               # Windows one-click launcher
-├── start.sh                # macOS/Linux one-click launcher
-├── tsconfig.json
-├── vite.config.ts
-└── README.md
-```
-
----
-
-## 📄 License
-This project is open-source and released under the **MIT License**.
+Tento projekt je otevřený open-source software pod licencí **MIT License**.

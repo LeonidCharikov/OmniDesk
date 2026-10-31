@@ -27,8 +27,10 @@
   border-color: #222226 !important;
 }
 [data-theme="oled"] header {
-  background-color: rgba(8, 8, 10, 0.9) !important;
-  border-color: #222226 !important;
+  background-color: rgba(0, 0, 0, 0.35) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border-color: rgba(34, 34, 38, 0.6) !important;
 }
 [data-theme="oled"] .bg-slate-900,
 [data-theme="oled"] .bg-slate-900\/80,
@@ -64,8 +66,10 @@
   border-color: #282e38 !important;
 }
 [data-theme="graphite"] header {
-  background-color: rgba(24, 27, 32, 0.9) !important;
-  border-color: #282e38 !important;
+  background-color: rgba(24, 27, 32, 0.45) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border-color: rgba(40, 46, 56, 0.6) !important;
 }
 [data-theme="graphite"] .bg-slate-900,
 [data-theme="graphite"] .bg-slate-900\/80,
@@ -101,8 +105,10 @@
   border-color: #0f3525 !important;
 }
 [data-theme="emerald"] header {
-  background-color: rgba(6, 24, 17, 0.9) !important;
-  border-color: #0f3525 !important;
+  background-color: rgba(6, 24, 17, 0.45) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border-color: rgba(15, 53, 37, 0.6) !important;
 }
 [data-theme="emerald"] .bg-slate-900,
 [data-theme="emerald"] .bg-slate-900\/80,
@@ -138,8 +144,10 @@
   border-color: #2c1454 !important;
 }
 [data-theme="purple"] header {
-  background-color: rgba(17, 8, 34, 0.9) !important;
-  border-color: #2c1454 !important;
+  background-color: rgba(17, 8, 34, 0.45) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border-color: rgba(44, 20, 84, 0.6) !important;
 }
 [data-theme="purple"] .bg-slate-900,
 [data-theme="purple"] .bg-slate-900\/80,
@@ -176,8 +184,10 @@
   border-color: #e2e8f0 !important;
 }
 [data-theme="light"] header {
-  background-color: rgba(255, 255, 255, 0.95) !important;
-  border-color: #e2e8f0 !important;
+  background-color: rgba(255, 255, 255, 0.65) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border-color: rgba(226, 232, 240, 0.7) !important;
 }
 [data-theme="light"] .bg-slate-900,
 [data-theme="light"] .bg-slate-900\/80,

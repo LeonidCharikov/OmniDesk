@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
 import { WidgetCustomization, DailyTask } from '../../types/tool';
-import { getSavedRates, FiatRateInfo, CryptoRateInfo } from '../../services/currencyService';
+import { getSavedRates, refreshAllRates, FiatRateInfo, CryptoRateInfo } from '../../services/currencyService';
 
 interface SidebarWidgetsProps {
   widgets: WidgetCustomization;
@@ -33,30 +33,6 @@ interface SidebarWidgetsProps {
   onOpenWidgetSettings: () => void;
   isCollapsed?: boolean;
 }
-
-// Sample live/cached prices for cryptocurrencies
-const CRYPTO_PRICES: Record<string, { price: string; change: string; positive: boolean }> = {
-  BTC: { price: '$68,940', change: '+3.2%', positive: true },
-  ETH: { price: '$3,485', change: '+2.1%', positive: true },
-  SOL: { price: '$182.40', change: '+5.7%', positive: true },
-  TON: { price: '$5.62', change: '+1.4%', positive: true },
-  BNB: { price: '$598.10', change: '-0.8%', positive: false },
-  XRP: { price: '$0.58', change: '-1.2%', positive: false },
-  DOGE: { price: '$0.145', change: '+4.3%', positive: true },
-  AVAX: { price: '$28.90', change: '+1.8%', positive: true },
-};
-
-// Sample fiat exchange rates
-const FIAT_RATES: Record<string, { base: string; rate: string }> = {
-  CZK: { base: '1 EUR', rate: '25.18 CZK' },
-  EUR: { base: '1 USD', rate: '0.92 EUR' },
-  USD: { base: '1 EUR', rate: '1.08 USD' },
-  RUB: { base: '1 USD', rate: '94.20 RUB' },
-  GBP: { base: '1 EUR', rate: '0.86 GBP' },
-  CHF: { base: '1 EUR', rate: '0.96 CHF' },
-  PLN: { base: '1 EUR', rate: '4.32 PLN' },
-  JPY: { base: '1 USD', rate: '154.6 JPY' },
-};
 
 function evaluateMiniCalc(input: string): string | null {
   const trimmed = input.trim().toLowerCase();
@@ -154,6 +130,9 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
   const [ratesData, setRatesData] = useState(() => getSavedRates());
 
   useEffect(() => {
+    // Refresh live market rates on startup
+    refreshAllRates().catch(() => {});
+
     const handleUpdate = (e: Event) => {
       const customEvent = e as CustomEvent;
       if (customEvent.detail) {
@@ -261,8 +240,42 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
     return null;
   }
 
-  const cryptoData = CRYPTO_PRICES[widgets.selectedCrypto] || CRYPTO_PRICES['BTC'];
-  const fiatData = FIAT_RATES[widgets.selectedFiat] || FIAT_RATES['CZK'];
+  // Live crypto computation
+  const selectedCryptoKey = widgets.selectedCrypto || 'BTC';
+  const cryptoItem = ratesData.crypto[selectedCryptoKey] || ratesData.crypto['BTC'] || {
+    name: 'Bitcoin',
+    symbol: 'BTC',
+    usdPrice: 71500,
+    change24h: 2.8,
+  };
+
+  const selectedFiatKey = widgets.selectedFiat || 'CZK';
+  const fiatItem = ratesData.fiat[selectedFiatKey] || ratesData.fiat['CZK'] || {
+    name: 'Česká koruna',
+    rate: 1,
+    flag: '🇨🇿',
+  };
+
+  const usdRateInCzk = ratesData.fiat['USD']?.rate || 23.42;
+  const fiatRateInCzk = fiatItem.rate || 1;
+  const priceInSelectedFiat = selectedFiatKey === 'USD'
+    ? cryptoItem.usdPrice
+    : (cryptoItem.usdPrice * usdRateInCzk) / fiatRateInCzk;
+
+  const formattedCryptoPrice = selectedFiatKey === 'USD'
+    ? `$${cryptoItem.usdPrice >= 100 ? Math.round(cryptoItem.usdPrice).toLocaleString() : cryptoItem.usdPrice.toFixed(cryptoItem.usdPrice < 1 ? 4 : 2)}`
+    : selectedFiatKey === 'EUR'
+    ? `€${priceInSelectedFiat >= 100 ? Math.round(priceInSelectedFiat).toLocaleString() : priceInSelectedFiat.toFixed(priceInSelectedFiat < 1 ? 4 : 2)}`
+    : `${priceInSelectedFiat >= 100 ? Math.round(priceInSelectedFiat).toLocaleString() : priceInSelectedFiat.toFixed(priceInSelectedFiat < 1 ? 4 : 2)} ${selectedFiatKey}`;
+
+  // Fiat ticker line
+  const eurRateInCzk = ratesData.fiat['EUR']?.rate || 25.28;
+  const fiatBaseText = selectedFiatKey === 'CZK' ? '1 EUR' : selectedFiatKey === 'EUR' ? '1 USD' : '1 EUR';
+  const fiatRateValue = selectedFiatKey === 'CZK'
+    ? `${eurRateInCzk.toFixed(2)} CZK`
+    : selectedFiatKey === 'EUR'
+    ? `${(usdRateInCzk / eurRateInCzk).toFixed(4)} EUR`
+    : `${(eurRateInCzk / usdRateInCzk).toFixed(4)} USD`;
 
   const calcResult = evaluateMiniCalc(calcInput);
 
@@ -390,17 +403,25 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
         <div className="p-2 rounded-lg bg-slate-900/40 border border-slate-800/60 space-y-1.5">
           <div className="flex items-center justify-between text-[10px]">
             <span className="font-mono font-semibold text-slate-200 flex items-center gap-1">
-              {widgets.selectedCrypto}
+              {cryptoItem.symbol}
             </span>
-            <span className={`font-mono text-[9px] flex items-center ${cryptoData.positive ? 'text-emerald-400' : 'text-rose-400'}`}>
-              {cryptoData.positive ? <ArrowUpRight className="w-2.5 h-2.5" /> : <ArrowDownRight className="w-2.5 h-2.5" />}
-              {cryptoData.change}
+            <span
+              className={`font-mono text-[9px] flex items-center ${
+                cryptoItem.change24h >= 0 ? 'text-emerald-400' : 'text-rose-400'
+              }`}
+            >
+              {cryptoItem.change24h >= 0 ? (
+                <ArrowUpRight className="w-2.5 h-2.5" />
+              ) : (
+                <ArrowDownRight className="w-2.5 h-2.5" />
+              )}
+              {cryptoItem.change24h >= 0 ? `+${cryptoItem.change24h}%` : `${cryptoItem.change24h}%`}
             </span>
-            <span className="font-mono text-indigo-300 font-semibold">{cryptoData.price}</span>
+            <span className="font-mono text-indigo-300 font-semibold">{formattedCryptoPrice}</span>
           </div>
           <div className="flex items-center justify-between text-[10px] pt-1 border-t border-slate-800/40">
-            <span className="font-mono text-slate-400 text-[9px]">{fiatData.base}</span>
-            <span className="font-mono text-slate-200 font-medium">{fiatData.rate}</span>
+            <span className="font-mono text-slate-400 text-[9px]">{fiatBaseText}</span>
+            <span className="font-mono text-slate-200 font-medium">{fiatRateValue}</span>
           </div>
         </div>
       )}

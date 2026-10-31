@@ -26,6 +26,11 @@ import { ColorPaletteWcagTool } from './utilities/ColorPaletteWcagTool';
 import { SystemMonitorTool } from './utilities/SystemMonitorTool';
 import { WcagContrastValidatorTool } from './utilities/WcagContrastValidatorTool';
 import { CalendarTool } from './utilities/CalendarTool';
+import { DiscountVatCalcTool } from './finance/DiscountVatCalcTool';
+import { SmartShoppingListTool } from './planning/SmartShoppingListTool';
+import { VoiceRecorderTool } from './files/VoiceRecorderTool';
+import { SketchpadTool } from './files/SketchpadTool';
+import { SizeConverterTool } from './utilities/SizeConverterTool';
 
 export const TOOLS_REGISTRY: ToolDefinition[] = [
   // 1. Soubory & Dokumenty (files)
@@ -58,6 +63,26 @@ export const TOOLS_REGISTRY: ToolDefinition[] = [
     requiresOnline: false,
     component: DocxToPdfTool,
     tags: ['word', 'docx', 'pdf', 'konverze', 'dokumenty', 'tisk'],
+  },
+  {
+    id: 'voice-recorder',
+    title: 'Rychlý Diktafon & Zvukové Poznámky',
+    shortDesc: 'Nahrávání hlasových poznámek přímo z mikrofonu zařízení s vizualizérem a exportem do WebM.',
+    category: 'files',
+    icon: 'Mic',
+    requiresOnline: false,
+    component: VoiceRecorderTool,
+    tags: ['audio', 'zvuk', 'nahravani', 'diktafon', 'hlas', 'mikrofon', 'poznamky', 'zaznam'],
+  },
+  {
+    id: 'sketchpad',
+    title: 'Jednoduchý Skicák & Podpisový Arch',
+    shortDesc: 'Kreslicí plátno pro rychlé nákresy, diagramy a elektronické podpisy s exportem do PNG.',
+    category: 'files',
+    icon: 'Pencil',
+    requiresOnline: false,
+    component: SketchpadTool,
+    tags: ['kresleni', 'skicar', 'podpis', 'canvas', 'obrazek', 'png', 'stetec', 'skica'],
   },
 
   // 2. Programování & Kód (programming)
@@ -132,6 +157,16 @@ export const TOOLS_REGISTRY: ToolDefinition[] = [
     requiresOnline: false,
     component: WorldTimezonesTool,
     tags: ['cas', 'hodiny', 'pasma', 'svet', 'mesta', 'schuzky', 'timezone'],
+  },
+  {
+    id: 'shopping-list',
+    title: 'Chytrý Nákupní Lístek & Checklist',
+    shortDesc: 'Odškrtávací nákupní seznam s kategoriemi, odhadem cen a rychlými předvolbami častého zboží.',
+    category: 'planning',
+    icon: 'ShoppingCart',
+    requiresOnline: false,
+    component: SmartShoppingListTool,
+    tags: ['nakup', 'seznam', 'kosik', 'potraviny', 'checklist', 'ukoly', 'planovani'],
   },
 
   // 4. Matematika (math)
@@ -239,8 +274,28 @@ export const TOOLS_REGISTRY: ToolDefinition[] = [
     component: LoanCalcTool,
     tags: ['uver', 'hypoteka', 'finance', 'splatky', 'urok', 'amortizace'],
   },
+  {
+    id: 'discount-vat-calc',
+    title: 'Kalkulačka Slev, DPH & Spropitného',
+    shortDesc: 'Výpočet slevových akcí, akcí 2+1 zdarma, sazeb DPH a spravedlivého rozdělení útraty v restauraci.',
+    category: 'finance',
+    icon: 'Percent',
+    requiresOnline: false,
+    component: DiscountVatCalcTool,
+    tags: ['sleva', 'dph', 'spropitne', 'ucet', 'vypocet', 'marze', 'akce', 'procenta', 'finance'],
+  },
 
   // 7. Utility & Nástroje (utilities)
+  {
+    id: 'size-converter',
+    title: 'Převodník Velikostí Oblečení & Obuvi',
+    shortDesc: 'Mezinárodní převod velikostí pánských i dámských bot (EU, US, UK, CM) a konfekčního oblečení.',
+    category: 'utilities',
+    icon: 'Ruler',
+    requiresOnline: false,
+    component: SizeConverterTool,
+    tags: ['velikosti', 'boty', 'obleceni', 'prevodnik', 'nohy', 'stélka', 'konfekce', 'moda'],
+  },
   {
     id: 'password-gen',
     title: 'Generátor Bezpečných Hesel',

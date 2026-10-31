@@ -31,6 +31,11 @@ import {
   FileBox,
   CalendarCheck,
   Wrench,
+  Percent,
+  ShoppingCart,
+  Mic,
+  Pencil,
+  Ruler,
 } from 'lucide-react';
 import { ToolDefinition, ToolCategory } from '../../types/tool';
 import { useI18n } from '../../i18n/context';
@@ -70,6 +75,11 @@ const ICON_MAP: Record<string, React.ReactNode> = {
   Eye: <Eye className="w-5 h-5 text-indigo-400" />,
   Flame: <Flame className="w-5 h-5 text-indigo-400" />,
   Calendar: <Calendar className="w-5 h-5 text-indigo-400" />,
+  Percent: <Percent className="w-5 h-5 text-amber-400" />,
+  ShoppingCart: <ShoppingCart className="w-5 h-5 text-emerald-400" />,
+  Mic: <Mic className="w-5 h-5 text-rose-400" />,
+  Pencil: <Pencil className="w-5 h-5 text-indigo-400" />,
+  Ruler: <Ruler className="w-5 h-5 text-cyan-400" />,
 };
 
 export const ToolGrid: React.FC<ToolGridProps> = ({

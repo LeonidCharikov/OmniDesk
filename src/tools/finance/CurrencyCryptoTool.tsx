@@ -178,7 +178,7 @@ export const CurrencyCryptoTool: React.FC<Props> = ({ isOffline }) => {
             {lastUpdated && (
               <span className="text-[10px] font-mono text-slate-400 hidden sm:inline flex items-center gap-1">
                 <Clock className="w-3 h-3 text-indigo-400" />
-                Aktualizováno: {lastUpdated}
+                {t('updated_at', 'Aktualizováno')}: {lastUpdated}
               </span>
             )}
           </div>
@@ -197,10 +197,10 @@ export const CurrencyCryptoTool: React.FC<Props> = ({ isOffline }) => {
               onClick={executeRefresh}
               disabled={isRefreshing}
               className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:border-slate-700 transition-colors flex items-center gap-1.5 text-xs font-medium"
-              title="Aktualizovat živé kurzy z burzy"
+              title={t('refresh_rates_tooltip', 'Aktualizovat živé kurzy z burzy')}
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-indigo-400' : ''}`} />
-              <span>{isRefreshing ? 'Stahuji...' : 'Aktualizovat kurzy'}</span>
+              <span>{isRefreshing ? t('downloading', 'Stahuji...') : t('refresh_rates_btn', 'Aktualizovat kurzy')}</span>
             </button>
           )}
 
@@ -231,7 +231,9 @@ export const CurrencyCryptoTool: React.FC<Props> = ({ isOffline }) => {
           <div className="flex items-center gap-2">
             <WifiOff className="w-4 h-4 shrink-0" />
             <span>
-              Aplikace běží offline: Využívají se uložené směnné kurzy z disku ({lastUpdated || 'Lokální cache'}).
+              {t('offline_rates_notice', 'Aplikace běží offline: Využívají se uložené směnné kurzy z disku ({date}).', {
+                date: lastUpdated || t('local_cache', 'Lokální cache'),
+              })}
             </span>
           </div>
           <span className="font-mono text-[10px] text-amber-400/80">
@@ -303,7 +305,7 @@ export const CurrencyCryptoTool: React.FC<Props> = ({ isOffline }) => {
                 </label>
                 {toCurrency === defaultAppCurrency && (
                   <span className="text-[10px] font-mono text-indigo-400 px-1.5 py-0.2 rounded bg-indigo-950/60 border border-indigo-800/50">
-                    Výchozí měna
+                    {t('default_currency_badge', 'Výchozí měna')}
                   </span>
                 )}
               </div>
@@ -338,34 +340,44 @@ export const CurrencyCryptoTool: React.FC<Props> = ({ isOffline }) => {
           <div className="p-4 rounded-xl bg-slate-900/30 border border-slate-800 space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                {t('exchange_rates_overview', 'Směnné kurzy k CZK')}
+                {t('exchange_rates_overview_base', 'Směnné kurzy vůči {curr}', { curr: toCurrency })}
               </span>
               <span className="text-[10px] font-mono text-slate-500">
-                Zdroj: Open Exchange Rates & ECB • {lastUpdated || 'Živě'}
+                {t('rates_source_label', 'Zdroj: ECB & Live Forex')} • {lastUpdated || t('live_data', 'Živě')}
               </span>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
               {Object.entries(fiatRates)
-                .filter(([k]) => k !== 'CZK')
-                .map(([code, c]) => (
-                  <div
-                    key={code}
-                    onClick={() => {
-                      setFromCurrency(code);
-                      setToCurrency(defaultAppCurrency);
-                    }}
-                    className="p-2.5 rounded-lg bg-slate-950/60 border border-slate-800/80 hover:border-indigo-500/40 cursor-pointer transition-colors"
-                  >
-                    <div className="flex items-center justify-between text-xs text-slate-400">
-                      <span>
-                        {c.flag} 1 {code}
-                      </span>
+                .filter(([code]) => code !== toCurrency)
+                .map(([code, c]) => {
+                  const targetRateInCzk = fiatRates[toCurrency]?.rate || 1;
+                  const codeRateInCzk = c.rate;
+                  const relativeRate = codeRateInCzk / targetRateInCzk;
+                  return (
+                    <div
+                      key={code}
+                      onClick={() => {
+                        setFromCurrency(code);
+                      }}
+                      className="p-2.5 rounded-lg bg-slate-950/60 border border-slate-800/80 hover:border-indigo-500/40 cursor-pointer transition-colors"
+                      title={t('click_to_convert', 'Kliknutím vložit do převodníku')}
+                    >
+                      <div className="flex items-center justify-between text-xs text-slate-400">
+                        <span>
+                          {c.flag} 1 {code}
+                        </span>
+                      </div>
+                      <div className="text-sm font-mono font-semibold text-slate-200 mt-1">
+                        {relativeRate >= 100
+                          ? relativeRate.toFixed(2)
+                          : relativeRate >= 1
+                          ? relativeRate.toFixed(3)
+                          : relativeRate.toFixed(4)}{' '}
+                        <span className="text-xs font-normal text-indigo-400">{toCurrency}</span>
+                      </div>
                     </div>
-                    <div className="text-sm font-mono font-semibold text-slate-200 mt-1">
-                      {c.rate.toFixed(c.rate < 1 ? 4 : 2)} CZK
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
             </div>
           </div>
         </div>

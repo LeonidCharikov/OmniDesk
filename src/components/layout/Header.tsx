@@ -1,5 +1,5 @@
 import React, { useId } from 'react';
-import { Search, Star, ArrowLeft, ShieldCheck, Languages, Sliders, Menu } from 'lucide-react';
+import { Search, Star, ArrowLeft, ShieldCheck, Languages, Sliders, Menu, Minus, Square, X } from 'lucide-react';
 import { ToolDefinition } from '../../types/tool';
 import { useI18n, SUPPORTED_LANGUAGES, SupportedLanguage } from '../../i18n/context';
 
@@ -29,8 +29,43 @@ export const Header: React.FC<HeaderProps> = ({
   const { language, setLanguage, t } = useI18n();
   const langSelectId = useId();
 
+  const handleMinimize = async () => {
+    try {
+      const { getCurrentWindow } = await import('@tauri-apps/api/window');
+      await getCurrentWindow().minimize();
+    } catch {
+      // Running in browser mode
+    }
+  };
+
+  const handleMaximize = async () => {
+    try {
+      const { getCurrentWindow } = await import('@tauri-apps/api/window');
+      await getCurrentWindow().toggleMaximize();
+    } catch {
+      // Browser fullscreen fallback
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen?.().catch(() => {});
+      } else {
+        document.exitFullscreen?.().catch(() => {});
+      }
+    }
+  };
+
+  const handleClose = async () => {
+    try {
+      const { getCurrentWindow } = await import('@tauri-apps/api/window');
+      await getCurrentWindow().close();
+    } catch {
+      // Browser fallback - notify or minimize view
+    }
+  };
+
   return (
-    <header className="min-h-14 border-b border-slate-800/80 bg-slate-950/80 backdrop-blur px-3 sm:px-6 py-2 flex items-center justify-between gap-2 sm:gap-6 shrink-0 select-none">
+    <header
+      data-tauri-drag-region
+      className="min-h-14 border-b border-slate-800/60 bg-slate-950/40 backdrop-blur-xl px-3 sm:px-5 py-2 flex items-center justify-between gap-2 sm:gap-4 shrink-0 select-none transition-colors"
+    >
       {/* Zone 1: Hamburger + Breadcrumbs & Back Navigation */}
       <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         {/* Hamburger toggle */}
@@ -141,6 +176,34 @@ export const Header: React.FC<HeaderProps> = ({
             <span className="hidden sm:inline">{t('local_sandboxed', 'Lokální sandbox')}</span>
           </div>
         )}
+
+        {/* Window action buttons (Tauri & Desktop) */}
+        <div className="flex items-center ml-1 pl-1 sm:pl-2 border-l border-slate-800/80 gap-0.5">
+          <button
+            onClick={handleMinimize}
+            className="p-1.5 rounded text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 transition-colors"
+            title={t('window_minimize', 'Minimalizovat')}
+            aria-label={t('window_minimize', 'Minimalizovat')}
+          >
+            <Minus className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={handleMaximize}
+            className="p-1.5 rounded text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 transition-colors"
+            title={t('window_maximize', 'Maximalizovat')}
+            aria-label={t('window_maximize', 'Maximalizovat')}
+          >
+            <Square className="w-3 h-3" />
+          </button>
+          <button
+            onClick={handleClose}
+            className="p-1.5 rounded text-slate-400 hover:text-rose-100 hover:bg-rose-600/80 transition-colors"
+            title={t('window_close', 'Zavřít')}
+            aria-label={t('window_close', 'Zavřít')}
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
       </div>
     </header>
   );
