@@ -200,7 +200,9 @@ export const ToolGrid: React.FC<ToolGridProps> = ({
         {/* Zero-pill metadata footer */}
         <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500">
           <div className="flex items-center gap-1.5 truncate">
-            <span className="uppercase font-mono tracking-wider">{tool.category}</span>
+            <span className="uppercase font-mono tracking-wider">
+              {t(`cat_${tool.category}`, tool.category)}
+            </span>
             <span aria-hidden="true">·</span>
             <span>{tool.requiresOnline ? t('online_badge', 'Online') : t('offline_badge', 'Offline')}</span>
           </div>
@@ -268,7 +270,15 @@ export const ToolGrid: React.FC<ToolGridProps> = ({
                 </div>
 
                 <span className="text-xs font-mono px-2.5 py-0.5 rounded-full bg-slate-900/80 border border-slate-800 text-slate-400">
-                  {categoryTools.length} {categoryTools.length === 1 ? 'nástroj' : categoryTools.length < 5 ? 'nástroje' : 'nástrojů'}
+                  {t(
+                    categoryTools.length === 1
+                      ? 'tools_count_one'
+                      : categoryTools.length < 5
+                        ? 'tools_count_few'
+                        : 'tools_count_many',
+                    categoryTools.length === 1 ? '{count} tool' : '{count} tools',
+                    { count: categoryTools.length }
+                  )}
                 </span>
               </div>
 

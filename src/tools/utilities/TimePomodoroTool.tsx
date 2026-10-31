@@ -18,8 +18,26 @@ const CITIES: CityTime[] = [
   { city: 'Sydney', country: 'Austrálie', zone: 'Australia/Sydney', flag: '🇦🇺' },
 ];
 
+const CITY_NAMES: Record<string, string> = {
+  'Europe/Prague': 'Prague',
+  'Europe/London': 'London',
+  'America/New_York': 'New York',
+  'America/Los_Angeles': 'San Francisco',
+  'Asia/Tokyo': 'Tokyo',
+  'Australia/Sydney': 'Sydney',
+};
+
+const COUNTRY_CODES: Record<string, string> = {
+  'Europe/Prague': 'CZ',
+  'Europe/London': 'GB',
+  'America/New_York': 'US',
+  'America/Los_Angeles': 'US',
+  'Asia/Tokyo': 'JP',
+  'Australia/Sydney': 'AU',
+};
+
 export const TimePomodoroTool: React.FC = () => {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const [activeTab, setActiveTab] = useState<'pomodoro' | 'clock'>('pomodoro');
   const [now, setNow] = useState(new Date());
 
@@ -28,6 +46,8 @@ export const TimePomodoroTool: React.FC = () => {
   const [timeLeft, setTimeLeft] = useState<number>(25 * 60);
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [completedSessions, setCompletedSessions] = useState<number>(0);
+  const locale = language === 'cs' ? 'cs-CZ' : language === 'de' ? 'de-DE' : language === 'es' ? 'es-ES' : language === 'ru' ? 'ru-RU' : 'en-US';
+  const displayNames = new Intl.DisplayNames(locale, { type: 'region' });
 
   // Live clock tick
   useEffect(() => {
@@ -89,7 +109,8 @@ export const TimePomodoroTool: React.FC = () => {
 
   const formatCityTime = (zone: string) => {
     try {
-      return new Intl.DateTimeFormat('cs-CZ', {
+      const locale = language === 'cs' ? 'cs-CZ' : language === 'de' ? 'de-DE' : language === 'es' ? 'es-ES' : language === 'ru' ? 'ru-RU' : 'en-US';
+      return new Intl.DateTimeFormat(locale, {
         timeZone: zone,
         hour: '2-digit',
         minute: '2-digit',
@@ -119,7 +140,7 @@ export const TimePomodoroTool: React.FC = () => {
             }`}
           >
             <Flame className="w-3.5 h-3.5" />
-            Pomodoro Focus
+            {t('pomodoro_focus', 'Pomodoro Focus')}
           </button>
           <button
             onClick={() => setActiveTab('clock')}
@@ -209,8 +230,12 @@ export const TimePomodoroTool: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <span className="text-lg">{c.flag}</span>
                   <div>
-                    <h3 className="text-sm font-semibold text-white">{c.city}</h3>
-                    <span className="text-[10px] text-slate-500 block">{c.country}</span>
+                    <h3 className="text-sm font-semibold text-white">
+                      {language === 'cs' ? c.city : CITY_NAMES[c.zone] || c.city}
+                    </h3>
+                    <span className="text-[10px] text-slate-500 block">
+                      {COUNTRY_CODES[c.zone] ? displayNames.of(COUNTRY_CODES[c.zone]) : c.country}
+                    </span>
                   </div>
                 </div>
               </div>

@@ -98,7 +98,11 @@ export async function saveFileWithPicker(options: {
 
       return { success: true, path: selectedPath };
     } catch (err: unknown) {
-      console.warn('Tauri native save dialog failed, attempting browser file picker:', err);
+      const error = err as Error;
+      return {
+        success: false,
+        error: error?.message || 'Uložení souboru v nativním dialogu selhalo.',
+      };
     }
   }
 

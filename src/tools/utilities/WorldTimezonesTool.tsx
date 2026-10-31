@@ -48,6 +48,43 @@ const WORLD_CITIES: CityTimezone[] = [
   { city: 'Johannesburg', country: 'Jihoafrická republika', zone: 'Africa/Johannesburg', flag: '🇿🇦', region: 'africa' },
 ];
 
+const CITY_NAMES: Record<string, string> = {
+  'Europe/Prague': 'Prague',
+  'Europe/Bratislava': 'Bratislava',
+  'Europe/London': 'London',
+  'Europe/Berlin': 'Berlin',
+  'Europe/Paris': 'Paris',
+  'Europe/Madrid': 'Madrid',
+  'Europe/Rome': 'Rome',
+  'Europe/Warsaw': 'Warsaw',
+  'Europe/Vienna': 'Vienna',
+  'Europe/Zurich': 'Zurich',
+  'Europe/Kyiv': 'Kyiv',
+  'Europe/Moscow': 'Moscow',
+  'America/Mexico_City': 'Mexico City',
+  'America/Sao_Paulo': 'São Paulo',
+  'Asia/Tokyo': 'Tokyo',
+  'Asia/Seoul': 'Seoul',
+  'Asia/Shanghai': 'Beijing',
+  'Asia/Kolkata': 'Mumbai',
+  'Asia/Dubai': 'Dubai',
+  'Australia/Sydney': 'Sydney',
+  'Pacific/Auckland': 'Auckland',
+  'Africa/Cairo': 'Cairo',
+  'Africa/Johannesburg': 'Johannesburg',
+};
+
+const COUNTRY_CODES: Record<string, string> = {
+  'Europe/Prague': 'CZ', 'Europe/Bratislava': 'SK', 'Europe/London': 'GB', 'Europe/Berlin': 'DE',
+  'Europe/Paris': 'FR', 'Europe/Madrid': 'ES', 'Europe/Rome': 'IT', 'Europe/Warsaw': 'PL',
+  'Europe/Vienna': 'AT', 'Europe/Zurich': 'CH', 'Europe/Kyiv': 'UA', 'Europe/Moscow': 'RU',
+  'America/New_York': 'US', 'America/Chicago': 'US', 'America/Los_Angeles': 'US',
+  'America/Toronto': 'CA', 'America/Mexico_City': 'MX', 'America/Sao_Paulo': 'BR',
+  'Asia/Tokyo': 'JP', 'Asia/Seoul': 'KR', 'Asia/Shanghai': 'CN', 'Asia/Singapore': 'SG',
+  'Asia/Kolkata': 'IN', 'Asia/Dubai': 'AE', 'Australia/Sydney': 'AU', 'Pacific/Auckland': 'NZ',
+  'Africa/Cairo': 'EG', 'Africa/Johannesburg': 'ZA',
+};
+
 export const WorldTimezonesTool: React.FC = () => {
   const { t, language } = useI18n();
   const [now, setNow] = useState(new Date());
@@ -56,6 +93,8 @@ export const WorldTimezonesTool: React.FC = () => {
   const [regionFilter, setRegionFilter] = useState<string>('all');
   const searchInputId = useId();
   const timeSliderId = useId();
+  const locale = language === 'cs' ? 'cs-CZ' : language === 'de' ? 'de-DE' : language === 'es' ? 'es-ES' : language === 'ru' ? 'ru-RU' : 'en-US';
+  const displayNames = new Intl.DisplayNames(locale, { type: 'region' });
 
   // Tick every second if offset is 0
   useEffect(() => {
@@ -233,8 +272,12 @@ export const WorldTimezonesTool: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <span className="text-xl">{c.flag}</span>
                   <div>
-                    <h3 className="text-sm font-semibold text-white tracking-tight">{c.city}</h3>
-                    <span className="text-[10px] text-slate-400 block truncate max-w-[130px]">{c.country}</span>
+                    <h3 className="text-sm font-semibold text-white tracking-tight">
+                      {language === 'cs' ? c.city : CITY_NAMES[c.zone] || c.city}
+                    </h3>
+                    <span className="text-[10px] text-slate-400 block truncate max-w-[130px]">
+                      {COUNTRY_CODES[c.zone] ? displayNames.of(COUNTRY_CODES[c.zone]) : c.country}
+                    </span>
                   </div>
                 </div>
 

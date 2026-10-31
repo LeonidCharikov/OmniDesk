@@ -271,7 +271,7 @@ export const ChemistryTool: React.FC = () => {
               {t('tool_chemistry_tool_title', 'Chemie, Periodická tabulka & Molární kalkulačka')}
             </h2>
             <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-950/60 border border-emerald-800/60 text-emerald-400">
-              118 prvků IUPAC
+              {t('iupac_element_count', '118 IUPAC elements')}
             </span>
           </div>
           <p className="text-sm text-slate-400 mt-1">
@@ -322,7 +322,7 @@ export const ChemistryTool: React.FC = () => {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="relative flex-1 min-w-[240px]">
                 <label htmlFor={elementSearchId} className="sr-only">
-                  Hledat prvek
+                  {t('search_element_label', 'Search element')}
                 </label>
                 <Search className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
                 <input
@@ -354,11 +354,11 @@ export const ChemistryTool: React.FC = () => {
                 </span>
                 {(
                   [
-                    { id: 'all', label: 'Vše' },
-                    { id: 'solid', label: 'Pevné' },
-                    { id: 'liquid', label: 'Kapalné' },
-                    { id: 'gas', label: 'Plynné' },
-                    { id: 'synthetic', label: 'Syntetické' },
+                    { id: 'all', label: t('state_all', 'Vše') },
+                    { id: 'solid', label: t('state_solid', 'Pevné') },
+                    { id: 'liquid', label: t('state_liquid', 'Kapalné') },
+                    { id: 'gas', label: t('state_gas', 'Plynné') },
+                    { id: 'synthetic', label: t('state_synthetic', 'Syntetické') },
                   ] as const
                 ).map(st => (
                   <button
@@ -387,7 +387,7 @@ export const ChemistryTool: React.FC = () => {
                     : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
                 }`}
               >
-                Všechny kategorie (118)
+                {t('all_element_categories', 'Všechny kategorie (118)')}
               </button>
               {(Object.keys(CATEGORY_CONFIG) as ElementCategory[]).map(catKey => {
                 const cfg = CATEGORY_CONFIG[catKey];
@@ -431,7 +431,7 @@ export const ChemistryTool: React.FC = () => {
                   style={{ gridColumn: 3, gridRow: 6 }}
                   onClick={() => setSelectedCategory('lanthanide')}
                   className="flex flex-col items-center justify-center p-1 rounded-lg border border-indigo-700/50 bg-indigo-950/40 text-indigo-300 hover:bg-indigo-900/60 cursor-pointer transition-colors text-center"
-                  title="Lanthanoidy (prvky 57-71)"
+                  title={t('lanthanides_title', 'Lanthanoidy (prvky 57-71)')}
                 >
                   <span className="text-[10px] font-mono font-bold">57-71</span>
                   <span className="text-xs font-bold font-mono">La-Lu</span>
@@ -443,7 +443,7 @@ export const ChemistryTool: React.FC = () => {
                   style={{ gridColumn: 3, gridRow: 7 }}
                   onClick={() => setSelectedCategory('actinide')}
                   className="flex flex-col items-center justify-center p-1 rounded-lg border border-pink-700/50 bg-pink-950/40 text-pink-300 hover:bg-pink-900/60 cursor-pointer transition-colors text-center"
-                  title="Aktinoidy (prvky 89-103)"
+                  title={t('actinides_title', 'Aktinoidy (prvky 89-103)')}
                 >
                   <span className="text-[10px] font-mono font-bold">89-103</span>
                   <span className="text-xs font-bold font-mono">Ac-Lr</span>
@@ -457,9 +457,9 @@ export const ChemistryTool: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <div className="w-24 shrink-0 text-right pr-2">
                     <span className="text-[10px] font-semibold text-indigo-400 uppercase tracking-wider block">
-                      Lanthanoidy
+                      {t('lanthanides', 'Lanthanoidy')}
                     </span>
-                    <span className="text-[9px] font-mono text-slate-500">4f řada</span>
+                    <span className="text-[9px] font-mono text-slate-500">{t('f_series_4', '4f series')}</span>
                   </div>
                   <div
                     className="grid gap-1.5 flex-1"
@@ -473,9 +473,9 @@ export const ChemistryTool: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <div className="w-24 shrink-0 text-right pr-2">
                     <span className="text-[10px] font-semibold text-pink-400 uppercase tracking-wider block">
-                      Aktinoidy
+                      {t('actinides', 'Aktinoidy')}
                     </span>
-                    <span className="text-[9px] font-mono text-slate-500">5f řada</span>
+                    <span className="text-[9px] font-mono text-slate-500">{t('f_series_5', '5f series')}</span>
                   </div>
                   <div
                     className="grid gap-1.5 flex-1"
@@ -492,7 +492,7 @@ export const ChemistryTool: React.FC = () => {
           {searchQuery && (
             <div className="p-4 rounded-2xl bg-slate-900/40 border border-slate-800 space-y-3">
               <span className="text-xs font-semibold text-slate-300 uppercase tracking-wider block">
-                Nalezené prvky ({filteredElements.length})
+                {t('found_elements', 'Found elements ({count})', { count: filteredElements.length })}
               </span>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
                 {filteredElements.map(el => {
@@ -553,7 +553,7 @@ export const ChemistryTool: React.FC = () => {
                     </span>
                   </div>
                   <p className="text-xs text-slate-400 mt-0.5">
-                    {selectedElement.name.en} • {selectedElement.name.cs} • {selectedElement.name.de} • {selectedElement.name.ru}
+                    {selectedElement.symbol} • {t('atomic_number', 'Atomic number')} {selectedElement.number}
                   </p>
                 </div>
               </div>
@@ -570,7 +570,7 @@ export const ChemistryTool: React.FC = () => {
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800 space-y-1">
                   <span className="text-[10px] font-semibold uppercase text-slate-500 block">
-                    Relativní atomová hmotnost
+                    {t('relative_atomic_mass', 'Relative atomic mass')}
                   </span>
                   <span className="text-sm font-mono font-bold text-white">
                     {selectedElement.mass} <span className="text-[10px] text-slate-400 font-normal">u</span>
@@ -579,16 +579,16 @@ export const ChemistryTool: React.FC = () => {
 
                 <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800 space-y-1">
                   <span className="text-[10px] font-semibold uppercase text-slate-500 block">
-                    Elektronegativita (Pauling)
+                    {t('electronegativity', 'Electronegativity (Pauling)')}
                   </span>
                   <span className="text-sm font-mono font-bold text-indigo-300">
-                    {selectedElement.electronegativity ?? 'Neuvedeno'}
+                    {selectedElement.electronegativity ?? t('not_available', 'Not available')}
                   </span>
                 </div>
 
                 <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800 space-y-1">
                   <span className="text-[10px] font-semibold uppercase text-slate-500 block">
-                    Perioda / Skupina / Blok
+                    {t('period_group_block', 'Period / Group / Block')}
                   </span>
                   <span className="text-sm font-mono font-bold text-white">
                     P{selectedElement.period} • G{selectedElement.group} • Blok {selectedElement.block}
@@ -597,7 +597,7 @@ export const ChemistryTool: React.FC = () => {
 
                 <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800 space-y-1">
                   <span className="text-[10px] font-semibold uppercase text-slate-500 block">
-                    Elektronová konfigurace
+                    {t('electron_configuration', 'Electron configuration')}
                   </span>
                   <span className="text-xs font-mono font-bold text-emerald-300">
                     {selectedElement.electronConfig}
@@ -606,7 +606,7 @@ export const ChemistryTool: React.FC = () => {
 
                 <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800 space-y-1">
                   <span className="text-[10px] font-semibold uppercase text-slate-500 block">
-                    Oxidační čísla
+                    {t('oxidation_states', 'Oxidation states')}
                   </span>
                   <span className="text-xs font-mono font-bold text-amber-300">
                     {selectedElement.oxidationStates || '0'}
@@ -615,23 +615,23 @@ export const ChemistryTool: React.FC = () => {
 
                 <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800 space-y-1">
                   <span className="text-[10px] font-semibold uppercase text-slate-500 block">
-                    Skupenství (při 20 °C)
+                    {t('state_at_temperature', 'State at 20 °C')}
                   </span>
                   <span className="text-xs font-medium text-slate-200 capitalize">
                     {selectedElement.state === 'gas'
-                      ? 'Plynné (plyn)'
+                      ? t('state_gas_detail', 'Gaseous (gas)')
                       : selectedElement.state === 'liquid'
-                      ? 'Kapalné (kapalina)'
+                      ? t('state_liquid_detail', 'Liquid (liquid)')
                       : selectedElement.state === 'solid'
-                      ? 'Pevné (pevná látka)'
-                      : 'Syntetické (vyrobeno v laboratoři)'}
+                      ? t('state_solid_detail', 'Solid (solid)')
+                      : t('state_synthetic_detail', 'Synthetic (laboratory-made)')}
                   </span>
                 </div>
 
                 {selectedElement.meltingPoint !== undefined && (
                   <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800 space-y-1">
                     <span className="text-[10px] font-semibold uppercase text-slate-500 block">
-                      Bod tání
+                      {t('melting_point', 'Melting point')}
                     </span>
                     <span className="text-xs font-mono font-bold text-slate-200">
                       {selectedElement.meltingPoint} °C
@@ -642,7 +642,7 @@ export const ChemistryTool: React.FC = () => {
                 {selectedElement.boilingPoint !== undefined && (
                   <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800 space-y-1">
                     <span className="text-[10px] font-semibold uppercase text-slate-500 block">
-                      Bod varu
+                      {t('boiling_point', 'Boiling point')}
                     </span>
                     <span className="text-xs font-mono font-bold text-slate-200">
                       {selectedElement.boilingPoint} °C
@@ -653,7 +653,7 @@ export const ChemistryTool: React.FC = () => {
                 {selectedElement.density !== undefined && (
                   <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800 space-y-1">
                     <span className="text-[10px] font-semibold uppercase text-slate-500 block">
-                      Hustota
+                      {t('density', 'Density')}
                     </span>
                     <span className="text-xs font-mono font-bold text-slate-200">
                       {selectedElement.density} g/cm³
@@ -664,7 +664,7 @@ export const ChemistryTool: React.FC = () => {
                 {selectedElement.yearDiscovered && (
                   <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800 space-y-1">
                     <span className="text-[10px] font-semibold uppercase text-slate-500 block">
-                      Rok objevu
+                      {t('year_discovered', 'Year discovered')}
                     </span>
                     <span className="text-xs font-mono font-bold text-slate-200">
                       {selectedElement.yearDiscovered}
@@ -677,7 +677,7 @@ export const ChemistryTool: React.FC = () => {
             {/* Modal Footer Actions */}
             <div className="p-4 border-t border-slate-800 bg-slate-950/80 flex items-center justify-between">
               <span className="text-xs text-slate-400">
-                IUPAC Standard Atomic Weights
+                {t('iupac_atomic_weights', 'IUPAC Standard Atomic Weights')}
               </span>
               <div className="flex items-center gap-2">
                 <button
@@ -691,7 +691,7 @@ export const ChemistryTool: React.FC = () => {
                   onClick={() => setSelectedElement(null)}
                   className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition-colors"
                 >
-                  Zavřít
+                  {t('close', 'Zavřít')}
                 </button>
               </div>
             </div>
@@ -785,7 +785,7 @@ export const ChemistryTool: React.FC = () => {
                 onClick={() => setFormula('')}
                 className="ml-auto px-2 py-1 rounded text-[11px] text-rose-400 hover:bg-rose-950/30 transition-colors"
               >
-                Vymazat
+                {t('clear', 'Clear')}
               </button>
             </div>
           </div>

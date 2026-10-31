@@ -41,11 +41,24 @@ const EVENT_COLORS = [
 
 const STORAGE_KEY = 'omnidesk_calendar_events';
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
-const DAYS_CS = ['Pondělí', 'Úterý', 'Středa', 'Čtvrtek', 'Pátek', 'Sobota', 'Neděle'];
-const MONTHS_CS = [
-  'Leden', 'Únor', 'Březen', 'Duben', 'Květen', 'Červen',
-  'Červenec', 'Srpen', 'Září', 'Říjen', 'Listopad', 'Prosinec',
-];
+function getLocale(language: string): string {
+  return language === 'cs' ? 'cs-CZ' : language === 'de' ? 'de-DE' : language === 'es' ? 'es-ES' : language === 'ru' ? 'ru-RU' : 'en-US';
+}
+
+function getDayNames(locale: string): string[] {
+  const monday = new Date(2024, 0, 1);
+  return Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(monday);
+    date.setDate(monday.getDate() + index);
+    return new Intl.DateTimeFormat(locale, { weekday: 'long' }).format(date);
+  });
+}
+
+function getMonthNames(locale: string): string[] {
+  return Array.from({ length: 12 }, (_, index) =>
+    new Intl.DateTimeFormat(locale, { month: 'long' }).format(new Date(2024, index, 1))
+  );
+}
 
 /* ── Helpers ───────────────────────────────────────────────── */
 function loadEvents(): CalendarEvent[] {
@@ -103,7 +116,10 @@ function getColorObj(key: string) {
 
 /* ── Main Component ────────────────────────────────────────── */
 export const CalendarTool: React.FC = () => {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
+  const locale = getLocale(language);
+  const dayNames = getDayNames(locale);
+  const monthNames = getMonthNames(locale);
   const [events, setEvents] = useState<CalendarEvent[]>(loadEvents);
   const [viewMode, setViewMode] = useState<ViewMode>('week');
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
@@ -182,18 +198,18 @@ export const CalendarTool: React.FC = () => {
   /* ── Header title ────────────────────────────────────────── */
   const getTitle = (): string => {
     if (viewMode === 'month') {
-      return `${MONTHS_CS[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
+      return `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
     } else if (viewMode === 'week') {
       const week = getWeekDays(currentDate);
       const first = week[0];
       const last = week[6];
       if (first.getMonth() === last.getMonth()) {
-        return `${first.getDate()}–${last.getDate()} ${MONTHS_CS[first.getMonth()]} ${first.getFullYear()}`;
+        return `${first.getDate()}–${last.getDate()} ${monthNames[first.getMonth()]} ${first.getFullYear()}`;
       }
-      return `${first.getDate()} ${MONTHS_CS[first.getMonth()].slice(0, 3)} – ${last.getDate()} ${MONTHS_CS[last.getMonth()].slice(0, 3)} ${last.getFullYear()}`;
+      return `${first.getDate()} ${monthNames[first.getMonth()].slice(0, 3)} – ${last.getDate()} ${monthNames[last.getMonth()].slice(0, 3)} ${last.getFullYear()}`;
     } else {
       const dayIdx = currentDate.getDay() === 0 ? 6 : currentDate.getDay() - 1;
-      return `${DAYS_CS[dayIdx]} ${currentDate.getDate()}. ${MONTHS_CS[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
+      return `${dayNames[dayIdx]} ${currentDate.getDate()}. ${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
     }
   };
 
@@ -263,6 +279,7 @@ export const CalendarTool: React.FC = () => {
           events={events}
           onSelectDate={(d) => { setSelectedDate(d); setCurrentDate(d); setViewMode('day'); }}
           getEventsForDate={getEventsForDate}
+          dayNames={dayNames}
         />
       )}
 
@@ -275,6 +292,7 @@ export const CalendarTool: React.FC = () => {
           onSlotClick={openNewEvent}
           onEventClick={openEditEvent}
           scrollRef={scrollRef}
+          dayNames={dayNames}
         />
       )}
 
@@ -318,14 +336,15 @@ const MonthView: React.FC<{
   events: CalendarEvent[];
   onSelectDate: (d: Date) => void;
   getEventsForDate: (ds: string) => CalendarEvent[];
-}> = ({ currentDate, todayStr, selectedDate, events, onSelectDate, getEventsForDate }) => {
+  dayNames: string[];
+}> = ({ currentDate, todayStr, selectedDate, events, onSelectDate, getEventsForDate, dayNames }) => {
   const days = getMonthDays(currentDate.getFullYear(), currentDate.getMonth());
 
   return (
     <div className="rounded-xl bg-slate-900/40 border border-slate-800 overflow-hidden">
       {/* Day headers */}
       <div className="grid grid-cols-7 bg-slate-900/80 border-b border-slate-800">
-        {DAYS_CS.map(d => (
+        {dayNames.map(d => (
           <div key={d} className="py-2 text-center text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
             {d.slice(0, 2)}
           </div>
@@ -393,7 +412,8 @@ const WeekView: React.FC<{
   onSlotClick: (ds: string, h: number, m?: number) => void;
   onEventClick: (ev: CalendarEvent) => void;
   scrollRef: React.RefObject<HTMLDivElement | null>;
-}> = ({ currentDate, todayStr, events, getEventsForSlot, onSlotClick, onEventClick, scrollRef }) => {
+  dayNames: string[];
+}> = ({ currentDate, todayStr, events, getEventsForSlot, onSlotClick, onEventClick, scrollRef, dayNames }) => {
   const weekDays = getWeekDays(currentDate);
 
   return (
@@ -406,7 +426,7 @@ const WeekView: React.FC<{
           const isToday = ds === todayStr;
           return (
             <div key={i} className={`py-2 px-1 text-center border-r border-slate-800/60 ${isToday ? 'bg-indigo-950/30' : ''}`}>
-              <div className="text-[10px] text-slate-400 uppercase font-semibold">{DAYS_CS[i].slice(0, 2)}</div>
+              <div className="text-[10px] text-slate-400 uppercase font-semibold">{dayNames[i].slice(0, 2)}</div>
               <div className={`text-sm font-bold mt-0.5 ${isToday ? 'text-indigo-400' : 'text-slate-200'}`}>
                 {day.getDate()}
               </div>

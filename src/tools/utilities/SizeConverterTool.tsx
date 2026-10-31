@@ -231,28 +231,28 @@ export const SizeConverterTool: React.FC = () => {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div className="p-4 rounded-xl bg-indigo-950/30 border border-indigo-500/30 text-center space-y-1">
                 <span className="text-xs font-semibold uppercase tracking-wider text-indigo-400">
-                  EU (Evropa)
+                  {t('eu_region', 'EU (Europe)')}
                 </span>
                 <div className="text-3xl font-extrabold text-white font-mono">{currentShoe.eu}</div>
               </div>
 
               <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 text-center space-y-1">
                 <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                  US (Amerika)
+                  {t('us_region', 'US (America)')}
                 </span>
                 <div className="text-3xl font-extrabold text-slate-200 font-mono">{currentShoe.us}</div>
               </div>
 
               <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 text-center space-y-1">
                 <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                  UK (Británie)
+                  {t('uk_region', 'UK (United Kingdom)')}
                 </span>
                 <div className="text-3xl font-extrabold text-slate-200 font-mono">{currentShoe.uk}</div>
               </div>
 
               <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 text-center space-y-1">
                 <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                  CM / Stélka
+                  {t('cm_insole', 'CM / Insole')}
                 </span>
                 <div className="text-3xl font-extrabold text-emerald-400 font-mono">
                   {currentShoe.cm} <span className="text-sm font-normal text-slate-400">cm</span>
@@ -292,7 +292,7 @@ export const SizeConverterTool: React.FC = () => {
                     <th className="px-4 py-3">US</th>
                     <th className="px-4 py-3">UK</th>
                     <th className="px-4 py-3">CM</th>
-                    <th className="px-4 py-3">Palce (Inch)</th>
+                    <th className="px-4 py-3">{t('inch_label', 'Inches')}</th>
                     <th className="px-4 py-3 text-right">{t('action', 'Akce')}</th>
                   </tr>
                 </thead>
@@ -345,21 +345,21 @@ export const SizeConverterTool: React.FC = () => {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div className="p-4 rounded-xl bg-indigo-950/30 border border-indigo-500/30 text-center space-y-1">
                 <span className="text-xs font-semibold uppercase tracking-wider text-indigo-400">
-                  Mezinárodní
+                  {t('size_international', 'International')}
                 </span>
                 <div className="text-3xl font-extrabold text-white font-mono">{currentClothes.intl}</div>
               </div>
 
               <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 text-center space-y-1">
                 <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                  EU (Evropa)
+                  {t('eu_region', 'EU (Europe)')}
                 </span>
                 <div className="text-3xl font-extrabold text-slate-200 font-mono">{currentClothes.eu}</div>
               </div>
 
               <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 text-center space-y-1">
                 <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                  US / UK
+                  {t('us_uk_region', 'US / UK')}
                 </span>
                 <div className="text-3xl font-extrabold text-slate-200 font-mono">
                   {currentClothes.us} / {currentClothes.uk}

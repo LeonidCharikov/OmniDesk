@@ -159,7 +159,7 @@ export const RegexEncoderTool: React.FC = () => {
                     onChange={e => setFlags({ ...flags, i: e.target.checked })}
                     className="rounded bg-slate-950 text-indigo-600"
                   />
-                  <span className="font-mono">i (ignore case)</span>
+                  <span className="font-mono">i ({t('flag_ignore_case', 'ignore case')})</span>
                 </label>
                 <label className="flex items-center gap-1 cursor-pointer">
                   <input
@@ -168,7 +168,7 @@ export const RegexEncoderTool: React.FC = () => {
                     onChange={e => setFlags({ ...flags, m: e.target.checked })}
                     className="rounded bg-slate-950 text-indigo-600"
                   />
-                  <span className="font-mono">m (multiline)</span>
+                  <span className="font-mono">m ({t('flag_multiline', 'multiline')})</span>
                 </label>
               </div>
             </div>
@@ -314,13 +314,13 @@ export const RegexEncoderTool: React.FC = () => {
               onClick={() => handleUrl(true)}
               className="px-3.5 py-1.5 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg transition-colors"
             >
-              URL Encode
+              {t('url_encode', 'URL Encode')}
             </button>
             <button
               onClick={() => handleUrl(false)}
               className="px-3.5 py-1.5 text-xs font-medium text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
             >
-              URL Decode
+              {t('url_decode', 'URL Decode')}
             </button>
           </div>
 
