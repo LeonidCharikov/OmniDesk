@@ -9,6 +9,8 @@
   "cat_architecture": "Tauri y Código",
   "categories": "Categorías de herramientas",
   "interface_language": "Idioma de la interfaz",
+  "choose_image": "Elegir imagen",
+  "choose_file": "Elegir archivo",
   "local_sandboxed": "Sandbox local",
   "unit_from_label": "De unidad",
   "unit_to_label": "A unidad",

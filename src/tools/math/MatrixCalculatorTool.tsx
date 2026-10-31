@@ -453,7 +453,7 @@ export const MatrixCalculatorTool: React.FC = () => {
           <button
             onClick={() => applyPreset(2, 3, 3, 2)}
             className="px-2 py-1 rounded bg-indigo-900/40 hover:bg-indigo-800/60 text-indigo-300 font-mono transition-colors"
-            title="Multiplication ready: A(2x3) x B(3x2) -> 2x2"
+            title={t('multiplication_ready', 'Násobení připraveno: A(2x3) x B(3x2) -> 2x2')}
           >
             2×3 & 3×2
           </button>
@@ -685,7 +685,7 @@ export const MatrixCalculatorTool: React.FC = () => {
             <button
               onClick={swapMatrices}
               className="flex items-center gap-1 px-2 py-1 rounded bg-indigo-950/40 text-indigo-300 hover:text-white border border-indigo-800/40 ml-auto transition-colors"
-              title="Prohodit matici A a matici B"
+              title={t('swap_matrices', 'Prohodit matici A a matici B')}
             >
               <ArrowLeftRight className="w-3 h-3" /> {t('matrix_swap_ab', 'Prohodit A ↔ B')}
             </button>

@@ -419,9 +419,9 @@ export const TextEditorTool: React.FC = () => {
               type="text"
               value={fileName}
               onChange={e => setFileName(e.target.value)}
-              placeholder="nazev_souboru.txt"
+              placeholder={t('filename_placeholder', 'nazev_souboru.txt')}
               className="w-full px-2 py-1 bg-slate-900 border border-slate-700 rounded-md font-mono text-xs text-white focus:outline-none focus:border-indigo-500"
-              title="Název souboru"
+              title={t('filename', 'Název souboru')}
             />
           </div>
 

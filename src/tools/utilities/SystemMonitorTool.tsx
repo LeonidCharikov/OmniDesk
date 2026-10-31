@@ -694,7 +694,7 @@ fn main() {
                 ? 'bg-amber-500/20 text-amber-300 border-amber-500/50'
                 : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200'
             }`}
-            title="Simulovat zvýšené vytížení procesoru"
+            title={t('simulate_cpu_load', 'Simulovat zvýšené vytížení procesoru')}
           >
             <Zap className={`w-3.5 h-3.5 ${stressSimulated ? 'fill-amber-400 text-amber-400' : ''}`} />
             <span>{stressSimulated ? t('sys_stress_active', 'Zátěž aktivní') : t('sys_stress_test', 'Test zátěže')}</span>
@@ -768,28 +768,28 @@ fn main() {
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 text-xs">
           <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800/80">
-            <span className="text-[10px] text-slate-500 uppercase tracking-wider block">Platform</span>
+            <span className="text-[10px] text-slate-500 uppercase tracking-wider block">{t('platform', 'Platforma')}</span>
             <span className="font-mono font-semibold text-slate-200 mt-0.5 block truncate">{osInfo.platform}</span>
           </div>
           <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800/80">
-            <span className="text-[10px] text-slate-500 uppercase tracking-wider block">Version</span>
+            <span className="text-[10px] text-slate-500 uppercase tracking-wider block">{t('version', 'Verze')}</span>
             <span className="font-mono font-semibold text-slate-200 mt-0.5 block truncate">{osInfo.version}</span>
           </div>
           <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800/80">
-            <span className="text-[10px] text-slate-500 uppercase tracking-wider block">Architecture</span>
+            <span className="text-[10px] text-slate-500 uppercase tracking-wider block">{t('architecture', 'Architektura')}</span>
             <span className="font-mono font-semibold text-indigo-400 mt-0.5 block">{osInfo.arch}</span>
           </div>
           <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800/80">
-            <span className="text-[10px] text-slate-500 uppercase tracking-wider block">Hostname</span>
+            <span className="text-[10px] text-slate-500 uppercase tracking-wider block">{t('hostname', 'Název hostitele')}</span>
             <span className="font-mono font-semibold text-slate-200 mt-0.5 block truncate">{osInfo.hostname}</span>
           </div>
           <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800/80">
-            <span className="text-[10px] text-slate-500 uppercase tracking-wider block">Locale</span>
+            <span className="text-[10px] text-slate-500 uppercase tracking-wider block">{t('locale', 'Jazykové prostředí')}</span>
             <span className="font-mono font-semibold text-slate-200 mt-0.5 block">{osInfo.locale}</span>
           </div>
           <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800/80">
             <span className="text-[10px] text-slate-500 uppercase tracking-wider block">
-              {osInfo.isNative ? 'Uptime' : 'Session Uptime'}
+              {osInfo.isNative ? t('uptime', 'Doba běhu') : t('session_uptime', 'Doba běhu relace')}
             </span>
             <span className="font-mono font-semibold text-emerald-400 mt-0.5 block truncate">{formatUptime(telemetry.uptimeSeconds)}</span>
           </div>
@@ -810,9 +810,9 @@ fn main() {
                     </div>
                     <div>
                       <h3 className="text-sm font-semibold text-white">
-                        {osInfo.isNative ? 'CPU Vytížení' : 'CPU Estimate (rAF)'}
+                        {osInfo.isNative ? t('cpu_usage', 'Vytížení CPU') : t('cpu_estimate', 'Odhad CPU (rAF)')}
                       </h3>
-                      <span className="text-[11px] text-slate-400">{telemetry.cores.length} Jader / Vláken</span>
+                      <span className="text-[11px] text-slate-400">{telemetry.cores.length} {t('cores_threads', 'jader / vláken')}</span>
                     </div>
                   </div>
                   <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded ${
@@ -925,31 +925,31 @@ fn main() {
                 {hasMemoryApi ? (
                   <>
                     <div className="flex justify-between text-slate-400">
-                      <span>Available heap:</span>
+                      <span>{t('available_heap', 'Dostupná halda')}:</span>
                       <span className="text-white">{((telemetry.ramTotalGb - telemetry.ramUsedGb) * 1024).toFixed(1)} MB</span>
                     </div>
                     <div className="flex justify-between text-slate-400">
-                      <span>Allocated (not used):</span>
+                      <span>{t('allocated_not_used', 'Alokováno (nepoužito)')}:</span>
                       <span className="text-slate-300">{(telemetry.ramCachedGb * 1024).toFixed(1)} MB</span>
                     </div>
                     <div className="flex justify-between text-slate-400">
-                      <span>Source:</span>
+                      <span>{t('source', 'Zdroj')}:</span>
                       <span className="text-slate-300">performance.memory (Chrome)</span>
                     </div>
                   </>
                 ) : (
                   <>
                     <div className="flex justify-between text-slate-400">
-                      <span>Device Memory:</span>
+                      <span>{t('device_memory', 'Paměť zařízení')}:</span>
                       <span className="text-white">{telemetry.ramTotalGb > 0 ? `${telemetry.ramTotalGb} GB` : 'N/A'}</span>
                     </div>
                     <div className="flex justify-between text-slate-400">
-                      <span>Source:</span>
+                      <span>{t('source', 'Zdroj')}:</span>
                       <span className="text-slate-300">navigator.deviceMemory</span>
                     </div>
                     <div className="flex justify-between text-slate-400">
-                      <span>Detail:</span>
-                      <span className="text-slate-500">Exact usage requires Tauri native</span>
+                      <span>{t('detail', 'Detail')}:</span>
+                      <span className="text-slate-500">{t('exact_usage_tauri', 'Přesné využití vyžaduje nativní Tauri')}</span>
                     </div>
                   </>
                 )}
@@ -1029,7 +1029,7 @@ fn main() {
                 ) : (
                   <div className="flex justify-between text-slate-400">
                     <span>{t('disk_io', 'Disk I/O:')}</span>
-                    <span className="text-slate-500">Not available in browser mode</span>
+                    <span className="text-slate-500">{t('not_available_browser', 'V režimu prohlížeče není k dispozici')}</span>
                   </div>
                 )}
               </div>
@@ -1093,10 +1093,10 @@ fn main() {
             <table className="w-full text-xs text-left">
               <thead className="bg-slate-900 text-slate-400 font-semibold border-b border-slate-800 uppercase">
                 <tr>
-                  <th className="py-2.5 px-3">Category</th>
-                  <th className="py-2.5 px-3">Metric</th>
-                  <th className="py-2.5 px-3 text-right">Value</th>
-                  <th className="py-2.5 px-3 text-right">Source</th>
+                  <th className="py-2.5 px-3">{t('category', 'Kategorie')}</th>
+                  <th className="py-2.5 px-3">{t('metric', 'Metrika')}</th>
+                  <th className="py-2.5 px-3 text-right">{t('value', 'Hodnota')}</th>
+                  <th className="py-2.5 px-3 text-right">{t('source', 'Zdroj')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-900 font-mono tabular-nums">

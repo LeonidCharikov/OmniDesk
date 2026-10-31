@@ -840,10 +840,7 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-6 py-3.5 border-t border-slate-800 bg-slate-950/60">
-          <span className="text-xs text-slate-500">
-            OmniDesk v2.4 • 100% Offline-First
-          </span>
+        <div className="flex items-center justify-end px-6 py-3.5 border-t border-slate-800 bg-slate-950/60">
           <button
             onClick={onClose}
             className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md transition-colors"

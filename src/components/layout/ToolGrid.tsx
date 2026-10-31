@@ -37,9 +37,31 @@ import {
   Pencil,
   Ruler,
   Scissors,
+  ScanText,
+  Image,
+  Columns3,
+  NotebookPen,
+  Database,
+  Send,
+  GitBranch,
+  Workflow,
+  Timer,
+  CalendarClock,
+  Wallet,
+  ChartNoAxesCombined,
+  ReceiptText,
+  ShieldCheck,
+  Minimize2,
+  Table2,
+  Regex,
+  Pipette,
+  FileSignature,
+  BriefcaseBusiness,
+  MapPin,
 } from 'lucide-react';
 import { ToolDefinition, ToolCategory } from '../../types/tool';
 import { useI18n } from '../../i18n/context';
+import { getToolCatalogText } from '../../i18n/toolCatalog';
 
 interface ToolGridProps {
   tools: ToolDefinition[];
@@ -82,6 +104,28 @@ const ICON_MAP: Record<string, React.ReactNode> = {
   Pencil: <Pencil className="w-5 h-5 text-indigo-400" />,
   Ruler: <Ruler className="w-5 h-5 text-cyan-400" />,
   Scissors: <Scissors className="w-5 h-5 text-indigo-400" />,
+  ScanText: <ScanText className="w-5 h-5 text-indigo-400" />,
+  Image: <Image className="w-5 h-5 text-indigo-400" />,
+  Columns3: <Columns3 className="w-5 h-5 text-indigo-400" />,
+  NotebookPen: <NotebookPen className="w-5 h-5 text-indigo-400" />,
+  Database: <Database className="w-5 h-5 text-indigo-400" />,
+  Send: <Send className="w-5 h-5 text-indigo-400" />,
+  GitBranch: <GitBranch className="w-5 h-5 text-indigo-400" />,
+  Workflow: <Workflow className="w-5 h-5 text-indigo-400" />,
+  Timer: <Timer className="w-5 h-5 text-indigo-400" />,
+  CalendarClock: <CalendarClock className="w-5 h-5 text-indigo-400" />,
+  Wallet: <Wallet className="w-5 h-5 text-indigo-400" />,
+  ChartNoAxesCombined: <ChartNoAxesCombined className="w-5 h-5 text-indigo-400" />,
+  ReceiptText: <ReceiptText className="w-5 h-5 text-indigo-400" />,
+  ShieldCheck: <ShieldCheck className="w-5 h-5 text-indigo-400" />,
+  Minimize2: <Minimize2 className="w-5 h-5 text-indigo-400" />,
+  Table2: <Table2 className="w-5 h-5 text-indigo-400" />,
+  Regex: <Regex className="w-5 h-5 text-indigo-400" />,
+  Pipette: <Pipette className="w-5 h-5 text-indigo-400" />,
+  Screenshot: <Image className="w-5 h-5 text-indigo-400" />,
+  FileSignature: <FileSignature className="w-5 h-5 text-indigo-400" />,
+  BriefcaseBusiness: <BriefcaseBusiness className="w-5 h-5 text-indigo-400" />,
+  MapPin: <MapPin className="w-5 h-5 text-indigo-400" />,
 };
 
 export const ToolGrid: React.FC<ToolGridProps> = ({
@@ -92,7 +136,7 @@ export const ToolGrid: React.FC<ToolGridProps> = ({
   isOffline,
   activeCategory,
 }) => {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
 
   const CATEGORIES_METADATA: Array<{
     id: ToolCategory;
@@ -173,12 +217,12 @@ export const ToolGrid: React.FC<ToolGridProps> = ({
                   }`}
                 >
                   {isOffline && <WifiOff className="w-2.5 h-2.5" />}
-                  {isOffline ? 'Offline zamčeno' : 'Online API'}
+                  {isOffline ? t('offline_locked', 'Offline zamčeno') : t('online_api', 'Online API')}
                 </span>
               )}
               <button
                 onClick={() => onToggleFavorite(tool.id)}
-                title={isFav ? 'Odebrat z oblíbených' : 'Přidat do oblíbených'}
+                title={isFav ? t('remove_favorite', 'Odebrat z oblíbených') : t('add_favorite', 'Přidat do oblíbených')}
                 className="p-1.5 rounded-lg text-slate-500 hover:text-amber-400 transition-colors"
               >
                 <Star className={`w-4 h-4 ${isFav ? 'fill-amber-400 text-amber-400' : ''}`} />
@@ -188,11 +232,11 @@ export const ToolGrid: React.FC<ToolGridProps> = ({
 
           <div>
             <h3 className="text-sm font-semibold text-slate-100 group-hover:text-indigo-300 transition-colors flex items-center gap-1">
-              <span>{t(`tool_${tool.id.replace(/-/g, '_')}_title`, tool.title)}</span>
+              <span>{getToolCatalogText(tool.id, 'title', language, t(`tool_${tool.id.replace(/-/g, '_')}_title`, tool.title))}</span>
               <ArrowUpRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity text-indigo-400" />
             </h3>
             <p className="text-xs text-slate-400 mt-1 line-clamp-2 leading-relaxed">
-              {t(`tool_${tool.id.replace(/-/g, '_')}_desc`, tool.shortDesc)}
+              {getToolCatalogText(tool.id, 'desc', language, t(`tool_${tool.id.replace(/-/g, '_')}_desc`, tool.shortDesc))}
             </p>
           </div>
         </div>

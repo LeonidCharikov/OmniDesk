@@ -10,6 +10,8 @@ import { ToolCategory, UserConfig } from './types/tool';
 import { loadUserConfig, saveUserConfig, DEFAULT_CONFIG } from './services/storage';
 import { applyTheme } from './services/themes';
 import { useI18n } from './i18n/context';
+import { Info } from 'lucide-react';
+import { getToolCatalogText } from './i18n/toolCatalog';
 
 export default function App() {
   const [config, setConfig] = useState<UserConfig>(loadUserConfig);
@@ -19,6 +21,7 @@ export default function App() {
   const [isConfigOpen, setIsConfigOpen] = useState(false);
   const [isBrowserOnline, setIsBrowserOnline] = useState(navigator.onLine);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isToolInfoOpen, setIsToolInfoOpen] = useState(false);
 
   const toggleSidebar = useCallback(() => setIsSidebarOpen(prev => !prev), []);
 
@@ -29,12 +32,28 @@ export default function App() {
     }
   }, []);
 
-  const { t } = useI18n();
+  const { t, language } = useI18n();
 
   // Apply theme dynamically to document root
   useEffect(() => {
     applyTheme(config.themeId || 'midnight');
   }, [config.themeId]);
+
+  useEffect(() => {
+    setIsToolInfoOpen(false);
+  }, [selectedToolId]);
+
+  useEffect(() => {
+    const collapseSidebarForSmallWindow = () => {
+      if (window.innerWidth < 900) {
+        setIsSidebarOpen(false);
+      }
+    };
+
+    collapseSidebarForSmallWindow();
+    window.addEventListener('resize', collapseSidebarForSmallWindow);
+    return () => window.removeEventListener('resize', collapseSidebarForSmallWindow);
+  }, []);
 
   // Monitor network status
   useEffect(() => {
@@ -221,7 +240,26 @@ export default function App() {
             {activeCategory === 'architecture' ? (
               <ArchitectureTool />
             ) : activeTool ? (
-              <div className="overflow-x-hidden">
+              <div className="overflow-x-hidden relative">
+                <div className="flex justify-end mb-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsToolInfoOpen(true)}
+                    aria-label={t('tool_info_label', 'Informace o nástroji')}
+                    className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 border border-slate-800"
+                  >
+                    <Info className="w-4 h-4" />
+                  </button>
+                </div>
+                {isToolInfoOpen && (
+                  <div role="dialog" aria-modal="true" className="absolute z-30 right-0 top-10 w-80 p-4 rounded-xl border border-indigo-500/40 bg-slate-900 shadow-2xl">
+                    <div className="flex items-start justify-between gap-3">
+                      <h3 className="font-semibold text-white">{getToolCatalogText(activeTool.id, 'title', language, t(`tool_${activeTool.id.replace(/-/g, '_')}_title`, activeTool.title))}</h3>
+                      <button type="button" onClick={() => setIsToolInfoOpen(false)} className="text-slate-400 hover:text-white" aria-label="Close">×</button>
+                    </div>
+                    <p className="mt-2 text-sm leading-relaxed text-slate-300">{getToolCatalogText(activeTool.id, 'desc', language, t(`tool_${activeTool.id.replace(/-/g, '_')}_desc`, activeTool.shortDesc))}</p>
+                  </div>
+                )}
                 {/* Active Tool Renderer */}
                 {React.createElement(activeTool.component, {
                   isOffline: isEffectiveOffline,

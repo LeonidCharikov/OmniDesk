@@ -716,7 +716,7 @@ export const ChemistryTool: React.FC = () => {
                 <span>·</span>
                 <button onClick={() => setFormula('NaCl')} className="text-indigo-400 hover:underline">NaCl</button>
                 <span>·</span>
-                <button onClick={() => setFormula('C6H12O6')} className="text-indigo-400 hover:underline">C₆H₁₂O₆ (Glukóza)</button>
+                <button onClick={() => setFormula('C6H12O6')} className="text-indigo-400 hover:underline">C₆H₁₂O₆ ({t('glucose', 'Glukóza')})</button>
                 <span>·</span>
                 <button onClick={() => setFormula('CuSO4*5H2O')} className="text-indigo-400 hover:underline">CuSO₄·5H₂O</button>
                 <span>·</span>
@@ -734,7 +734,7 @@ export const ChemistryTool: React.FC = () => {
                 type="text"
                 value={formula}
                 onChange={e => setFormula(e.target.value)}
-                placeholder="C6H12O6, CuSO4*5H2O, Ca(OH)2, KMnO4, BaSO4..."
+                placeholder={t('formula_examples_placeholder', 'C6H12O6, CuSO4*5H2O, Ca(OH)2, KMnO4, BaSO4...')}
                 className="w-full px-4 py-3 bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl text-xl font-mono text-white focus:outline-none tracking-wide"
               />
             </div>

@@ -23,6 +23,8 @@
   "tool_text_editor_desc": "Create, edit, and download text files without a server. Includes search, replace, word counter, and formatting utilities.",
   "categories": "Tool Categories",
   "interface_language": "Interface language",
+  "choose_image": "Choose image",
+  "choose_file": "Choose file",
   "local_sandboxed": "Local sandbox",
   "unit_from_label": "From unit",
   "unit_to_label": "To unit",

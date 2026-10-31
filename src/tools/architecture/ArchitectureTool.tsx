@@ -97,9 +97,9 @@ export async function saveConvertedFile(targetPath: string, data: Uint8Array): P
   return (
     <div className="space-y-6">
       <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800">
-        <h2 className="text-lg font-semibold text-white">Architektura, Tauri Blueprint & Integrace</h2>
+        <h2 className="text-lg font-semibold text-white">{t('architecture_title', 'Architektura, Tauri Blueprint & Integrace')}</h2>
         <p className="text-sm text-slate-400 mt-1">
-          Kompletní průvodce pro export tohoto řešení do 100% nativní desktopové aplikace (Windows, macOS, Linux).
+          {t('architecture_desc', 'Kompletní průvodce pro export tohoto řešení do 100% nativní desktopové aplikace (Windows, macOS, Linux).')}
         </p>
       </div>
 
@@ -111,7 +111,7 @@ export async function saveConvertedFile(targetPath: string, data: Uint8Array): P
             activeTab === 'compare' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
           }`}
         >
-          Srovnání: Tauri v2 vs. Electron
+          {t('compare_tauri_electron', 'Srovnání: Tauri v2 vs. Electron')}
         </button>
         <button
           onClick={() => setActiveTab('structure')}
@@ -119,7 +119,7 @@ export async function saveConvertedFile(targetPath: string, data: Uint8Array): P
             activeTab === 'structure' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
           }`}
         >
-          Modulární struktura složek
+          {t('modular_structure', 'Modulární struktura složek')}
         </button>
         <button
           onClick={() => setActiveTab('commands')}
@@ -127,7 +127,7 @@ export async function saveConvertedFile(targetPath: string, data: Uint8Array): P
             activeTab === 'commands' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
           }`}
         >
-          Inicializační příkazy
+          {t('initialization_commands', 'Inicializační příkazy')}
         </button>
         <button
           onClick={() => setActiveTab('ipc')}
@@ -135,7 +135,7 @@ export async function saveConvertedFile(targetPath: string, data: Uint8Array): P
             activeTab === 'ipc' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
           }`}
         >
-          Propojení UI & Rust Backend (IPC)
+          {t('ui_rust_ipc', 'Propojení UI & Rust Backend (IPC)')}
         </button>
         <button
           onClick={() => setActiveTab('build')}
@@ -143,7 +143,7 @@ export async function saveConvertedFile(targetPath: string, data: Uint8Array): P
             activeTab === 'build' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
           }`}
         >
-          Desktop (.exe / .dmg) vs. Web
+          {t('desktop_vs_web', 'Desktop (.exe / .dmg) vs. Web')}
         </button>
       </div>
 
@@ -153,27 +153,27 @@ export async function saveConvertedFile(targetPath: string, data: Uint8Array): P
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="p-4 rounded-xl bg-slate-900/40 border border-indigo-500/30 space-y-3">
               <div className="flex items-center justify-between">
-                <h3 className="text-base font-semibold text-white">Tauri v2 (Doporučená volba)</h3>
+                <h3 className="text-base font-semibold text-white">{t('tauri_recommended', 'Tauri v2 (Doporučená volba)')}</h3>
                 <span className="text-xs font-semibold px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300">
-                  Vítěz pro OmniDesk
+                  {t('winner_for_omnidesk', 'Vítěz pro OmniDesk')}
                 </span>
               </div>
               <ul className="text-xs text-slate-300 space-y-2 leading-relaxed">
                 <li className="flex items-start gap-2">
                   <span className="text-emerald-400 font-bold">&#10003;</span>
-                  <span><strong>Paměť RAM:</strong> ~35 MB (využívá nativní WebView2 na Windows / WebKit na macOS).</span>
+                  <span><strong>{t('ram_memory', 'Paměť RAM')}:</strong> ~35 MB (využívá nativní WebView2 na Windows / WebKit na macOS).</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-emerald-400 font-bold">&#10003;</span>
-                  <span><strong>Velikost binárky:</strong> 8–15 MB místo 120+ MB u Electronu.</span>
+                  <span><strong>{t('binary_size', 'Velikost binárky')}:</strong> 8–15 MB místo 120+ MB u Electronu.</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-emerald-400 font-bold">&#10003;</span>
-                  <span><strong>Výkon pro soubory:</strong> Rust má bezkonkurenční rychlost a bezpečnost paměti pro binární konverze dokumentů.</span>
+                  <span><strong>{t('file_performance', 'Výkon pro soubory')}:</strong> Rust má bezkonkurenční rychlost a bezpečnost paměti pro binární konverze dokumentů.</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-emerald-400 font-bold">&#10003;</span>
-                  <span><strong>Bezpečnost:</strong> Detailní oprávnění (permissions) pro přístup k souborům a oknům.</span>
+                  <span><strong>{t('security', 'Bezpečnost')}:</strong> Detailní oprávnění (permissions) pro přístup k souborům a oknům.</span>
                 </li>
               </ul>
             </div>
@@ -182,25 +182,25 @@ export async function saveConvertedFile(targetPath: string, data: Uint8Array): P
               <div className="flex items-center justify-between">
                 <h3 className="text-base font-semibold text-slate-300">Electron</h3>
                 <span className="text-xs font-semibold px-2 py-0.5 rounded bg-slate-800 text-slate-400">
-                  Alternativa
+                  {t('alternative', 'Alternativa')}
                 </span>
               </div>
               <ul className="text-xs text-slate-400 space-y-2 leading-relaxed">
                 <li className="flex items-start gap-2">
                   <span className="text-amber-400 font-bold">&#8226;</span>
-                  <span><strong>Paměť RAM:</strong> 180–400+ MB (přibaluje celý Chromium browser a instanci Node.js).</span>
+                  <span><strong>{t('ram_memory', 'Paměť RAM')}:</strong> 180–400+ MB (přibaluje celý Chromium browser a instanci Node.js).</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-amber-400 font-bold">&#8226;</span>
-                  <span><strong>Velikost instalátoru:</strong> 90–160 MB.</span>
+                  <span><strong>{t('installer_size', 'Velikost instalátoru')}:</strong> 90–160 MB.</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-emerald-400 font-bold">&#10003;</span>
-                  <span><strong>Ekosystém:</strong> Přímý přístup k libovolným Node.js modulům přes `npm` i na backendu.</span>
+                  <span><strong>{t('ecosystem', 'Ekosystém')}:</strong> Přímý přístup k libovolným Node.js modulům přes `npm` i na backendu.</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-amber-400 font-bold">&#8226;</span>
-                  <span><strong>Závěr:</strong> Pro aplikaci, která má tiše běžet na pozadí jako rychlý pomocník, je zbytečně těžkopádný.</span>
+                  <span><strong>{t('conclusion', 'Závěr')}:</strong> Pro aplikaci, která má tiše běžet na pozadí jako rychlý pomocník, je zbytečně těžkopádný.</span>
                 </li>
               </ul>
             </div>
@@ -256,14 +256,14 @@ export async function saveConvertedFile(targetPath: string, data: Uint8Array): P
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-              Příkazy pro terminál (Bash / PowerShell)
+              {t('terminal_commands', 'Příkazy pro terminál (Bash / PowerShell)')}
             </span>
             <button
               onClick={() => copyCode(terminalInitCommands, 1)}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-indigo-400 hover:text-indigo-300 rounded-lg hover:bg-slate-800 transition-colors"
             >
               {copiedIndex === 1 ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-              {copiedIndex === 1 ? 'Zkopírováno' : 'Kopírovat příkazy'}
+              {copiedIndex === 1 ? t('copied', 'Zkopírováno') : t('copy_commands', 'Kopírovat příkazy')}
             </button>
           </div>
           <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 font-mono text-xs text-slate-300 leading-relaxed overflow-x-auto">
@@ -278,14 +278,14 @@ export async function saveConvertedFile(targetPath: string, data: Uint8Array): P
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                1. Rust Backend: Implementace IPC příkazů (`src-tauri/src/main.rs`)
+                {t('rust_ipc_heading', '1. Rust Backend: Implementace IPC příkazů (`src-tauri/src/main.rs`)')}
               </span>
               <button
                 onClick={() => copyCode(rustIpcCode, 2)}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-indigo-400 hover:text-indigo-300 rounded-lg hover:bg-slate-800 transition-colors"
               >
                 {copiedIndex === 2 ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                {copiedIndex === 2 ? 'Zkopírováno' : 'Kopírovat Rust'}
+                {copiedIndex === 2 ? t('copied', 'Zkopírováno') : t('copy_rust', 'Kopírovat Rust')}
               </button>
             </div>
             <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 font-mono text-xs text-emerald-300 leading-relaxed overflow-x-auto max-h-64">
@@ -296,14 +296,14 @@ export async function saveConvertedFile(targetPath: string, data: Uint8Array): P
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                2. React Frontend: Volání příkazů (`src/services/tauriBridge.ts`)
+                {t('react_bridge_heading', '2. React Frontend: Volání příkazů (`src/services/tauriBridge.ts`)')}
               </span>
               <button
                 onClick={() => copyCode(reactBridgeCode, 3)}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-indigo-400 hover:text-indigo-300 rounded-lg hover:bg-slate-800 transition-colors"
               >
                 {copiedIndex === 3 ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                {copiedIndex === 3 ? 'Zkopírováno' : 'Kopírovat TypeScript'}
+                {copiedIndex === 3 ? t('copied', 'Zkopírováno') : t('copy_typescript', 'Kopírovat TypeScript')}
               </button>
             </div>
             <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 font-mono text-xs text-indigo-300 leading-relaxed overflow-x-auto max-h-64">
@@ -318,16 +318,15 @@ export async function saveConvertedFile(targetPath: string, data: Uint8Array): P
         <div className="space-y-4">
           <div className="p-5 rounded-2xl bg-indigo-950/20 border border-indigo-500/30 space-y-3">
             <h3 className="text-base font-semibold text-white">
-              Jak z tohoto kódu vznikne instalovatelná počítačová aplikace (.exe, .dmg, .deb)
+              {t('build_title', 'Jak z tohoto kódu vznikne instalovatelná počítačová aplikace (.exe, .dmg, .deb)')}
             </h3>
             <p className="text-xs text-slate-300 leading-relaxed">
-              To, co vidíte v tomto okně, <strong>není jen webová stránka</strong>. V moderním desktopovém vývoji (Tauri i Electron) je uživatelské rozhraní vždy psáno ve webových technologiích (React, HTML5, CSS).
-              Když na svém počítači spustíte příkaz <code>npm run tauri build</code>, stane se následující:
+              {t('build_intro', 'To, co vidíte v tomto okně, není jen webová stránka. V moderním desktopovém vývoji (Tauri i Electron) je uživatelské rozhraní vždy psáno ve webových technologiích (React, HTML5, CSS). Když na svém počítači spustíte příkaz npm run tauri build, stane se následující:')}
             </p>
             <ol className="text-xs text-slate-300 space-y-2 list-decimal list-inside leading-relaxed pl-1">
-              <li><strong>Vite zkompiluje React UI:</strong> Vygeneruje statickou složku <code>dist/</code> s bleskově rychlým JS a CSS kódem.</li>
-              <li><strong>Rust zkompiluje nativní jádro:</strong> Vytvoří binární soubor, který komunikuje přímo s operačním systémem (Windows, macOS nebo Linux) a připojí k němu systémový WebView.</li>
-              <li><strong>Vytvoření instalátoru:</strong> Tauri automaticky zabalí vše dohromady a vytvoří hotový instalátor:
+              <li>{t('build_vite', 'Vite zkompiluje React UI: Vygeneruje statickou složku dist/ s bleskově rychlým JS a CSS kódem.')}</li>
+              <li>{t('build_rust', 'Rust zkompiluje nativní jádro: Vytvoří binární soubor, který komunikuje přímo s operačním systémem a připojí k němu systémový WebView.')}</li>
+              <li>{t('build_installer', 'Vytvoření instalátoru: Tauri automaticky zabalí vše dohromady a vytvoří hotový instalátor:')}
                 <ul className="list-disc list-inside pl-4 mt-1 space-y-0.5 font-mono text-indigo-300">
                   <li>Windows: <code>src-tauri/target/release/bundle/nsis/omnidesk_setup.exe</code></li>
                   <li>macOS: <code>src-tauri/target/release/bundle/dmg/omnidesk.dmg</code></li>
@@ -339,19 +338,19 @@ export async function saveConvertedFile(targetPath: string, data: Uint8Array): P
 
           <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800 space-y-3">
             <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
-              Obrovská výhoda hybridní architektury (2 v 1)
+              {t('hybrid_advantage', 'Obrovská výhoda hybridní architektury (2 v 1)')}
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
               <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 space-y-1">
-                <span className="font-semibold text-emerald-400 block">&#10003; 1. Nativní desktop aplikace</span>
+                <span className="font-semibold text-emerald-400 block">&#10003; {t('native_desktop', '1. Nativní desktop aplikace')}</span>
                 <p className="text-slate-400 text-[11px] leading-relaxed">
-                  Funguje bez internetu, má přímý přístup k disku, systémovým oknům a souborovým asociacím (např. dvojklik na .docx otevře OmniDesk).
+                  {t('native_desktop_desc', 'Funguje bez internetu, má přímý přístup k disku, systémovým oknům a souborovým asociacím (např. dvojklik na .docx otevře OmniDesk).')}
                 </p>
               </div>
               <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 space-y-1">
-                <span className="font-semibold text-indigo-400 block">&#10003; 2. Webová SaaS verze</span>
+                <span className="font-semibold text-indigo-400 block">&#10003; {t('web_saas', '2. Webová SaaS verze')}</span>
                 <p className="text-slate-400 text-[11px] leading-relaxed">
-                  Tentýž kód můžete nahrát na libovolný webhosting a kdokoliv jej může používat přímo v prohlížeči bez instalace (jako na tomto odkazu).
+                  {t('web_saas_desc', 'Tentýž kód můžete nahrát na libovolný webhosting a kdokoliv jej může používat přímo v prohlížeči bez instalace.')}
                 </p>
               </div>
             </div>

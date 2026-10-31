@@ -12,6 +12,7 @@ interface CommandPaletteProps {
 }
 
 import { useI18n } from '../../i18n/context';
+import { getToolCatalogText } from '../../i18n/toolCatalog';
 
 export const CommandPalette: React.FC<CommandPaletteProps> = ({
   isOpen,
@@ -21,7 +22,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   onSelectTool,
   isOffline,
 }) => {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const [query, setQuery] = useState('');
   const commandSearchId = useId();
 
@@ -42,14 +43,14 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 
   if (!isOpen) return null;
 
-  const filtered = tools.filter(t => {
+  const filtered = tools.filter(tool => {
     const q = query.toLowerCase().trim();
     if (!q) return true;
     return (
-      t.title.toLowerCase().includes(q) ||
-      t.shortDesc.toLowerCase().includes(q) ||
-      t.category.toLowerCase().includes(q) ||
-      t.tags.some(tag => tag.toLowerCase().includes(q))
+      getToolCatalogText(tool.id, 'title', language, tool.title).toLowerCase().includes(q) ||
+      getToolCatalogText(tool.id, 'desc', language, tool.shortDesc).toLowerCase().includes(q) ||
+      tool.category.toLowerCase().includes(q) ||
+      tool.tags.some(tag => tag.toLowerCase().includes(q))
     );
   });
 
@@ -110,7 +111,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-semibold text-slate-200 group-hover:text-white">
-                          {t(`tool_${tool.id.replace(/-/g, '_')}_title`, tool.title)}
+                          {getToolCatalogText(tool.id, 'title', language, t(`tool_${tool.id.replace(/-/g, '_')}_title`, tool.title))}
                         </span>
                         {isFav && <Star className="w-3 h-3 fill-amber-400 text-amber-400" />}
                         {isLockedOffline && (
@@ -118,7 +119,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                         )}
                       </div>
                       <p className="text-[11px] text-slate-400 truncate mt-0.5">
-                        {t(`tool_${tool.id.replace(/-/g, '_')}_desc`, tool.shortDesc)}
+                        {getToolCatalogText(tool.id, 'desc', language, t(`tool_${tool.id.replace(/-/g, '_')}_desc`, tool.shortDesc))}
                       </p>
                     </div>
                   </div>

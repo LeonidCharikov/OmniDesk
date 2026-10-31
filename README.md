@@ -8,7 +8,7 @@
 [![i18n Ally](https://img.shields.io/badge/i18n--Ally-Supported-success?logo=visualstudiocode)](https://marketplace.visualstudio.com/items?itemName=lokalise.i18n-ally)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-**OmniDesk** is a modern, high-performance, and versatile desktop workstation combining **32 integrated tools** into a unified, distraction-free environment. Built with **Tauri v2 (Rust backend)** and **React 19 / TypeScript / Vite / Tailwind CSS**, it operates primarily **100% offline** directly in device memory with zero server telemetry, while supporting native OS hardware monitoring, local filesystem processing, a translucent top bar matching your active color theme, and lightning-fast keyboard navigation (`Ctrl+K`).
+**OmniDesk** is a modern, high-performance, and versatile desktop workstation combining **57 integrated tools** into a unified, distraction-free environment. Built with **Tauri v2 (Rust backend)** and **React 19 / TypeScript / Vite / Tailwind CSS**, it operates primarily **100% offline** directly in device memory with zero server telemetry, while supporting native OS hardware monitoring, local filesystem processing, a translucent top bar matching your active color theme, and lightning-fast keyboard navigation (`Ctrl+K`).
 
 The application defaults to **English** out-of-the-box, with dynamic, first-class localization across 5 languages (**English**, **Čeština**, **Deutsch**, **Español**, and **Русский**).
 
@@ -116,7 +116,7 @@ Open [http://localhost:3000](http://localhost:3000) in your web browser. From th
 
 ---
 
-## 🛠️ Complete Integrated Tools Catalog (32 Tools)
+## 🛠️ Complete Integrated Tools Catalog (57 Tools)
 
 ### 📁 1. Files & Documents (`files`)
 1. **Text & Markdown Editor (.txt / .md)**: File creation/editing, selective text resizing, headings, alignment, case conversion, regex search & replace, and File Explorer save dialog.
@@ -164,6 +164,32 @@ Open [http://localhost:3000](http://localhost:3000) in your web browser. From th
 29. **World Timezones & Meeting Planner**: Interactive clock with 28 world cities and meeting time scrubber slider.
 30. **JSON Formatter & Validator**: Beautify, minify, and validate JSON data structures with syntax error detection.
 31. **Online Translator**: Quick translation utility with automatic network status detection and offline notice.
+33. **PDF Toolkit**: Merge PDF files and rotate pages locally before exporting the result.
+34. **OCR Scanner**: Extract text from images locally using Tesseract.js.
+35. **Image Editor**: Resize, compress, preview, and export images as JPEG.
+36. **Markdown Preview & Export**: Live Markdown preview with HTML export.
+37. **To-do / Kanban**: Organize tasks across planned, in-progress, and completed columns.
+38. **Notes Workspace**: Manage multiple searchable notes with automatic local persistence.
+39. **SQL Playground**: Run simple local `SELECT` queries against JSON data without a server.
+40. **API Tester**: Send HTTP requests and inspect JSON or text responses.
+41. **Git Tools**: Filter and copy pasted Git logs or diffs locally.
+42. **Diagram Editor**: Create lightweight node diagrams and export them as SVG.
+43. **Multi-Activity Time Tracker**: Run independent timers for several activities inside the Pomodoro tool.
+45. **Expense Tracker & Budget**: Record expenses and calculate the running total.
+46. **Investment Calculator**: Estimate compound growth from initial and monthly deposits.
+47. **Invoice Generator**: Create a simple HTML invoice from semicolon-separated items.
+48. **File Hashing**: Calculate local SHA-256 fingerprints.
+49. **JWT Decoder**: Decode JWT headers and payloads locally without verifying signatures.
+50. **XML Formatter & Validator**: Parse and format XML documents.
+51. **YAML Formatter & Validator**: Normalize basic YAML configuration text.
+52. **CSS/HTML/JavaScript Minifier**: Remove comments and unnecessary whitespace.
+53. **Markdown Table Generator**: Convert semicolon-separated rows into Markdown tables.
+54. **Regex Builder**: Create escaped regular-expression patterns with flags.
+55. **Image Color Picker**: Read HEX colors from clicked image pixels.
+56. **Screenshot Annotator**: Add text annotations and export PNG screenshots.
+57. **GPS Converter**: Convert decimal coordinates to degrees, minutes, and seconds.
+58. **Periodic Finance Calculator**: Calculate compound interest by compounding period.
+59. **Binary/Hex Converter**: Convert UTF-8 text to binary and hexadecimal.
 
 ---
 

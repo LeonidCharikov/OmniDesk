@@ -23,6 +23,8 @@
   "tool_text_editor_desc": "Vytváření, úprava a stahování textových souborů bez serveru. Podpora vyhledávání, nahrazování, počítadla slov a formátovacích utilit.",
   "categories": "Kategorie nástrojů",
   "interface_language": "Jazyk rozhraní",
+  "choose_image": "Vybrat obrázek",
+  "choose_file": "Vybrat soubor",
   "local_sandboxed": "Lokální sandbox",
   "unit_from_label": "Z jednotky",
   "unit_to_label": "Do jednotky",

@@ -24,6 +24,7 @@ interface CalendarEvent {
   description: string;
   color: string;       // tailwind-friendly color key
   durationMinutes: number; // 30, 60, 90, 120
+  recurrence?: 'none' | 'weekly' | 'daily';
 }
 
 type ViewMode = 'month' | 'week' | 'day';
@@ -127,6 +128,9 @@ export const CalendarTool: React.FC = () => {
   const [showEventModal, setShowEventModal] = useState(false);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<{ date: string; hour: number; minute: number } | null>(null);
+  const [workdayStart, setWorkdayStart] = useState(dateToStr(new Date()));
+  const [workdayCount, setWorkdayCount] = useState(20);
+  const [workdayResult, setWorkdayResult] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Persist events
@@ -158,7 +162,14 @@ export const CalendarTool: React.FC = () => {
 
   /* ── Event CRUD ──────────────────────────────────────────── */
   const addEvent = (ev: Omit<CalendarEvent, 'id'>) => {
-    setEvents(prev => [...prev, { ...ev, id: Date.now().toString() + Math.random().toString(36).slice(2) }]);
+    const count = ev.recurrence === 'daily' ? 30 : ev.recurrence === 'weekly' ? 12 : 1;
+    const generated = Array.from({ length: count }, (_, index) => {
+      const eventDate = new Date(`${ev.date}T12:00:00`);
+      if (ev.recurrence === 'daily') eventDate.setDate(eventDate.getDate() + index);
+      if (ev.recurrence === 'weekly') eventDate.setDate(eventDate.getDate() + index * 7);
+      return { ...ev, date: dateToStr(eventDate), recurrence: 'none' as const, id: `${Date.now()}-${index}-${Math.random().toString(36).slice(2)}` };
+    });
+    setEvents(prev => [...prev, ...generated]);
   };
 
   const updateEvent = (ev: CalendarEvent) => {
@@ -215,6 +226,15 @@ export const CalendarTool: React.FC = () => {
 
   const today = new Date();
   const todayStr = dateToStr(today);
+  const calculateWorkday = () => {
+    const date = new Date(`${workdayStart}T12:00:00`);
+    let remaining = Math.max(0, workdayCount);
+    while (remaining > 0) {
+      date.setDate(date.getDate() + 1);
+      if (date.getDay() !== 0 && date.getDay() !== 6) remaining -= 1;
+    }
+    setWorkdayResult(dateToStr(date));
+  };
 
   return (
     <div className="space-y-4">
@@ -259,6 +279,16 @@ export const CalendarTool: React.FC = () => {
           <button onClick={goToday} className="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white transition-colors">
             {t('cal_today', 'Dnes')}
           </button>
+        </div>
+
+        <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800">
+          <h3 className="text-sm font-semibold text-white mb-2">{t('working_days_planning', 'Plánování pracovních dnů a dovolené')}</h3>
+          <div className="flex flex-wrap items-end gap-2">
+            <label className="text-xs text-slate-400">{t('start_date', 'Počáteční datum')}<input className="block mt-1 px-2 py-1.5 rounded bg-slate-950 border border-slate-800 text-white" type="date" value={workdayStart} onChange={event => setWorkdayStart(event.target.value)} /></label>
+            <label className="text-xs text-slate-400">{t('working_days', 'Pracovní dny')}<input className="block mt-1 w-24 px-2 py-1.5 rounded bg-slate-950 border border-slate-800 text-white" type="number" min="0" value={workdayCount} onChange={event => setWorkdayCount(Number(event.target.value))} /></label>
+            <button onClick={calculateWorkday} className="px-3 py-1.5 rounded bg-indigo-600 hover:bg-indigo-500 text-white text-xs">{t('calculate_date', 'Vypočítat datum')}</button>
+            {workdayResult && <span className="text-xs text-emerald-400">{t('result', 'Výsledek')}: {workdayResult}</span>}
+          </div>
         </div>
         <h3 className="text-sm font-bold text-white tracking-tight">{getTitle()}</h3>
         <button
@@ -593,6 +623,7 @@ const EventModal: React.FC<{
   const [minute, setMinute] = useState(event?.minute ?? slot?.minute ?? 0);
   const [duration, setDuration] = useState(event?.durationMinutes ?? 60);
   const [color, setColor] = useState(event?.color || 'indigo');
+  const [recurrence, setRecurrence] = useState<'none' | 'weekly' | 'daily'>(event?.recurrence || 'none');
 
   const handleSave = () => {
     if (!title.trim()) return;
@@ -605,6 +636,7 @@ const EventModal: React.FC<{
       description: description.trim(),
       color,
       durationMinutes: duration,
+      recurrence,
     });
   };
 
@@ -653,6 +685,17 @@ const EventModal: React.FC<{
                 className="w-full px-2 py-2 text-xs rounded-lg bg-slate-950 border border-slate-800 text-white focus:border-indigo-500 focus:outline-none transition-colors"
               />
             </div>
+
+            {!event && (
+              <div>
+                <label className="block text-[11px] text-slate-400 uppercase tracking-wider mb-1">{t('repeat', 'Opakování')}</label>
+                <select value={recurrence} onChange={e => setRecurrence(e.target.value as 'none' | 'weekly' | 'daily')} className="w-full px-2 py-2 text-xs rounded-lg bg-slate-950 border border-slate-800 text-white">
+                  <option value="none">{t('does_not_repeat', 'Neopakovat')}</option>
+                  <option value="daily">{t('daily_occurrences', 'Denně (30 výskytů)')}</option>
+                  <option value="weekly">{t('weekly_occurrences', 'Týdně (12 výskytů)')}</option>
+                </select>
+              </div>
+            )}
             <div>
               <label className="block text-[11px] text-slate-400 uppercase tracking-wider mb-1">{t('from_time', 'Od')}</label>
               <div className="flex gap-1">
@@ -683,14 +726,14 @@ const EventModal: React.FC<{
                 onChange={e => setDuration(Number(e.target.value))}
                 className="w-full px-2 py-2 text-xs rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none"
               >
-                <option value={15} className="bg-slate-900">15 min</option>
-                <option value={30} className="bg-slate-900">30 min</option>
-                <option value={45} className="bg-slate-900">45 min</option>
-                <option value={60} className="bg-slate-900">1 hod</option>
-                <option value={90} className="bg-slate-900">1.5 hod</option>
-                <option value={120} className="bg-slate-900">2 hod</option>
-                <option value={180} className="bg-slate-900">3 hod</option>
-                <option value={240} className="bg-slate-900">4 hod</option>
+                <option value={15} className="bg-slate-900">{t('duration_minutes', '{value} min', { value: 15 })}</option>
+                <option value={30} className="bg-slate-900">{t('duration_minutes', '{value} min', { value: 30 })}</option>
+                <option value={45} className="bg-slate-900">{t('duration_minutes', '{value} min', { value: 45 })}</option>
+                <option value={60} className="bg-slate-900">{t('duration_hours', '{value} hod', { value: 1 })}</option>
+                <option value={90} className="bg-slate-900">{t('duration_hours_decimal', '{value} hod', { value: 1.5 })}</option>
+                <option value={120} className="bg-slate-900">{t('duration_hours', '{value} hod', { value: 2 })}</option>
+                <option value={180} className="bg-slate-900">{t('duration_hours', '{value} hod', { value: 3 })}</option>
+                <option value={240} className="bg-slate-900">{t('duration_hours', '{value} hod', { value: 4 })}</option>
               </select>
             </div>
           </div>

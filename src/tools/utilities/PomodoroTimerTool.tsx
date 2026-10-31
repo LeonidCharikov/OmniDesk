@@ -10,7 +10,8 @@ interface LapRecord {
 
 export const PomodoroTimerTool: React.FC = () => {
   const { t } = useI18n();
-  const [activeTab, setActiveTab] = useState<'pomodoro' | 'timer' | 'stopwatch'>('pomodoro');
+  const [activeTab, setActiveTab] = useState<'pomodoro' | 'timer' | 'stopwatch' | 'activities'>('pomodoro');
+  const [activities, setActivities] = useState<Array<{ id: number; name: string; seconds: number; running: boolean }>>([]);
 
   // --- 1. Pomodoro State ---
   const [pomodoroMode, setPomodoroMode] = useState<'work' | 'shortBreak' | 'longBreak'>('work');
@@ -33,6 +34,13 @@ export const PomodoroTimerTool: React.FC = () => {
   const stopwatchStartRef = useRef<number>(0);
   const stopwatchAccumulatedRef = useRef<number>(0);
   const [copiedLaps, setCopiedLaps] = useState(false);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      setActivities(current => current.map(activity => activity.running ? { ...activity, seconds: activity.seconds + 1 } : activity));
+    }, 1000);
+    return () => window.clearInterval(interval);
+  }, []);
 
   // Play audio chime
   const playBeep = () => {
@@ -252,6 +260,15 @@ export const PomodoroTimerTool: React.FC = () => {
             <Flag className="w-3.5 h-3.5" />
             {t('tab_stopwatch', 'Stopky & Mezičasy')}
           </button>
+          <button
+            onClick={() => setActiveTab('activities')}
+            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+              activeTab === 'activities' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Timer className="w-3.5 h-3.5 inline mr-1" />
+            Multi-activity
+          </button>
         </div>
       </div>
 
@@ -329,6 +346,39 @@ export const PomodoroTimerTool: React.FC = () => {
       )}
 
       {/* 2. Custom Countdown Timer View */}
+      {activeTab === 'activities' && (
+        <div className="p-5 rounded-2xl bg-slate-900/40 border border-slate-800 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold text-white">{t('multi_activity_tracker', 'Sledování více aktivit')}</h3>
+            <button
+              onClick={() => setActivities(current => [...current, { id: Date.now(), name: `Activity ${current.length + 1}`, seconds: 0, running: false }])}
+              className="px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs"
+            >
+              <Plus className="w-3.5 h-3.5 inline mr-1" /> Add activity
+            </button>
+          </div>
+          {activities.map(activity => (
+            <div key={activity.id} className="flex items-center gap-2">
+              <input
+                className="flex-1 px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-sm text-white"
+                value={activity.name}
+                onChange={event => setActivities(current => current.map(item => item.id === activity.id ? { ...item, name: event.target.value } : item))}
+              />
+              <span className="font-mono text-white">{formatHoursSeconds(activity.seconds)}</span>
+              <button
+                onClick={() => setActivities(current => current.map(item => item.id === activity.id ? { ...item, running: !item.running } : item))}
+                className="px-3 py-2 rounded-lg bg-slate-800 text-xs text-white"
+              >
+                {activity.running ? 'Pause' : 'Start'}
+              </button>
+              <button onClick={() => setActivities(current => current.filter(item => item.id !== activity.id))} className="text-red-400">
+                ×
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
       {activeTab === 'timer' && (
         <div className="space-y-6">
           <div className="p-8 rounded-2xl bg-slate-900/40 border border-slate-800 flex flex-col items-center justify-center space-y-6 text-center">

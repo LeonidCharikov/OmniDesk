@@ -9,6 +9,8 @@
   "cat_architecture": "Tauri & Quellcode",
   "categories": "Werkzeugkategorien",
   "interface_language": "Oberflächensprache",
+  "choose_image": "Bild auswählen",
+  "choose_file": "Datei auswählen",
   "local_sandboxed": "Lokale Sandbox",
   "unit_from_label": "Von Einheit",
   "unit_to_label": "In Einheit",

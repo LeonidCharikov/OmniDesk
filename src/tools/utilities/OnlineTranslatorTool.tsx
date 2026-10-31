@@ -141,11 +141,11 @@ export const OnlineTranslatorTool: React.FC<Props> = ({ isOffline }) => {
             onChange={e => setSourceLang(e.target.value as 'cs' | 'en' | 'de' | 'es' | 'ru')}
             className="px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-200"
           >
-            <option value="cs">Čeština</option>
-            <option value="en">English</option>
-            <option value="de">Deutsch</option>
-            <option value="es">Español</option>
-            <option value="ru">Русский</option>
+            <option value="cs">{t('czech', 'Čeština')}</option>
+            <option value="en">{t('english', 'English')}</option>
+            <option value="de">{t('german', 'Deutsch')}</option>
+            <option value="es">{t('spanish', 'Español')}</option>
+            <option value="ru">{t('russian', 'Русский')}</option>
           </select>
 
           <button
@@ -163,11 +163,11 @@ export const OnlineTranslatorTool: React.FC<Props> = ({ isOffline }) => {
             onChange={e => setTargetLang(e.target.value as 'cs' | 'en' | 'de' | 'es' | 'ru')}
             className="px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-200"
           >
-            <option value="ru">Русский</option>
-            <option value="en">English</option>
-            <option value="cs">Čeština</option>
-            <option value="de">Deutsch</option>
-            <option value="es">Español</option>
+            <option value="ru">{t('russian', 'Русский')}</option>
+            <option value="en">{t('english', 'English')}</option>
+            <option value="cs">{t('czech', 'Čeština')}</option>
+            <option value="de">{t('german', 'Deutsch')}</option>
+            <option value="es">{t('spanish', 'Español')}</option>
           </select>
         </div>
 

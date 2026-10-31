@@ -83,10 +83,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
     >
       <div className="p-4 space-y-5 overflow-y-auto flex-1 min-w-0">
         {/* Brand Lockup + Toggle */}
-        <div className="flex items-center justify-between">
+        <div className={`relative flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
           <div 
             onClick={onBackToOverview}
-            className="flex items-center gap-3 px-2 cursor-pointer group min-w-0"
+            className={`flex items-center gap-3 cursor-pointer group min-w-0 ${isCollapsed ? 'px-0' : 'px-2'}`}
           >
             <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-400 flex items-center justify-center text-white shadow-md shadow-indigo-500/20 group-hover:scale-105 transition-transform shrink-0">
               <HardDrive className="w-5 h-5" />
@@ -106,7 +106,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {/* Collapse/expand toggle – hidden on mobile (hamburger is in header) */}
           <button
             onClick={onToggle}
-            className="hidden sm:flex p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors shrink-0"
+            className={`hidden sm:flex p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors shrink-0 ${
+              isCollapsed ? 'absolute right-0 top-0' : ''
+            }`}
             title={isOpen ? t('collapse_sidebar', 'Sbalit panel') : t('expand_sidebar', 'Rozbalit panel')}
           >
             {isOpen ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
@@ -129,16 +131,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   onSelectCategory(cat.id);
                   onBackToOverview();
                 }}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                className={`${isCollapsed ? 'w-10 h-10 p-0 justify-center mx-auto' : 'w-full px-3 py-2 justify-between min-w-0'} flex items-center rounded-lg text-xs font-medium transition-colors ${
                   isActive
                     ? 'bg-indigo-600 text-white shadow-sm'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/80'
                 }`}
                 title={isCollapsed ? cat.label : undefined}
               >
-                <div className={`flex items-center gap-2.5 ${isCollapsed ? 'mx-auto' : ''}`}>
+                <div className="flex items-center gap-2.5 min-w-0">
                   {cat.icon}
-                  {isOpen && <span>{cat.label}</span>}
+                  {isOpen && <span className="truncate whitespace-nowrap">{cat.label}</span>}
                 </div>
                 {isOpen && cat.count !== undefined && (
                   <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${

@@ -275,7 +275,7 @@ export const SmartShoppingListTool: React.FC = () => {
                   type="text"
                   value={qtyInput}
                   onChange={e => setQtyInput(e.target.value)}
-                  placeholder="např. 2 ks, 1 kg"
+                  placeholder={t('quantity_placeholder', 'např. 2 ks, 1 kg')}
                   className="w-full px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs font-mono text-white focus:outline-none focus:border-indigo-500"
                 />
               </div>
@@ -289,7 +289,7 @@ export const SmartShoppingListTool: React.FC = () => {
                     step="any"
                     value={priceInput}
                     onChange={e => setPriceInput(e.target.value)}
-                    placeholder="0.00"
+                    placeholder={t('price_placeholder', '0.00')}
                     className="w-full px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs font-mono text-white focus:outline-none focus:border-indigo-500"
                   />
                   <span className="absolute right-2.5 top-1.5 text-[11px] font-mono text-slate-500">

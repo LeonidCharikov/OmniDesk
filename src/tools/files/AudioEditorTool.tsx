@@ -1110,8 +1110,8 @@ export const AudioEditorTool: React.FC = () => {
                 onChange={e => setExportFormat(e.target.value as 'wav' | 'webm')}
                 className="bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500 font-medium"
               >
-                <option value="wav">Lossless WAV (16-bit)</option>
-                <option value="webm">WebM Audio</option>
+                <option value="wav">{t('lossless_wav', 'Bezeztrátový WAV (16 bitů)')}</option>
+                <option value="webm">{t('webm_audio', 'Zvuk WebM')}</option>
               </select>
 
               <button
