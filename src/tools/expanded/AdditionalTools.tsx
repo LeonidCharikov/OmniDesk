@@ -3,6 +3,7 @@ import { PDFDocument, degrees } from 'pdf-lib';
 import { Download, FileUp, Plus, Trash2, Play, Send, Copy, Search, RotateCw } from 'lucide-react';
 import { saveBinaryWithDialog, saveTextWithDialog } from '../../services/fileSystemService';
 import { useI18n } from '../../i18n/context';
+import { findToolCatalogIdByTitle, getToolCatalogText } from '../../i18n/toolCatalog';
 
 const button = 'px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium transition-colors';
 const secondary = 'px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium transition-colors';
@@ -14,7 +15,7 @@ function FilePicker({ id, label, fileName, accept, multiple, onChange }: { id: s
 }
 
 function ToolHeader({ title, description }: { title: string; description: string }) {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const translations: Record<string, [string, string]> = {
     'PDF Toolkit': ['pdf_toolkit_title', 'PDF nástroje'],
     'OCR skener': ['ocr_scanner_title', 'OCR skener'],
@@ -39,8 +40,11 @@ function ToolHeader({ title, description }: { title: string; description: string
     'Git nástroje': 'Analyzujte vložený Git log nebo diff bez úprav repozitáře.',
     'UML Diagram Editor': 'Vytvářejte UML uzly, upravujte texty, propojujte je šipkami a exportujte SVG.',
   };
+  const catalogId = findToolCatalogIdByTitle(title);
+  const catalogTitle = catalogId ? getToolCatalogText(catalogId, 'title', language, title) : title;
+  const catalogDescription = catalogId ? getToolCatalogText(catalogId, 'desc', language, description) : description;
   const [key, fallback] = translations[title] || ['', title];
-  return <div className={panel}><h2 className="text-lg font-semibold text-white">{key ? t(key, fallback) : title}</h2><p className="mt-1 text-sm text-slate-400">{key ? t(`${key}_desc`, descriptions[title] || description) : description}</p></div>;
+  return <div className={panel}><h2 className="text-lg font-semibold text-white">{catalogId ? catalogTitle : key ? t(key, fallback) : title}</h2><p className="mt-1 text-sm text-slate-400">{catalogId ? catalogDescription : key ? t(`${key}_desc`, descriptions[title] || description) : description}</p></div>;
 }
 
 export const PdfToolkitTool: React.FC = () => {
@@ -60,7 +64,7 @@ export const PdfToolkitTool: React.FC = () => {
         pages.forEach(page => output.addPage(page));
       }
       const bytes = await output.save();
-      const result = await saveBinaryWithDialog('merged.pdf', new Blob([bytes as unknown as BlobPart], { type: 'application/pdf' }), 'application/pdf', [{ name: 'PDF (*.pdf)', extensions: ['pdf'] }], 'Save merged PDF');
+      const result = await saveBinaryWithDialog('merged.pdf', new Blob([bytes as unknown as BlobPart], { type: 'application/pdf' }), 'application/pdf', [{ name: 'PDF (*.pdf)', extensions: ['pdf'] }], t('save_merged_pdf', 'Uložit sloučené PDF'));
       setMessage(result.success ? t('pdf_merged', `Sloučeno ${files.length} souborů PDF.`) : result.canceled ? t('save_canceled', 'Ukládání zrušeno.') : result.error || t('pdf_merge_failed', 'Sloučení PDF se nezdařilo.'));
     } catch (error) { setMessage(error instanceof Error ? error.message : t('pdf_processing_failed', 'PDF se nepodařilo zpracovat.')); }
     finally { setBusy(false); }
@@ -69,7 +73,7 @@ export const PdfToolkitTool: React.FC = () => {
     const pdf = await PDFDocument.load(await file.arrayBuffer());
     pdf.getPages().forEach(page => page.setRotation(degrees(90)));
     const bytes = await pdf.save();
-    const result = await saveBinaryWithDialog(`${file.name.replace(/\.pdf$/i, '')}-rotated.pdf`, new Blob([bytes as unknown as BlobPart], { type: 'application/pdf' }), 'application/pdf', [{ name: 'PDF (*.pdf)', extensions: ['pdf'] }], 'Save rotated PDF');
+    const result = await saveBinaryWithDialog(`${file.name.replace(/\.pdf$/i, '')}-rotated.pdf`, new Blob([bytes as unknown as BlobPart], { type: 'application/pdf' }), 'application/pdf', [{ name: 'PDF (*.pdf)', extensions: ['pdf'] }], t('save_rotated_pdf', 'Uložit otočené PDF'));
     setMessage(result.success ? t('pdf_rotated', `Otočeno: ${file.name}.`) : result.canceled ? t('save_canceled', 'Ukládání zrušeno.') : result.error || t('pdf_rotate_failed', 'Otočení PDF se nezdařilo.'));
   };
   return <div className="space-y-5"><ToolHeader title="PDF Toolkit" description={t('pdf_toolkit_desc', 'Lokálně slučujte soubory PDF nebo otočte stránky vybraného PDF.')} />
@@ -110,7 +114,7 @@ export const ImageEditorTool: React.FC = () => {
     const canvas = document.createElement('canvas'); canvas.width = width; canvas.height = height; const ctx = canvas.getContext('2d'); if (!ctx) return;
     ctx.drawImage(image, 0, 0, width, height); const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/jpeg', quality / 100)); if (!blob) return;
     URL.revokeObjectURL(sourceUrl);
-    setPreview(URL.createObjectURL(blob)); await saveBinaryWithDialog(`${file.name.replace(/\.[^.]+$/, '')}-edited.jpg`, blob, 'image/jpeg', [{ name: 'JPEG (*.jpg)', extensions: ['jpg'] }], 'Uložit upravený obrázek');
+    setPreview(URL.createObjectURL(blob)); await saveBinaryWithDialog(`${file.name.replace(/\.[^.]+$/, '')}-edited.jpg`, blob, 'image/jpeg', [{ name: 'JPEG (*.jpg)', extensions: ['jpg'] }], t('save_edited_image', 'Uložit upravený obrázek'));
   };
   return <div className="space-y-5"><ToolHeader title="Image Editor" description={t('image_editor_desc', 'Měňte velikost, komprimujte, zobrazujte náhled a exportujte obrázky jako JPEG.')} /><div className={panel + ' space-y-3'}><FilePicker id="image-editor-file" label={t('choose_image', 'Vybrat obrázek')} fileName={file?.name} accept="image/*" onChange={e => setFile(e.target.files?.[0] || null)} />{originalPreview && <img className="max-h-80 max-w-full rounded-lg object-contain" src={originalPreview} alt={t('selected_image_preview', 'Náhled vybraného obrázku')} />}<div className="grid grid-cols-3 gap-3"><label className="text-xs text-slate-400">{t('width', 'Šířka')}<input className={input} type="number" value={width} onChange={e => setWidth(Number(e.target.value))} /></label><label className="text-xs text-slate-400">{t('height', 'Výška')}<input className={input} type="number" value={height} onChange={e => setHeight(Number(e.target.value))} /></label><label className="text-xs text-slate-400">{t('quality', 'Kvalita')}<input className={input} type="number" min="1" max="100" value={quality} onChange={e => setQuality(Number(e.target.value))} /></label></div><button className={button} disabled={!file} onClick={process}>{t('edit_and_save', 'Upravit a uložit')}</button>{preview && <img className="max-h-80 rounded-lg" src={preview} alt={t('edited_image_preview', 'Náhled upraveného obrázku')} />}</div></div>;
 };
@@ -179,7 +183,7 @@ export const DiagramEditorTool: React.FC = () => {
   const selectedNode = nodes.find(node => node.id === selected);
   const add = (type: UmlNode['type']) => { const id = Date.now(); setNodes([...nodes, { id, x: 80 + nodes.length * 45, y: 280, text: type === 'class' ? 'NewClass' : 'NewNode', type }]); setSelected(id); };
   const addEdge = () => { if (edgeFrom === edgeTo) return; setEdges([...edges, { id: Date.now(), from: edgeFrom, to: edgeTo, label: edgeLabel, dashed: false }]); setEdgeLabel(''); };
-  const exportSvg = async () => { if (!svgRef.current) return; const source = new XMLSerializer().serializeToString(svgRef.current); await saveTextWithDialog('diagram.svg', source, [{ name: 'SVG (*.svg)', extensions: ['svg'] }], 'Uložit diagram'); };
+  const exportSvg = async () => { if (!svgRef.current) return; const source = new XMLSerializer().serializeToString(svgRef.current); await saveTextWithDialog('diagram.svg', source, [{ name: 'SVG (*.svg)', extensions: ['svg'] }], t('save_diagram', 'Uložit diagram')); };
   return <div className="space-y-5"><ToolHeader title="UML Diagram Editor" description={t('diagram_editor_desc', 'Vytvářejte UML uzly tříd, rozhraní, aktérů a případů užití, upravujte popisky, propojujte je šipkami a exportujte SVG.')} />
     <div className="flex flex-wrap gap-2">{(['class', 'interface', 'actor', 'usecase'] as UmlNode['type'][]).map(type => <button key={type} className={button} onClick={() => add(type)}>{t(`add_${type}`, `Přidat ${type}`)}</button>)}<button className={secondary} onClick={exportSvg}><Download className="inline w-4 h-4" /> {t('export_svg', 'Exportovat SVG')}</button><button className={secondary} onClick={() => { setNodes(nodes.filter(node => node.id !== selected)); setEdges(edges.filter(edge => edge.from !== selected && edge.to !== selected)); }}><Trash2 className="inline w-4 h-4" /> {t('delete_selected', 'Smazat vybraný')}</button></div>
     {selectedNode && <div className={panel + ' grid md:grid-cols-3 gap-2'}><label className="text-xs text-slate-400">{t('selected_label', 'Vybraný popisek')}<input className={input} value={selectedNode.text} onChange={event => setNodes(nodes.map(node => node.id === selected ? { ...node, text: event.target.value } : node))} /></label><label className="text-xs text-slate-400">{t('node_type', 'Typ uzlu')}<select className={input} value={selectedNode.type} onChange={event => setNodes(nodes.map(node => node.id === selected ? { ...node, type: event.target.value as UmlNode['type'] } : node))}><option value="class">{t('class', 'Třída')}</option><option value="interface">{t('interface', 'Rozhraní')}</option><option value="actor">{t('actor', 'Aktér')}</option><option value="usecase">{t('usecase', 'Případ užití')}</option></select></label><div className="text-xs text-slate-400">{t('select_node_hint', 'Kliknutím na uzel jej vyberete a upravíte.')}</div></div>}

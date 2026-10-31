@@ -103,8 +103,32 @@ const catalog: Record<string, { title: CatalogText; desc: CatalogText }> = {
     title: { cs: 'Binární a hexadecimální převodník', en: 'Binary & Hex Converter', de: 'Binär- und Hex-Konverter', es: 'Convertidor binario y hexadecimal', ru: 'Двоичный и шестнадцатеричный конвертер' },
     desc: { cs: 'Převeďte text UTF-8 na bajtový hexadecimální a binární výstup.', en: 'Convert UTF-8 text into byte-level hexadecimal and binary output.', de: 'UTF-8-Text in byteweise Hexadezimal- und Binärausgabe umwandeln.', es: 'Convierte texto UTF-8 a salida hexadecimal y binaria por bytes.', ru: 'Преобразуйте текст UTF-8 в побайтовый шестнадцатеричный и двоичный вид.' },
   },
+  'time-tracker': {
+    title: { cs: 'Sledování času', en: 'Time Tracker', de: 'Zeiterfassung', es: 'Registro de tiempo', ru: 'Учет времени' },
+    desc: { cs: 'Sledujte čas více aktivit současně; data zůstávají v této relaci.', en: 'Track multiple activities at once; data remains in this session.', de: 'Mehrere Aktivitäten gleichzeitig verfolgen; die Daten bleiben in dieser Sitzung.', es: 'Registra varias actividades a la vez; los datos permanecen en esta sesión.', ru: 'Отслеживайте несколько действий одновременно; данные остаются в текущем сеансе.' },
+  },
+  'recurring-events': {
+    title: { cs: 'Opakované události', en: 'Recurring Events', de: 'Wiederkehrende Ereignisse', es: 'Eventos recurrentes', ru: 'Повторяющиеся события' },
+    desc: { cs: 'Naplánujte týdenní událost a zobrazte její následující výskyty.', en: 'Schedule a weekly event and display its upcoming occurrences.', de: 'Ein wöchentliches Ereignis planen und kommende Vorkommen anzeigen.', es: 'Programa un evento semanal y muestra sus próximas apariciones.', ru: 'Запланируйте еженедельное событие и просмотрите следующие вхождения.' },
+  },
+  'workday-calculator': {
+    title: { cs: 'Pracovní dny a dovolená', en: 'Workdays & Vacation', de: 'Arbeitstage und Urlaub', es: 'Días laborables y vacaciones', ru: 'Рабочие дни и отпуск' },
+    desc: { cs: 'Přičtěte pracovní dny k datu a ignorujte víkendy.', en: 'Add workdays to a date while ignoring weekends.', de: 'Arbeitstage zu einem Datum addieren und Wochenenden ignorieren.', es: 'Añade días laborables a una fecha ignorando los fines de semana.', ru: 'Добавляйте рабочие дни к дате, не учитывая выходные.' },
+  },
 };
 
 export function getToolCatalogText(id: string, field: 'title' | 'desc', language: SupportedLanguage, fallback: string) {
   return catalog[id]?.[field][language] || fallback;
+}
+
+export function findToolCatalogIdByTitle(title: string) {
+  const aliases: Record<string, string> = {
+    'Poznámky': 'notes',
+    'UML Diagram Editor': 'diagram-editor',
+    'Minifikátor CSS / HTML / JavaScriptu': 'web-minifier',
+    'CSS / HTML / JavaScript minifier': 'web-minifier',
+    'Výdaje a rozpočet': 'budget-tracker',
+    'Expenses & budget': 'budget-tracker',
+  };
+  return aliases[title] || Object.entries(catalog).find(([, value]) => Object.values(value.title).includes(title))?.[0];
 }
