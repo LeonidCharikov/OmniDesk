@@ -12,6 +12,7 @@ import {
   Layers 
 } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
+import { saveTextWithDialog } from '../../services/fileSystemService';
 
 interface PresetFormula {
   name: string;
@@ -155,7 +156,7 @@ export const LatexVisualizerTool: React.FC = () => {
   };
 
   // Download rendered formula as clean SVG
-  const downloadSvg = () => {
+  const downloadSvg = async () => {
     const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="300" viewBox="0 0 800 300">
   <rect width="100%" height="100%" fill="${themeMode === 'dark' ? '#0f172a' : '#ffffff'}" rx="16"/>
   <text x="50%" y="45%" text-anchor="middle" fill="${themeMode === 'dark' ? '#6366f1' : '#4338ca'}" font-family="monospace" font-size="14" opacity="0.6">OmniDesk LaTeX Renderer</text>
@@ -164,13 +165,15 @@ export const LatexVisualizerTool: React.FC = () => {
   </text>
 </svg>`;
 
-    const blob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `formula-${Date.now()}.svg`;
-    a.click();
-    URL.revokeObjectURL(url);
+    await saveTextWithDialog(
+      `formula-${Date.now()}.svg`,
+      svgContent,
+      [
+        { name: 'SVG Vektorový obrázek (*.svg)', extensions: ['svg'] },
+        { name: 'Všechny soubory (*.*)', extensions: ['*'] }
+      ],
+      t('save_svg_title', 'Uložit LaTeX formuli (Průzkumník)')
+    );
   };
 
   return (

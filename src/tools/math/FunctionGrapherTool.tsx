@@ -13,6 +13,7 @@ import {
   Crosshair
 } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
+import { saveBinaryWithDialog } from '../../services/fileSystemService';
 
 interface GraphFunction {
   id: string;
@@ -334,14 +335,23 @@ export const FunctionGrapherTool: React.FC = () => {
     setScale(40);
   };
 
-  // Export image
+  // Export image with File Explorer
   const downloadGraph = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const a = document.createElement('a');
-    a.href = canvas.toDataURL('image/png');
-    a.download = `graph-${Date.now()}.png`;
-    a.click();
+    canvas.toBlob(async blob => {
+      if (!blob) return;
+      await saveBinaryWithDialog(
+        `graph-${Date.now()}.png`,
+        blob,
+        'image/png',
+        [
+          { name: 'PNG Obrázek (*.png)', extensions: ['png'] },
+          { name: 'Všechny soubory (*.*)', extensions: ['*'] }
+        ],
+        t('save_graph_title', 'Uložit graf (Průzkumník)')
+      );
+    }, 'image/png');
   };
 
   const updateFunctionExpr = (id: string, expr: string) => {

@@ -14,6 +14,7 @@ import {
   FileCheck2,
 } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
+import { saveBinaryWithDialog } from '../../services/fileSystemService';
 
 export const SketchpadTool: React.FC = () => {
   const { t } = useI18n();
@@ -162,15 +163,24 @@ export const SketchpadTool: React.FC = () => {
     }
   };
 
-  // Download image as PNG
+  // Download image as PNG with File Explorer
   const downloadPng = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const link = document.createElement('a');
-    link.download = `skica_${new Date().toISOString().slice(0, 10)}.png`;
-    link.href = canvas.toDataURL('image/png');
-    link.click();
+    canvas.toBlob(async blob => {
+      if (!blob) return;
+      await saveBinaryWithDialog(
+        `skica_${new Date().toISOString().slice(0, 10)}.png`,
+        blob,
+        'image/png',
+        [
+          { name: 'PNG Obrázek (*.png)', extensions: ['png'] },
+          { name: 'Všechny soubory (*.*)', extensions: ['*'] }
+        ],
+        t('save_sketch_title', 'Uložit náčrt / podpis (Průzkumník)')
+      );
+    }, 'image/png');
   };
 
   // Copy to clipboard

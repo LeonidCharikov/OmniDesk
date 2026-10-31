@@ -24,6 +24,7 @@ import { UserConfig, ThemeId, WidgetCustomization } from '../../types/tool';
 import { useI18n } from '../../i18n/context';
 import { THEMES } from '../../services/themes';
 import { DEFAULT_CONFIG, validateConfigJson } from '../../services/storage';
+import { saveTextWithDialog } from '../../services/fileSystemService';
 
 interface ConfigModalProps {
   isOpen: boolean;
@@ -124,16 +125,21 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
 
   const jsonString = JSON.stringify(jsonExportPayload, null, 2);
 
-  const downloadConfigFile = () => {
-    const blob = new Blob([jsonString], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `omnidesk-profile-${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    setDownloaded(true);
-    setTimeout(() => setDownloaded(false), 2000);
+  const downloadConfigFile = async () => {
+    const defaultName = `omnidesk-profile-${new Date().toISOString().slice(0, 10)}.json`;
+    const res = await saveTextWithDialog(
+      defaultName,
+      jsonString,
+      [
+        { name: 'JSON Soubor (*.json)', extensions: ['json'] },
+        { name: 'Všechny soubory (*.*)', extensions: ['*'] }
+      ],
+      t('save_profile_title', 'Uložit profil konfigurace (Průzkumník)')
+    );
+    if (res.success) {
+      setDownloaded(true);
+      setTimeout(() => setDownloaded(false), 2000);
+    }
   };
 
   const copyConfigJson = () => {

@@ -98,6 +98,51 @@ function evaluateMiniCalc(input: string): string | null {
   return null;
 }
 
+const CITY_NAMES_LOCALE: Record<string, Record<string, string>> = {
+  'Europe/Prague': {
+    en: 'Prague',
+    cs: 'Praha',
+    ru: 'Прага',
+    de: 'Prag',
+    es: 'Praga',
+  },
+  'Europe/London': {
+    en: 'London',
+    cs: 'Londýn',
+    ru: 'Лондон',
+    de: 'London',
+    es: 'Londres',
+  },
+  'America/New_York': {
+    en: 'New York',
+    cs: 'New York',
+    ru: 'Нью-Йорк',
+    de: 'New York',
+    es: 'Nueva York',
+  },
+  'Asia/Tokyo': {
+    en: 'Tokyo',
+    cs: 'Tokio',
+    ru: 'Токио',
+    de: 'Tokio',
+    es: 'Tokio',
+  },
+  'Australia/Sydney': {
+    en: 'Sydney',
+    cs: 'Sydney',
+    ru: 'Сидней',
+    de: 'Sydney',
+    es: 'Sídney',
+  },
+  'Asia/Dubai': {
+    en: 'Dubai',
+    cs: 'Dubaj',
+    ru: 'Дубай',
+    de: 'Dubai',
+    es: 'Dubái',
+  },
+};
+
 export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
   widgets,
   onToggleWidget,
@@ -203,7 +248,8 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
   const locale = language === 'ru' ? 'ru-RU' : language === 'en' ? 'en-US' : language === 'de' ? 'de-DE' : language === 'es' ? 'es-ES' : 'cs-CZ';
 
   const targetTimezone = widgets.selectedCity || 'Europe/Prague';
-  const cityName = widgets.selectedCityName || 'Praha';
+  const localizedCity = CITY_NAMES_LOCALE[targetTimezone]?.[language];
+  const cityName = localizedCity || widgets.selectedCityName || 'Praha';
 
   let timeString = '';
   let dateString = '';
@@ -295,6 +341,19 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
 
   const dailyTasks = widgets.dailyTasks || [];
   const completedTasksCount = dailyTasks.filter(t => t.done).length;
+
+  const getTaskLabel = (task: DailyTask) => {
+    if (task.id === '1' && (task.text === 'Zkontrolovat denní úkoly' || task.text === 'Check daily tasks' || task.text === 'Проверить задачи на день')) {
+      return t('default_task_1', 'Zkontrolovat denní úkoly');
+    }
+    if (task.id === '2' && (task.text === 'Kalkulace a převod měn' || task.text === 'Calculations & currency conversion' || task.text === 'Расчеты и конвертация валют')) {
+      return t('default_task_2', 'Kalkulace a převod měn');
+    }
+    if (task.id === '3' && (task.text === 'Pomodoro blok soustředění' || task.text === 'Pomodoro focus block' || task.text === 'Блок концентрации Помодоро')) {
+      return t('default_task_3', 'Pomodoro blok soustředění');
+    }
+    return task.text;
+  };
 
   if (isCollapsed) {
     return null;
@@ -488,7 +547,7 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
                     <Square className="w-3 h-3 text-slate-500 shrink-0" />
                   )}
                   <span className={`truncate ${task.done ? 'line-through text-slate-500' : ''}`}>
-                    {task.text}
+                    {getTaskLabel(task)}
                   </span>
                 </div>
                 <button

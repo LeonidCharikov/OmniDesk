@@ -18,6 +18,7 @@ import {
   Check,
 } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
+import { saveBinaryWithDialog } from '../../services/fileSystemService';
 
 interface AudioRecord {
   id: string;
@@ -220,11 +221,18 @@ export const VoiceRecorderTool: React.FC = () => {
     }
   };
 
-  const handleDownload = (rec: AudioRecord) => {
-    const a = document.createElement('a');
-    a.href = rec.url;
-    a.download = `${rec.name.replace(/\s+/g, '_')}.webm`;
-    a.click();
+  const handleDownload = async (rec: AudioRecord) => {
+    const defaultName = `${rec.name.replace(/\s+/g, '_')}.webm`;
+    await saveBinaryWithDialog(
+      defaultName,
+      rec.blob,
+      'audio/webm',
+      [
+        { name: 'WebM Audio (*.webm)', extensions: ['webm'] },
+        { name: 'Všechny soubory (*.*)', extensions: ['*'] }
+      ],
+      t('save_audio_title', 'Uložit zvukový záznam')
+    );
   };
 
   const saveRename = (id: string) => {

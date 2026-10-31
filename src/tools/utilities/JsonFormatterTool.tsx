@@ -1,6 +1,7 @@
 import React, { useState, useId } from 'react';
 import { Check, Copy, Download, AlertCircle, FileCode, Minimize2, Maximize2 } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
+import { saveTextWithDialog } from '../../services/fileSystemService';
 
 export const JsonFormatterTool: React.FC = () => {
   const { t } = useI18n();
@@ -57,14 +58,16 @@ export const JsonFormatterTool: React.FC = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const downloadJson = () => {
-    const blob = new Blob([input], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'formatted_omnidesk.json';
-    a.click();
-    URL.revokeObjectURL(url);
+  const downloadJson = async () => {
+    await saveTextWithDialog(
+      'formatted_omnidesk.json',
+      input,
+      [
+        { name: 'JSON Soubor (*.json)', extensions: ['json'] },
+        { name: 'Všechny soubory (*.*)', extensions: ['*'] }
+      ],
+      t('save_json_title', 'Uložit JSON soubor (Průzkumník)')
+    );
   };
 
   // Stats

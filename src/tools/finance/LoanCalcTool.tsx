@@ -1,6 +1,7 @@
 import React, { useState, useId } from 'react';
 import { DollarSign, PieChart, Download, Calendar } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
+import { saveTextWithDialog } from '../../services/fileSystemService';
 
 export const LoanCalcTool: React.FC = () => {
   const { t, language } = useI18n();
@@ -49,7 +50,7 @@ export const LoanCalcTool: React.FC = () => {
     });
   }
 
-  const exportScheduleCsv = () => {
+  const exportScheduleCsv = async () => {
     let csv = `${t('month', 'Měsíc')},${t('payment', 'Splátka')},${t('principal_part', 'Úmor (Jistina)')},${t('interest_part', 'Úrok')},${t('remaining_balance', 'Zbývající dluh')}\n`;
     let bal = principal;
     for (let m = 1; m <= totalMonths; m++) {
@@ -59,13 +60,15 @@ export const LoanCalcTool: React.FC = () => {
       csv += `${m},${monthlyPayment.toFixed(2)},${pPart.toFixed(2)},${iPart.toFixed(2)},${bal.toFixed(2)}\n`;
     }
 
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `amortization_schedule_${principal}_${years}y.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    await saveTextWithDialog(
+      `amortization_schedule_${principal}_${years}y.csv`,
+      csv,
+      [
+        { name: 'CSV Tabulka (*.csv)', extensions: ['csv'] },
+        { name: 'Všechny soubory (*.*)', extensions: ['*'] }
+      ],
+      t('save_csv_title', 'Uložit splátkový kalendář CSV (Průzkumník)')
+    );
   };
 
   const locale = language === 'ru' ? 'ru-RU' : language === 'en' ? 'en-US' : language === 'de' ? 'de-DE' : language === 'es' ? 'es-ES' : 'cs-CZ';

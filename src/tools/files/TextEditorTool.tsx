@@ -26,6 +26,7 @@ import {
   Edit3,
 } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
+import { saveTextWithDialog, openFileWithPicker } from '../../services/fileSystemService';
 
 const DRAFT_STORAGE_KEY = 'omnidesk_text_editor_draft_v1';
 const FILENAME_STORAGE_KEY = 'omnidesk_text_editor_filename_v1';
@@ -104,19 +105,49 @@ export const TextEditorTool: React.FC = () => {
   const bytesCount = new Blob([content]).size;
   const estimatedReadTime = Math.max(1, Math.ceil(wordsCount / 200));
 
-  // File download as .txt
-  const downloadFile = () => {
+  // File download as .txt or .md with native File Explorer
+  const downloadFile = async () => {
     const safeName = fileName.trim() ? (fileName.includes('.') ? fileName : `${fileName}.txt`) : 'dokument.txt';
-    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = safeName;
-    a.click();
-    URL.revokeObjectURL(url);
+    const isMd = safeName.toLowerCase().endsWith('.md');
+    const res = await saveTextWithDialog(
+      safeName,
+      content,
+      [
+        isMd
+          ? { name: 'Markdown (*.md)', extensions: ['md'] }
+          : { name: 'Textový soubor (*.txt)', extensions: ['txt'] },
+        { name: 'Markdown (*.md)', extensions: ['md'] },
+        { name: 'Textový soubor (*.txt)', extensions: ['txt'] },
+        { name: 'Všechny soubory (*.*)', extensions: ['*'] },
+      ],
+      t('save_text_dialog_title', 'Uložit textový soubor (Průzkumník)')
+    );
 
-    setSavedNotification(true);
-    setTimeout(() => setSavedNotification(false), 2500);
+    if (res.success && res.path) {
+      const extractedName = res.path.split(/[/\\]/).pop() || safeName;
+      setFileName(extractedName);
+      setSavedNotification(true);
+      setTimeout(() => setSavedNotification(false), 2500);
+    }
+  };
+
+  // Open file with native File Explorer
+  const handleOpenFile = async () => {
+    const res = await openFileWithPicker({
+      accept: '.txt,.md,.text,.log,.json,.csv,.sql,.js,.ts',
+      filters: [
+        { name: 'Textové & Markdown soubory (*.txt, *.md)', extensions: ['txt', 'md', 'text', 'log', 'json', 'csv', 'sql', 'js', 'ts'] },
+        { name: 'Všechny soubory (*.*)', extensions: ['*'] }
+      ],
+      readAs: 'text',
+      title: t('open_file_dialog_title', 'Otevřít textový soubor (Průzkumník)')
+    });
+    if (res) {
+      setFileName(res.name);
+      if (typeof res.content === 'string') {
+        setContent(res.content);
+      }
+    }
   };
 
   // Copy full content
@@ -343,9 +374,9 @@ export const TextEditorTool: React.FC = () => {
           </button>
 
           <button
-            onClick={() => fileInputRef.current?.click()}
+            onClick={handleOpenFile}
             className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-medium text-slate-300 hover:text-white transition-colors flex items-center gap-1.5"
-            title={t('open_file_tooltip', 'Otevřít .txt/.md soubor z disku')}
+            title={t('open_file_tooltip', 'Otevřít soubor z disku pomocí Průzkumníka')}
           >
             <Upload className="w-3.5 h-3.5 text-indigo-400" />
             <span>{t('open_file', 'Otevřít soubor')}</span>
@@ -369,10 +400,10 @@ export const TextEditorTool: React.FC = () => {
           <button
             onClick={downloadFile}
             className="px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md transition-colors flex items-center gap-1.5"
-            title={t('download_file_tooltip', 'Uložit a stáhnout soubor na disk (Ctrl+S)')}
+            title={t('download_file_tooltip', 'Uložit soubor pomocí Průzkumníka (Ctrl+S)')}
           >
-            <Download className="w-3.5 h-3.5" />
-            <span>{t('download_txt', 'Stáhnout .txt')}</span>
+            <Save className="w-3.5 h-3.5" />
+            <span>{t('save_as_file', 'Uložit jako...')}</span>
           </button>
         </div>
       </div>

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useId } from 'react';
 import QRCode from 'qrcode';
 import { QrCode, Download, Wifi, Link, AlignLeft, Copy, Check } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
+import { saveBinaryWithDialog } from '../../services/fileSystemService';
 
 export const QrCodeGeneratorTool: React.FC = () => {
   const { t } = useI18n();
@@ -45,12 +46,20 @@ export const QrCodeGeneratorTool: React.FC = () => {
       .catch(err => console.error(err));
   }, [qrType, url, text, ssid, wifiPassword, encryption]);
 
-  const downloadQrPng = () => {
+  const downloadQrPng = async () => {
     if (!dataUrl) return;
-    const a = document.createElement('a');
-    a.href = dataUrl;
-    a.download = `qrcode_${qrType}.png`;
-    a.click();
+    const res = await fetch(dataUrl);
+    const blob = await res.blob();
+    await saveBinaryWithDialog(
+      `qrcode_${qrType}.png`,
+      blob,
+      'image/png',
+      [
+        { name: 'PNG Obrázek (*.png)', extensions: ['png'] },
+        { name: 'Všechny soubory (*.*)', extensions: ['*'] }
+      ],
+      t('save_qr_title', 'Uložit QR kód (Průzkumník)')
+    );
   };
 
   const copyQrImage = async () => {

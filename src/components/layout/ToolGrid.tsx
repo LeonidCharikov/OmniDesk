@@ -36,6 +36,7 @@ import {
   Mic,
   Pencil,
   Ruler,
+  Scissors,
 } from 'lucide-react';
 import { ToolDefinition, ToolCategory } from '../../types/tool';
 import { useI18n } from '../../i18n/context';
@@ -80,6 +81,7 @@ const ICON_MAP: Record<string, React.ReactNode> = {
   Mic: <Mic className="w-5 h-5 text-rose-400" />,
   Pencil: <Pencil className="w-5 h-5 text-indigo-400" />,
   Ruler: <Ruler className="w-5 h-5 text-cyan-400" />,
+  Scissors: <Scissors className="w-5 h-5 text-indigo-400" />,
 };
 
 export const ToolGrid: React.FC<ToolGridProps> = ({

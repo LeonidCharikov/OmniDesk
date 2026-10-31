@@ -16,6 +16,7 @@ import {
 import mammoth from 'mammoth';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import { useI18n } from '../../i18n/context';
+import { saveBinaryWithDialog } from '../../services/fileSystemService';
 
 type ConversionCategory = 'docs' | 'data' | 'images';
 
@@ -33,6 +34,7 @@ export const MultiFormatConverterTool: React.FC = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [sourceFileName, setSourceFileName] = useState<string>('');
   const [resultBlobUrl, setResultBlobUrl] = useState<string | null>(null);
+  const [resultBlob, setResultBlob] = useState<Blob | null>(null);
   const [resultFileName, setResultFileName] = useState<string>('');
   const [stats, setStats] = useState<{ originalSize: number; newSize: number; durationMs: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -143,6 +145,7 @@ export const MultiFormatConverterTool: React.FC = () => {
 
       const pdfBytes = await pdfDoc.save();
       const blob = new Blob([pdfBytes as unknown as BlobPart], { type: 'application/pdf' });
+      setResultBlob(blob);
       const url = URL.createObjectURL(blob);
       setResultBlobUrl(url);
       const outName = file.name.replace(/\.[^/.]+$/, '') + '.pdf';
@@ -215,6 +218,7 @@ export const MultiFormatConverterTool: React.FC = () => {
       }
 
       const blob = new Blob([outputText], { type: mime });
+      setResultBlob(blob);
       const url = URL.createObjectURL(blob);
       setResultBlobUrl(url);
       setResultFileName(outName);
@@ -276,6 +280,7 @@ export const MultiFormatConverterTool: React.FC = () => {
       URL.revokeObjectURL(objectUrl);
       const ext = targetImageFormat === 'image/webp' ? '.webp' : targetImageFormat === 'image/png' ? '.png' : '.jpg';
       const outName = file.name.replace(/\.[^/.]+$/, '') + ext;
+      setResultBlob(blob);
       const resultUrl = URL.createObjectURL(blob);
       setResultBlobUrl(resultUrl);
       setResultFileName(outName);
@@ -291,6 +296,22 @@ export const MultiFormatConverterTool: React.FC = () => {
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  const handleDownload = async () => {
+    if (!resultBlob) return;
+    const ext = resultFileName.split('.').pop() || 'dat';
+    const mime = resultBlob.type || 'application/octet-stream';
+    await saveBinaryWithDialog(
+      resultFileName,
+      resultBlob,
+      mime,
+      [
+        { name: `Soubor (*.${ext})`, extensions: [ext] },
+        { name: 'Všechny soubory (*.*)', extensions: ['*'] }
+      ],
+      t('save_converted_file', 'Uložit převedený soubor (Průzkumník)')
+    );
   };
 
   const handleFilePicked = (file: File) => {
@@ -544,14 +565,13 @@ Zero external API calls for files. All binary transformations run locally.`;
                 {t('conversion_finished', 'Převod dokončen')}: <strong className="text-white font-mono">{resultFileName}</strong>
               </span>
             </div>
-            <a
-              href={resultBlobUrl}
-              download={resultFileName}
+            <button
+              onClick={handleDownload}
               className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg transition-colors shadow-sm"
             >
               <Download className="w-3.5 h-3.5" />
-              {t('download_converted_file', 'Stáhnout převedený soubor')}
-            </a>
+              {t('download_converted_file', 'Stáhnout převedený soubor (Průzkumník)')}
+            </button>
           </div>
 
           {/* Preview based on category */}

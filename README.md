@@ -8,7 +8,7 @@
 [![i18n Ally](https://img.shields.io/badge/i18n--Ally-Supported-success?logo=visualstudiocode)](https://marketplace.visualstudio.com/items?itemName=lokalise.i18n-ally)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-**OmniDesk** is a modern, high-performance, and versatile desktop workstation combining **31 integrated tools** into a unified, distraction-free environment. Built with **Tauri v2 (Rust backend)** and **React 19 / TypeScript / Vite / Tailwind CSS**, it operates primarily **100% offline** directly in device memory with zero server telemetry, while supporting native OS hardware monitoring, local filesystem processing, a translucent top bar matching your active color theme, and lightning-fast keyboard navigation (`Ctrl+K`).
+**OmniDesk** is a modern, high-performance, and versatile desktop workstation combining **32 integrated tools** into a unified, distraction-free environment. Built with **Tauri v2 (Rust backend)** and **React 19 / TypeScript / Vite / Tailwind CSS**, it operates primarily **100% offline** directly in device memory with zero server telemetry, while supporting native OS hardware monitoring, local filesystem processing, a translucent top bar matching your active color theme, and lightning-fast keyboard navigation (`Ctrl+K`).
 
 The application defaults to **English** out-of-the-box, with dynamic, first-class localization across 5 languages (**English**, **Čeština**, **Deutsch**, **Español**, and **Русский**).
 
@@ -116,16 +116,17 @@ Open [http://localhost:3000](http://localhost:3000) in your web browser. From th
 
 ---
 
-## 🛠️ Complete Integrated Tools Catalog (31 Tools)
+## 🛠️ Complete Integrated Tools Catalog (32 Tools)
 
 ### 📁 1. Files & Documents (`files`)
-1. **Text & Markdown Editor (.txt / .md)**: File creation/editing, selective text resizing, headings, alignment, case conversion, regex search & replace, and UTF-8 download.
-2. **Offline Voice Recorder & Audio Memos**: In-browser audio recording via `MediaRecorder`, live volume visualizer, playback, rename, and WebM export.
-3. **Quick Sketchpad & Signature Pad**: HTML5 Canvas drawing, pen/eraser with width control, signature baseline guide, transparent/white canvas, undo, and PNG export.
-4. **Multi-Format Converter**: Client-side document conversion (DOCX, MD, TXT to PDF), data conversion (CSV <-> JSON), and image transcoding (WebP, PNG, JPEG).
-5. **DOCX to PDF Converter**: Local Word document rendering and vector PDF generation with zero server uploads.
-6. **Text & File Diff Comparator**: Side-by-side and inline diff visualizer with line-by-line change detection.
-7. **File Inspector & Hasher**: Instant SHA-256 cryptographic checksums, binary hex dump, and MIME detection.
+1. **Text & Markdown Editor (.txt / .md)**: File creation/editing, selective text resizing, headings, alignment, case conversion, regex search & replace, and File Explorer save dialog.
+2. **Audio Editor & Trimmer**: Interactive audio waveform canvas, range cropping, cutting, silencing, fade in/out, normalization, speed adjust, reverse, and native File Explorer export.
+3. **Offline Voice Recorder & Audio Memos**: In-browser audio recording via `MediaRecorder`, live volume visualizer, playback, rename, and WebM export with folder selection.
+4. **Quick Sketchpad & Signature Pad**: HTML5 Canvas drawing, pen/eraser with width control, signature baseline guide, transparent/white canvas, undo, and PNG export.
+5. **Multi-Format Converter**: Client-side document conversion (DOCX, MD, TXT to PDF), data conversion (CSV <-> JSON), and image transcoding (WebP, PNG, JPEG).
+6. **DOCX to PDF Converter**: Local Word document rendering and vector PDF generation with zero server uploads.
+7. **Text & File Diff Comparator**: Side-by-side and inline diff visualizer with line-by-line change detection.
+8. **File Inspector & Hasher**: Instant SHA-256 cryptographic checksums, binary hex dump, and MIME detection.
 
 ### 📐 2. Mathematics & Calculations (`math`)
 8. **Scientific Calculator**: Trigonometry (sin, cos, tan), logarithms, powers, roots, memory registers (M+/MR), and calculation history.

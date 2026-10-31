@@ -13,6 +13,7 @@ import {
   FileCode
 } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
+import { saveBinaryWithDialog } from '../../services/fileSystemService';
 
 export const DocxToPdfTool: React.FC = () => {
   const { t } = useI18n();
@@ -20,6 +21,7 @@ export const DocxToPdfTool: React.FC = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [extractedText, setExtractedText] = useState<string>('');
   const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
+  const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
   const [stats, setStats] = useState<{
     wordCount: number;
     charCount: number;
@@ -214,6 +216,7 @@ Všechna data podléhají nejpřísnějším standardům ochrany soukromí. Konv
 
       const pdfBytes = await pdfDoc.save();
       const blob = new Blob([pdfBytes as unknown as BlobPart], { type: 'application/pdf' });
+      setPdfBlob(blob);
       if (pdfBlobUrl) {
         URL.revokeObjectURL(pdfBlobUrl);
       }
@@ -234,6 +237,21 @@ Všechna data podléhají nejpřísnějším standardům ochrany soukromí. Konv
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  const handleDownloadPdf = async () => {
+    if (!pdfBlob) return;
+    const defaultName = file ? file.name.replace(/\.[^/.]+$/, '') + '.pdf' : 'konvertovany_dokument.pdf';
+    await saveBinaryWithDialog(
+      defaultName,
+      pdfBlob,
+      'application/pdf',
+      [
+        { name: 'PDF Dokument (*.pdf)', extensions: ['pdf'] },
+        { name: 'Všechny soubory (*.*)', extensions: ['*'] }
+      ],
+      t('save_pdf_title', 'Uložit PDF (Průzkumník)')
+    );
   };
 
   return (
@@ -328,14 +346,13 @@ Všechna data podléhají nejpřísnějším standardům ochrany soukromí. Konv
               <CheckCircle2 className="w-4 h-4 text-emerald-400" />
               <span>{t('docx_ready', 'PDF je připraveno ke stažení a náhledu')}</span>
             </div>
-            <a
-              href={pdfBlobUrl}
-              download={file ? file.name.replace(/\.[^/.]+$/, '') + '.pdf' : 'konvertovany_dokument.pdf'}
+            <button
+              onClick={handleDownloadPdf}
               className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg transition-colors shadow-sm"
             >
               <Download className="w-4 h-4" />
-              {t('docx_download', 'Stáhnout PDF')}
-            </a>
+              {t('docx_download', 'Stáhnout PDF (Průzkumník)')}
+            </button>
           </div>
 
           {/* Embedded PDF Preview / Text Preview tabs */}

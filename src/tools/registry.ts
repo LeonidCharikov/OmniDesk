@@ -29,6 +29,7 @@ import { CalendarTool } from './utilities/CalendarTool';
 import { DiscountVatCalcTool } from './finance/DiscountVatCalcTool';
 import { SmartShoppingListTool } from './planning/SmartShoppingListTool';
 import { VoiceRecorderTool } from './files/VoiceRecorderTool';
+import { AudioEditorTool } from './files/AudioEditorTool';
 import { SketchpadTool } from './files/SketchpadTool';
 import { SizeConverterTool } from './utilities/SizeConverterTool';
 
@@ -73,6 +74,16 @@ export const TOOLS_REGISTRY: ToolDefinition[] = [
     requiresOnline: false,
     component: VoiceRecorderTool,
     tags: ['audio', 'zvuk', 'nahravani', 'diktafon', 'hlas', 'mikrofon', 'poznamky', 'zaznam'],
+  },
+  {
+    id: 'audio-editor',
+    title: 'Audio Editor & Ořezávač zvuku',
+    shortDesc: 'Stříhání, ořezávání, ztišení, fade in/out, normalizace a export zvuku s výběrem složky.',
+    category: 'files',
+    icon: 'Scissors',
+    requiresOnline: false,
+    component: AudioEditorTool,
+    tags: ['audio', 'editor', 'strihani', 'orezavani', 'zkraceni', 'wav', 'mp3', 'zvuk', 'trim', 'cut', 'fade'],
   },
   {
     id: 'sketchpad',
