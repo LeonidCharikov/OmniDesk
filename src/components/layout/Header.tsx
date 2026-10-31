@@ -29,12 +29,29 @@ export const Header: React.FC<HeaderProps> = ({
   const { language, setLanguage, t } = useI18n();
   const langSelectId = useId();
 
+  const handleHeaderMouseDown = async (event: React.MouseEvent<HTMLElement>) => {
+    if (event.button !== 0 || (event.target instanceof Element && event.target.closest('button, select, input, a'))) {
+      return;
+    }
+
+    try {
+      const { getCurrentWindow } = await import('@tauri-apps/api/window');
+      await getCurrentWindow().startDragging();
+    } catch (error) {
+      if (typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) {
+        console.error('Unable to drag the application window:', error);
+      }
+    }
+  };
+
   const handleMinimize = async () => {
     try {
       const { getCurrentWindow } = await import('@tauri-apps/api/window');
       await getCurrentWindow().minimize();
-    } catch {
-      // Running in browser mode
+    } catch (error) {
+      if (typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) {
+        console.error('Unable to minimize the application window:', error);
+      }
     }
   };
 
@@ -42,9 +59,10 @@ export const Header: React.FC<HeaderProps> = ({
     try {
       const { getCurrentWindow } = await import('@tauri-apps/api/window');
       await getCurrentWindow().toggleMaximize();
-    } catch {
-      // Browser fullscreen fallback
-      if (!document.fullscreenElement) {
+    } catch (error) {
+      if (typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) {
+        console.error('Unable to maximize the application window:', error);
+      } else if (!document.fullscreenElement) {
         document.documentElement.requestFullscreen?.().catch(() => {});
       } else {
         document.exitFullscreen?.().catch(() => {});
@@ -56,14 +74,16 @@ export const Header: React.FC<HeaderProps> = ({
     try {
       const { getCurrentWindow } = await import('@tauri-apps/api/window');
       await getCurrentWindow().close();
-    } catch {
-      // Browser fallback - notify or minimize view
+    } catch (error) {
+      if (typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) {
+        console.error('Unable to close the application window:', error);
+      }
     }
   };
 
   return (
     <header
-      data-tauri-drag-region
+      onMouseDown={handleHeaderMouseDown}
       className="min-h-14 border-b border-slate-800/60 bg-slate-950/40 backdrop-blur-xl px-3 sm:px-5 py-2 flex items-center justify-between gap-2 sm:gap-4 shrink-0 select-none transition-colors"
     >
       {/* Zone 1: Hamburger + Breadcrumbs & Back Navigation */}
@@ -87,7 +107,7 @@ export const Header: React.FC<HeaderProps> = ({
             <ArrowLeft className="w-4 h-4" />
           </button>
         )}
-        <div className="flex items-center gap-2 text-xs text-slate-400 truncate min-w-0">
+        <div data-tauri-drag-region className="flex items-center gap-2 text-xs text-slate-400 truncate min-w-0">
           <span className="font-semibold text-slate-300 hidden sm:inline">OmniDesk</span>
           <span aria-hidden="true" className="text-slate-600">/</span>
           <span className="truncate">{currentCategoryName}</span>

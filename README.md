@@ -40,11 +40,15 @@ $env:Path="$msvc\bin\HostX64\x64;$env:Path"
 $env:INCLUDE="$msvc\include;$sdk\Include\$sdkver\ucrt;$sdk\Include\$sdkver\shared;$sdk\Include\$sdkver\um"
 $env:LIB="$msvc\lib\x64;$sdk\Lib\$sdkver\ucrt\x64;$sdk\Lib\$sdkver\um\x64"
 
-cd "C:\OmniDesk-main\OmniDesk-main"
+cd "C:\\OmniDesk-main\OmniDesk-main"
 npm run tauri dev
 ```
 
 *(Note: Adjust the paths for `$msvc` and `$sdk` to match the exact paths and toolset versions installed on your machine).*
+
+In VS Code, you can also run the prepared task **Tauri Dev (MSVC)** from
+**Terminal → Run Task**. It initializes the Visual Studio build environment
+before starting Tauri.
 
 ---
 

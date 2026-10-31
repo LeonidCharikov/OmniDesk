@@ -1,0 +1,26 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Tauri Dev (MSVC)",
+      "type": "shell",
+      "windows": {
+        "command": "cmd.exe",
+        "args": [
+          "/d",
+          "/s",
+          "/c",
+          "\"\"C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\Common7\\Tools\\VsDevCmd.bat\" -arch=x64 -host_arch=x64 && set \"MSVC=C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.44.35207\" && set \"SDK=C:\\Program Files (x86)\\Windows Kits\\10\" && set \"SDKVER=10.0.26100.0\" && set \"PATH=%MSVC%\\bin\\HostX64\\x64;%SDK%\\bin\\%SDKVER%\\x64;%PATH%\" && set \"INCLUDE=%MSVC%\\include;%SDK%\\Include\\%SDKVER%\\ucrt;%SDK%\\Include\\%SDKVER%\\shared;%SDK%\\Include\\%SDKVER%\\um\" && set \"LIB=%MSVC%\\lib\\x64;%SDK%\\Lib\\%SDKVER%\\ucrt\\x64;%SDK%\\Lib\\%SDKVER%\\um\\x64\" && cd /d \"${workspaceFolder}\" && npm run tauri dev\""
+        ]
+      },
+      "problemMatcher": [
+        "$tsc"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      }
+    }
+  ]
+}
