@@ -20,9 +20,9 @@ The application defaults to **English** out-of-the-box, with dynamic, first-clas
 
 ## 📸 Screenshots & Visual Showcase
 
-| 🖥️ Main Dashboard (All Tools) | 📈 2D Function Grapher & Plotter |
+| 🧪 Chemistry & Molecular Calculator | 📈 2D Function Grapher & Plotter |
 | :---: | :---: |
-| [![Main Dashboard](docs/screenshots/dashboard.png)](docs/screenshots/dashboard.png) | [![2D Function Grapher](docs/screenshots/function-grapher.png)](docs/screenshots/function-grapher.png) |
+| [![Chemistry table](docs/screenshots/function-chemistry.png)](docs/screenshots/dashboard.png) | [![2D Function Grapher](docs/screenshots/function-grapher.png)](docs/screenshots/function-grapher.png) |
 | *Categorized workstation with mini-widgets & search* | *Interactive curves, tangent slopes & math formulas* |
 
 | 💱 Live Crypto & Currency Rates | ⚙️ Application Settings & Configurator |
