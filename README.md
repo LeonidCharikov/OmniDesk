@@ -22,12 +22,12 @@ The application defaults to **English** out-of-the-box, with dynamic, first-clas
 
 | 🧪 Chemistry & Molecular Calculator | 📈 2D Function Grapher & Plotter |
 | :---: | :---: |
-| [![Chemistry table](docs/screenshots/function-chemistry.png)](docs/screenshots/dashboard.png) | [![2D Function Grapher](docs/screenshots/function-grapher.png)](docs/screenshots/function-grapher.png) |
+| [![Chemistry table](docs/screenshots/function-chemistry.png)](docs/screenshots/function-chemistry.png) | [![2D Function Grapher](docs/screenshots/function-grapher.png)](docs/screenshots/function-grapher.png) |
 | *Categorized workstation with mini-widgets & search* | *Interactive curves, tangent slopes & math formulas* |
 
 | 💱 Live Crypto & Currency Rates | ⚙️ Application Settings & Configurator |
 | :---: | :---: |
-| [![Crypto & Currency Tracker](docs/screenshots/crypto-rates.png)](docs/screenshots/crypto-rates.png) | [![Settings & Configurator](docs/screenshots/settings-configurator.png)](docs/screenshots/config.png) |
+| [![Crypto & Currency Tracker](docs/screenshots/crypto-rates.png)](docs/screenshots/crypto-rates.png) | [![Settings & Configurator](docs/screenshots/config.png)](docs/screenshots/config.png) |
 | *Real-time cryptocurrency ticker & value calculator* | *Themes, currency preferences, widgets & JSON backup * |
 
 ---
