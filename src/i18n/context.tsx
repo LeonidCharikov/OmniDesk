@@ -39,8 +39,8 @@ interface I18nContextType {
 }
 
 const I18nContext = createContext<I18nContextType>({
-  language: 'cs',
-  currentLanguage: 'cs',
+  language: 'en',
+  currentLanguage: 'en',
   setLanguage: () => {},
   t: (key, fallback) => fallback || key,
 });
@@ -55,7 +55,7 @@ export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch {
       // ignore
     }
-    return 'cs';
+    return 'en';
   });
 
   const setLanguage = (lang: SupportedLanguage) => {

@@ -29,7 +29,7 @@ export const DEFAULT_CONFIG: UserConfig = {
   defaultCurrency: 'CZK',
   widgets: DEFAULT_WIDGETS,
   enabledWidgets: ['clock', 'timer', 'crypto', 'notes', 'tasks', 'calc'],
-  language: 'cs',
+  language: 'en',
 };
 
 export function loadUserConfig(): UserConfig {
@@ -110,7 +110,7 @@ export function validateConfigJson(jsonString: string): { valid: boolean; config
         quickNote: typeof parsed.widgets?.quickNote === 'string' ? parsed.widgets.quickNote : DEFAULT_WIDGETS.quickNote,
         dailyTasks: Array.isArray(parsed.widgets?.dailyTasks) ? parsed.widgets.dailyTasks : DEFAULT_TASKS,
       },
-      language: ['cs', 'en', 'ru', 'de', 'es'].includes(parsed.language) ? parsed.language : 'cs',
+      language: ['cs', 'en', 'ru', 'de', 'es'].includes(parsed.language) ? parsed.language : 'en',
     };
 
     config.enabledWidgets = config.widgets.enabledWidgets;
