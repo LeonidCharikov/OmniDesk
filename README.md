@@ -28,7 +28,7 @@ The application defaults to **English** out-of-the-box, with dynamic, first-clas
 | 💱 Live Crypto & Currency Rates | ⚙️ Application Settings & Configurator |
 | :---: | :---: |
 | [![Crypto & Currency Tracker](docs/screenshots/crypto-rates.png)](docs/screenshots/crypto-rates.png) | [![Settings & Configurator](docs/screenshots/settings-configurator.png)](docs/screenshots/settings-configurator.png) |
-| *Real-time cryptocurrency ticker & value calculator* | *Themes, currency preferences, widgets & JSON backup* |
+| *Real-time cryptocurrency ticker & value calculator* | *Themes, currency preferences, widgets & JSON backup * |
 
 ---
 
