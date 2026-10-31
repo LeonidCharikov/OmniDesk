@@ -61,7 +61,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       >
         {/* Search Input */}
         <div className="flex items-center gap-3 px-4 py-3.5 border-b border-slate-800">
-          <label htmlFor={commandSearchId} className="sr-only">Hledat nástroj nebo klíčové slovo</label>
+          <label htmlFor={commandSearchId} className="sr-only">{t('command_search_label', 'Hledat nástroj nebo klíčové slovo')}</label>
           <Search className="w-4 h-4 text-slate-500 shrink-0" />
           <input
             id={commandSearchId}
@@ -84,7 +84,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         <div className="max-h-80 overflow-y-auto p-2 space-y-1">
           {filtered.length === 0 ? (
             <div className="p-8 text-center text-xs text-slate-500">
-              Žádný nástroj neodpovídá zadání "{query}"
+              {t('no_tools_query', 'Žádný nástroj neodpovídá zadání "{query}"', { query })}
             </div>
           ) : (
             filtered.map(tool => {
@@ -132,8 +132,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         </div>
 
         <div className="px-4 py-2 bg-slate-950 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-500 font-mono">
-          <span>Stiskněte <kbd className="text-slate-400">ESC</kbd> pro zavření</span>
-          <span>{filtered.length} nalezených nástrojů</span>
+          <span>{t('command_close_hint', 'Stiskněte ESC pro zavření')}</span>
+          <span>{t('tools_found_count', '{count} nalezených nástrojů', { count: filtered.length })}</span>
         </div>
       </div>
     </div>

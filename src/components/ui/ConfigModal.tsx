@@ -438,7 +438,7 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
                   </p>
                 </div>
                 <div className="flex items-center gap-2 px-3 py-1 rounded-xl bg-indigo-950/60 border border-indigo-500/40 text-indigo-300 text-xs font-mono">
-                  <span>Aktivní výchozí měna:</span>
+                  <span>{t('active_default_currency', 'Aktivní výchozí měna:')}</span>
                   <strong className="text-white font-bold">{config.defaultCurrency || 'CZK'}</strong>
                 </div>
               </div>

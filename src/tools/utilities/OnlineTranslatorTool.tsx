@@ -134,7 +134,7 @@ export const OnlineTranslatorTool: React.FC<Props> = ({ isOffline }) => {
 
       <div className="flex items-center justify-between p-3 bg-slate-900/60 rounded-xl border border-slate-800">
         <div className="flex items-center gap-3">
-          <label htmlFor={sourceLangId} className="sr-only">Výchozí jazyk</label>
+          <label htmlFor={sourceLangId} className="sr-only">{t('source_language', 'Výchozí jazyk')}</label>
           <select
             id={sourceLangId}
             value={sourceLang}
@@ -156,7 +156,7 @@ export const OnlineTranslatorTool: React.FC<Props> = ({ isOffline }) => {
             <ArrowRightLeft className="w-4 h-4" />
           </button>
 
-          <label htmlFor={targetLangId} className="sr-only">Cílový jazyk</label>
+          <label htmlFor={targetLangId} className="sr-only">{t('target_language', 'Cílový jazyk')}</label>
           <select
             id={targetLangId}
             value={targetLang}

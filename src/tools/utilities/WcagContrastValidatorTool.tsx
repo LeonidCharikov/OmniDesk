@@ -325,7 +325,7 @@ export const WcagContrastValidatorTool: React.FC = () => {
           <button
             onClick={handleCopyReport}
             className="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-800 transition-colors flex items-center gap-1.5"
-            title="Kopírovat kompletní report přístupnosti"
+            title={t('copy_accessibility_report', 'Kopírovat kompletní report přístupnosti')}
           >
             {copiedReport ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
             <span>{copiedReport ? t('copied', 'Zkopírováno') : t('wcag_copy_report', 'Kopírovat audit')}</span>
@@ -345,7 +345,7 @@ export const WcagContrastValidatorTool: React.FC = () => {
               <button
                 onClick={handleSwap}
                 className="px-2 py-1 text-[11px] font-medium text-slate-400 hover:text-white bg-slate-800/80 hover:bg-slate-800 rounded-md transition-colors flex items-center gap-1.5"
-                title="Prohodit barvy popředí a pozadí"
+                title={t('swap_foreground_background', 'Prohodit barvy popředí a pozadí')}
               >
                 <ArrowLeftRight className="w-3 h-3 text-indigo-400" />
                 <span>{t('wcag_swap_colors', 'Prohodit')}</span>
@@ -370,7 +370,7 @@ export const WcagContrastValidatorTool: React.FC = () => {
                     value={foreground}
                     onChange={e => setForeground(e.target.value)}
                     className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                    title="Vybrat barvu popředí"
+                    title={t('select_foreground_color', 'Vybrat barvu popředí')}
                   />
                 </div>
                 <input
@@ -403,7 +403,7 @@ export const WcagContrastValidatorTool: React.FC = () => {
                     value={background}
                     onChange={e => setBackground(e.target.value)}
                     className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                    title="Vybrat barvu pozadí"
+                    title={t('select_background_color', 'Vybrat barvu pozadí')}
                   />
                 </div>
                 <input
@@ -548,7 +548,7 @@ export const WcagContrastValidatorTool: React.FC = () => {
             {/* AA Normal Text */}
             <div className="p-3.5 rounded-xl bg-slate-900/40 border border-slate-800 space-y-1">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-300">AA Běžný Text</span>
+                <span className="text-xs font-semibold text-slate-300">{t('wcag_aa_normal_text', 'AA Běžný Text')}</span>
                 {passesAANormal ? (
                   <span className="text-xs font-mono font-semibold text-emerald-400 flex items-center gap-1">
                     <CheckCircle2 className="w-3.5 h-3.5" /> PASS
@@ -559,13 +559,13 @@ export const WcagContrastValidatorTool: React.FC = () => {
                   </span>
                 )}
               </div>
-              <span className="text-[11px] text-slate-500 block">Minimálně 4.5 : 1</span>
+              <span className="text-[11px] text-slate-500 block">{t('minimum_ratio_45', 'Minimálně 4.5 : 1')}</span>
             </div>
 
             {/* AA Large Text */}
             <div className="p-3.5 rounded-xl bg-slate-900/40 border border-slate-800 space-y-1">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-300">AA Velký Text</span>
+                <span className="text-xs font-semibold text-slate-300">{t('wcag_aa_large_text', 'AA Velký Text')}</span>
                 {passesAALarge ? (
                   <span className="text-xs font-mono font-semibold text-emerald-400 flex items-center gap-1">
                     <CheckCircle2 className="w-3.5 h-3.5" /> PASS
@@ -576,13 +576,13 @@ export const WcagContrastValidatorTool: React.FC = () => {
                   </span>
                 )}
               </div>
-              <span className="text-[11px] text-slate-500 block">Minimálně 3.0 : 1 (18pt+)</span>
+              <span className="text-[11px] text-slate-500 block">{t('minimum_ratio_30_large', 'Minimálně 3.0 : 1 (18pt+)')}</span>
             </div>
 
             {/* AAA Normal Text */}
             <div className="p-3.5 rounded-xl bg-slate-900/40 border border-slate-800 space-y-1">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-300">AAA Nejvyšší</span>
+                <span className="text-xs font-semibold text-slate-300">{t('wcag_aaa_highest', 'AAA Nejvyšší')}</span>
                 {passesAAANormal ? (
                   <span className="text-xs font-mono font-semibold text-emerald-400 flex items-center gap-1">
                     <CheckCircle2 className="w-3.5 h-3.5" /> PASS
@@ -593,7 +593,7 @@ export const WcagContrastValidatorTool: React.FC = () => {
                   </span>
                 )}
               </div>
-              <span className="text-[11px] text-slate-500 block">Minimálně 7.0 : 1</span>
+              <span className="text-[11px] text-slate-500 block">{t('minimum_ratio_70', 'Minimálně 7.0 : 1')}</span>
             </div>
           </div>
 

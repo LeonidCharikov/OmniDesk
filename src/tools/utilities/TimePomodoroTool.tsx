@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Clock, Play, Pause, RotateCcw, Globe, Flame, Coffee } from 'lucide-react';
+import { useI18n } from '../../i18n/context';
 
 interface CityTime {
   city: string;
@@ -18,6 +19,7 @@ const CITIES: CityTime[] = [
 ];
 
 export const TimePomodoroTool: React.FC = () => {
+  const { t } = useI18n();
   const [activeTab, setActiveTab] = useState<'pomodoro' | 'clock'>('pomodoro');
   const [now, setNow] = useState(new Date());
 
@@ -103,9 +105,9 @@ export const TimePomodoroTool: React.FC = () => {
     <div className="space-y-6">
       <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h2 className="text-lg font-semibold text-white">Časová Pásma & Pomodoro Časovač</h2>
+          <h2 className="text-lg font-semibold text-white">{t('time_pomodoro_title', 'Časová Pásma & Pomodoro Časovač')}</h2>
           <p className="text-sm text-slate-400 mt-1">
-            Světové hodiny pro globální týmy a produktivní časovač soustředění Pomodoro.
+            {t('time_pomodoro_desc', 'Světové hodiny pro globální týmy a produktivní časovač soustředění Pomodoro.')}
           </p>
         </div>
 
@@ -126,7 +128,7 @@ export const TimePomodoroTool: React.FC = () => {
             }`}
           >
             <Globe className="w-3.5 h-3.5" />
-            Světový čas
+            {t('world_time', 'Světový čas')}
           </button>
         </div>
       </div>
@@ -141,7 +143,7 @@ export const TimePomodoroTool: React.FC = () => {
                 timerMode === 'work' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
               }`}
             >
-              Práce (25 min)
+              {t('work_25_min', 'Práce (25 min)')}
             </button>
             <button
               onClick={() => setMode('shortBreak')}
@@ -149,7 +151,7 @@ export const TimePomodoroTool: React.FC = () => {
                 timerMode === 'shortBreak' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
               }`}
             >
-              Pauza (5 min)
+              {t('short_break_5_min', 'Pauza (5 min)')}
             </button>
             <button
               onClick={() => setMode('longBreak')}
@@ -157,7 +159,7 @@ export const TimePomodoroTool: React.FC = () => {
                 timerMode === 'longBreak' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
               }`}
             >
-              Dlouhá pauza (15 min)
+              {t('long_break_15_min', 'Dlouhá pauza (15 min)')}
             </button>
           </div>
 
@@ -177,13 +179,13 @@ export const TimePomodoroTool: React.FC = () => {
               }`}
             >
               {isRunning ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-              <span>{isRunning ? 'Pozastavit' : 'Spustit'}</span>
+              <span>{isRunning ? t('pause', 'Pozastavit') : t('start', 'Spustit')}</span>
             </button>
 
             <button
               onClick={resetTimer}
               className="p-3 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
-              title="Resetovat časovač"
+              title={t('reset_timer', 'Resetovat časovač')}
             >
               <RotateCcw className="w-4 h-4" />
             </button>
@@ -191,7 +193,7 @@ export const TimePomodoroTool: React.FC = () => {
 
           <div className="text-xs text-slate-400 flex items-center gap-2">
             <Flame className="w-4 h-4 text-amber-400" />
-            <span>Dokončeno soustředěných bloků: <strong className="text-white font-mono">{completedSessions}</strong></span>
+            <span>{t('completed_focus_blocks', 'Dokončeno soustředěných bloků: {count}', { count: completedSessions })}</span>
           </div>
         </div>
       )}

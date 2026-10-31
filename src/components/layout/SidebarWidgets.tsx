@@ -347,7 +347,7 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
                 className={`text-[9px] font-mono px-1 py-0.5 rounded transition-colors ${
                   timerTotal === 25 * 60 ? 'bg-indigo-700 text-white' : 'text-slate-400 hover:text-white'
                 }`}
-                title="25 min Pomodoro"
+                title={t('pomodoro_25_min', '25 min Pomodoro')}
               >
                 25m
               </button>
@@ -356,7 +356,7 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
                 className={`text-[9px] font-mono px-1 py-0.5 rounded transition-colors ${
                   timerTotal === 5 * 60 ? 'bg-indigo-700 text-white' : 'text-slate-400 hover:text-white'
                 }`}
-                title="5 min pauza"
+                title={t('break_5_min', '5 min pauza')}
               >
                 5m
               </button>
@@ -439,7 +439,7 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
             type="text"
             value={calcInput}
             onChange={e => setCalcInput(e.target.value)}
-            placeholder="např. 50 km to mi, 25 * 4"
+            placeholder={t('mini_calc_placeholder', 'např. 50 km to mi, 25 * 4')}
             className="w-full text-xs font-mono px-2 py-1 bg-slate-950/80 border border-slate-800 rounded text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500"
           />
           {calcResult && (

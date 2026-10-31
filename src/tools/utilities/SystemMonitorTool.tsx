@@ -702,7 +702,7 @@ fn main() {
 
           {/* Refresh interval selector */}
           <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800 text-xs">
-            <label htmlFor={refreshSelectId} className="sr-only">Interval obnovení</label>
+            <label htmlFor={refreshSelectId} className="sr-only">{t('refresh_interval', 'Interval obnovení')}</label>
             <button
               onClick={() => setIsRunning(!isRunning)}
               className="p-1 rounded text-slate-400 hover:text-white transition-colors"
@@ -849,7 +849,7 @@ fn main() {
 
               {/* Sparkline mini chart */}
               <div className="pt-2 border-t border-slate-800/80">
-                <span className="text-[10px] text-slate-500 uppercase tracking-wider block mb-1.5">Historie zátěže (30s)</span>
+                <span className="text-[10px] text-slate-500 uppercase tracking-wider block mb-1.5">{t('load_history_30s', 'Historie zátěže (30s)')}</span>
                 <div className="h-10 flex items-end gap-1">
                   {cpuHistory.map((val, idx) => (
                     <div
@@ -1004,7 +1004,7 @@ fn main() {
               {/* Disk I/O details */}
               <div className="pt-2 border-t border-slate-800/80 space-y-1.5 text-[11px] font-mono">
                 <div className="flex justify-between text-slate-400">
-                  <span>Volné místo:</span>
+                  <span>{t('free_space', 'Volné místo:')}</span>
                   <span className="text-white">
                     {(telemetry.diskTotalGb - telemetry.diskUsedGb) > 1
                       ? `${(telemetry.diskTotalGb - telemetry.diskUsedGb).toFixed(1)} GB`
@@ -1028,7 +1028,7 @@ fn main() {
                   </>
                 ) : (
                   <div className="flex justify-between text-slate-400">
-                    <span>Disk I/O:</span>
+                    <span>{t('disk_io', 'Disk I/O:')}</span>
                     <span className="text-slate-500">Not available in browser mode</span>
                   </div>
                 )}
@@ -1169,7 +1169,7 @@ fn main() {
               className="px-3 py-1.5 text-xs font-medium rounded-lg bg-indigo-900/40 hover:bg-indigo-900/60 text-indigo-300 border border-indigo-700/50 transition-colors flex items-center gap-1.5"
             >
               {copiedCode ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-              <span>{copiedCode ? 'Zkopírováno' : 'Kopírovat Rust kód'}</span>
+              <span>{copiedCode ? t('copied', 'Zkopírováno') : t('copy_rust_code', 'Kopírovat Rust kód')}</span>
             </button>
           </div>
 

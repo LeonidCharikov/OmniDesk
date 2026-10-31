@@ -435,7 +435,7 @@ export const ChemistryTool: React.FC = () => {
                 >
                   <span className="text-[10px] font-mono font-bold">57-71</span>
                   <span className="text-xs font-bold font-mono">La-Lu</span>
-                  <span className="text-[8px] text-slate-400 truncate">Lanthanoidy</span>
+                  <span className="text-[8px] text-slate-400 truncate">{t('lanthanides', 'Lanthanoidy')}</span>
                 </div>
 
                 {/* Actinides placeholder at Period 7, Group 3 */}
@@ -447,7 +447,7 @@ export const ChemistryTool: React.FC = () => {
                 >
                   <span className="text-[10px] font-mono font-bold">89-103</span>
                   <span className="text-xs font-bold font-mono">Ac-Lr</span>
-                  <span className="text-[8px] text-slate-400 truncate">Aktinoidy</span>
+                  <span className="text-[8px] text-slate-400 truncate">{t('actinides', 'Aktinoidy')}</span>
                 </div>
               </div>
 
@@ -685,7 +685,7 @@ export const ChemistryTool: React.FC = () => {
                   className="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs flex items-center gap-1.5 transition-colors shadow-md"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
-                  <span>Vložit do vzorce ({selectedElement.symbol})</span>
+                  <span>{t('insert_into_formula', 'Vložit do vzorce ({symbol})', { symbol: selectedElement.symbol })}</span>
                 </button>
                 <button
                   onClick={() => setSelectedElement(null)}
@@ -741,7 +741,7 @@ export const ChemistryTool: React.FC = () => {
 
             {/* Quick Element Keyboard Insert Bar */}
             <div className="flex flex-wrap items-center gap-1.5 pt-2">
-              <span className="text-[10px] font-semibold text-slate-500 uppercase mr-1">Rychlé vložení prvku:</span>
+              <span className="text-[10px] font-semibold text-slate-500 uppercase mr-1">{t('quick_element_insert', 'Rychlé vložení prvku:')}</span>
               {['H', 'C', 'N', 'O', 'Na', 'Cl', 'Fe', 'Cu', 'S', 'P', 'Ca', 'K', 'Mg', 'Al', 'Ag', 'Au', 'U'].map(sym => (
                 <button
                   key={sym}
@@ -821,7 +821,7 @@ export const ChemistryTool: React.FC = () => {
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-300 hover:text-white bg-emerald-950/40 rounded-lg transition-colors border border-emerald-500/30"
                   >
                     <FlaskConical className="w-3.5 h-3.5" />
-                    <span>Použít pro roztok</span>
+                    <span>{t('use_for_solution', 'Použít pro roztok')}</span>
                   </button>
 
                   <button
@@ -895,7 +895,7 @@ export const ChemistryTool: React.FC = () => {
                 {t('chem_sol_title', 'Příprava roztoku a výpočet látkové koncentrace: c = n / V = (m / M) / V')}
               </span>
               <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-400">
-                <span>Předvolby:</span>
+                <span>{t('presets', 'Předvolby:')}</span>
                 <button
                   onClick={() => handleSelectPreset('NaCl (Chlorid sodný)', 58.44, 'NaCl')}
                   className="text-indigo-400 hover:underline"

@@ -600,7 +600,7 @@ const EventModal: React.FC<{
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-800 bg-slate-950/60">
           <h3 className="text-sm font-bold text-white flex items-center gap-2">
             <CalendarIcon className="w-4 h-4 text-indigo-400" />
-            {event ? 'Upravit událost' : 'Nová událost'}
+            {event ? t('edit_event', 'Upravit událost') : t('new_event', 'Nová událost')}
           </h3>
           <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-white transition-colors">
             <X className="w-4 h-4" />
@@ -610,12 +610,12 @@ const EventModal: React.FC<{
         <div className="p-5 space-y-4">
           {/* Title */}
           <div>
-            <label className="block text-[11px] text-slate-400 uppercase tracking-wider mb-1">Název události</label>
+            <label className="block text-[11px] text-slate-400 uppercase tracking-wider mb-1">{t('event_name', 'Název události')}</label>
             <input
               type="text"
               value={title}
               onChange={e => setTitle(e.target.value)}
-              placeholder="Např. Schůzka, Oběd, Deadline..."
+              placeholder={t('event_title_placeholder', 'Např. Schůzka, Oběd, Deadline...')}
               className="w-full px-3 py-2 text-sm rounded-lg bg-slate-950 border border-slate-800 text-white placeholder-slate-600 focus:border-indigo-500 focus:outline-none transition-colors"
               autoFocus
             />
@@ -624,7 +624,7 @@ const EventModal: React.FC<{
           {/* Date & Time row */}
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <label className="block text-[11px] text-slate-400 uppercase tracking-wider mb-1">Datum</label>
+              <label className="block text-[11px] text-slate-400 uppercase tracking-wider mb-1">{t('date', 'Datum')}</label>
               <input
                 type="date"
                 value={date}
@@ -633,7 +633,7 @@ const EventModal: React.FC<{
               />
             </div>
             <div>
-              <label className="block text-[11px] text-slate-400 uppercase tracking-wider mb-1">Od</label>
+              <label className="block text-[11px] text-slate-400 uppercase tracking-wider mb-1">{t('from_time', 'Od')}</label>
               <div className="flex gap-1">
                 <select
                   value={hour}
@@ -656,7 +656,7 @@ const EventModal: React.FC<{
               </div>
             </div>
             <div>
-              <label className="block text-[11px] text-slate-400 uppercase tracking-wider mb-1">Délka</label>
+              <label className="block text-[11px] text-slate-400 uppercase tracking-wider mb-1">{t('duration', 'Délka')}</label>
               <select
                 value={duration}
                 onChange={e => setDuration(Number(e.target.value))}
@@ -683,11 +683,11 @@ const EventModal: React.FC<{
 
           {/* Description */}
           <div>
-            <label className="block text-[11px] text-slate-400 uppercase tracking-wider mb-1">Poznámka (volitelné)</label>
+            <label className="block text-[11px] text-slate-400 uppercase tracking-wider mb-1">{t('optional_note', 'Poznámka (volitelné)')}</label>
             <textarea
               value={description}
               onChange={e => setDescription(e.target.value)}
-              placeholder="Detaily, místo, odkaz..."
+              placeholder={t('event_details_placeholder', 'Detaily, místo, odkaz...')}
               rows={3}
               className="w-full px-3 py-2 text-sm rounded-lg bg-slate-950 border border-slate-800 text-white placeholder-slate-600 focus:border-indigo-500 focus:outline-none resize-none transition-colors"
             />
@@ -695,7 +695,7 @@ const EventModal: React.FC<{
 
           {/* Color picker */}
           <div>
-            <label className="block text-[11px] text-slate-400 uppercase tracking-wider mb-1.5">Barva</label>
+            <label className="block text-[11px] text-slate-400 uppercase tracking-wider mb-1.5">{t('color', 'Barva')}</label>
             <div className="flex gap-2">
               {EVENT_COLORS.map(c => (
                 <button
@@ -719,7 +719,7 @@ const EventModal: React.FC<{
                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg text-rose-400 hover:bg-rose-950/40 border border-rose-800/40 transition-colors"
               >
                 <Trash2 className="w-3.5 h-3.5" />
-                <span>Smazat</span>
+                <span>{t('delete', 'Smazat')}</span>
               </button>
             )}
           </div>
@@ -728,7 +728,7 @@ const EventModal: React.FC<{
               onClick={onClose}
               className="px-3 py-1.5 text-xs font-medium rounded-lg text-slate-400 hover:text-white border border-slate-800 transition-colors"
             >
-              Zrušit
+              {t('cancel', 'Zrušit')}
             </button>
             <button
               onClick={handleSave}
@@ -736,7 +736,7 @@ const EventModal: React.FC<{
               className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-medium rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <Save className="w-3.5 h-3.5" />
-              <span>{event ? 'Uložit změny' : 'Vytvořit'}</span>
+              <span>{event ? t('save_changes', 'Uložit změny') : t('create', 'Vytvořit')}</span>
             </button>
           </div>
         </div>
@@ -744,4 +744,3 @@ const EventModal: React.FC<{
     </div>
   );
 };
-

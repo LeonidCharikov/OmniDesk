@@ -156,7 +156,7 @@ export const ScientificCalculatorTool: React.FC = () => {
             <button
               onClick={copyDisplay}
               className="absolute left-3 bottom-3 p-1.5 rounded-lg text-slate-500 hover:text-slate-200 hover:bg-slate-800/60 opacity-0 group-hover:opacity-100 transition-opacity"
-              title="Kopírovat číslo"
+              title={t('copy_number', 'Kopírovat číslo')}
             >
               {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
             </button>
@@ -411,7 +411,7 @@ export const ScientificCalculatorTool: React.FC = () => {
                 <button
                   onClick={() => setHistory([])}
                   className="text-slate-500 hover:text-slate-300 p-1 rounded"
-                  title="Smazat historii"
+                  title={t('clear_history', 'Smazat historii')}
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
@@ -420,7 +420,7 @@ export const ScientificCalculatorTool: React.FC = () => {
 
             <div className="space-y-2 overflow-y-auto max-h-80">
               {history.length === 0 ? (
-                <div className="text-xs text-slate-500 py-8 text-center">Historie je prázdná</div>
+                <div className="text-xs text-slate-500 py-8 text-center">{t('calculation_history_empty', 'Historie je prázdná')}</div>
               ) : (
                 history.map((item, idx) => (
                   <div

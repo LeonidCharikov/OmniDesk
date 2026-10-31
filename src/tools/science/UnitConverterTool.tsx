@@ -154,7 +154,7 @@ export const UnitConverterTool: React.FC = () => {
               <option key={key} value={key}>{getUnitName(u)}</option>
             ))}
           </select>
-          <label htmlFor={inputId} className="sr-only">Vstupní hodnota</label>
+          <label htmlFor={inputId} className="sr-only">{t('input_value', 'Vstupní hodnota')}</label>
           <input
             id={inputId}
             type="number"

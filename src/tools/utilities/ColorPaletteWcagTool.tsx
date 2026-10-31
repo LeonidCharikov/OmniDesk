@@ -342,7 +342,7 @@ export const ColorPaletteWcagTool: React.FC = () => {
           <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
             <span className="text-xs text-slate-400 block font-medium">{t('normal_text_label', 'Běžný text (< 18pt)')}</span>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-slate-300 font-mono">Úroveň AA (≥ 4.5:1)</span>
+              <span className="text-xs text-slate-300 font-mono">{t('wcag_level_aa_45', 'Úroveň AA (≥ 4.5:1)')}</span>
               {normalAA ? (
                 <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-400">
                   <CheckCircle2 className="w-3.5 h-3.5" /> {t('passes', 'Vyhovuje')}
@@ -354,7 +354,7 @@ export const ColorPaletteWcagTool: React.FC = () => {
               )}
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-slate-300 font-mono">Úroveň AAA (≥ 7.0:1)</span>
+              <span className="text-xs text-slate-300 font-mono">{t('wcag_level_aaa_70', 'Úroveň AAA (≥ 7.0:1)')}</span>
               {normalAAA ? (
                 <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-400">
                   <CheckCircle2 className="w-3.5 h-3.5" /> {t('passes', 'Vyhovuje')}
@@ -371,7 +371,7 @@ export const ColorPaletteWcagTool: React.FC = () => {
           <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
             <span className="text-xs text-slate-400 block font-medium">{t('large_text_label', 'Velký text (≥ 18pt / 14pt bold)')}</span>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-slate-300 font-mono">Úroveň AA (≥ 3.0:1)</span>
+              <span className="text-xs text-slate-300 font-mono">{t('wcag_level_aa_30', 'Úroveň AA (≥ 3.0:1)')}</span>
               {largeAA ? (
                 <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-400">
                   <CheckCircle2 className="w-3.5 h-3.5" /> {t('passes', 'Vyhovuje')}
@@ -383,7 +383,7 @@ export const ColorPaletteWcagTool: React.FC = () => {
               )}
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-slate-300 font-mono">Úroveň AAA (≥ 4.5:1)</span>
+              <span className="text-xs text-slate-300 font-mono">{t('wcag_level_aaa_45', 'Úroveň AAA (≥ 4.5:1)')}</span>
               {largeAAA ? (
                 <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-400">
                   <CheckCircle2 className="w-3.5 h-3.5" /> {t('passes', 'Vyhovuje')}
@@ -398,9 +398,9 @@ export const ColorPaletteWcagTool: React.FC = () => {
 
           {/* UI Components */}
           <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
-            <span className="text-xs text-slate-400 block font-medium">Grafické prvky & Ikony</span>
+            <span className="text-xs text-slate-400 block font-medium">{t('graphics_and_icons', 'Grafické prvky & Ikony')}</span>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-slate-300 font-mono">Úroveň AA (&ge; 3.0:1)</span>
+              <span className="text-xs text-slate-300 font-mono">{t('wcag_level_aa_30', 'Úroveň AA (≥ 3.0:1)')}</span>
               {uiAA ? (
                 <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-400">
                   <CheckCircle2 className="w-3.5 h-3.5" /> Vyhovuje
@@ -412,7 +412,7 @@ export const ColorPaletteWcagTool: React.FC = () => {
               )}
             </div>
             <p className="text-[10px] text-slate-500 pt-1">
-              Vyžadováno pro hranice tlačítek, formulářové rámečky a grafy.
+              {t('wcag_ui_requirement', 'Vyžadováno pro hranice tlačítek, formulářové rámečky a grafy.')}
             </p>
           </div>
         </div>
@@ -423,7 +423,7 @@ export const ColorPaletteWcagTool: React.FC = () => {
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <span className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
-              Barevná Harmonie
+              {t('color_harmony', 'Barevná Harmonie')}
             </span>
             <div className="flex items-center gap-2">
               <input
@@ -463,10 +463,10 @@ export const ColorPaletteWcagTool: React.FC = () => {
                 className="w-full h-16 rounded-lg shadow-inner cursor-pointer relative flex items-center justify-center"
                 style={{ backgroundColor: item.hex }}
                 onClick={() => copyCode(item.hex, item.hex)}
-                title="Kliknutím zkopírujete HEX"
+                title={t('copy_hex_hint', 'Kliknutím zkopírujete HEX')}
               >
                 <span className="opacity-0 group-hover:opacity-100 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded backdrop-blur-sm transition-opacity">
-                  Kopírovat
+                  {t('copy', 'Kopírovat')}
                 </span>
               </div>
               <div className="space-y-0.5">
@@ -509,7 +509,7 @@ export const ColorPaletteWcagTool: React.FC = () => {
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition-colors"
           >
             {copiedText === 'css' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-            <span>CSS Proměnné</span>
+            <span>{t('css_variables', 'CSS Proměnné')}</span>
           </button>
           <button
             onClick={() => copyCode(
@@ -519,7 +519,7 @@ export const ColorPaletteWcagTool: React.FC = () => {
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition-colors"
           >
             {copiedText === 'json' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-            <span>JSON Paleta</span>
+            <span>{t('json_palette', 'JSON Paleta')}</span>
           </button>
         </div>
       </div>

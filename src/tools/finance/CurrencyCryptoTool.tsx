@@ -443,20 +443,20 @@ export const CurrencyCryptoTool: React.FC<Props> = ({ isOffline }) => {
                 <button
                   onClick={handleOpenEditPrice}
                   className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs text-indigo-300 hover:text-white transition-colors flex items-center gap-1"
-                  title="Ručně upravit cenu kryptoměny"
+                  title={t('edit_crypto_price', 'Ručně upravit cenu kryptoměny')}
                 >
                   <Edit3 className="w-3 h-3" />
-                  <span>Upravit cenu</span>
+                  <span>{t('edit_price', 'Upravit cenu')}</span>
                 </button>
 
                 {cryptoInfo.isCustom && (
                   <button
                     onClick={handleResetToLive}
                     className="px-2 py-1 rounded-lg bg-amber-950/40 hover:bg-amber-900/60 border border-amber-800 text-xs text-amber-300 transition-colors flex items-center gap-1"
-                    title="Obnovit živý burzovní kurz"
+                    title={t('refresh_crypto_rate', 'Obnovit živý burzovní kurz')}
                   >
                     <RotateCcw className="w-3 h-3" />
-                    <span>Obnovit live</span>
+                    <span>{t('refresh_live', 'Obnovit live')}</span>
                   </button>
                 )}
               </div>
@@ -475,7 +475,7 @@ export const CurrencyCryptoTool: React.FC<Props> = ({ isOffline }) => {
                     step="any"
                     value={editPriceInput}
                     onChange={e => setEditPriceInput(e.target.value)}
-                    placeholder="Např. 71500"
+                    placeholder={t('crypto_price_placeholder', 'Např. 71500')}
                     className="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-sm font-mono text-white focus:outline-none focus:border-indigo-500"
                   />
                 </div>
