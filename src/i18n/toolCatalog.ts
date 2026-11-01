@@ -3,6 +3,22 @@ import { SupportedLanguage } from './context';
 type CatalogText = Record<SupportedLanguage, string>;
 
 const catalog: Record<string, { title: CatalogText; desc: CatalogText }> = {
+  'pdf-editor': {
+    title: {
+      cs: 'PDF Studio & Vizuální Editor',
+      en: 'PDF Studio & Visual Editor',
+      de: 'PDF Studio & Visueller Editor',
+      es: 'Estudio y Editor Visual de PDF',
+      ru: 'PDF Студия и Визуальный Редактор',
+    },
+    desc: {
+      cs: 'Vizuální editor PDF: přímá úprava a nahrazování textu, textová pole, bělitko, začernění, zvýrazňovač, kreslení, podpis a správa stránek.',
+      en: 'Visual PDF editor: edit or replace text in-place, add text boxes, whiteout, redact, highlight, draw, digital signature, and page manager.',
+      de: 'Visueller PDF-Editor: Text direkt bearbeiten oder ersetzen, Textfelder, Whiteout, Schwärzen, Textmarker, Zeichnen, Unterschrift und Seitenverwaltung.',
+      es: 'Editor visual de PDF: edición o reemplazo directo de texto, cuadros de texto, corrector blanco, censura, resaltador, dibujo, firma y gestión de páginas.',
+      ru: 'Визуальный редактор PDF: редактирование и замена текста на странице, текстовые блоки, белый корректор, цензура, выделитель, подпись и страницы.',
+    },
+  },
   'pdf-toolkit': {
     title: { cs: 'PDF nástroje', en: 'PDF Toolkit', de: 'PDF-Werkzeuge', es: 'Herramientas PDF', ru: 'Инструменты PDF' },
     desc: { cs: 'Lokálně slučujte vybrané soubory PDF nebo otočte všechny stránky jednoho PDF a uložte výsledek.', en: 'Merge selected PDF files or rotate all pages in one PDF locally, then save the result.', de: 'Ausgewählte PDF-Dateien zusammenführen oder alle Seiten einer PDF drehen und lokal speichern.', es: 'Une archivos PDF seleccionados o gira todas las páginas de un PDF y guarda el resultado localmente.', ru: 'Объединяйте выбранные PDF или поворачивайте все страницы одного PDF локально и сохраняйте результат.' },

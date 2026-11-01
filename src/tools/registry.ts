@@ -1,6 +1,7 @@
 import React from 'react';
 import { ToolDefinition } from '../types/tool';
 import { TextEditorTool } from './files/TextEditorTool';
+import { PdfEditorTool } from './files/PdfEditorTool';
 import { DocxToPdfTool } from './files/DocxToPdfTool';
 import { MultiFormatConverterTool } from './files/MultiFormatConverterTool';
 import { FileInspectorTool } from './files/FileInspectorTool';
@@ -83,6 +84,16 @@ export const TOOLS_REGISTRY: ToolDefinition[] = [
     requiresOnline: false,
     component: MultiFormatConverterTool,
     tags: ['konverze', 'obrazky', 'csv', 'json', 'markdown', 'pdf', 'webp'],
+  },
+  {
+    id: 'pdf-editor',
+    title: 'PDF Studio & Vizuální Editor',
+    shortDesc: 'Vizuální editor PDF: přímá úprava a nahrazování textu, textová pole, bělitko, začernění, zvýrazňovač, kreslení, podpis a správa stránek.',
+    category: 'files',
+    icon: 'FileSignature',
+    requiresOnline: false,
+    component: PdfEditorTool,
+    tags: ['pdf', 'editor', 'stranky', 'vodoznak', 'podpis', 'slouceni', 'split', 'otocit', 'uprava', 'dokument'],
   },
   {
     id: 'docx-to-pdf',
