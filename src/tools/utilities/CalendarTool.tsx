@@ -11,6 +11,8 @@ import {
   Check,
   Save,
   AlertCircle,
+  Download,
+  Search,
 } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
 
@@ -131,10 +133,60 @@ export const CalendarTool: React.FC = () => {
   const [workdayStart, setWorkdayStart] = useState(dateToStr(new Date()));
   const [workdayCount, setWorkdayCount] = useState(20);
   const [workdayResult, setWorkdayResult] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Persist events
   useEffect(() => { saveEvents(events); }, [events]);
+
+  const exportIcs = () => {
+    if (!events.length) return;
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const formatIcsDate = (dateStr: string, hour: number, minute: number) => {
+      const [y, m, d] = dateStr.split('-');
+      return `${y}${m}${d}T${pad(hour)}${pad(minute)}00`;
+    };
+    const nowStamp = `${dateToStr(new Date()).replace(/-/g, '')}T120000Z`;
+    const icsLines = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//OmniDesk//Calendar 2.0//EN',
+      'CALSCALE:GREGORIAN',
+      'METHOD:PUBLISH',
+    ];
+    events.forEach(e => {
+      const start = formatIcsDate(e.date, e.hour, e.minute);
+      const endMinTotal = e.hour * 60 + e.minute + e.durationMinutes;
+      const endHour = Math.floor(endMinTotal / 60);
+      const endMin = endMinTotal % 60;
+      const end = formatIcsDate(e.date, endHour, endMin);
+      icsLines.push(
+        'BEGIN:VEVENT',
+        `UID:${e.id}@omnidesk`,
+        `DTSTAMP:${nowStamp}`,
+        `DTSTART:${start}`,
+        `DTEND:${end}`,
+        `SUMMARY:${e.title.replace(/[,;\\]/g, ' ')}`,
+        `DESCRIPTION:${e.description.replace(/[,;\\]/g, ' ')}`,
+        'END:VEVENT'
+      );
+    });
+    icsLines.push('END:VCALENDAR');
+    const blob = new Blob([icsLines.join('\r\n')], { type: 'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `kalendar-${dateToStr(new Date())}.ics`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const clearPastEvents = () => {
+    const todayVal = dateToStr(new Date());
+    if (confirm(t('confirm_clear_past_events', 'Opravdu si přejete smazat události před dnešním dnem?'))) {
+      setEvents(events.filter(e => e.date >= todayVal));
+    }
+  };
 
   // Scroll to current hour on mount
   useEffect(() => {
@@ -251,21 +303,112 @@ export const CalendarTool: React.FC = () => {
           </p>
         </div>
 
-        {/* View mode switch */}
-        <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800 text-xs">
-          {(['month', 'week', 'day'] as ViewMode[]).map(mode => (
-            <button
-              key={mode}
-              onClick={() => setViewMode(mode)}
-              className={`px-3 py-1.5 rounded-md font-medium transition-colors ${
-                viewMode === mode ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              {mode === 'month' ? t('cal_month', 'Měsíc') : mode === 'week' ? t('cal_week', 'Týden') : t('cal_day', 'Den')}
-            </button>
-          ))}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Quick jump to date */}
+          <div className="flex items-center gap-1.5 bg-slate-950 px-2 py-1 rounded-lg border border-slate-800 text-xs">
+            <span className="text-slate-400">{t('go_to_date', 'Přejít:')}</span>
+            <input
+              type="date"
+              className="bg-transparent text-white outline-none font-mono text-xs"
+              value={dateToStr(currentDate)}
+              onChange={e => {
+                if (e.target.value) {
+                  const d = new Date(e.target.value + 'T12:00:00');
+                  setCurrentDate(d);
+                  setSelectedDate(d);
+                }
+              }}
+            />
+          </div>
+
+          {/* Export to ICS */}
+          <button
+            onClick={exportIcs}
+            disabled={!events.length}
+            className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 transition-colors disabled:opacity-50"
+            title={t('export_ical_desc', 'Exportovat všechny události do standardního formátu iCalendar (.ics)')}
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>.ICS Export</span>
+          </button>
+
+          {/* Clear past events */}
+          <button
+            onClick={clearPastEvents}
+            className="px-2.5 py-1.5 text-xs font-medium rounded-lg bg-slate-800/80 hover:bg-rose-950/40 hover:text-rose-300 text-slate-400 border border-slate-800 transition-colors"
+            title={t('clear_past_events', 'Smazat události před dnešním dnem')}
+          >
+            {t('clear_past', 'Smazat minulé')}
+          </button>
+
+          {/* View mode switch */}
+          <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800 text-xs">
+            {(['month', 'week', 'day'] as ViewMode[]).map(mode => (
+              <button
+                key={mode}
+                onClick={() => setViewMode(mode)}
+                className={`px-3 py-1.5 rounded-md font-medium transition-colors ${
+                  viewMode === mode ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                {mode === 'month' ? t('cal_month', 'Měsíc') : mode === 'week' ? t('cal_week', 'Týden') : t('cal_day', 'Den')}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
+
+      {/* ── Search Bar ────────────────────────────────────────── */}
+      <div className="flex flex-wrap items-center justify-between gap-3 p-2.5 rounded-xl bg-slate-900/30 border border-slate-800/80">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-500" />
+          <input
+            type="text"
+            className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder-slate-500 outline-none focus:border-indigo-500"
+            placeholder={t('search_events', 'Hledat událost podle názvu nebo popisu…')}
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+          />
+        </div>
+        <div className="text-xs text-slate-500">
+          Celkem {events.length} událostí
+        </div>
+      </div>
+
+      {/* Search results dropdown if searching */}
+      {searchQuery.trim() && (
+        <div className="p-3 rounded-xl bg-slate-950 border border-indigo-500/40 space-y-2 max-h-56 overflow-y-auto">
+          <span className="text-xs font-semibold text-indigo-400 block">
+            Nalezené události pro &ldquo;{searchQuery}&rdquo;:
+          </span>
+          {events
+            .filter(
+              e =>
+                e.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                e.description.toLowerCase().includes(searchQuery.toLowerCase())
+            )
+            .map(e => (
+              <div
+                key={e.id}
+                onClick={() => {
+                  const d = new Date(e.date + 'T12:00:00');
+                  setCurrentDate(d);
+                  setSelectedDate(d);
+                  openEditEvent(e);
+                }}
+                className="p-2 rounded-lg bg-slate-900/80 border border-slate-800 text-xs flex items-center justify-between cursor-pointer hover:bg-slate-800"
+              >
+                <div>
+                  <strong className="text-white">{e.title}</strong>
+                  <span className="text-slate-400 ml-2">
+                    {e.date} v {formatTime(e.hour, e.minute)} ({e.durationMinutes} min)
+                  </span>
+                </div>
+                <span className="text-[10px] text-indigo-400 underline">Otevřít</span>
+              </div>
+            ))}
+        </div>
+      )}
 
       {/* ── Navigation Bar ───────────────────────────────────── */}
       <div className="flex items-center justify-between gap-3">
