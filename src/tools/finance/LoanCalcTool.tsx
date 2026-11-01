@@ -1,10 +1,18 @@
 import React, { useState, useId } from 'react';
-import { DollarSign, PieChart, Download, Calendar } from 'lucide-react';
+import { DollarSign, PieChart, Download, Calendar, Coins } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
 import { saveTextWithDialog } from '../../services/fileSystemService';
+import {
+  useAppCurrency,
+  getCurrencySymbol,
+  formatCurrency,
+  SUPPORTED_FIAT_CURRENCIES,
+} from '../../services/currencyService';
 
 export const LoanCalcTool: React.FC = () => {
   const { t, language } = useI18n();
+  const [currency, setCurrency] = useAppCurrency();
+  const currSymbol = getCurrencySymbol(currency);
   const [principal, setPrincipal] = useState<number>(3000000);
   const [interestRate, setInterestRate] = useState<number>(4.9);
   const [years, setYears] = useState<number>(25);
@@ -51,7 +59,7 @@ export const LoanCalcTool: React.FC = () => {
   }
 
   const exportScheduleCsv = async () => {
-    let csv = `${t('month', 'Měsíc')},${t('payment', 'Splátka')},${t('principal_part', 'Úmor (Jistina)')},${t('interest_part', 'Úrok')},${t('remaining_balance', 'Zbývající dluh')}\n`;
+    let csv = `${t('month', 'Měsíc')},${t('payment', 'Splátka')} (${currSymbol}),${t('principal_part', 'Úmor (Jistina)')} (${currSymbol}),${t('interest_part', 'Úrok')} (${currSymbol}),${t('remaining_balance', 'Zbývající dluh')} (${currSymbol})\n`;
     let bal = principal;
     for (let m = 1; m <= totalMonths; m++) {
       const iPart = bal * monthlyRate;
@@ -61,7 +69,7 @@ export const LoanCalcTool: React.FC = () => {
     }
 
     await saveTextWithDialog(
-      `amortization_schedule_${principal}_${years}y.csv`,
+      `amortization_schedule_${principal}_${years}y_${currency}.csv`,
       csv,
       [
         { name: 'CSV Tabulka (*.csv)', extensions: ['csv'] },
@@ -75,19 +83,38 @@ export const LoanCalcTool: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800">
-        <h2 className="text-lg font-semibold text-white">
-          {t('tool_loan_calc_title', 'Hypoteční & Úvěrová Kalkulačka')}
-        </h2>
-        <p className="text-sm text-slate-400 mt-1">
-          {t('loan_calc_desc', 'Přesný výpočet anuitních splátek, celkového přeplatku na úrocích a amortizačního kalendáře.')}
-        </p>
+      <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-semibold text-white">
+            {t('tool_loan_calc_title', 'Hypoteční & Úvěrová Kalkulačka')}
+          </h2>
+          <p className="text-sm text-slate-400 mt-1">
+            {t('loan_calc_desc', 'Přesný výpočet anuitních splátek, celkového přeplatku na úrocích a amortizačního kalendáře.')}
+          </p>
+        </div>
+
+        {/* Currency Switcher */}
+        <div className="flex items-center gap-2 self-start sm:self-auto bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 shrink-0">
+          <Coins className="w-4 h-4 text-indigo-400" />
+          <span className="text-xs text-slate-400 font-medium">{t('currency', 'Měna')}:</span>
+          <select
+            value={currency}
+            onChange={e => setCurrency(e.target.value)}
+            className="bg-slate-950 border border-slate-700/80 rounded px-2 py-0.5 text-xs font-semibold text-white focus:outline-none focus:border-indigo-500 cursor-pointer"
+          >
+            {SUPPORTED_FIAT_CURRENCIES.map(c => (
+              <option key={c.code} value={c.code} className="bg-slate-900 text-slate-200">
+                {c.flag} {c.code} ({c.symbol})
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800 space-y-2">
           <label htmlFor={principalId} className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
-            {t('loan_amount', 'Výše úvěru (Kč)')}
+            {t('loan_amount', 'Výše úvěru')} ({currSymbol})
           </label>
           <input
             id={principalId}
@@ -98,7 +125,7 @@ export const LoanCalcTool: React.FC = () => {
             className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-lg font-mono text-white focus:outline-none focus:border-indigo-500 tabular-nums"
           />
           <span className="text-xs text-slate-500 font-mono">
-            {principal.toLocaleString(locale)} Kč
+            {formatCurrency(principal, currency, locale)}
           </span>
         </div>
 
@@ -148,7 +175,7 @@ export const LoanCalcTool: React.FC = () => {
             {t('monthly_payment', 'Měsíční splátka')}
           </span>
           <span className="text-2xl font-bold font-mono text-white tabular-nums mt-1 block">
-            {Math.round(monthlyPayment).toLocaleString(locale)} Kč
+            {formatCurrency(Math.round(monthlyPayment), currency, locale)}
           </span>
           <span className="text-xs text-indigo-300/80 mt-1 block">
             {t('fixed_annuity_payment', 'Fixní anuitní platba')}
@@ -160,7 +187,7 @@ export const LoanCalcTool: React.FC = () => {
             {t('total_interest', 'Přeplatek na úrocích')}
           </span>
           <span className="text-2xl font-bold font-mono text-amber-400 tabular-nums mt-1 block">
-            {Math.round(totalInterest).toLocaleString(locale)} Kč
+            {formatCurrency(Math.round(totalInterest), currency, locale)}
           </span>
           <span className="text-xs text-slate-500 mt-1 block">
             {((totalInterest / principal) * 100).toFixed(1)} % {t('of_original_principal', 'původní jistiny')}
@@ -172,7 +199,7 @@ export const LoanCalcTool: React.FC = () => {
             {t('total_payment_sum', 'Celkem zaplatíte')}
           </span>
           <span className="text-2xl font-bold font-mono text-slate-200 tabular-nums mt-1 block">
-            {Math.round(totalPayment).toLocaleString(locale)} Kč
+            {formatCurrency(Math.round(totalPayment), currency, locale)}
           </span>
           <span className="text-xs text-slate-500 mt-1 block">
             {t('including_principal_interest', 'Včetně celé jistiny a úroků')}
@@ -236,10 +263,10 @@ export const LoanCalcTool: React.FC = () => {
                 {schedule.map(row => (
                   <tr key={row.month} className="hover:bg-slate-900/40 text-slate-300">
                     <td className="py-2 px-3 text-slate-400">{row.month}. {t('month_short', 'měsíc')}</td>
-                    <td className="py-2 px-3 text-right">{Math.round(row.payment).toLocaleString(locale)} Kč</td>
-                    <td className="py-2 px-3 text-right text-indigo-300">{Math.round(row.principalPart).toLocaleString(locale)} Kč</td>
-                    <td className="py-2 px-3 text-right text-amber-300">{Math.round(row.interestPart).toLocaleString(locale)} Kč</td>
-                    <td className="py-2 px-3 text-right font-semibold text-slate-200">{Math.round(row.balance).toLocaleString(locale)} Kč</td>
+                    <td className="py-2 px-3 text-right">{formatCurrency(Math.round(row.payment), currency, locale)}</td>
+                    <td className="py-2 px-3 text-right text-indigo-300">{formatCurrency(Math.round(row.principalPart), currency, locale)}</td>
+                    <td className="py-2 px-3 text-right text-amber-300">{formatCurrency(Math.round(row.interestPart), currency, locale)}</td>
+                    <td className="py-2 px-3 text-right font-semibold text-slate-200">{formatCurrency(Math.round(row.balance), currency, locale)}</td>
                   </tr>
                 ))}
               </tbody>

@@ -34,6 +34,8 @@ interface SidebarProps {
   onToggleTask: (taskId: string) => void;
   onAddTask: (taskText: string) => void;
   onDeleteTask: (taskId: string) => void;
+  onUpdateWidgetCustomization?: (customization: Partial<WidgetCustomization>) => void;
+  defaultCurrency?: string;
   isOpen: boolean;
   onToggle: () => void;
 }
@@ -51,6 +53,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onToggleTask,
   onAddTask,
   onDeleteTask,
+  onUpdateWidgetCustomization,
+  defaultCurrency,
   isOpen,
   onToggle,
 }) => {
@@ -164,6 +168,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
         onAddTask={onAddTask}
         onDeleteTask={onDeleteTask}
         onOpenWidgetSettings={onOpenConfig}
+        onUpdateWidgetCustomization={onUpdateWidgetCustomization}
+        defaultCurrency={defaultCurrency}
         isCollapsed={isCollapsed}
       />
 

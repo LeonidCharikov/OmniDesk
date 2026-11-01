@@ -21,8 +21,8 @@ import {
   refreshAllRates,
   setManualCryptoPrice,
   clearManualCryptoOverrides,
+  useAppCurrency,
 } from '../../services/currencyService';
-import { loadUserConfig } from '../../services/storage';
 
 interface Props {
   isOffline: boolean;
@@ -33,8 +33,7 @@ export const CurrencyCryptoTool: React.FC<Props> = ({ isOffline }) => {
   const [activeTab, setActiveTab] = useState<'fiat' | 'crypto'>('fiat');
 
   // Load user config for default currency
-  const userConfig = loadUserConfig();
-  const defaultAppCurrency = userConfig.defaultCurrency || 'CZK';
+  const [appCurrency] = useAppCurrency();
 
   // Rates initialized from disk cache
   const initialData = getSavedRates();
@@ -47,12 +46,19 @@ export const CurrencyCryptoTool: React.FC<Props> = ({ isOffline }) => {
   // Fiat converter state
   const [fiatAmount, setFiatAmount] = useState<number>(1000);
   const [fromCurrency, setFromCurrency] = useState<string>('EUR');
-  const [toCurrency, setToCurrency] = useState<string>(defaultAppCurrency);
+  const [toCurrency, setToCurrency] = useState<string>(appCurrency || 'CZK');
 
   // Crypto tracker state
   const [selectedCrypto, setSelectedCrypto] = useState<string>('BTC');
   const [cryptoAmount, setCryptoAmount] = useState<number>(1);
-  const [targetFiat, setTargetFiat] = useState<string>(defaultAppCurrency);
+  const [targetFiat, setTargetFiat] = useState<string>(appCurrency || 'CZK');
+
+  useEffect(() => {
+    if (appCurrency) {
+      setToCurrency(appCurrency);
+      setTargetFiat(appCurrency);
+    }
+  }, [appCurrency]);
 
   // Custom price override modal state
   const [isEditingPrice, setIsEditingPrice] = useState(false);
@@ -303,7 +309,7 @@ export const CurrencyCryptoTool: React.FC<Props> = ({ isOffline }) => {
                 >
                   {t('to_currency', 'Do měny')}
                 </label>
-                {toCurrency === defaultAppCurrency && (
+                {toCurrency === appCurrency && (
                   <span className="text-[10px] font-mono text-indigo-400 px-1.5 py-0.2 rounded bg-indigo-950/60 border border-indigo-800/50">
                     {t('default_currency_badge', 'Výchozí měna')}
                   </span>

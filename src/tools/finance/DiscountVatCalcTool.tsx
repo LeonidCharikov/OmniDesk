@@ -12,8 +12,14 @@ import {
   DollarSign,
   Tag,
   Calculator,
+  Coins,
 } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
+import {
+  useAppCurrency,
+  getCurrencySymbol,
+  SUPPORTED_FIAT_CURRENCIES,
+} from '../../services/currencyService';
 
 export const DiscountVatCalcTool: React.FC = () => {
   const { t } = useI18n();
@@ -21,19 +27,8 @@ export const DiscountVatCalcTool: React.FC = () => {
   // Active tab: 'discount' | 'vat' | 'tip'
   const [activeTab, setActiveTab] = useState<'discount' | 'vat' | 'tip'>('discount');
 
-  // Currency from user config
-  const [currency] = useState(() => {
-    try {
-      const saved = localStorage.getItem('omnidesk_user_config_v2');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed.defaultCurrency) return parsed.defaultCurrency;
-      }
-    } catch {
-      // ignore
-    }
-    return 'CZK';
-  });
+  // Reactive currency from user config
+  const [currency, setCurrency] = useAppCurrency();
 
   const [copied, setCopied] = useState(false);
 
@@ -120,13 +115,25 @@ export const DiscountVatCalcTool: React.FC = () => {
       {/* Header */}
       <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <h2 className="text-lg font-semibold text-white">
               {t('tool_discount_vat_calc_title', 'Kalkulačka slev, DPH a spropitného')}
             </h2>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-950/60 border border-indigo-800/60 text-indigo-400">
-              {currency}
-            </span>
+            <div className="flex items-center gap-1.5 bg-slate-950 border border-slate-700/80 rounded-lg px-2 py-0.5">
+              <Coins className="w-3.5 h-3.5 text-indigo-400" />
+              <select
+                value={currency}
+                onChange={e => setCurrency(e.target.value)}
+                className="bg-transparent text-xs font-semibold text-indigo-300 focus:outline-none cursor-pointer"
+                title={t('select_currency', 'Zvolit měnu')}
+              >
+                {SUPPORTED_FIAT_CURRENCIES.map(c => (
+                  <option key={c.code} value={c.code} className="bg-slate-900 text-slate-200">
+                    {c.flag} {c.code} ({c.symbol})
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
           <p className="text-sm text-slate-400 mt-1">
             {t(

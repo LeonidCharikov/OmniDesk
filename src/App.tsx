@@ -6,7 +6,7 @@ import { CommandPalette } from './components/layout/CommandPalette';
 import { ConfigModal } from './components/ui/ConfigModal';
 import { ArchitectureTool } from './tools/architecture/ArchitectureTool';
 import { TOOLS_REGISTRY } from './tools/registry';
-import { ToolCategory, UserConfig } from './types/tool';
+import { ToolCategory, UserConfig, WidgetCustomization } from './types/tool';
 import { loadUserConfig, saveUserConfig, DEFAULT_CONFIG } from './services/storage';
 import { applyTheme } from './services/themes';
 import { useI18n } from './i18n/context';
@@ -171,6 +171,18 @@ export default function App() {
     });
   };
 
+  const handleUpdateWidgetCustomization = (customization: Partial<WidgetCustomization>) => {
+    const updated = {
+      ...config.widgets,
+      ...customization,
+    };
+    updateConfig({
+      ...config,
+      widgets: updated,
+      defaultCurrency: customization.selectedFiat || config.defaultCurrency,
+    });
+  };
+
   const getCategoryDisplayName = (cat: ToolCategory) => {
     switch (cat) {
       case 'all': return t('cat_all', 'Všechny nástroje');
@@ -215,6 +227,8 @@ export default function App() {
         onToggleTask={handleToggleTask}
         onAddTask={handleAddTask}
         onDeleteTask={handleDeleteTask}
+        onUpdateWidgetCustomization={handleUpdateWidgetCustomization}
+        defaultCurrency={config.defaultCurrency || config.widgets?.selectedFiat || 'CZK'}
         isOpen={isSidebarOpen}
         onToggle={toggleSidebar}
       />
@@ -263,6 +277,7 @@ export default function App() {
                 {/* Active Tool Renderer */}
                 {React.createElement(activeTool.component, {
                   isOffline: isEffectiveOffline,
+                  currency: config.defaultCurrency || config.widgets?.selectedFiat || 'CZK',
                 } as unknown as Record<string, unknown>)}
               </div>
             ) : (

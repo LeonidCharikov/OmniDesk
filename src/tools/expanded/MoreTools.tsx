@@ -27,10 +27,17 @@ import {
   RefreshCw,
   Search,
   Code,
+  Coins,
 } from 'lucide-react';
 import { saveBinaryWithDialog, saveTextWithDialog } from '../../services/fileSystemService';
 import { useI18n } from '../../i18n/context';
 import { findToolCatalogIdByTitle, getToolCatalogText } from '../../i18n/toolCatalog';
+import {
+  useAppCurrency,
+  getCurrencySymbol,
+  formatCurrency,
+  SUPPORTED_FIAT_CURRENCIES,
+} from '../../services/currencyService';
 
 const btn = 'px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed';
 const secondary = 'px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed';
@@ -212,6 +219,8 @@ const EXPENSE_STORAGE = 'omnidesk_budget_expenses_v2';
 
 export const BudgetTool: React.FC = () => {
   const { t } = useI18n();
+  const [currency, setCurrency] = useAppCurrency();
+  const currSymbol = getCurrencySymbol(currency);
   const [items, setItems] = useState<Expense[]>(() => {
     try {
       const saved = localStorage.getItem(EXPENSE_STORAGE);
@@ -280,7 +289,24 @@ export const BudgetTool: React.FC = () => {
 
   return (
     <div className="space-y-5">
-      <Header title={t('expenses_budget', 'Výdaje a rozpočet')} desc={t('expenses_budget_desc', 'Přidávejte výdaje s kategoriemi a sledujte průběžný součet rozpočtu.')} />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Header title={t('expenses_budget', 'Výdaje a rozpočet')} desc={t('expenses_budget_desc', 'Přidávejte výdaje s kategoriemi a sledujte průběžný součet rozpočtu.')} />
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-xs">
+          <Coins className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+          <span className="text-slate-400">{t('currency', 'Měna')}:</span>
+          <select
+            value={currency}
+            onChange={e => setCurrency(e.target.value)}
+            className="bg-transparent font-semibold font-mono text-indigo-300 focus:outline-none cursor-pointer"
+          >
+            {SUPPORTED_FIAT_CURRENCIES.map(c => (
+              <option key={c.code} value={c.code} className="bg-slate-900 text-slate-200">
+                {c.flag} {c.code} ({c.symbol})
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
       <div className="flex flex-wrap gap-2 items-center">
         <input
           className={input + ' flex-1 min-w-[180px]'}
@@ -294,7 +320,7 @@ export const BudgetTool: React.FC = () => {
           type="number"
           value={amount}
           onChange={e => setAmount(e.target.value)}
-          placeholder={t('amount', 'Částka')}
+          placeholder={`${t('amount', 'Částka')} (${currSymbol})`}
           onKeyDown={e => e.key === 'Enter' && add()}
         />
         <select className={input + ' w-40'} value={category} onChange={e => setCategory(e.target.value)}>
@@ -319,7 +345,7 @@ export const BudgetTool: React.FC = () => {
       <div className="grid sm:grid-cols-2 gap-4">
         <div className={box + ' text-white flex flex-col justify-center'}>
           <span className="text-xs text-slate-400">{t('total_expenses', 'Celkové výdaje')}</span>
-          <span className="text-3xl font-bold mt-1 text-emerald-400">{total.toLocaleString('cs-CZ')} Kč</span>
+          <span className="text-3xl font-bold mt-1 text-emerald-400">{formatCurrency(total, currency)}</span>
           <span className="text-xs text-slate-500 mt-1">{items.length} {t('records_count', 'položek')}</span>
         </div>
         <div className={box + ' space-y-1.5'}>
@@ -327,7 +353,7 @@ export const BudgetTool: React.FC = () => {
           {Object.entries(categoryTotals).map(([cat, sum]) => (
             <div key={cat} className="flex justify-between text-xs text-slate-300">
               <span>{categoryLabels[cat] || cat}:</span>
-              <span className="font-mono">{sum.toLocaleString('cs-CZ')} Kč ({total > 0 ? Math.round((sum / total) * 100) : 0}%)</span>
+              <span className="font-mono">{formatCurrency(sum, currency)} ({total > 0 ? Math.round((sum / total) * 100) : 0}%)</span>
             </div>
           ))}
         </div>
@@ -346,7 +372,7 @@ export const BudgetTool: React.FC = () => {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <span className="font-semibold text-sm text-slate-100">{item.amount.toLocaleString('cs-CZ')} Kč</span>
+              <span className="font-semibold text-sm text-slate-100">{formatCurrency(item.amount, currency)}</span>
               <button className="text-slate-500 hover:text-rose-400 p-1" onClick={() => remove(item.id)} title={t('delete', 'Smazat')}>
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
@@ -363,6 +389,8 @@ export const BudgetTool: React.FC = () => {
    ───────────────────────────────────────────────────────────── */
 export const InvestmentCalculatorTool: React.FC = () => {
   const { t } = useI18n();
+  const [currency, setCurrency] = useAppCurrency();
+  const currSymbol = getCurrencySymbol(currency);
   const [initial, setInitial] = useState(50000);
   const [monthly, setMonthly] = useState(2500);
   const [rate, setRate] = useState(8);
@@ -378,18 +406,36 @@ export const InvestmentCalculatorTool: React.FC = () => {
   const totalInterest = Math.max(0, future - totalInvested);
 
   const fields = [
-    { label: t('initial_deposit', 'Počáteční vklad (Kč)'), value: initial, setter: setInitial },
-    { label: t('monthly_deposit', 'Měsíční vklad (Kč)'), value: monthly, setter: setMonthly },
+    { label: `${t('initial_deposit', 'Počáteční vklad')} (${currSymbol})`, value: initial, setter: setInitial },
+    { label: `${t('monthly_deposit', 'Měsíční vklad')} (${currSymbol})`, value: monthly, setter: setMonthly },
     { label: t('annual_return', 'Očekávaný roční výnos (%)'), value: rate, setter: setRate },
     { label: t('investment_years', 'Doba investice (roky)'), value: years, setter: setYears },
   ];
 
   return (
     <div className="space-y-5">
-      <Header
-        title={t('investment_calculator', 'Investiční kalkulačka')}
-        desc={t('investment_calculator_desc', 'Odhadněte budoucí hodnotu počáteční investice a pravidelných vkladů se složeným úročením.')}
-      />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Header
+          title={t('investment_calculator', 'Investiční kalkulačka')}
+          desc={t('investment_calculator_desc', 'Odhadněte budoucí hodnotu počáteční investice a pravidelných vkladů se složeným úročením.')}
+        />
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-xs">
+          <Coins className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+          <span className="text-slate-400">{t('currency', 'Měna')}:</span>
+          <select
+            value={currency}
+            onChange={e => setCurrency(e.target.value)}
+            className="bg-transparent font-semibold font-mono text-indigo-300 focus:outline-none cursor-pointer"
+          >
+            {SUPPORTED_FIAT_CURRENCIES.map(c => (
+              <option key={c.code} value={c.code} className="bg-slate-900 text-slate-200">
+                {c.flag} {c.code} ({c.symbol})
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
       <div className={box + ' grid md:grid-cols-4 gap-3'}>
         {fields.map(item => (
           <label className="text-xs text-slate-400" key={item.label}>
@@ -402,15 +448,15 @@ export const InvestmentCalculatorTool: React.FC = () => {
       <div className="grid md:grid-cols-3 gap-3">
         <div className={box + ' text-center'}>
           <span className="text-xs text-slate-400 block">{t('total_invested_by_user', 'Celkem vámi vloženo')}</span>
-          <span className="text-xl font-bold text-slate-200 mt-1 block">{Math.round(totalInvested).toLocaleString('cs-CZ')} Kč</span>
+          <span className="text-xl font-bold text-slate-200 mt-1 block">{formatCurrency(totalInvested, currency)}</span>
         </div>
         <div className={box + ' text-center'}>
           <span className="text-xs text-slate-400 block">{t('total_compound_interest', 'Získaný složený úrok')}</span>
-          <span className="text-xl font-bold text-indigo-400 mt-1 block">+{Math.round(totalInterest).toLocaleString('cs-CZ')} Kč</span>
+          <span className="text-xl font-bold text-indigo-400 mt-1 block">+{formatCurrency(totalInterest, currency)}</span>
         </div>
         <div className={box + ' text-center bg-indigo-950/20 border-indigo-800/40'}>
           <span className="text-xs text-slate-400 block">{t('final_portfolio_value', 'Konečná hodnota portfolia')}</span>
-          <span className="text-2xl font-bold text-emerald-400 mt-1 block">{Math.round(future).toLocaleString('cs-CZ')} Kč</span>
+          <span className="text-2xl font-bold text-emerald-400 mt-1 block">{formatCurrency(future, currency)}</span>
         </div>
       </div>
     </div>
@@ -422,6 +468,7 @@ export const InvestmentCalculatorTool: React.FC = () => {
    ───────────────────────────────────────────────────────────── */
 export const InvoiceGeneratorTool: React.FC = () => {
   const { t } = useI18n();
+  const [appCurrency] = useAppCurrency();
   type InvoiceLine = { id: number; description: string; quantity: number; unitPrice: number; vat: number };
   const [seller, setSeller] = useState({
     name: 'Jan Novák - IT Solutions',
@@ -446,7 +493,7 @@ export const InvoiceGeneratorTool: React.FC = () => {
     dueDate: new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10),
     variableSymbol: `${new Date().getFullYear()}001`,
     constantSymbol: '0308',
-    currency: 'CZK',
+    currency: appCurrency || 'CZK',
     note: 'Děkujeme za spolupráci. Platbu proveďte převodem na bankovní účet.',
   });
   const [lines, setLines] = useState<InvoiceLine[]>([
@@ -607,10 +654,11 @@ export const InvoiceGeneratorTool: React.FC = () => {
           <label className="text-xs text-slate-400 block">
             {t('currency', 'Měna dokladu')}
             <select className={input + ' mt-1'} value={invoice.currency} onChange={e => update(setInvoice, 'currency', e.target.value)}>
-              <option value="CZK">CZK (Kč)</option>
-              <option value="EUR">EUR (€)</option>
-              <option value="USD">USD ($)</option>
-              <option value="GBP">GBP (£)</option>
+              {SUPPORTED_FIAT_CURRENCIES.map(c => (
+                <option key={c.code} value={c.code}>
+                  {c.flag} {c.code} ({c.symbol})
+                </option>
+              ))}
             </select>
           </label>
         </div>
@@ -2513,6 +2561,8 @@ export const GeoGpsTool: React.FC = () => {
    ───────────────────────────────────────────────────────────── */
 export const PeriodicFinanceTool: React.FC = () => {
   const { t } = useI18n();
+  const [currency, setCurrency] = useAppCurrency();
+  const currSymbol = getCurrencySymbol(currency);
   const [principal, setPrincipal] = useState(100000);
   const [addition, setAddition] = useState(2000);
   const [rate, setRate] = useState(6.5);
@@ -2536,21 +2586,38 @@ export const PeriodicFinanceTool: React.FC = () => {
 
   return (
     <div className="space-y-5">
-      <Header
-        title={t('periodic_finance', 'Periodický finanční kalkulátor')}
-        desc={t(
-          'periodic_finance_desc',
-          'Vypočítejte složené úročení z počátečního vkladu, pravidelných příspěvků a zvolené periody.'
-        )}
-      />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <Header
+          title={t('periodic_finance', 'Periodický finanční kalkulátor')}
+          desc={t(
+            'periodic_finance_desc',
+            'Vypočítejte složené úročení z počátečního vkladu, pravidelných příspěvků a zvolené periody.'
+          )}
+        />
+        <div className="flex items-center gap-2 self-start sm:self-auto bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 shrink-0">
+          <Coins className="w-4 h-4 text-indigo-400" />
+          <span className="text-xs text-slate-400 font-medium">{t('currency', 'Měna')}:</span>
+          <select
+            value={currency}
+            onChange={e => setCurrency(e.target.value)}
+            className="bg-slate-950 border border-slate-700/80 rounded px-2 py-0.5 text-xs font-semibold text-white focus:outline-none focus:border-indigo-500"
+          >
+            {SUPPORTED_FIAT_CURRENCIES.map(c => (
+              <option key={c.code} value={c.code} className="bg-slate-900 text-slate-200">
+                {c.flag} {c.code} ({c.symbol})
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
       <div className={box + ' space-y-4'}>
         <div className="grid md:grid-cols-3 gap-3">
           <label className="text-xs text-slate-400">
-            {t('initial_lump_sum', 'Počáteční jednorázový vklad (Kč)')}
+            {t('initial_lump_sum', 'Počáteční jednorázový vklad')} ({currSymbol})
             <input className={input + ' mt-1'} type="number" value={principal} onChange={e => setPrincipal(Number(e.target.value))} />
           </label>
           <label className="text-xs text-slate-400">
-            {t('regular_addition', 'Pravidelný vklad za periodu (Kč)')}
+            {t('regular_addition', 'Pravidelný vklad za periodu')} ({currSymbol})
             <input className={input + ' mt-1'} type="number" value={addition} onChange={e => setAddition(Number(e.target.value))} />
           </label>
           <label className="text-xs text-slate-400">
@@ -2584,19 +2651,19 @@ export const PeriodicFinanceTool: React.FC = () => {
           <div className="p-3 bg-slate-950 rounded-lg border border-slate-800 text-center">
             <span className="text-xs text-slate-400 block">{t('total_principal_invested', 'Celkem vámi vloženo')}</span>
             <span className="text-lg font-bold text-slate-200 mt-1 block">
-              {Math.round(totalDeposited).toLocaleString('cs-CZ')} Kč
+              {formatCurrency(totalDeposited, currency)}
             </span>
           </div>
           <div className="p-3 bg-slate-950 rounded-lg border border-slate-800 text-center">
             <span className="text-xs text-slate-400 block">{t('total_interest_earned', 'Získaný úrok celkem')}</span>
             <span className="text-lg font-bold text-indigo-400 mt-1 block">
-              +{Math.round(totalInterest).toLocaleString('cs-CZ')} Kč
+              +{formatCurrency(totalInterest, currency)}
             </span>
           </div>
           <div className="p-3 bg-emerald-950/20 rounded-lg border border-emerald-800/40 text-center">
             <span className="text-xs text-slate-400 block">{t('future_total_value', 'Budoucí konečná hodnota')}</span>
             <span className="text-2xl font-bold text-emerald-400 mt-1 block">
-              {Math.round(total).toLocaleString('cs-CZ')} Kč
+              {formatCurrency(total, currency)}
             </span>
           </div>
         </div>

@@ -18,6 +18,11 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
+import {
+  useAppCurrency,
+  formatCurrency,
+  SUPPORTED_FIAT_CURRENCIES,
+} from '../../services/currencyService';
 
 export interface ShoppingItem {
   id: string;
@@ -34,19 +39,8 @@ const STORAGE_KEY = 'omnidesk_shopping_list_v2';
 export const SmartShoppingListTool: React.FC = () => {
   const { t } = useI18n();
 
-  // Currency from user config
-  const [currency] = useState(() => {
-    try {
-      const saved = localStorage.getItem('omnidesk_user_config_v2');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed.defaultCurrency) return parsed.defaultCurrency;
-      }
-    } catch {
-      // ignore
-    }
-    return 'CZK';
-  });
+  // Reactive currency from user config
+  const [currency, setCurrency] = useAppCurrency();
 
   const [items, setItems] = useState<ShoppingItem[]>(() => {
     try {
@@ -198,6 +192,17 @@ export const SmartShoppingListTool: React.FC = () => {
             <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-950/60 border border-emerald-800/60 text-emerald-400">
               {pendingCount} {t('items_remaining', 'zbývá')}
             </span>
+            <select
+              value={currency}
+              onChange={e => setCurrency(e.target.value)}
+              className="bg-slate-950 border border-slate-700/80 rounded px-1.5 py-0.5 text-[11px] font-semibold text-indigo-300 focus:outline-none cursor-pointer"
+            >
+              {SUPPORTED_FIAT_CURRENCIES.map(c => (
+                <option key={c.code} value={c.code} className="bg-slate-900 text-slate-200">
+                  {c.flag} {c.code}
+                </option>
+              ))}
+            </select>
           </div>
           <p className="text-sm text-slate-400 mt-1">
             {t(
@@ -360,13 +365,13 @@ export const SmartShoppingListTool: React.FC = () => {
             <div className="flex items-center justify-between text-slate-400">
               <span>{t('estimated_total_cost', 'Odhad celkové útraty:')}</span>
               <span className="font-mono text-sm font-bold text-white">
-                {totalEstimatedPrice.toFixed(2)} {currency}
+                {formatCurrency(totalEstimatedPrice, currency)}
               </span>
             </div>
             <div className="flex items-center justify-between text-slate-400">
               <span>{t('purchased_items_cost', 'Již zakoupeno v košíku:')}</span>
               <span className="font-mono text-emerald-400 font-semibold">
-                {completedPrice.toFixed(2)} {currency}
+                {formatCurrency(completedPrice, currency)}
               </span>
             </div>
           </div>
@@ -468,7 +473,7 @@ export const SmartShoppingListTool: React.FC = () => {
                         </div>
                         <div className="text-[11px] text-slate-500 font-mono mt-0.5">
                           {item.quantity}
-                          {item.price ? ` • ${item.price.toFixed(2)} ${currency}` : ''}
+                          {item.price ? ` • ${formatCurrency(item.price, currency)}` : ''}
                         </div>
                       </div>
                     </div>

@@ -91,6 +91,9 @@ export function saveUserConfig(config: UserConfig): void {
       enabledWidgets: config.widgets?.enabledWidgets || config.enabledWidgets,
     };
     localStorage.setItem(CONFIG_KEY, JSON.stringify(payload, null, 2));
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('omnidesk-config-updated', { detail: payload }));
+    }
   } catch (e) {
     console.error('Failed to save user config:', e);
   }

@@ -1,9 +1,6 @@
-/**
- * Real-time currency & crypto live data service
- * Fetches real Forex rates from open.er-api.com / Frankfurter
- * and real Crypto rates from CryptoCompare / Coinbase / CoinGecko
- * Supports custom manual price overrides and persistent caching.
- */
+import { useState, useEffect, useCallback } from 'react';
+import { loadUserConfig } from './storage';
+import { UserConfig } from '../types/tool';
 
 export interface FiatRateInfo {
   name: string;
@@ -19,6 +16,115 @@ export interface CryptoRateInfo {
   czkPrice?: number;
   change24h: number;
   isCustom?: boolean;
+}
+
+export const CURRENCY_SYMBOLS: Record<string, string> = {
+  CZK: 'Kč',
+  EUR: '€',
+  USD: '$',
+  GBP: '£',
+  CHF: 'CHF',
+  PLN: 'zł',
+  JPY: '¥',
+  CAD: 'C$',
+  AUD: 'A$',
+  HUF: 'Ft',
+  SEK: 'kr',
+  NOK: 'kr',
+  DKK: 'kr',
+  RUB: '₽',
+  CNY: '¥',
+  INR: '₹',
+  BRL: 'R$',
+  KRW: '₩',
+  TRY: '₺',
+};
+
+export const SUPPORTED_FIAT_CURRENCIES: Array<{ code: string; name: string; flag: string; symbol: string }> = [
+  { code: 'CZK', name: 'Česká koruna', flag: '🇨🇿', symbol: 'Kč' },
+  { code: 'EUR', name: 'Euro', flag: '🇪🇺', symbol: '€' },
+  { code: 'USD', name: 'Americký dolar', flag: '🇺🇸', symbol: '$' },
+  { code: 'GBP', name: 'Britská libra', flag: '🇬🇧', symbol: '£' },
+  { code: 'CHF', name: 'Švýcarský frank', flag: '🇨🇭', symbol: 'CHF' },
+  { code: 'PLN', name: 'Polský zlotý', flag: '🇵🇱', symbol: 'zł' },
+  { code: 'JPY', name: 'Japonský jen', flag: '🇯🇵', symbol: '¥' },
+  { code: 'CAD', name: 'Kanadský dolar', flag: '🇨🇦', symbol: 'C$' },
+  { code: 'AUD', name: 'Australský dolar', flag: '🇦🇺', symbol: 'A$' },
+  { code: 'HUF', name: 'Maďarský forint', flag: '🇭🇺', symbol: 'Ft' },
+  { code: 'SEK', name: 'Švédská koruna', flag: '🇸🇪', symbol: 'kr' },
+  { code: 'NOK', name: 'Norská koruna', flag: '🇳🇴', symbol: 'kr' },
+  { code: 'DKK', name: 'Dánská koruna', flag: '🇩🇰', symbol: 'kr' },
+  { code: 'RUB', name: 'Ruský rubl', flag: '🇷🇺', symbol: '₽' },
+];
+
+export function getCurrencySymbol(code?: string): string {
+  if (!code) return 'Kč';
+  return CURRENCY_SYMBOLS[code.toUpperCase()] || code.toUpperCase();
+}
+
+export function formatCurrency(amount: number, currencyCode: string = 'CZK', locale = 'cs-CZ'): string {
+  const symbol = getCurrencySymbol(currencyCode);
+  const formattedNumber = Math.round(amount).toLocaleString(locale);
+  return `${formattedNumber} ${symbol}`;
+}
+
+export function convertFiat(
+  amount: number,
+  fromCode: string,
+  toCode: string,
+  fiatRates: Record<string, FiatRateInfo> = INITIAL_FIAT_RATES
+): number {
+  if (fromCode === toCode) return amount;
+  const fromRateInCzk = fiatRates[fromCode]?.rate || 1;
+  const toRateInCzk = fiatRates[toCode]?.rate || 1;
+  return (amount * fromRateInCzk) / toRateInCzk;
+}
+
+export function convertCryptoToFiat(
+  cryptoUsdPrice: number,
+  toFiatCode: string,
+  fiatRates: Record<string, FiatRateInfo> = INITIAL_FIAT_RATES
+): number {
+  if (toFiatCode === 'USD') return cryptoUsdPrice;
+  const usdRateInCzk = fiatRates['USD']?.rate || 23.42;
+  const toRateInCzk = fiatRates[toFiatCode]?.rate || 1;
+  return (cryptoUsdPrice * usdRateInCzk) / toRateInCzk;
+}
+
+/**
+ * Hook providing reactive access to the user-configured default currency.
+ */
+export function useAppCurrency(initialOverride?: string): [string, (newCurrency: string) => void] {
+  const [currency, setCurrency] = useState<string>(() => {
+    if (initialOverride) return initialOverride;
+    try {
+      const config = loadUserConfig();
+      return config.defaultCurrency || config.widgets?.selectedFiat || 'CZK';
+    } catch {
+      return 'CZK';
+    }
+  });
+
+  useEffect(() => {
+    if (initialOverride) {
+      setCurrency(initialOverride);
+      return;
+    }
+    const handler = (e: Event) => {
+      const customEvent = e as CustomEvent<UserConfig>;
+      if (customEvent.detail?.defaultCurrency) {
+        setCurrency(customEvent.detail.defaultCurrency);
+      }
+    };
+    window.addEventListener('omnidesk-config-updated', handler);
+    return () => window.removeEventListener('omnidesk-config-updated', handler);
+  }, [initialOverride]);
+
+  const updateCurrency = useCallback((newCurr: string) => {
+    setCurrency(newCurr);
+  }, []);
+
+  return [currency, updateCurrency];
 }
 
 export const INITIAL_FIAT_RATES: Record<string, FiatRateInfo> = {

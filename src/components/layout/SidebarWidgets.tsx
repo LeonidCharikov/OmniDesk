@@ -18,10 +18,21 @@ import {
   Calculator,
   Copy,
   Check,
+  RefreshCw,
+  Coins,
 } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
 import { WidgetCustomization, DailyTask } from '../../types/tool';
-import { getSavedRates, refreshAllRates, FiatRateInfo, CryptoRateInfo } from '../../services/currencyService';
+import {
+  getSavedRates,
+  refreshAllRates,
+  FiatRateInfo,
+  CryptoRateInfo,
+  formatCurrency,
+  getCurrencySymbol,
+  convertCryptoToFiat,
+  SUPPORTED_FIAT_CURRENCIES,
+} from '../../services/currencyService';
 
 interface SidebarWidgetsProps {
   widgets: WidgetCustomization;
@@ -31,6 +42,8 @@ interface SidebarWidgetsProps {
   onAddTask: (taskText: string) => void;
   onDeleteTask: (taskId: string) => void;
   onOpenWidgetSettings: () => void;
+  onUpdateWidgetCustomization?: (customization: Partial<WidgetCustomization>) => void;
+  defaultCurrency?: string;
   isCollapsed?: boolean;
 }
 
@@ -178,6 +191,23 @@ const CITY_NAMES_LOCALE: Record<string, Record<string, string>> = {
   },
 };
 
+export const AVAILABLE_CRYPTOS = [
+  { code: 'BTC', name: 'Bitcoin' },
+  { code: 'ETH', name: 'Ethereum' },
+  { code: 'SOL', name: 'Solana' },
+  { code: 'TON', name: 'Toncoin' },
+  { code: 'BNB', name: 'BNB Chain' },
+  { code: 'XRP', name: 'Ripple' },
+  { code: 'DOGE', name: 'Dogecoin' },
+  { code: 'AVAX', name: 'Avalanche' },
+  { code: 'ADA', name: 'Cardano' },
+  { code: 'LINK', name: 'Chainlink' },
+  { code: 'DOT', name: 'Polkadot' },
+  { code: 'NEAR', name: 'NEAR' },
+  { code: 'SUI', name: 'Sui Network' },
+  { code: 'SHIB', name: 'Shiba Inu' },
+];
+
 export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
   widgets,
   onToggleWidget,
@@ -186,10 +216,44 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
   onAddTask,
   onDeleteTask,
   onOpenWidgetSettings,
+  onUpdateWidgetCustomization,
+  defaultCurrency = 'CZK',
   isCollapsed,
 }) => {
   const { t, language } = useI18n();
   const [now, setNow] = useState(new Date());
+
+  // Active selected crypto and fiat currency
+  const activeCrypto = widgets.selectedCrypto || 'BTC';
+  const activeFiat = widgets.selectedFiat || defaultCurrency || 'CZK';
+  const [isRefreshingRates, setIsRefreshingRates] = useState(false);
+
+  const handleSelectCrypto = (cryptoCode: string) => {
+    if (onUpdateWidgetCustomization) {
+      onUpdateWidgetCustomization({
+        selectedCrypto: cryptoCode,
+        selectedCryptos: [cryptoCode, ...(widgets.selectedCryptos?.filter(c => c !== cryptoCode) || [])].slice(0, 3),
+      });
+    }
+  };
+
+  const handleSelectFiat = (fiatCode: string) => {
+    if (onUpdateWidgetCustomization) {
+      onUpdateWidgetCustomization({
+        selectedFiat: fiatCode,
+        selectedFiats: [fiatCode, ...(widgets.selectedFiats?.filter(f => f !== fiatCode) || [])].slice(0, 3),
+      });
+    }
+  };
+
+  const handleManualRefreshRates = async () => {
+    setIsRefreshingRates(true);
+    try {
+      await refreshAllRates();
+    } finally {
+      setTimeout(() => setIsRefreshingRates(false), 500);
+    }
+  };
 
   // Mini timer state
   const [timerSecondsLeft, setTimerSecondsLeft] = useState((widgets.timerDurationMinutes || 25) * 60);
@@ -283,8 +347,6 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
   const locale = language === 'ru' ? 'ru-RU' : language === 'en' ? 'en-US' : language === 'de' ? 'de-DE' : language === 'es' ? 'es-ES' : 'cs-CZ';
 
   const selectedCityKeys = (widgets.selectedCities?.length ? widgets.selectedCities : [widgets.selectedCity || 'Europe/Prague']).slice(0, 3);
-  const selectedCryptoKeys = (widgets.selectedCryptos?.length ? widgets.selectedCryptos : [widgets.selectedCrypto || 'BTC']).slice(0, 3);
-  const selectedFiatKeys = (widgets.selectedFiats?.length ? widgets.selectedFiats : [widgets.selectedFiat || 'CZK']).slice(0, 3);
   const customTimerSeconds = Math.min(180, Math.max(1, widgets.timerDurationMinutes || 25)) * 60;
 
   let timeString = '';
@@ -322,42 +384,45 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
     return null;
   }
 
-  // Live crypto computation
-  const selectedCryptoKey = selectedCryptoKeys[0];
-  const cryptoItem = ratesData.crypto[selectedCryptoKey] || ratesData.crypto['BTC'] || {
+  // Live crypto computation for active selected crypto in user's selected fiat currency
+  const currentCryptoItem = ratesData.crypto[activeCrypto] || ratesData.crypto['BTC'] || {
     name: 'Bitcoin',
     symbol: 'BTC',
     usdPrice: 71500,
     change24h: 2.8,
   };
 
-  const selectedFiatKey = selectedFiatKeys[0];
-  const fiatItem = ratesData.fiat[selectedFiatKey] || ratesData.fiat['CZK'] || {
-    name: 'Česká koruna',
-    rate: 1,
-    flag: '🇨🇿',
-  };
+  const cryptoPriceInActiveFiat = convertCryptoToFiat(currentCryptoItem.usdPrice, activeFiat, ratesData.fiat);
+  const formattedCryptoPrice = formatCurrency(cryptoPriceInActiveFiat, activeFiat);
 
-  const usdRateInCzk = ratesData.fiat['USD']?.rate || 23.42;
-  const fiatRateInCzk = fiatItem.rate || 1;
-  const priceInSelectedFiat = selectedFiatKey === 'USD'
-    ? cryptoItem.usdPrice
-    : (cryptoItem.usdPrice * usdRateInCzk) / fiatRateInCzk;
+  // Compute foreign exchange rates relative to activeFiat
+  const activeFiatRateInCzk = ratesData.fiat[activeFiat]?.rate || 1;
+  const activeFiatSymbol = getCurrencySymbol(activeFiat);
 
-  const formattedCryptoPrice = selectedFiatKey === 'USD'
-    ? `$${cryptoItem.usdPrice >= 100 ? Math.round(cryptoItem.usdPrice).toLocaleString() : cryptoItem.usdPrice.toFixed(cryptoItem.usdPrice < 1 ? 4 : 2)}`
-    : selectedFiatKey === 'EUR'
-    ? `€${priceInSelectedFiat >= 100 ? Math.round(priceInSelectedFiat).toLocaleString() : priceInSelectedFiat.toFixed(priceInSelectedFiat < 1 ? 4 : 2)}`
-    : `${priceInSelectedFiat >= 100 ? Math.round(priceInSelectedFiat).toLocaleString() : priceInSelectedFiat.toFixed(priceInSelectedFiat < 1 ? 4 : 2)} ${selectedFiatKey}`;
+  const referenceCandidates = ['EUR', 'USD', 'CZK', 'GBP', 'CHF', 'PLN'];
+  const refCurrencies = referenceCandidates.filter(c => c !== activeFiat).slice(0, 3);
 
-  // Fiat ticker line
-  const eurRateInCzk = ratesData.fiat['EUR']?.rate || 25.28;
-  const fiatBaseText = selectedFiatKey === 'CZK' ? '1 EUR' : selectedFiatKey === 'EUR' ? '1 USD' : '1 EUR';
-  const fiatRateValue = selectedFiatKey === 'CZK'
-    ? `${eurRateInCzk.toFixed(2)} CZK`
-    : selectedFiatKey === 'EUR'
-    ? `${(usdRateInCzk / eurRateInCzk).toFixed(4)} EUR`
-    : `${(eurRateInCzk / usdRateInCzk).toFixed(4)} USD`;
+  const fxRates = refCurrencies.map(refCode => {
+    const refRateInCzk = ratesData.fiat[refCode]?.rate || 1;
+    const rateVal = refRateInCzk / activeFiatRateInCzk;
+    const isSmall = rateVal < 0.05;
+    const baseUnits = isSmall ? 100 : 1;
+    const effectiveRate = isSmall ? rateVal * 100 : rateVal;
+
+    let formattedVal = '';
+    if (effectiveRate >= 100) {
+      formattedVal = effectiveRate.toFixed(1);
+    } else if (effectiveRate >= 1) {
+      formattedVal = effectiveRate.toFixed(2);
+    } else {
+      formattedVal = effectiveRate.toFixed(4);
+    }
+
+    return {
+      pair: `${baseUnits} ${refCode}`,
+      value: `${formattedVal} ${activeFiatSymbol}`,
+    };
+  });
 
   const calcResult = evaluateMiniCalc(calcInput);
 
@@ -502,28 +567,92 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
 
       {/* 3. Customizable Crypto & Fiat Ticker Widget */}
       {showCrypto && (
-        <div className="p-2 rounded-lg bg-slate-900/40 border border-slate-800/60 space-y-1.5">
-          {selectedCryptoKeys.map((cryptoKey, index) => {
-            const item = ratesData.crypto[cryptoKey] || ratesData.crypto.BTC || cryptoItem;
-            const fiatKey = selectedFiatKeys[index] || selectedFiatKeys[0];
-            const fiat = ratesData.fiat[fiatKey] || ratesData.fiat.CZK || fiatItem;
-            const price = fiatKey === 'USD' ? item.usdPrice : item.usdPrice * usdRateInCzk / (fiat.rate || 1);
-            const priceText = fiatKey === 'USD' ? `$${Math.round(price).toLocaleString()}` : `${price >= 100 ? Math.round(price).toLocaleString() : price.toFixed(price < 1 ? 4 : 2)} ${fiatKey}`;
-            return <div key={cryptoKey} className="space-y-1">
-              <div className="flex items-center justify-between text-[10px]">
-                <span className="font-mono font-semibold text-slate-200">{item.symbol}</span>
-                <span className={`font-mono text-[9px] flex items-center ${item.change24h >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                  {item.change24h >= 0 ? <ArrowUpRight className="w-2.5 h-2.5" /> : <ArrowDownRight className="w-2.5 h-2.5" />}
-                  {item.change24h >= 0 ? `+${item.change24h}%` : `${item.change24h}%`}
-                </span>
-                <span className="font-mono text-indigo-300 font-semibold">{priceText}</span>
-              </div>
-              {index === 0 && <div className="flex items-center justify-between text-[10px] pt-1 border-t border-slate-800/40">
-                <span className="font-mono text-slate-400 text-[9px]">{fiatBaseText}</span>
-                <span className="font-mono text-slate-200 font-medium">{fiatRateValue}</span>
-              </div>}
-            </div>;
-          })}
+        <div className="p-2.5 rounded-lg bg-slate-900/40 border border-slate-800/60 space-y-2">
+          {/* Header row: Title + Refresh button */}
+          <div className="flex items-center justify-between gap-1.5 text-[10px]">
+            <div className="flex items-center gap-1.5 font-semibold text-slate-300 min-w-0">
+              <Coins className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+              <span className="truncate" title={t('widget_crypto_title', 'Krypto & Kurzy')}>
+                {t('widget_crypto_title', 'Krypto & Kurzy')}
+              </span>
+            </div>
+            <button
+              onClick={handleManualRefreshRates}
+              disabled={isRefreshingRates}
+              className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors shrink-0"
+              title={t('refresh_rates', 'Obnovit kurzy')}
+            >
+              <RefreshCw className={`w-3 h-3 ${isRefreshingRates ? 'animate-spin text-emerald-400' : ''}`} />
+            </button>
+          </div>
+
+          {/* Controls row: Crypto select + Fiat select (side-by-side inside the box) */}
+          <div className="grid grid-cols-2 gap-1.5">
+            {/* Crypto selector dropdown */}
+            <div className="min-w-0">
+              <select
+                value={activeCrypto}
+                onChange={e => handleSelectCrypto(e.target.value)}
+                className="w-full bg-slate-950/90 border border-slate-700/80 rounded px-2 py-1 text-[10px] font-mono text-emerald-300 font-semibold focus:outline-none cursor-pointer hover:border-slate-600 transition-colors truncate"
+                title={t('selected_crypto', 'Vybrat kryptoměnu')}
+              >
+                {AVAILABLE_CRYPTOS.map(c => (
+                  <option key={c.code} value={c.code} className="bg-slate-900 text-slate-200">
+                    {c.code}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Fiat currency selector dropdown */}
+            <div className="min-w-0">
+              <select
+                value={activeFiat}
+                onChange={e => handleSelectFiat(e.target.value)}
+                className="w-full bg-slate-950/90 border border-slate-700/80 rounded px-2 py-1 text-[10px] font-mono text-indigo-300 font-semibold focus:outline-none cursor-pointer hover:border-slate-600 transition-colors truncate"
+                title={t('selected_fiat', 'Vybrat měnu')}
+              >
+                {SUPPORTED_FIAT_CURRENCIES.map(f => (
+                  <option key={f.code} value={f.code} className="bg-slate-900 text-slate-200">
+                    {f.code} ({f.symbol})
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Crypto Price Display in Selected Currency */}
+          <div className="p-1.5 rounded bg-slate-950/60 border border-slate-800/80 space-y-0.5">
+            <div className="flex items-center justify-between text-[11px]">
+              <span className="font-mono font-bold text-white flex items-center gap-1">
+                {currentCryptoItem.symbol}
+                <span className="text-[9px] font-normal text-slate-400">({currentCryptoItem.name})</span>
+              </span>
+              <span className={`font-mono text-[10px] font-medium flex items-center ${currentCryptoItem.change24h >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                {currentCryptoItem.change24h >= 0 ? <ArrowUpRight className="w-2.5 h-2.5" /> : <ArrowDownRight className="w-2.5 h-2.5" />}
+                {currentCryptoItem.change24h >= 0 ? `+${currentCryptoItem.change24h}%` : `${currentCryptoItem.change24h}%`}
+              </span>
+            </div>
+            <div className="text-sm font-mono font-bold text-emerald-300 tracking-tight">
+              {formattedCryptoPrice}
+            </div>
+          </div>
+
+          {/* Forex Exchange Rates Section in Selected Currency */}
+          <div className="pt-1.5 border-t border-slate-800/60 space-y-1">
+            <div className="flex items-center justify-between text-[9px] font-semibold text-slate-500 uppercase tracking-wider">
+              <span>{t('exchange_rates_in', 'Kurzy')} ({activeFiat}):</span>
+              <span className="text-[9px] font-normal text-slate-400">{ratesData.timestamp || 'Live'}</span>
+            </div>
+            <div className="space-y-0.5">
+              {fxRates.map(fx => (
+                <div key={fx.pair} className="flex items-center justify-between text-[10px] font-mono">
+                  <span className="text-slate-400">{fx.pair} =</span>
+                  <span className="text-slate-200 font-semibold">{fx.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       )}
 
