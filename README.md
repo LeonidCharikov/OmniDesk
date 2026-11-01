@@ -23,12 +23,17 @@ The application defaults to **English** out-of-the-box, with dynamic, first-clas
 | 🧪 Chemistry & Molecular Calculator | 📈 2D Function Grapher & Plotter |
 | :---: | :---: |
 | [![Chemistry table](docs/screenshots/function-chemistry.png)](docs/screenshots/function-chemistry.png) | [![2D Function Grapher](docs/screenshots/function-grapher.png)](docs/screenshots/function-grapher.png) |
-| *Categorized workstation with mini-widgets & search* | *Interactive curves, tangent slopes & math formulas* |
+| *118 IUPAC elements, orbital blocks & solution molarity* | *Interactive curves, tangent slopes & math formulas* |
 
-| 💱 Live Crypto & Currency Rates | ⚙️ Application Settings & Configurator |
+| 📅 Interactive Calendar & Planner | 💱 Live Crypto & Currency Rates |
 | :---: | :---: |
-| [![Crypto & Currency Tracker](docs/screenshots/crypto-rates.png)](docs/screenshots/crypto-rates.png) | [![Settings & Configurator](docs/screenshots/config.png)](docs/screenshots/config.png) |
-| *Real-time cryptocurrency ticker & value calculator* | *Themes, currency preferences, widgets & JSON backup * |
+| [![Calendar & Planner](docs/screenshots/calendar.png)](docs/screenshots/calendar.png) | [![Crypto & Currency Tracker](docs/screenshots/crypto-rates.png)](docs/screenshots/crypto-rates.png) |
+| *Hourly schedule, vacation planning & .ICS export* | *Real-time cryptocurrency ticker & value calculator* |
+
+| ⚙️ Application Settings & Configurator |
+| :---: |
+| [![Settings & Configurator](docs/screenshots/config.png)](docs/screenshots/config.png) |
+| *Themes, default currency selection, sidebar widgets & JSON profile backup* |
 
 ---
 
@@ -90,19 +95,27 @@ Open [http://localhost:3000](http://localhost:3000) in your web browser. From th
 
 ## 🌟 Architectural Highlights & Recent Updates
 
+- 💱 **Universal Dynamic Multi-Currency Engine**:
+  - Global user-configurable default currency (**CZK, EUR, USD, GBP, CHF, PLN, JPY, RUB, CAD, AUD, HUF, UAH, TRY**) automatically propagated across all tools.
+  - Zero hardcoded static currencies: Investment Calculator, Periodic Finance Calculator, Loan & Mortgage Calculator, Expense Tracker, Discount & VAT Calculator, and Smart Shopping List automatically format numbers and labels using the active currency.
+  - Instant in-tool currency switcher in each financial workstation for on-the-fly currency switching without having to open global settings.
+- 🪙 **Interactive Sidebar Crypto & Forex Widget**:
+  - Direct selection of any cryptocurrency (BTC, ETH, SOL, TON, BNB, XRP, DOGE, AVAX, ADA, LINK, DOT, NEAR, SUI, SHIB) and fiat currency directly within the sidebar widget.
+  - Dual-row responsive controls ensuring zero overflow or text clipping across all 5 languages (English, Czech, German, Spanish, Russian).
+  - Dynamic Forex exchange cross-rates computed relative to the chosen fiat currency, plus 1-click manual rate refresh.
+- 📅 **Interactive Calendar & Event Planner**:
+  - Hourly calendar schedules with Day, Week, and Month views, event searching, and .ICS file export.
+  - Built-in work days & vacation planner to calculate return dates and holiday periods.
 - 🧪 **Complete 118-Element IUPAC Periodic Table**:
   - Full authentic periodic table adhering to official IUPAC standards (periods 1–7, groups 1–18, separated lanthanide and actinide series).
   - Color-coded orbital blocks (*s, p, d, f*) and element categories (alkali metals, halogens, noble gases, etc.).
   - Interactive element modal: atomic number, relative molar mass, electronegativity, electron configurations, phase, and density.
-- 💱 **Live Cryptocurrency & Exchange Rates**:
-  - Real-time CoinGecko API integration for major cryptocurrencies (BTC, ETH, SOL, TON, BNB, XRP, ADA, DOGE, AVAX, etc.) with manual refresh and cached offline fallback.
-  - User-configurable default fiat currency in Settings (**USD, EUR, CZK, GBP, CHF, PLN, JPY, RUB**) — automatically synced across converters and sidebar widgets.
 - 📝 **Rich Text & Code Editor (.txt / .md)**:
   - Create, open, edit, and download plain text and Markdown files.
-  - **Selective font sizing and case transforms applied exclusively to highlighted text**.
+  - Selective font sizing and case transforms applied exclusively to highlighted text.
   - Headings (H1, H2, H3), alignment (left, center, right), regex search & replace, live word/character counters, reading time estimates, and auto-save.
 - 🗂️ **Categorized Home Dashboard**:
-  - All tools organized into clear, labeled categories on the home screen (Files & Documents, Mathematics, Science, Finance, Planning, Utilities).
+  - All tools organized into clear, labeled categories on the home screen (Files & Documents, Programming & Code, Mathematics, Science, Finance, Planning, Utilities).
 - 🪟 **Translucent Themed Header**:
   - The top window control bar matches the active color palette with a modern semi-transparent glass aesthetic.
 - 🌐 **Dynamic Internationalization (English Default)**:
