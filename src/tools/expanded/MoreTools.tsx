@@ -6,6 +6,7 @@ import { useI18n } from '../../i18n/context';
 import { findToolCatalogIdByTitle, getToolCatalogText } from '../../i18n/toolCatalog';
 
 const btn = 'px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium';
+const secondary = 'px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium transition-colors';
 const input = 'w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 focus:border-indigo-500 outline-none text-sm text-slate-200';
 const box = 'p-4 rounded-xl bg-slate-900/50 border border-slate-800';
 function FilePicker({ id, label, fileName, accept, onChange }: { id: string; label: string; fileName?: string; accept?: string; onChange: (event: React.ChangeEvent<HTMLInputElement>) => void }) {
@@ -80,7 +81,13 @@ export const BudgetTool: React.FC = () => {
 export const InvestmentCalculatorTool: React.FC = () => {
   const { t } = useI18n(); const [initial, setInitial] = useState(10000); const [monthly, setMonthly] = useState(1000); const [rate, setRate] = useState(7); const [years, setYears] = useState(10);
   const future = useMemo(() => { const r = rate / 100 / 12; const n = years * 12; return r === 0 ? initial + monthly * n : initial * (1 + r) ** n + monthly * (((1 + r) ** n - 1) / r); }, [initial, monthly, rate, years]);
-  return <div className="space-y-5"><Header title={t('investment_calculator', 'Investiční kalkulačka')} desc={t('investment_calculator_desc', 'Odhadněte budoucí hodnotu počáteční investice a pravidelných vkladů.')} /><div className={box + ' grid md:grid-cols-4 gap-3'}>{[[t('initial_deposit', 'Počáteční vklad'), initial, setInitial], [t('monthly_deposit', 'Měsíční vklad'), monthly, setMonthly], [t('annual_return', 'Roční výnos %'), rate, setRate], [t('years', 'Roky'), years, setYears]].map(([label, value, setter]) => <label className="text-xs text-slate-400" key={String(label)}>{label}<input className={input} type="number" value={value as number} onChange={e => (setter as (v: number) => void)(Number(e.target.value))} /></label>)}</div><div className={box + ' text-xl text-emerald-400'}>{t('estimate', 'Odhad')}: {future.toLocaleString(undefined, { maximumFractionDigits: 2 })}</div></div>;
+  const fields = [
+    { label: t('initial_deposit', 'Počáteční vklad'), value: initial, setter: setInitial },
+    { label: t('monthly_deposit', 'Měsíční vklad'), value: monthly, setter: setMonthly },
+    { label: t('annual_return', 'Roční výnos %'), value: rate, setter: setRate },
+    { label: t('years', 'Roky'), value: years, setter: setYears },
+  ];
+  return <div className="space-y-5"><Header title={t('investment_calculator', 'Investiční kalkulačka')} desc={t('investment_calculator_desc', 'Odhadněte budoucí hodnotu počáteční investice a pravidelných vkladů.')} /><div className={box + ' grid md:grid-cols-4 gap-3'}>{fields.map(item => <label className="text-xs text-slate-400" key={item.label}>{item.label}<input className={input} type="number" value={item.value} onChange={e => item.setter(Number(e.target.value))} /></label>)}</div><div className={box + ' text-xl text-emerald-400'}>{t('estimate', 'Odhad')}: {future.toLocaleString(undefined, { maximumFractionDigits: 2 })}</div></div>;
 };
 
 export const InvoiceGeneratorTool: React.FC = () => {

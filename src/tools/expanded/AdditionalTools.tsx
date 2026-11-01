@@ -91,7 +91,7 @@ export const OcrScannerTool: React.FC = () => {
     if (!image) return; setBusy(true); setText('');
     try {
       const { createWorker } = await import('tesseract.js');
-      const worker = await createWorker('eng', 1, { logger: data => { if (typeof data.progress === 'number') setProgress(Math.round(data.progress * 100)); } });
+      const worker = await createWorker('eng', 1, { logger: (data: { progress?: number }) => { if (typeof data.progress === 'number') setProgress(Math.round(data.progress * 100)); } });
       const result = await worker.recognize(image); setText(result.data.text); await worker.terminate();
     } catch (error) { setText(error instanceof Error ? error.message : 'OCR se nepodařilo dokončit.'); }
     finally { setBusy(false); }
