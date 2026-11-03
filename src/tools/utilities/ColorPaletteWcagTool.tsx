@@ -143,38 +143,38 @@ export const ColorPaletteWcagTool: React.FC = () => {
 
     if (harmonyType === 'complementary') {
       const compRgb = hslToRgb((h + 180) % 360, s, l);
-      colors.push({ hex: rgbToHex(compRgb.r, compRgb.g, compRgb.b), label: 'Komplementární' });
+      colors.push({ hex: rgbToHex(compRgb.r, compRgb.g, compRgb.b), label: t('palette_complementary', 'Komplementární') });
       // Tint & Shade
       const tint = hslToRgb(h, s, Math.min(95, l + 25));
       const shade = hslToRgb(h, s, Math.max(10, l - 25));
-      colors.push({ hex: rgbToHex(tint.r, tint.g, tint.b), label: 'Světlý odstín' });
-      colors.push({ hex: rgbToHex(shade.r, shade.g, shade.b), label: 'Tmavý stín' });
+      colors.push({ hex: rgbToHex(tint.r, tint.g, tint.b), label: t('palette_light_tint', 'Světlý odstín') });
+      colors.push({ hex: rgbToHex(shade.r, shade.g, shade.b), label: t('palette_dark_shade', 'Tmavý stín') });
     } else if (harmonyType === 'analogous') {
       [-30, 30, -60, 60].forEach((offset, idx) => {
         const rgb = hslToRgb((h + offset + 360) % 360, s, l);
-        colors.push({ hex: rgbToHex(rgb.r, rgb.g, rgb.b), label: `Analog ${idx + 1}` });
+        colors.push({ hex: rgbToHex(rgb.r, rgb.g, rgb.b), label: `${t('palette_analogous', 'Analog')} ${idx + 1}` });
       });
     } else if (harmonyType === 'triadic') {
       [120, 240].forEach((offset, idx) => {
         const rgb = hslToRgb((h + offset) % 360, s, l);
-        colors.push({ hex: rgbToHex(rgb.r, rgb.g, rgb.b), label: `Triáda ${idx + 1}` });
+        colors.push({ hex: rgbToHex(rgb.r, rgb.g, rgb.b), label: `${t('palette_triad', 'Triáda')} ${idx + 1}` });
       });
       const tint = hslToRgb(h, s, Math.min(95, l + 20));
-      colors.push({ hex: rgbToHex(tint.r, tint.g, tint.b), label: 'Zvýraznění' });
+      colors.push({ hex: rgbToHex(tint.r, tint.g, tint.b), label: t('palette_accent', 'Zvýraznění') });
+    } else if (harmonyType === 'monochromatic') {
+      [85, 70, 50, 30, 15].forEach((lightness) => {
+        const rgb = hslToRgb(h, s, lightness);
+        colors.push({ hex: rgbToHex(rgb.r, rgb.g, rgb.b), label: `${lightness}% ${t('palette_lightness', 'světlost')}` });
+      });
     } else if (harmonyType === 'tetradic') {
       [90, 180, 270].forEach((offset, idx) => {
         const rgb = hslToRgb((h + offset) % 360, s, l);
-        colors.push({ hex: rgbToHex(rgb.r, rgb.g, rgb.b), label: `Tetráda ${idx + 1}` });
-      });
-    } else if (harmonyType === 'monochromatic') {
-      [85, 70, 50, 30, 15].forEach((lightness, idx) => {
-        const rgb = hslToRgb(h, s, lightness);
-        colors.push({ hex: rgbToHex(rgb.r, rgb.g, rgb.b), label: `${lightness}% světlost` });
+        colors.push({ hex: rgbToHex(rgb.r, rgb.g, rgb.b), label: `${t('palette_tetrad', 'Tetráda')} ${idx + 1}` });
       });
     }
 
     return colors;
-  }, [baseColor, baseHsl, harmonyType]);
+  }, [baseColor, baseHsl, harmonyType, t]);
 
   // WCAG evaluations
   const contrastRatio = useMemo(() => getContrastRatio(fgColor, bgColor), [fgColor, bgColor]);
@@ -201,18 +201,10 @@ export const ColorPaletteWcagTool: React.FC = () => {
       <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800 flex flex-wrap items-center justify-between gap-4">
         <div>
           <h2 className="text-lg font-semibold text-white">
-            {currentLanguage === 'cs' ? 'Paletka Barev & Kontrastní WCAG Validátor' :
-             currentLanguage === 'ru' ? 'Цветовая Палитра & WCAG Валидатор Контраста' :
-             currentLanguage === 'de' ? 'Farbpalette & WCAG Kontrast-Prüfer' :
-             currentLanguage === 'es' ? 'Paleta de Colores y Validador WCAG' :
-             'Color Palette Generator & WCAG Contrast Checker'}
+            {t('color_palette_title', 'Paletka barev & Kontrastní WCAG validátor')}
           </h2>
           <p className="text-sm text-slate-400 mt-1">
-            {currentLanguage === 'cs' ? 'Generování harmonických palet barev, převody HEX/RGB/HSL/CMYK a ověření přístupnosti WCAG 2.1 (AA/AAA).' :
-             currentLanguage === 'ru' ? 'Генератор палитр, конвертер форматов цвета и проверка контрастности по стандарту WCAG 2.1.' :
-             currentLanguage === 'de' ? 'Harmonische Farbpaletten, Format-Konverter und WCAG 2.1 Kontrastprüfung.' :
-             currentLanguage === 'es' ? 'Paletas armónicas, conversor HEX/RGB/HSL y verificación de contraste WCAG 2.1.' :
-             'Harmonious color palettes, color code conversions, and real-time WCAG 2.1 accessibility auditing.'}
+            {t('color_palette_desc', 'Generování harmonických palet barev, převody HEX/RGB/HSL/CMYK a ověření přístupnosti WCAG 2.1 (AA/AAA).')}
           </p>
         </div>
 
@@ -403,11 +395,11 @@ export const ColorPaletteWcagTool: React.FC = () => {
               <span className="text-xs text-slate-300 font-mono">{t('wcag_level_aa_30', 'Úroveň AA (≥ 3.0:1)')}</span>
               {uiAA ? (
                 <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-400">
-                  <CheckCircle2 className="w-3.5 h-3.5" /> Vyhovuje
+                  <CheckCircle2 className="w-3.5 h-3.5" /> {t('passes', 'Vyhovuje')}
                 </span>
               ) : (
                 <span className="flex items-center gap-1 text-[11px] font-bold text-rose-400">
-                  <XCircle className="w-3.5 h-3.5" /> Nevyhovuje
+                  <XCircle className="w-3.5 h-3.5" /> {t('fails', 'Nevyhovuje')}
                 </span>
               )}
             </div>
@@ -446,7 +438,7 @@ export const ColorPaletteWcagTool: React.FC = () => {
                   harmonyType === type ? 'bg-indigo-600 text-white font-medium' : 'text-slate-400 hover:text-white'
                 }`}
               >
-                {type}
+                {t(`harmony_${type}`, type)}
               </button>
             ))}
           </div>
@@ -470,7 +462,7 @@ export const ColorPaletteWcagTool: React.FC = () => {
                 </span>
               </div>
               <div className="space-y-0.5">
-                <span className="text-[10px] text-slate-500 block">{item.label}</span>
+                <span className="text-[10px] text-slate-500 block">{t(`palette_label_${item.label.toLowerCase().replace(/[^a-z0-9]/g, '_')}`, item.label)}</span>
                 <span className="font-mono text-xs font-bold text-white block uppercase">
                   {item.hex}
                 </span>

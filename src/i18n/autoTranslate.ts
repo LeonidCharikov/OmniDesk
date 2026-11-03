@@ -575,6 +575,128 @@ const DICTIONARY: Record<string, Record<Exclude<SupportedLanguage, 'cs'>, string
   'Denní checklist': { ru: 'Список задач на день', en: 'Daily Checklist', de: 'Tages-Checkliste', es: 'Lista diaria de tareas' },
   'Denní checklist úkolů': { ru: 'Ежедневный список задач', en: 'Daily Tasks Checklist', de: 'Tägliche Aufgabenliste', es: 'Lista de tareas diarias' },
   'Rychlý seznam priorit a cílů pro dnešní den': { ru: 'Быстрый список приоритетов и целей на сегодня', en: 'Quick list of daily priorities and goals', de: 'Schnellübersicht über Tagesziele', es: 'Lista rápida de prioridades del día' },
+  // Git Tools & Version Control
+  'Vyžaduje aktualizaci závislostí.': { ru: 'Требуется обновление зависимостей.', en: 'Requires dependency update.', de: 'Erfordert Aktualisierung der Abhängigkeiten.', es: 'Requiere actualización de dependencias.' },
+  'Vytvořit a přepnout novou větev': { ru: 'Создать и переключить новую ветку', en: 'Create and switch to new branch', de: 'Neuen Branch erstellen und wechseln', es: 'Crear y cambiar a una nueva rama' },
+  'Stashnout neuložené změny': { ru: 'Спрятать несохраненные изменения (stash)', en: 'Stash uncommitted changes', de: 'Nicht gespeicherte Änderungen stashen', es: 'Guardar cambios no confirmados (stash)' },
+  'Vrátit poslední lokální commit (ponechat změny)': { ru: 'Отменить последний локальный коммит (сохранить изменения)', en: 'Undo last local commit (keep changes)', de: 'Letzten lokalen Commit rückgängig machen (Änderungen behalten)', es: 'Deshacer último commit local (conservar cambios)' },
+  'Přepsat poslední commit message': { ru: 'Переписать сообщение последнего коммита', en: 'Amend last commit message', de: 'Letzte Commit-Nachricht anpassen', es: 'Sobrescribir el mensaje del último commit' },
+  'Vyčistit necommitnuté soubory': { ru: 'Очистить незакоммиченные файлы', en: 'Clean uncommitted files', de: 'Nicht committete Dateien bereinigen', es: 'Limpiar archivos no confirmados' },
+  'Zobrazit zkrácenou historii ve stromu': { ru: 'Показать краткую историю деревом', en: 'Show concise git log tree', de: 'Kompakten Git-Log-Baum anzeigen', es: 'Mostrar árbol conciso del historial' },
+  'Kopírovat příkaz': { ru: 'Копировать команду', en: 'Copy command', de: 'Befehl kopieren', es: 'Copiar comando' },
+
+  // UML Diagram Editor
+  'Uložit diagram': { ru: 'Сохранить диаграмму', en: 'Save diagram', de: 'Diagramm speichern', es: 'Guardar diagrama' },
+  'Text vybraného uzlu': { ru: 'Текст выбранного узла', en: 'Selected node text', de: 'Text des ausgewählten Knotens', es: 'Texto del nodo seleccionado' },
+  'Typ elementu': { ru: 'Тип элемента', en: 'Element type', de: 'Elementtyp', es: 'Tipo de elemento' },
+  'Třída (Class)': { ru: 'Класс (Class)', en: 'Class', de: 'Klasse (Class)', es: 'Clase (Class)' },
+  'Rozhraní (Interface)': { ru: 'Интерфейс (Interface)', en: 'Interface', de: 'Schnittstelle (Interface)', es: 'Interfaz (Interface)' },
+  'Aktér (Actor)': { ru: 'Актёр (Actor)', en: 'Actor', de: 'Akteur (Actor)', es: 'Actor (Actor)' },
+  'Případ užití (Use case)': { ru: 'Прецедент (Use case)', en: 'Use case', de: 'Anwendungsfall (Use case)', es: 'Caso de uso (Use case)' },
+  'Uzly můžete myší přetahovat po celé ploše diagramu!': { ru: 'Вы можете перетаскивать узлы мышью по диаграмме!', en: 'You can drag nodes anywhere on the diagram canvas!', de: 'Knoten können per Drag & Drop auf der Zeichenfläche verschoben werden!', es: '¡Puede arrastrar los nodos por el lienzo del diagrama!' },
+  'Z uzlu': { ru: 'Из узла', en: 'From node', de: 'Von Knoten', es: 'Desde nodo' },
+  'Do uzlu': { ru: 'В узел', en: 'To node', de: 'Zu Knoten', es: 'Hacia nodo' },
+  'Popis vztahu…': { ru: 'Описание связи…', en: 'Relation label…', de: 'Beziehungsbeschriftung…', es: 'Etiqueta de relación…' },
+  'Čárkovaná šipka': { ru: 'Пунктирная стрелка', en: 'Dashed arrow', de: 'Gestrichelter Pfeil', es: 'Flecha discontinua' },
+  'Propojit šipkou': { ru: 'Соединить стрелкой', en: 'Connect with arrow', de: 'Mit Pfeil verbinden', es: 'Conectar con flecha' },
+  'Vztahy:': { ru: 'Связи:', en: 'Relations:', de: 'Beziehungen:', es: 'Relaciones:' },
+  'Smazat vybraný uzel': { ru: 'Удалить выбранный узел', en: 'Delete selected node', de: 'Ausgewählten Knoten löschen', es: 'Eliminar nodo seleccionado' },
+  'Exportovat SVG': { ru: 'Экспортировать SVG', en: 'Export SVG', de: 'SVG exportieren', es: 'Exportar SVG' },
+
+  // Math, Matrix & Scientific
+  'Maticová kalkulačka (Dynamické rozměry)': { ru: 'Матричный калькулятор (Динамические размеры)', en: 'Matrix Calculator (Dynamic Dimensions)', de: 'Matrix-Rechner (Dynamische Dimensionen)', es: 'Calculadora de Matrices (Dimensiones Dinámicas)' },
+  'Libovolně nastavitelné rozměry matic A (M × K) a B (K × N) od 1×1 do 6×6, násobení A×B a B×A, inverze i determinanty.': {
+    ru: 'Произвольные размеры матриц A (M × K) и B (K × N) от 1×1 до 6×6, умножение A×B и B×A, обратные матрицы и определители.',
+    en: 'Fully customizable matrix dimensions A (M × K) and B (K × N) from 1×1 to 6×6, multiplication, inversion, and determinants.',
+    de: 'Beliebige Dimensionen für Matrizen A (M × K) und B (K × N) von 1×1 bis 6×6, Multiplikation, Inverse und Determinanten.',
+    es: 'Dimensiones arbitrarias de matrices A (M × K) y B (K × N) de 1×1 a 6×6, multiplicación, inversas y determinantes.',
+  },
+  'Neplatný výsledek': { ru: 'Недопустимый результат', en: 'Invalid result', de: 'Ungültiges Ergebnis', es: 'Resultado no válido' },
+
+  // Colors, Palette & WCAG
+  'Paletka barev & Kontrastní WCAG validátor': { ru: 'Цветовая палитра & WCAG валидатор контраста', en: 'Color Palette & WCAG Contrast Validator', de: 'Farbpalette & WCAG-Kontrastprüfer', es: 'Paleta de colores y validador WCAG' },
+  'Generování harmonických palet barev, převody HEX/RGB/HSL/CMYK a ověření přístupnosti WCAG 2.1 (AA/AAA).': {
+    ru: 'Генератор палитр, конвертер форматов цвета и проверка контрастности по стандарту WCAG 2.1.',
+    en: 'Harmonious color palettes, color conversions, and WCAG 2.1 (AA/AAA) accessibility auditing.',
+    de: 'Harmonische Farbpaletten, Format-Konverter und WCAG 2.1 Kontrastprüfung.',
+    es: 'Paletas armónicas, conversor HEX/RGB/HSL y verificación de contraste WCAG 2.1.',
+  },
+  'Komplementární': { ru: 'Комплементарный', en: 'Complementary', de: 'Komplementär', es: 'Complementario' },
+  'Světlý odstín': { ru: 'Светлый оттенок', en: 'Light tint', de: 'Helle Nuance', es: 'Tono claro' },
+  'Tmavý stín': { ru: 'Темный оттенок', en: 'Dark shade', de: 'Dunkler Schatten', es: 'Sombra oscura' },
+  'Triáda': { ru: 'Триада', en: 'Triad', de: 'Triade', es: 'Tríada' },
+  'Tetráda': { ru: 'Тетрада', en: 'Tetrad', de: 'Tetrade', es: 'Tétrada' },
+  'Zvýraznění': { ru: 'Акцент', en: 'Accent', de: 'Akzent', es: 'Realce' },
+  'světlost': { ru: 'светлота', en: 'lightness', de: 'Helligkeit', es: 'luminosidad' },
+  'Analog': { ru: 'Аналог', en: 'Analogous', de: 'Analog', es: 'Análogo' },
+
+  // System & Architecture
+  'Architektura Tauri & Rust Sysinfo Integrace': { ru: 'Архитектура интеграции Tauri и Rust Sysinfo', en: 'Tauri & Rust Sysinfo Architecture Integration', de: 'Tauri & Rust Sysinfo Architektur-Integration', es: 'Arquitectura de Integración Tauri y Rust Sysinfo' },
+  'Jak OmniDesk propojuje `@tauri-apps/plugin-os` a Rust crate `sysinfo` pro sub-20ms telemetrii bez režie Electronu.': {
+    ru: 'Как OmniDesk объединяет @tauri-apps/plugin-os и Rust crate sysinfo для телеметрии <20 мс без накладных расходов Electron.',
+    en: 'How OmniDesk bridges @tauri-apps/plugin-os and Rust crate sysinfo for sub-20ms telemetry without Electron overhead.',
+    de: 'Wie OmniDesk @tauri-apps/plugin-os und das Rust-Crate sysinfo für Sub-20ms-Telemetrie ohne Electron-Overhead verbindet.',
+    es: 'Cómo OmniDesk conecta @tauri-apps/plugin-os y el crate de Rust sysinfo para telemetría sub-20ms sin la sobrecarga de Electron.',
+  },
+
+  // SQL & Data
+  'Podporovaná syntaxe: SELECT col1, col2 FROM data [WHERE col = val] [ORDER BY col [ASC|DESC]] [LIMIT n]': {
+    ru: 'Поддерживаемый синтаксис: SELECT col1, col2 FROM data [WHERE col = val] [ORDER BY col [ASC|DESC]] [LIMIT n]',
+    en: 'Supported syntax: SELECT col1, col2 FROM data [WHERE col = val] [ORDER BY col [ASC|DESC]] [LIMIT n]',
+    de: 'Unterstützte Syntax: SELECT col1, col2 FROM data [WHERE col = val] [ORDER BY col [ASC|DESC]] [LIMIT n]',
+    es: 'Sintaxis compatible: SELECT col1, col2 FROM data [WHERE col = val] [ORDER BY col [ASC|DESC]] [LIMIT n]',
+  },
+  'Chyba při vykonávání dotazu.': { ru: 'Ошибка выполнения запроса.', en: 'Error executing query.', de: 'Fehler beim Ausführen der Abfrage.', es: 'Error al ejecutar la consulta.' },
+
+  // Tasks, Notes & Shopping
+  'Připravit čtvrtletní report': { ru: 'Подготовить квартальный отчет', en: 'Prepare quarterly report', de: 'Quartalsbericht vorbereiten', es: 'Preparar informe trimestral' },
+  'Zkontrolovat zálohy souborů': { ru: 'Проверить резервные копии файлов', en: 'Check file backups', de: 'Datei-Backups überprüfen', es: 'Comprobar copias de seguridad' },
+  'Aktualizovat seznam úkolů': { ru: 'Обновить список задач', en: 'Update task list', de: 'Aufgabenliste aktualisieren', es: 'Actualizar lista de tareas' },
+  'První poznámka': { ru: 'Первая заметка', en: 'First note', de: 'Erste Notiz', es: 'Primera nota' },
+  'Vítejte v lokálním poznámkovém bloku. Data se automaticky ukládají do vašeho prohlížeče.': {
+    ru: 'Добро пожаловать в локальный блокнот. Данные автоматически сохраняются в браузере.',
+    en: 'Welcome to local notes. Data is automatically saved in your browser.',
+    de: 'Willkommen bei den lokalen Notizen. Daten werden automatisch in Ihrem Browser gespeichert.',
+    es: 'Bienvenido al bloc de notas local. Los datos se guardan automáticamente en su navegador.',
+  },
+  'Čerstvé mléko 1L': { ru: 'Свежее молоко 1л', en: 'Fresh milk 1L', de: 'Frische Milch 1L', es: 'Leche fresca 1L' },
+  'Kvásový chléb': { ru: 'Заквасочный хлеб', en: 'Sourdough bread', de: 'Sauerteigbrot', es: 'Pan de masa madre' },
+  'Vejce podestýlková M': { ru: 'Яйца отборные М', en: 'Barn eggs size M', de: 'Freilandeier M', es: 'Huevos de suelo M' },
+  'Zrnková káva 500g': { ru: 'Кофе в зернах 500г', en: 'Coffee beans 500g', de: 'Kaffeebohnen 500g', es: 'Café en grano 500g' },
+  'Prací gel na bílé prádlo': { ru: 'Гель для стирки белого белья', en: 'Laundry detergent for whites', de: 'Waschgel für Weißwäsche', es: 'Detergente para ropa blanca' },
+  'Poznámka k chybě': { ru: 'Заметка об ошибке', en: 'Error note', de: 'Fehlerhinweis', es: 'Nota de error' },
+  'Nákup potravin': { ru: 'Покупка продуктов', en: 'Groceries shopping', de: 'Lebensmitteleinkauf', es: 'Compra de comestibles' },
+  'Měsíční jízdenka MHD': { ru: 'Проездной на месяц', en: 'Monthly transit pass', de: 'Monatsticket ÖPNV', es: 'Abono de transporte mensual' },
+  'Internet a telefon': { ru: 'Интернет и телефон', en: 'Internet & mobile plan', de: 'Internet und Telefon', es: 'Internet y teléfono' },
+
+  // Invoice & Business
+  'Vývoj webové aplikace a frontend integrace': { ru: 'Разработка веб-приложения и фронтенд-интеграция', en: 'Web application development and frontend integration', de: 'Web-App-Entwicklung und Frontend-Integration', es: 'Desarrollo de aplicaciones web e integración frontend' },
+  'Technická podpora a správa serveru': { ru: 'Техническая поддержка и администрирование серверов', en: 'Technical support and server management', de: 'Technischer Support und Serververwaltung', es: 'Soporte técnico y administración de servidores' },
+  'Děkujeme za spolupráci. Platbu proveďte převodem na bankovní účet.': {
+    ru: 'Спасибо за сотрудничество. Пожалуйста, оплатите банковским переводом.',
+    en: 'Thank you for your business. Please pay via bank transfer.',
+    de: 'Vielen Dank für die Zusammenarbeit. Bitte überweisen Sie auf das Bankkonto.',
+    es: 'Gracias por su colaboración. Realice el pago mediante transferencia bancaria.',
+  },
+  'IČO': { ru: 'ОГРН / ИНН', en: 'Company ID', de: 'Reg.-Nr.', es: 'CIF / NIF' },
+  'DIČ': { ru: 'ИНН / КПП', en: 'VAT ID', de: 'USt-IdNr.', es: 'NIF-IVA' },
+  'Uložit cenu': { ru: 'Сохранить цену', en: 'Save price', de: 'Preis speichern', es: 'Guardar precio' },
+
+  // Markdown Table & Chem
+  'Mechanická klávesnice': { ru: 'Механическая клавиатура', en: 'Mechanical keyboard', de: 'Mechanische Tastatur', es: 'Teclado mecánico' },
+  'Bezdrátová myš': { ru: 'Беспроводная мышь', en: 'Wireless mouse', de: 'Kabellose Maus', es: 'Ratón inalámbrico' },
+  'Podložka pod myš XXL': { ru: 'Коврик для мыши XXL', en: 'Mousepad XXL', de: 'Mauspad XXL', es: 'Alfombrilla de ratón XXL' },
+  'Skladem': { ru: 'В наличии', en: 'In stock', de: 'Auf Lager', es: 'En stock' },
+  'NaCl (Chlorid sodný)': { ru: 'NaCl (Хлорид натрия)', en: 'NaCl (Sodium chloride)', de: 'NaCl (Natriumchlorid)', es: 'NaCl (Cloruro de sodio)' },
+  'Glukóza': { ru: 'Глюкоза', en: 'Glucose', de: 'Glukose', es: 'Glucosa' },
+  'Kyselina sírová': { ru: 'Серная кислота', en: 'Sulfuric acid', de: 'Schwefelsäure', es: 'Ácido sulfúrico' },
+  'Hydroxid sodný': { ru: 'Гидроксид натрия', en: 'Sodium hydroxide', de: 'Natriumhydroxid', es: 'Hidróxido de sodio' },
+  'Všechny soubory': { ru: 'Все файлы', en: 'All files', de: 'Alle Dateien', es: 'Todos los archivos' },
+  'Uložit náčrt / podpis (Průzkumník)': { ru: 'Сохранить эскиз / подпись', en: 'Save sketch / signature', de: 'Skizze / Signatur speichern', es: 'Guardar boceto / firma' },
+  'Uložit převedený soubor (Průzkumník)': { ru: 'Сохранить преобразованный файл', en: 'Save converted file', de: 'Konvertierte Datei speichern', es: 'Guardar archivo convertido' },
+  'Uložit splátkový kalendář CSV (Průzkumník)': { ru: 'Сохранить график платежей CSV', en: 'Save amortization schedule CSV', de: 'Tilgungsplan als CSV speichern', es: 'Guardar calendario de pagos CSV' },
+  'Uložit JSON soubor (Průzkumník)': { ru: 'Сохранить файл JSON', en: 'Save JSON file', de: 'JSON-Datei speichern', es: 'Guardar archivo JSON' },
+  'Uložit QR kód (Průzkumník)': { ru: 'Сохранить QR-код', en: 'Save QR code', de: 'QR-Code speichern', es: 'Guardar código QR' },
   '+ Nový úkol...': { ru: '+ Новая задача...', en: '+ New task...', de: '+ Neue Aufgabe...', es: '+ Nueva tarea...' },
 };
 

@@ -55,8 +55,8 @@ export const QrCodeGeneratorTool: React.FC = () => {
       blob,
       'image/png',
       [
-        { name: 'PNG Obrázek (*.png)', extensions: ['png'] },
-        { name: 'Všechny soubory (*.*)', extensions: ['*'] }
+        { name: `${t('png_image_label', 'PNG Obrázek')} (*.png)`, extensions: ['png'] },
+        { name: `${t('all_files', 'Všechny soubory')} (*.*)`, extensions: ['*'] }
       ],
       t('save_qr_title', 'Uložit QR kód (Průzkumník)')
     );

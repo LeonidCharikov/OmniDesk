@@ -877,14 +877,14 @@ fn main() {
                     </div>
                     <div>
                       <h3 className="text-sm font-semibold text-white">
-                        {hasMemoryApi ? 'JS Heap Memory' : 'Operační Paměť'}
+                        {hasMemoryApi ? t('js_heap_memory', 'JS Heap Paměť') : t('ram_memory', 'Operační Paměť')}
                       </h3>
                       <span className="text-[11px] text-slate-400">
                         {hasMemoryApi
-                          ? `Limit ${telemetry.ramTotalGb.toFixed(2)} GB`
+                          ? `${t('limit', 'Limit')} ${telemetry.ramTotalGb.toFixed(2)} GB`
                           : telemetry.ramTotalGb > 0
-                            ? `Device Memory ~${telemetry.ramTotalGb.toFixed(0)} GB`
-                            : 'Not available in browser'}
+                            ? `${t('device_memory_approx', 'Paměť zařízení')} ~${telemetry.ramTotalGb.toFixed(0)} GB`
+                            : t('not_available_browser', 'Není k dispozici v prohlížeči')}
                       </span>
                     </div>
                   </div>
@@ -901,7 +901,7 @@ fn main() {
                     <span className="text-sm font-normal text-slate-400">
                       {hasMemoryApi
                         ? `/ ${(telemetry.ramTotalGb * 1024).toFixed(0)} MB`
-                        : telemetry.ramTotalGb > 0 ? 'GB (device hint)' : ''}
+                        : telemetry.ramTotalGb > 0 ? `GB (${t('device_hint', 'odhad')})` : ''}
                     </span>
                   </div>
                   {hasMemoryApi && (
@@ -914,7 +914,7 @@ fn main() {
                   )}
                   {!osInfo.isNative && !hasMemoryApi && (
                     <span className="text-[10px] text-slate-500 mt-1 block">
-                      performance.memory not available (Chrome only)
+                      {t('perf_memory_chrome_only', 'performance.memory není k dispozici (pouze Chrome)')}
                     </span>
                   )}
                 </div>
@@ -966,10 +966,10 @@ fn main() {
                     </div>
                     <div>
                       <h3 className="text-sm font-semibold text-white">
-                        {osInfo.isNative ? 'Úložiště & Disk' : 'Browser Storage'}
+                        {osInfo.isNative ? t('storage_disk', 'Úložiště & Disk') : t('browser_storage', 'Úložiště Prohlížeče')}
                       </h3>
                       <span className="text-[11px] text-slate-400">
-                        {osInfo.isNative ? 'Kořenový svazek (/)' : 'navigator.storage.estimate()'}
+                        {osInfo.isNative ? t('root_volume', 'Kořenový svazek (/)') : 'navigator.storage.estimate()'}
                       </span>
                     </div>
                   </div>
@@ -995,7 +995,7 @@ fn main() {
                   </div>
                   {!osInfo.isNative && (
                     <span className="text-[10px] text-slate-500 mt-1 block">
-                      Browser storage quota (not full disk)
+                      {t('browser_storage_quota_hint', 'Kvóta úložiště prohlížeče (nikoliv celý disk)')}
                     </span>
                   )}
                 </div>
@@ -1015,13 +1015,13 @@ fn main() {
                   <>
                     <div className="flex justify-between text-slate-400 items-center">
                       <span className="flex items-center gap-1">
-                        <ArrowDownToLine className="w-3 h-3 text-emerald-400" /> Čtení (Disk Read):
+                        <ArrowDownToLine className="w-3 h-3 text-emerald-400" /> {t('disk_read_speed', 'Čtení (Disk Read):')}
                       </span>
                       <span className="text-emerald-400 font-semibold">{telemetry.diskReadMbs} MB/s</span>
                     </div>
                     <div className="flex justify-between text-slate-400 items-center">
                       <span className="flex items-center gap-1">
-                        <ArrowUpFromLine className="w-3 h-3 text-indigo-400" /> Zápis (Disk Write):
+                        <ArrowUpFromLine className="w-3 h-3 text-indigo-400" /> {t('disk_write_speed', 'Zápis (Disk Write):')}
                       </span>
                       <span className="text-indigo-400 font-semibold">{telemetry.diskWriteMbs} MB/s</span>
                     </div>
@@ -1042,10 +1042,10 @@ fn main() {
               <span className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
                 {osInfo.isNative
                   ? t('sys_per_core_usage', 'Vytížení jednotlivých CPU Jader')
-                  : t('sys_per_core_usage_web', 'Per-Core Estimate (simulated distribution)')}
+                  : t('sys_per_core_usage_web', 'Odhad vytížení jader (simulovaná distribuce)')}
               </span>
               <span className="text-[11px] font-mono text-slate-500">
-                {telemetry.cores.length} logických jader (hardwareConcurrency)
+                {telemetry.cores.length} {t('logical_cores_hint', 'logických jader (hardwareConcurrency)')}
               </span>
             </div>
 
@@ -1158,10 +1158,10 @@ fn main() {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-semibold text-white">
-                Architektura Tauri & Rust Sysinfo Integrace
+                {t('sys_tauri_arch_title', 'Architektura Tauri & Rust Sysinfo Integrace')}
               </h3>
               <p className="text-xs text-slate-400 mt-0.5">
-                Jak OmniDesk propojuje `@tauri-apps/plugin-os` a Rust crate `sysinfo` pro sub-20ms telemetrii bez režie Electronu.
+                {t('sys_telemetry_desc', 'Jak OmniDesk propojuje `@tauri-apps/plugin-os` a Rust crate `sysinfo` pro sub-20ms telemetrii bez režie Electronu.')}
               </p>
             </div>
             <button

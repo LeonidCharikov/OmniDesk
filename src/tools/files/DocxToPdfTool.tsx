@@ -32,28 +32,27 @@ export const DocxToPdfTool: React.FC = () => {
 
   // Helper to create a sample DOCX-like demo text for instant testing
   const loadSampleDocument = () => {
-    const sample = `SMLOUVA O POSKYTOVÁNÍ SLUŽEB A TECHNICKÉ PODPOŘE
+    const sample = `${t('sample_contract_title', 'SMLOUVA O POSKYTOVÁNÍ SLUŽEB A TECHNICKÉ PODPOŘE')}
 
-1. Smluvní strany
-Dodavatel: OmniDesk Solutions s.r.o., IČO: 12345678, se sídlem Technologická 10, Praha
-Objednatel: Zákazník / Uživatel lokálního softwaru
+1. ${t('sample_parties_title', 'Smluvní strany')}
+${t('sample_party_provider', 'Dodavatel: OmniDesk Solutions s.r.o., IČO: 12345678, se sídlem Technologická 10, Praha')}
+${t('sample_party_client', 'Objednatel: Zákazník / Uživatel lokálního softwaru')}
 
-2. Předmět smlouvy
-Předmětem této smlouvy je zajištění plně offline zpracování a konverze digitálních dokumentů.
-Veškerá data jsou zpracována výhradně v paměti zařízení zákazníka bez odesílání na vzdálené cloudové servery.
+2. ${t('sample_subject_title', 'Předmět smlouvy')}
+${t('sample_subject_body', 'Předmětem této smlouvy je zajištění plně offline zpracování a konverze digitálních dokumentů. Veškerá data jsou zpracována výhradně v paměti zařízení zákazníka bez odesílání na vzdálené cloudové servery.')}
 
-3. Důvěrnost informací
-Všechna data podléhají nejpřísnějším standardům ochrany soukromí. Konverzní proces využívá lokální WebAssembly jádro a nativní instrukce procesoru.
+3. ${t('sample_confidentiality_title', 'Důvěrnost informací')}
+${t('sample_confidentiality_body', 'Všechna data podléhají nejpřísnějším standardům ochrany soukromí. Konverzní proces využívá lokální WebAssembly jádro a nativní instrukce procesoru.')}
 
-4. Technické parametry
-- Vstupní formát: Microsoft Word (.docx)
-- Výstupní formát: Portable Document Format (PDF 1.7)
-- Doba zpracování: < 200 ms
-- Způsob uložení: Místní souborový systém`;
+4. ${t('sample_specs_title', 'Technické parametry')}
+- ${t('sample_spec_in', 'Vstupní formát: Microsoft Word (.docx)')}
+- ${t('sample_spec_out', 'Výstupní formát: Portable Document Format (PDF 1.7)')}
+- ${t('sample_spec_time', 'Doba zpracování: < 200 ms')}
+- ${t('sample_spec_storage', 'Způsob uložení: Místní souborový systém')}`;
 
     setExtractedText(sample);
-    setFile({ name: 'Ukazkovy_dokument.docx', size: 14520 } as File);
-    generatePdfFromText(sample, 'Ukazkovy_dokument.pdf');
+    setFile({ name: `${t('sample_doc_name', 'Ukazkovy_dokument')}.docx`, size: 14520 } as File);
+    generatePdfFromText(sample, `${t('sample_doc_name', 'Ukazkovy_dokument')}.pdf`);
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -61,7 +60,7 @@ Všechna data podléhají nejpřísnějším standardům ochrany soukromí. Konv
     if (!selectedFile) return;
 
     if (!selectedFile.name.toLowerCase().endsWith('.docx') && !selectedFile.name.toLowerCase().endsWith('.txt')) {
-      setError('Vyberte prosím soubor ve formátu .docx nebo .txt');
+      setError(t('err_select_docx_or_txt', 'Vyberte prosím soubor ve formátu .docx nebo .txt'));
       return;
     }
 
@@ -86,7 +85,7 @@ Všechna data podléhají nejpřísnějším standardům ochrany soukromí. Konv
       await generatePdfFromText(text, selectedFile.name.replace(/\.[^/.]+$/, '') + '.pdf', startTime);
     } catch (err: unknown) {
       console.error(err);
-      setError('Chyba při čtení souboru: ' + (err instanceof Error ? err.message : 'Neznámá chyba'));
+      setError(t('err_file_read_prefix', 'Chyba při čtení souboru: ') + (err instanceof Error ? err.message : t('unknown_error', 'Neznámá chyba')));
     } finally {
       setIsProcessing(false);
     }
@@ -205,7 +204,11 @@ Všechna data podléhají nejpřísnějším standardům ochrany soukromí. Konv
         }
 
         // Footer pagination
-        page.drawText(safeWinAnsi(`Stránka ${pageNum + 1} z ${totalPages}`), {
+        const pageLabel = t('pdf_page_n_of_m', `Stránka ${pageNum + 1} z ${totalPages}`, {
+          page: pageNum + 1,
+          total: totalPages,
+        });
+        page.drawText(safeWinAnsi(pageLabel), {
           x: pageWidth - margin - 60,
           y: margin - 20,
           size: 8,
@@ -233,7 +236,7 @@ Všechna data podléhají nejpřísnějším standardům ochrany soukromí. Konv
       });
     } catch (err: unknown) {
       console.error(err);
-      setError('Chyba při generování PDF: ' + (err instanceof Error ? err.message : 'Neznámá chyba'));
+      setError(t('err_pdf_gen_prefix', 'Chyba při generování PDF: ') + (err instanceof Error ? err.message : t('unknown_error', 'Neznámá chyba')));
     } finally {
       setIsProcessing(false);
     }
@@ -241,14 +244,14 @@ Všechna data podléhají nejpřísnějším standardům ochrany soukromí. Konv
 
   const handleDownloadPdf = async () => {
     if (!pdfBlob) return;
-    const defaultName = file ? file.name.replace(/\.[^/.]+$/, '') + '.pdf' : 'konvertovany_dokument.pdf';
+    const defaultName = file ? file.name.replace(/\.[^/.]+$/, '') + '.pdf' : `${t('converted_doc_name', 'konvertovany_dokument')}.pdf`;
     await saveBinaryWithDialog(
       defaultName,
       pdfBlob,
       'application/pdf',
       [
-        { name: 'PDF Dokument (*.pdf)', extensions: ['pdf'] },
-        { name: 'Všechny soubory (*.*)', extensions: ['*'] }
+        { name: `${t('pdf_document', 'PDF Dokument')} (*.pdf)`, extensions: ['pdf'] },
+        { name: `${t('all_files', 'Všechny soubory')} (*.*)`, extensions: ['*'] }
       ],
       t('save_pdf_title', 'Uložit PDF (Průzkumník)')
     );

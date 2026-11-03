@@ -229,9 +229,9 @@ export const BudgetTool: React.FC = () => {
       // ignore
     }
     return [
-      { id: 1, label: 'Nákup potravin', amount: 850, category: 'food', date: new Date().toISOString().slice(0, 10) },
-      { id: 2, label: 'Měsíční jízdenka MHD', amount: 550, category: 'transport', date: new Date().toISOString().slice(0, 10) },
-      { id: 3, label: 'Internet a telefon', amount: 690, category: 'utilities', date: new Date().toISOString().slice(0, 10) },
+      { id: 1, label: t('budget_item_groceries', 'Nákup potravin'), amount: 850, category: 'food', date: new Date().toISOString().slice(0, 10) },
+      { id: 2, label: t('budget_item_transport', 'Měsíční jízdenka MHD'), amount: 550, category: 'transport', date: new Date().toISOString().slice(0, 10) },
+      { id: 3, label: t('budget_item_internet', 'Internet a telefon'), amount: 690, category: 'utilities', date: new Date().toISOString().slice(0, 10) },
     ];
   });
   const [label, setLabel] = useState('');
@@ -470,35 +470,35 @@ export const InvoiceGeneratorTool: React.FC = () => {
   const { t } = useI18n();
   const [appCurrency] = useAppCurrency();
   type InvoiceLine = { id: number; description: string; quantity: number; unitPrice: number; vat: number };
-  const [seller, setSeller] = useState({
-    name: 'Jan Novák - IT Solutions',
-    street: 'Vodičkova 25',
-    city: '110 00 Praha 1',
+  const [seller, setSeller] = useState(() => ({
+    name: t('default_seller_name', 'Jan Novák - IT Solutions'),
+    street: t('default_seller_street', 'Vodičkova 25'),
+    city: t('default_seller_city', '110 00 Praha 1'),
     ico: '12345678',
     dic: 'CZ12345678',
     phone: '+420 777 123 456',
     email: 'info@novak-it.cz',
-    account: '123456789/0800 (Česká spořitelna)',
-  });
-  const [customer, setCustomer] = useState({
-    name: 'Acme Corporation s.r.o.',
-    street: 'Klimentská 10',
-    city: '110 00 Praha 1',
+    account: t('default_seller_account', '123456789/0800 (Česká spořitelna)'),
+  }));
+  const [customer, setCustomer] = useState(() => ({
+    name: t('default_customer_name', 'Acme Corporation s.r.o.'),
+    street: t('default_customer_street', 'Klimentská 10'),
+    city: t('default_customer_city', '110 00 Praha 1'),
     ico: '87654321',
     dic: 'CZ87654321',
-  });
-  const [invoice, setInvoice] = useState({
+  }));
+  const [invoice, setInvoice] = useState(() => ({
     number: `INV-${new Date().getFullYear()}-001`,
     issueDate: new Date().toISOString().slice(0, 10),
     dueDate: new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10),
     variableSymbol: `${new Date().getFullYear()}001`,
     constantSymbol: '0308',
     currency: appCurrency || 'CZK',
-    note: 'Děkujeme za spolupráci. Platbu proveďte převodem na bankovní účet.',
-  });
-  const [lines, setLines] = useState<InvoiceLine[]>([
-    { id: 1, description: 'Vývoj webové aplikace a frontend integrace', quantity: 1, unitPrice: 25000, vat: 21 },
-    { id: 2, description: 'Technická podpora a správa serveru', quantity: 5, unitPrice: 1200, vat: 21 },
+    note: t('default_seller_note', 'Děkujeme za spolupráci. Platbu proveďte převodem na bankovní účet.'),
+  }));
+  const [lines, setLines] = useState<InvoiceLine[]>(() => [
+    { id: 1, description: t('default_item_dev', 'Vývoj webové aplikace a frontend integrace'), quantity: 1, unitPrice: 25000, vat: 21 },
+    { id: 2, description: t('default_item_support', 'Technická podpora a správa serveru'), quantity: 5, unitPrice: 1200, vat: 21 },
   ]);
 
   const update = <T extends object>(setter: React.Dispatch<React.SetStateAction<T>>, key: keyof T, value: T[keyof T]) =>
@@ -542,49 +542,49 @@ export const InvoiceGeneratorTool: React.FC = () => {
 <body>
   <div class="header">
     <div>
-      <div class="badge">FAKTURA - DAŇOVÝ DOKLAD</div>
-      <div style="font-size: 16px; color: #475569; margin-top: 4px;">Číslo: <strong>${esc(invoice.number)}</strong></div>
+      <div class="badge">${t('invoice_title_doc', 'FAKTURA - DAŇOVÝ DOKLAD')}</div>
+      <div style="font-size: 16px; color: #475569; margin-top: 4px;">${t('invoice_number_label', 'Číslo:')} <strong>${esc(invoice.number)}</strong></div>
       <div style="font-size: 12px; color: #64748b; margin-top: 6px;">
-        Variabilní symbol: <strong>${esc(invoice.variableSymbol)}</strong> &bull; Konstantní symbol: ${esc(invoice.constantSymbol)}
+        ${t('variable_symbol_label', 'Variabilní symbol:')} <strong>${esc(invoice.variableSymbol)}</strong> &bull; ${t('constant_symbol_label', 'Konstantní symbol:')} ${esc(invoice.constantSymbol)}
       </div>
     </div>
     <div class="text-right" style="font-size: 13px;">
-      <div>Datum vystavení: <strong>${esc(invoice.issueDate)}</strong></div>
-      <div>Datum splatnosti: <strong>${esc(invoice.dueDate)}</strong></div>
-      <div style="margin-top: 10px;">Bankovní účet:</div>
+      <div>${t('issue_date_label', 'Datum vystavení:')} <strong>${esc(invoice.issueDate)}</strong></div>
+      <div>${t('due_date_label', 'Datum splatnosti:')} <strong>${esc(invoice.dueDate)}</strong></div>
+      <div style="margin-top: 10px;">${t('bank_account_label', 'Bankovní účet:')}</div>
       <div style="font-weight: 700; color: #1e3a8a;">${esc(seller.account)}</div>
     </div>
   </div>
 
   <div class="grid">
     <div class="box">
-      <h3>Dodavatel</h3>
+      <h3>${t('supplier', 'Dodavatel')}</h3>
       <strong style="font-size: 15px;">${esc(seller.name)}</strong><br>
       ${esc(seller.street)}<br>
       ${esc(seller.city)}<br><br>
-      ${seller.ico ? `IČO: <strong>${esc(seller.ico)}</strong><br>` : ''}
-      ${seller.dic ? `DIČ: <strong>${esc(seller.dic)}</strong><br>` : ''}
+      ${seller.ico ? `${t('business_id', 'IČO')}: <strong>${esc(seller.ico)}</strong><br>` : ''}
+      ${seller.dic ? `${t('tax_id', 'DIČ')}: <strong>${esc(seller.dic)}</strong><br>` : ''}
       ${seller.email ? `Email: ${esc(seller.email)}<br>` : ''}
       ${seller.phone ? `Tel: ${esc(seller.phone)}` : ''}
     </div>
     <div class="box">
-      <h3>Odběratel</h3>
+      <h3>${t('customer', 'Odběratel')}</h3>
       <strong style="font-size: 15px;">${esc(customer.name)}</strong><br>
       ${esc(customer.street)}<br>
       ${esc(customer.city)}<br><br>
-      ${customer.ico ? `IČO: <strong>${esc(customer.ico)}</strong><br>` : ''}
-      ${customer.dic ? `DIČ: <strong>${esc(customer.dic)}</strong><br>` : ''}
+      ${customer.ico ? `${t('business_id', 'IČO')}: <strong>${esc(customer.ico)}</strong><br>` : ''}
+      ${customer.dic ? `${t('tax_id', 'DIČ')}: <strong>${esc(customer.dic)}</strong><br>` : ''}
     </div>
   </div>
 
   <table>
     <thead>
       <tr>
-        <th>Položka</th>
-        <th class="text-right">Množství</th>
-        <th class="text-right">Cena za jedn.</th>
-        <th class="text-right">DPH</th>
-        <th class="text-right">Celkem s DPH</th>
+        <th>${t('item_header', 'Položka')}</th>
+        <th class="text-right">${t('quantity_header', 'Množství')}</th>
+        <th class="text-right">${t('unit_price_header', 'Cena za jedn.')}</th>
+        <th class="text-right">${t('vat_header', 'DPH')}</th>
+        <th class="text-right">${t('total_with_vat_header', 'Celkem s DPH')}</th>
       </tr>
     </thead>
     <tbody>
@@ -604,10 +604,10 @@ export const InvoiceGeneratorTool: React.FC = () => {
 
   <div class="total-box">
     <div style="font-size: 14px; color: #64748b;">
-      Základ bez DPH: ${subtotal.toLocaleString('cs-CZ', { minimumFractionDigits: 2 })} ${esc(invoice.currency)} &bull; DPH celkem: ${vatTotal.toLocaleString('cs-CZ', { minimumFractionDigits: 2 })} ${esc(invoice.currency)}
+      ${t('subtotal_without_vat', 'Základ bez DPH:')} ${subtotal.toLocaleString('cs-CZ', { minimumFractionDigits: 2 })} ${esc(invoice.currency)} &bull; ${t('vat_total_label', 'DPH celkem:')} ${vatTotal.toLocaleString('cs-CZ', { minimumFractionDigits: 2 })} ${esc(invoice.currency)}
     </div>
     <div style="margin-top: 8px;">
-      <span style="font-size: 16px; font-weight: 600;">Celkem k úhradě: </span>
+      <span style="font-size: 16px; font-weight: 600;">${t('total_to_pay', 'Celkem k úhradě:')} </span>
       <span class="total-amount">${total.toLocaleString('cs-CZ', { minimumFractionDigits: 2 })} ${esc(invoice.currency)}</span>
     </div>
   </div>
@@ -678,19 +678,19 @@ export const InvoiceGeneratorTool: React.FC = () => {
                 type="number"
                 value={line.quantity}
                 onChange={e => setLines(lines.map(item => (item.id === line.id ? { ...item, quantity: Number(e.target.value) } : item)))}
-                placeholder="Ks"
+                placeholder={t('quantity_pcs_placeholder', 'Ks')}
               />
               <input
                 className={input}
                 type="number"
                 value={line.unitPrice}
                 onChange={e => setLines(lines.map(item => (item.id === line.id ? { ...item, unitPrice: Number(e.target.value) } : item)))}
-                placeholder="Cena/ks"
+                placeholder={t('unit_price_placeholder', 'Cena/ks')}
               />
               <select className={input} value={line.vat} onChange={e => setLines(lines.map(item => (item.id === line.id ? { ...item, vat: Number(e.target.value) } : item)))}>
-                <option value="21">21% DPH</option>
-                <option value="12">12% DPH</option>
-                <option value="0">0% DPH</option>
+                <option value="21">{t('vat_21_option', '21% DPH')}</option>
+                <option value="12">{t('vat_12_option', '12% DPH')}</option>
+                <option value="0">{t('vat_0_option', '0% DPH')}</option>
               </select>
               <button
                 className="text-slate-500 hover:text-rose-400 p-2 text-center"
@@ -709,10 +709,10 @@ export const InvoiceGeneratorTool: React.FC = () => {
 
         <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 flex justify-between items-center text-sm">
           <span className="text-slate-400">
-            Základ: {subtotal.toLocaleString('cs-CZ')} {invoice.currency} &bull; DPH: {vatTotal.toLocaleString('cs-CZ')} {invoice.currency}
+            {t('subtotal_summary_label', 'Základ:')} {subtotal.toLocaleString('cs-CZ')} {invoice.currency} &bull; {t('vat_summary_label', 'DPH:')} {vatTotal.toLocaleString('cs-CZ')} {invoice.currency}
           </span>
           <span className="text-lg font-bold text-emerald-400">
-            Celkem: {total.toLocaleString('cs-CZ')} {invoice.currency}
+            {t('total_summary_label', 'Celkem:')} {total.toLocaleString('cs-CZ')} {invoice.currency}
           </span>
         </div>
 
@@ -750,10 +750,10 @@ export const FileCryptoTool: React.FC = () => {
         const str = new TextDecoder('utf-8', { fatal: true }).decode(buf);
         setText(str);
       } catch {
-        setText(`[Binární soubor: ${file.name}, velikost: ${(file.size / 1024).toFixed(1)} KB]`);
+        setText(t('binary_file_preview', '[Binární soubor: {name}, velikost: {size} KB]', { name: file.name, size: (file.size / 1024).toFixed(1) }));
       }
     } else {
-      setText(`[Binární soubor: ${file.name}, velikost: ${(file.size / 1024).toFixed(1)} KB]`);
+      setText(t('binary_file_preview', '[Binární soubor: {name}, velikost: {size} KB]', { name: file.name, size: (file.size / 1024).toFixed(1) }));
     }
   };
 
@@ -762,7 +762,7 @@ export const FileCryptoTool: React.FC = () => {
     try {
       const dataToHash = fileBytes || new TextEncoder().encode(text);
       if (!dataToHash || (dataToHash instanceof ArrayBuffer && dataToHash.byteLength === 0 && !text)) {
-        setCryptoError('Zadejte text nebo načtěte soubor.');
+        setCryptoError(t('err_enter_text_or_file', 'Zadejte text nebo načtěte soubor.'));
         return;
       }
       const digest = await crypto.subtle.digest(selectedAlgo, dataToHash);
@@ -771,7 +771,7 @@ export const FileCryptoTool: React.FC = () => {
         .join('');
       setHash(hashStr);
     } catch (e) {
-      setCryptoError(e instanceof Error ? e.message : 'Výpočet hashe selhal.');
+      setCryptoError(e instanceof Error ? e.message : t('err_hash_failed', 'Výpočet hashe selhal.'));
     }
   };
 
@@ -800,7 +800,7 @@ export const FileCryptoTool: React.FC = () => {
       all.set(new Uint8Array(data), salt.length + iv.length);
       setEncrypted(btoa(String.fromCharCode(...all)));
     } catch (e) {
-      setCryptoError(e instanceof Error ? e.message : 'Šifrování selhalo.');
+      setCryptoError(e instanceof Error ? e.message : t('err_encryption_failed', 'Šifrování selhalo.'));
     }
   };
 
@@ -863,41 +863,41 @@ export const FileCryptoTool: React.FC = () => {
         {/* Algorithm & password section */}
         <div className="grid md:grid-cols-2 gap-3 items-end">
           <div>
-            <label className="text-xs text-slate-400 block mb-1">Algoritmus kontrolního součtu:</label>
+            <label className="text-xs text-slate-400 block mb-1">{t('checksum_algo_label', 'Algoritmus kontrolního součtu:')}</label>
             <div className="flex gap-2">
               <select
                 className={input}
                 value={selectedAlgo}
                 onChange={e => setSelectedAlgo(e.target.value as typeof selectedAlgo)}
               >
-                <option value="SHA-256">SHA-256 (Doporučeno)</option>
-                <option value="SHA-512">SHA-512 (Maximální bezpečnost)</option>
+                <option value="SHA-256">SHA-256 ({t('recommended', 'Doporučeno')})</option>
+                <option value="SHA-512">SHA-512 ({t('max_security', 'Maximální bezpečnost')})</option>
                 <option value="SHA-384">SHA-384</option>
-                <option value="SHA-1">SHA-1 (Legacy)</option>
+                <option value="SHA-1">SHA-1 ({t('legacy', 'Legacy')})</option>
               </select>
               <button className={btn} onClick={calculateHash}>
-                Spočítat {selectedAlgo}
+                {t('compute_algo', 'Spočítat {algo}', { algo: selectedAlgo })}
               </button>
             </div>
           </div>
 
           <div>
-            <label className="text-xs text-slate-400 block mb-1">Heslo pro AES-GCM šifrování:</label>
+            <label className="text-xs text-slate-400 block mb-1">{t('aes_password_label', 'Heslo pro AES-GCM šifrování:')}</label>
             <div className="flex gap-2">
               <input
                 className={input}
                 type="password"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                placeholder="Zadejte tajné heslo…"
+                placeholder={t('enter_secret_password', 'Zadejte tajné heslo…')}
               />
               <button className={btn} onClick={encrypt}>
                 <Lock className="w-3.5 h-3.5 inline mr-1" />
-                Zašifrovat
+                {t('encrypt', 'Zašifrovat')}
               </button>
               <button className={secondary} onClick={decrypt} disabled={!encrypted}>
                 <Unlock className="w-3.5 h-3.5 inline mr-1" />
-                Dešifrovat
+                {t('decrypt', 'Dešifrovat')}
               </button>
             </div>
           </div>
@@ -913,9 +913,9 @@ export const FileCryptoTool: React.FC = () => {
         {hash && (
           <div className="space-y-1">
             <div className="flex justify-between items-center text-xs">
-              <span className="text-slate-400">{selectedAlgo} Hash:</span>
+              <span className="text-slate-400">{selectedAlgo} {t('hash_label', 'Hash:')}</span>
               <button className="text-indigo-400 hover:text-indigo-300" onClick={() => navigator.clipboard.writeText(hash)}>
-                <Copy className="w-3 h-3 inline mr-1" /> Kopírovat hash
+                <Copy className="w-3 h-3 inline mr-1" /> {t('copy_hash', 'Kopírovat hash')}
               </button>
             </div>
             <pre className={box + ' break-all text-emerald-400 font-mono text-xs'}>{hash}</pre>
@@ -925,9 +925,9 @@ export const FileCryptoTool: React.FC = () => {
         {encrypted && (
           <div className="space-y-1">
             <div className="flex justify-between items-center text-xs">
-              <span className="text-slate-400">Zašifrovaný text (Base64 AES-GCM 256-bit):</span>
+              <span className="text-slate-400">{t('ciphertext_label', 'Zašifrovaný text (Base64 AES-GCM 256-bit):')}</span>
               <button className="text-amber-400 hover:text-amber-300" onClick={() => navigator.clipboard.writeText(encrypted)}>
-                <Copy className="w-3 h-3 inline mr-1" /> Kopírovat ciphertext
+                <Copy className="w-3 h-3 inline mr-1" /> {t('copy_ciphertext', 'Kopírovat ciphertext')}
               </button>
             </div>
             <pre className={box + ' break-all text-amber-300 font-mono text-xs max-h-40 overflow-auto'}>{encrypted}</pre>
@@ -937,9 +937,9 @@ export const FileCryptoTool: React.FC = () => {
         {decrypted && (
           <div className="space-y-1">
             <div className="flex justify-between items-center text-xs">
-              <span className="text-slate-400">Dešifrovaný výsledek:</span>
+              <span className="text-slate-400">{t('decrypted_result_label', 'Dešifrovaný výsledek:')}</span>
               <button className="text-emerald-400 hover:text-emerald-300" onClick={() => navigator.clipboard.writeText(decrypted)}>
-                <Copy className="w-3 h-3 inline mr-1" /> Kopírovat
+                <Copy className="w-3 h-3 inline mr-1" /> {t('copy', 'Kopírovat')}
               </button>
             </div>
             <pre className={box + ' break-all text-emerald-300 font-mono text-xs max-h-40 overflow-auto'}>{decrypted}</pre>
@@ -1048,7 +1048,7 @@ export const JwtDecoderTool: React.FC = () => {
         <div className="grid md:grid-cols-2 gap-4">
           <div className="space-y-1">
             <div className="flex justify-between items-center">
-              <span className="text-xs font-semibold text-rose-400">HEADER: Algorithm & Token Type</span>
+              <span className="text-xs font-semibold text-rose-400">{t('jwt_header_title', 'HEADER: Algorithm & Token Type')}</span>
               {headerJson && (
                 <button
                   className="text-xs text-indigo-400 hover:text-indigo-300"
@@ -1066,7 +1066,7 @@ export const JwtDecoderTool: React.FC = () => {
 
           <div className="space-y-1">
             <div className="flex justify-between items-center">
-              <span className="text-xs font-semibold text-purple-400">PAYLOAD: Data</span>
+              <span className="text-xs font-semibold text-purple-400">{t('jwt_payload_title', 'PAYLOAD: Data')}</span>
               {payloadJson && (
                 <button
                   className="text-xs text-indigo-400 hover:text-indigo-300"
@@ -1085,7 +1085,7 @@ export const JwtDecoderTool: React.FC = () => {
 
         {signature && (
           <div className="space-y-1">
-            <span className="text-xs font-semibold text-sky-400">SIGNATURE</span>
+            <span className="text-xs font-semibold text-sky-400">{t('jwt_signature_title', 'SIGNATURE')}</span>
             <pre className={box + ' break-all text-xs font-mono text-sky-300'}>{signature}</pre>
           </div>
         )}
@@ -1183,11 +1183,11 @@ export const XmlFormatterTool: React.FC = () => {
       const doc = new DOMParser().parseFromString(value, 'application/xml');
       const parseError = doc.querySelector('parsererror');
       if (parseError) {
-        throw new Error(parseError.textContent || 'Chyba syntaxe XML.');
+        throw new Error(parseError.textContent || t('xml_syntax_error', 'Chyba syntaxe XML.'));
       }
       setResult(prettifyXml(value, 2));
     } catch (e) {
-      setErrorMsg(e instanceof Error ? e.message : 'Neplatné XML.');
+      setErrorMsg(e instanceof Error ? e.message : t('invalid_xml', 'Neplatné XML.'));
     }
   };
 
@@ -1195,10 +1195,10 @@ export const XmlFormatterTool: React.FC = () => {
     setErrorMsg('');
     try {
       const doc = new DOMParser().parseFromString(value, 'application/xml');
-      if (doc.querySelector('parsererror')) throw new Error('Neplatné XML.');
+      if (doc.querySelector('parsererror')) throw new Error(t('invalid_xml', 'Neplatné XML.'));
       setResult(value.replace(/>\s+</g, '><').trim());
     } catch (e) {
-      setErrorMsg(e instanceof Error ? e.message : 'Chyba při minifikaci.');
+      setErrorMsg(e instanceof Error ? e.message : t('err_minify', 'Chyba při minifikaci.'));
     }
   };
 
@@ -1206,30 +1206,30 @@ export const XmlFormatterTool: React.FC = () => {
     setErrorMsg('');
     try {
       const doc = new DOMParser().parseFromString(value, 'application/xml');
-      if (doc.querySelector('parsererror')) throw new Error('Neplatné XML.');
+      if (doc.querySelector('parsererror')) throw new Error(t('invalid_xml', 'Neplatné XML.'));
       const parsed = xmlToJsonHelper(doc.documentElement);
       setResult(JSON.stringify({ [doc.documentElement.nodeName]: parsed }, null, 2));
     } catch (e) {
-      setErrorMsg(e instanceof Error ? e.message : 'Převod do JSON selhal.');
+      setErrorMsg(e instanceof Error ? e.message : t('err_json_convert', 'Převod do JSON selhal.'));
     }
   };
 
   return (
     <div className="space-y-5">
       <Header
-        title="XML formatter & validator"
+        title={t('xml_formatter_title', 'XML formatter & validator')}
         desc={t('xml_formatter_desc', 'Formátujte, minifikujte, validujte XML nebo jej převeďte do JSON.')}
       />
       <div className={box + ' space-y-3'}>
         <div className="flex flex-wrap gap-2">
           <button className={btn} onClick={formatXml}>
-            Zformátovat (Prettify)
+            {t('prettify_xml', 'Zformátovat (Prettify)')}
           </button>
           <button className={secondary} onClick={minifyXml}>
-            Minifikovat
+            {t('minify', 'Minifikovat')}
           </button>
           <button className={secondary} onClick={convertToJson}>
-            Převést XML → JSON
+            {t('convert_xml_to_json', 'Převést XML → JSON')}
           </button>
         </div>
 
@@ -1238,7 +1238,7 @@ export const XmlFormatterTool: React.FC = () => {
             className={input + ' min-h-64 font-mono text-xs leading-relaxed'}
             value={value}
             onChange={e => setValue(e.target.value)}
-            placeholder="Zde vložte XML…"
+            placeholder={t('insert_xml_placeholder', 'Zde vložte XML…')}
           />
           <div className="space-y-2">
             {errorMsg ? (
@@ -1248,21 +1248,21 @@ export const XmlFormatterTool: React.FC = () => {
               </div>
             ) : (
               <pre className={panel + ' min-h-64 max-h-96 overflow-auto font-mono text-xs text-slate-200'}>
-                {result || 'Výsledek se zobrazí zde…'}
+                {result || t('result_placeholder', 'Výsledek se zobrazí zde…')}
               </pre>
             )}
             {result && (
               <div className="flex gap-2">
                 <button className={secondary} onClick={() => navigator.clipboard.writeText(result)}>
                   <Copy className="w-3.5 h-3.5 inline mr-1" />
-                  Kopírovat
+                  {t('copy', 'Kopírovat')}
                 </button>
                 <button
                   className={secondary}
-                  onClick={() => downloadText('data.xml', result, 'xml', 'Uložit XML')}
+                  onClick={() => downloadText('data.xml', result, 'xml', t('save_xml', 'Uložit XML'))}
                 >
                   <Download className="w-3.5 h-3.5 inline mr-1" />
-                  Stáhnout XML
+                  {t('download_xml', 'Stáhnout XML')}
                 </button>
               </div>
             )}
@@ -1350,7 +1350,7 @@ export const YamlFormatterTool: React.FC = () => {
       const parsed = simpleYamlToJson(value);
       setResult(jsonToYaml(parsed));
     } catch (e) {
-      setErrorMsg(e instanceof Error ? e.message : 'Neplatný YAML.');
+      setErrorMsg(e instanceof Error ? e.message : t('invalid_yaml', 'Neplatný YAML.'));
     }
   };
 
@@ -1360,23 +1360,23 @@ export const YamlFormatterTool: React.FC = () => {
       const parsed = simpleYamlToJson(value);
       setResult(JSON.stringify(parsed, null, 2));
     } catch (e) {
-      setErrorMsg(e instanceof Error ? e.message : 'Převod do JSON selhal.');
+      setErrorMsg(e instanceof Error ? e.message : t('err_json_convert', 'Převod do JSON selhal.'));
     }
   };
 
   return (
     <div className="space-y-5">
       <Header
-        title="YAML formatter & validator"
+        title={t('yaml_formatter_title', 'YAML formatter & validator')}
         desc={t('yaml_formatter_desc', 'Formátujte, validujte strukturu YAML a převádějte obousměrně do JSON.')}
       />
       <div className={box + ' space-y-3'}>
         <div className="flex flex-wrap gap-2">
           <button className={btn} onClick={formatYaml}>
-            Normalizovat YAML
+            {t('normalize_yaml', 'Normalizovat YAML')}
           </button>
           <button className={secondary} onClick={convertToJson}>
-            YAML → JSON
+            {t('yaml_to_json', 'YAML → JSON')}
           </button>
         </div>
 
@@ -1385,7 +1385,7 @@ export const YamlFormatterTool: React.FC = () => {
             className={input + ' min-h-64 font-mono text-xs leading-relaxed'}
             value={value}
             onChange={e => setValue(e.target.value)}
-            placeholder="Zde vložte YAML…"
+            placeholder={t('insert_yaml_placeholder', 'Zde vložte YAML…')}
           />
           <div className="space-y-2">
             {errorMsg ? (
@@ -1395,13 +1395,13 @@ export const YamlFormatterTool: React.FC = () => {
               </div>
             ) : (
               <pre className={panel + ' min-h-64 max-h-96 overflow-auto font-mono text-xs text-slate-200'}>
-                {result || 'Výsledek se zobrazí zde…'}
+                {result || t('result_placeholder', 'Výsledek se zobrazí zde…')}
               </pre>
             )}
             {result && (
               <button className={secondary} onClick={() => navigator.clipboard.writeText(result)}>
                 <Copy className="w-3.5 h-3.5 inline mr-1" />
-                Kopírovat výsledek
+                {t('copy_result', 'Kopírovat výsledek')}
               </button>
             )}
           </div>
@@ -1467,7 +1467,7 @@ export const MinifierTool: React.FC = () => {
       try {
         setResult(JSON.stringify(JSON.parse(value), null, 2));
       } catch {
-        setResult('Chyba: Neplatný JSON.');
+        setResult(t('err_invalid_json', 'Chyba: Neplatný JSON.'));
       }
     } else if (kind === 'css') {
       let formatted = '';
@@ -1495,7 +1495,7 @@ export const MinifierTool: React.FC = () => {
   return (
     <div className="space-y-5">
       <Header
-        title="CSS / HTML / JavaScript minifier"
+        title={t('minifier_title', 'CSS / HTML / JavaScript minifier')}
         desc={t('minifier_desc', 'Minifikujte nebo zkrášlete (beautify) kód CSS, HTML, JS a JSON se statistikou úspory.')}
       />
       <div className={box + ' space-y-3'}>
@@ -1512,19 +1512,21 @@ export const MinifierTool: React.FC = () => {
               <option value="json">JSON</option>
             </select>
             <button className={btn} onClick={minify}>
-              Minifikovat
+              {t('minify', 'Minifikovat')}
             </button>
             <button className={secondary} onClick={beautify}>
-              Zkrášlit (Beautify)
+              {t('beautify', 'Zkrášlit (Beautify)')}
             </button>
           </div>
 
           {origSize > 0 && minSize > 0 && (
             <div className="text-xs font-mono text-slate-300">
-              Původní: {origSize} B → Cíl: {minSize} B{' '}
-              <span className="text-emerald-400 font-bold">
-                (Úspora {origSize - minSize} B / {Math.round((1 - minSize / origSize) * 100)}%)
-              </span>
+              {t('minifier_savings', 'Původní: {orig} B → Cíl: {min} B (Úspora {saved} B / {percent}%)', {
+                orig: origSize,
+                min: minSize,
+                saved: origSize - minSize,
+                percent: Math.round((1 - minSize / origSize) * 100)
+              })}
             </div>
           )}
         </div>
@@ -1534,19 +1536,19 @@ export const MinifierTool: React.FC = () => {
             className={input + ' min-h-64 font-mono text-xs leading-relaxed'}
             value={value}
             onChange={e => setValue(e.target.value)}
-            placeholder="Zde vložte kód…"
+            placeholder={t('insert_code_placeholder', 'Zde vložte kód…')}
           />
           <div className="space-y-2">
             <textarea
               className={input + ' min-h-64 font-mono text-xs leading-relaxed bg-slate-950'}
               value={result}
               readOnly
-              placeholder="Výsledek se zobrazí zde…"
+              placeholder={t('result_placeholder', 'Výsledek se zobrazí zde…')}
             />
             {result && (
               <button className={secondary} onClick={() => navigator.clipboard.writeText(result)}>
                 <Copy className="w-3.5 h-3.5 inline mr-1" />
-                Kopírovat výsledek
+                {t('copy_result', 'Kopírovat výsledek')}
               </button>
             )}
           </div>
@@ -1561,18 +1563,23 @@ export const MinifierTool: React.FC = () => {
    ───────────────────────────────────────────────────────────── */
 export const MarkdownTableTool: React.FC = () => {
   const { t } = useI18n();
-  const [headers, setHeaders] = useState<string[]>(['Název', 'Kategorie', 'Cena (Kč)', 'Skladem']);
+  const [headers, setHeaders] = useState<string[]>(() => [
+    t('table_col_name', 'Název'),
+    t('table_col_category', 'Kategorie'),
+    t('table_col_price', 'Cena (Kč)'),
+    t('table_col_stock', 'Skladem'),
+  ]);
   const [alignments, setAlignments] = useState<('left' | 'center' | 'right')[]>(['left', 'left', 'right', 'center']);
-  const [rows, setRows] = useState<string[][]>([
-    ['Mechanická klávesnice', 'Hardware', '2 490', 'Ano'],
-    ['Bezdrátová myš', 'Příslušenství', '990', 'Ano'],
-    ['Podložka pod myš XXL', 'Příslušenství', '390', 'Ne'],
+  const [rows, setRows] = useState<string[][]>(() => [
+    [t('table_item_kb', 'Mechanická klávesnice'), 'Hardware', '2 490', t('yes', 'Ano')],
+    [t('table_item_mouse', 'Bezdrátová myš'), t('table_cat_acc', 'Příslušenství'), '990', t('yes', 'Ano')],
+    [t('table_item_pad', 'Podložka pod myš XXL'), t('table_cat_acc', 'Příslušenství'), '390', t('no', 'Ne')],
   ]);
   const [delimitText, setDelimitText] = useState('');
   const [mode, setMode] = useState<'grid' | 'paste'>('grid');
 
   const addColumn = () => {
-    setHeaders([...headers, `Sloupec ${headers.length + 1}`]);
+    setHeaders([...headers, `${t('column_label', 'Sloupec')} ${headers.length + 1}`]);
     setAlignments([...alignments, 'left']);
     setRows(rows.map(r => [...r, '']));
   };
@@ -1623,7 +1630,7 @@ export const MarkdownTableTool: React.FC = () => {
   return (
     <div className="space-y-5">
       <Header
-        title="Markdown table generator"
+        title={t('markdown_table_title', 'Markdown table generator')}
         desc={t('markdown_table_desc', 'Vizuální tabulkový editor i převodník CSV do čistých Markdown tabulek.')}
       />
       <div className={box + ' space-y-4'}>
@@ -1634,14 +1641,14 @@ export const MarkdownTableTool: React.FC = () => {
             onClick={() => setMode('grid')}
           >
             <TableIcon className="w-3.5 h-3.5 inline mr-1" />
-            Vizuální tabulka
+            {t('visual_table', 'Vizuální tabulka')}
           </button>
           <button
             type="button"
             className={mode === 'paste' ? btn : secondary}
             onClick={() => setMode('paste')}
           >
-            Vložit CSV / TSV text
+            {t('paste_csv_tsv', 'Vložit CSV / TSV text')}
           </button>
         </div>
 
@@ -1651,20 +1658,20 @@ export const MarkdownTableTool: React.FC = () => {
               className={input + ' min-h-40 font-mono text-xs'}
               value={delimitText}
               onChange={e => setDelimitText(e.target.value)}
-              placeholder="Vložte řádky oddělené středníkem (;), čárkou (,) nebo tabulátorem:\nJméno;Role;Lokalita\nAlice;Admin;Praha\nBob;Developer;Brno"
+              placeholder={t('csv_paste_placeholder', 'Vložte řádky oddělené středníkem (;), čárkou (,) nebo tabulátorem:\nJméno;Role;Lokalita\nAlice;Admin;Praha\nBob;Developer;Brno')}
             />
             <button className={btn} onClick={parseDelimited}>
-              Načíst a vytvořit tabulku
+              {t('load_create_table', 'Načíst a vytvořit tabulku')}
             </button>
           </div>
         ) : (
           <div className="space-y-3">
             <div className="flex flex-wrap gap-2">
               <button className={btn} onClick={addRow}>
-                <Plus className="w-3.5 h-3.5 inline mr-1" /> Přidat řádek
+                <Plus className="w-3.5 h-3.5 inline mr-1" /> {t('add_row', 'Přidat řádek')}
               </button>
               <button className={secondary} onClick={addColumn}>
-                <Plus className="w-3.5 h-3.5 inline mr-1" /> Přidat sloupec
+                <Plus className="w-3.5 h-3.5 inline mr-1" /> {t('add_column', 'Přidat sloupec')}
               </button>
             </div>
 
@@ -1701,7 +1708,7 @@ export const MarkdownTableTool: React.FC = () => {
                             type="button"
                             className="text-slate-500 hover:text-rose-400 p-0.5"
                             onClick={() => removeColumn(cidx)}
-                            title="Smazat sloupec"
+                            title={t('delete_column', 'Smazat sloupec')}
                           >
                             ×
                           </button>
@@ -1733,7 +1740,7 @@ export const MarkdownTableTool: React.FC = () => {
                           type="button"
                           className="text-slate-500 hover:text-rose-400 p-1"
                           onClick={() => removeRow(ridx)}
-                          title="Smazat řádek"
+                          title={t('delete_row', 'Smazat řádek')}
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -1748,11 +1755,11 @@ export const MarkdownTableTool: React.FC = () => {
 
         <div className="pt-2 border-t border-slate-800 space-y-2">
           <div className="flex justify-between items-center text-xs">
-            <span className="text-slate-300 font-semibold">Generovaný Markdown kód:</span>
+            <span className="text-slate-300 font-semibold">{t('generated_markdown_code', 'Generovaný Markdown kód:')}</span>
             <div className="flex gap-2">
               <button className={btn} onClick={() => navigator.clipboard.writeText(markdownOutput)}>
                 <Copy className="w-3.5 h-3.5 inline mr-1" />
-                Kopírovat Markdown
+                {t('copy_markdown', 'Kopírovat Markdown')}
               </button>
             </div>
           </div>
@@ -1769,20 +1776,20 @@ export const MarkdownTableTool: React.FC = () => {
    REGEX BUILDER & TESTER (Interactive Tester, Presets, Token chips)
    ───────────────────────────────────────────────────────────── */
 const REGEX_PRESETS = [
-  { name: 'Emailová adresa', pattern: '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$', flags: 'i' },
-  { name: 'Webová URL adresa', pattern: 'https?:\\/\\/(?:www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b(?:[-a-zA-Z0-9()@:%_\\+.~#?&\\/=]*)', flags: 'gi' },
-  { name: 'IPv4 Adresa', pattern: '\\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\b', flags: 'g' },
-  { name: 'Datum (YYYY-MM-DD)', pattern: '\\b\\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12][0-9]|3[01])\\b', flags: 'g' },
-  { name: 'HEX Barva (#FFF nebo #FFFFFF)', pattern: '^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$', flags: 'i' },
-  { name: 'UUID v4', pattern: '[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}', flags: 'gi' },
+  { key: 'preset_email', name: 'Emailová adresa', pattern: '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$', flags: 'i' },
+  { key: 'preset_url', name: 'Webová URL adresa', pattern: 'https?:\\/\\/(?:www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b(?:[-a-zA-Z0-9()@:%_\\+.~#?&\\/=]*)', flags: 'gi' },
+  { key: 'preset_ipv4', name: 'IPv4 Adresa', pattern: '\\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\b', flags: 'g' },
+  { key: 'preset_date_ymd', name: 'Datum (YYYY-MM-DD)', pattern: '\\b\\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12][0-9]|3[01])\\b', flags: 'g' },
+  { key: 'preset_hex_color', name: 'HEX Barva (#FFF nebo #FFFFFF)', pattern: '^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$', flags: 'i' },
+  { key: 'preset_uuid_v4', name: 'UUID v4', pattern: '[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}', flags: 'gi' },
 ];
 
 export const RegexBuilderTool: React.FC = () => {
   const { t } = useI18n();
   const [pattern, setPattern] = useState('[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}');
   const [flags, setFlags] = useState('g');
-  const [testText, setTestText] = useState(
-    'Ahoj, kontaktujte nás na info@omnidesk.app nebo na podpora@firma.cz pro více informací.\nChybný email: user@domain'
+  const [testText, setTestText] = useState(() =>
+    t('regex_sample_test_text', 'Ahoj, kontaktujte nás na info@omnidesk.app nebo na podpora@firma.cz pro více informací.\nChybný email: user@domain')
   );
 
   const testResults = useMemo(() => {
@@ -1802,9 +1809,9 @@ export const RegexBuilderTool: React.FC = () => {
       }
       return { matches, error: null };
     } catch (e) {
-      return { matches: [], error: e instanceof Error ? e.message : 'Chyba v regulárním výrazu.' };
+      return { matches: [], error: e instanceof Error ? e.message : t('err_regex', 'Chyba v regulárním výrazu.') };
     }
-  }, [pattern, flags, testText]);
+  }, [pattern, flags, testText, t]);
 
   const insertToken = (token: string) => {
     setPattern(prev => prev + token);
@@ -1813,17 +1820,17 @@ export const RegexBuilderTool: React.FC = () => {
   return (
     <div className="space-y-5">
       <Header
-        title="Regex builder"
+        title={t('regex_builder_title', 'Regex builder')}
         desc={t('regex_builder_desc', 'Interaktivní sestavovač a tester regulárních výrazů s živým zvýrazněním shod.')}
       />
       <div className={box + ' space-y-4'}>
         {/* Presets */}
         <div>
-          <span className="text-xs text-slate-400 block mb-1.5">Předpřipravené knihovny vzorů:</span>
+          <span className="text-xs text-slate-400 block mb-1.5">{t('preset_patterns_library', 'Předpřipravené knihovny vzorů:')}</span>
           <div className="flex flex-wrap gap-1.5">
             {REGEX_PRESETS.map(p => (
               <button
-                key={p.name}
+                key={p.key}
                 type="button"
                 className="text-xs px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
                 onClick={() => {
@@ -1831,7 +1838,7 @@ export const RegexBuilderTool: React.FC = () => {
                   setFlags(p.flags);
                 }}
               >
-                {p.name}
+                {t(p.key, p.name)}
               </button>
             ))}
           </div>
@@ -1840,7 +1847,7 @@ export const RegexBuilderTool: React.FC = () => {
         {/* Pattern & Flags */}
         <div className="grid sm:grid-cols-[1fr_120px] gap-2 items-end">
           <label className="text-xs text-slate-400">
-            Regulární výraz (Pattern):
+            {t('regex_pattern_label', 'Regulární výraz (Pattern):')}
             <div className="flex items-center gap-1 bg-slate-950 border border-slate-800 rounded-lg px-2 mt-1">
               <span className="text-slate-500 font-mono text-sm">/</span>
               <input
@@ -1852,7 +1859,7 @@ export const RegexBuilderTool: React.FC = () => {
             </div>
           </label>
           <label className="text-xs text-slate-400">
-            Příznaky (Flags):
+            {t('regex_flags_label', 'Příznaky (Flags):')}
             <input
               className={input + ' mt-1 font-mono text-sm'}
               value={flags}
@@ -1864,18 +1871,18 @@ export const RegexBuilderTool: React.FC = () => {
 
         {/* Quick token chips */}
         <div className="flex flex-wrap gap-1 items-center text-xs text-slate-400">
-          <span className="text-[11px] mr-1">Rychlé symboly:</span>
+          <span className="text-[11px] mr-1">{t('quick_symbols', 'Rychlé symboly:')}</span>
           {[
-            { label: 'Čísla (\\d+)', val: '\\d+' },
-            { label: 'Písmena (\\w+)', val: '\\w+' },
-            { label: 'Mezera (\\s)', val: '\\s' },
-            { label: 'Začátek (^)', val: '^' },
-            { label: 'Konec ($)', val: '$' },
-            { label: 'Hranice (\\b)', val: '\\b' },
-            { label: 'Skupina (...)', val: '()' },
+            { label: `${t('regex_sym_digits', 'Čísla')} (\\d+)`, val: '\\d+' },
+            { label: `${t('regex_sym_words', 'Písmena')} (\\w+)`, val: '\\w+' },
+            { label: `${t('regex_sym_spaces', 'Mezera')} (\\s)`, val: '\\s' },
+            { label: `${t('regex_sym_start', 'Začátek')} (^)`, val: '^' },
+            { label: `${t('regex_sym_end', 'Konec')} ($)`, val: '$' },
+            { label: `${t('regex_sym_boundary', 'Hranice')} (\\b)`, val: '\\b' },
+            { label: `${t('regex_sym_group', 'Skupina')} (...)`, val: '()' },
           ].map(token => (
             <button
-              key={token.label}
+              key={token.val}
               type="button"
               className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-950 border border-slate-800 hover:border-slate-700 text-slate-300"
               onClick={() => insertToken(token.val)}
@@ -1895,9 +1902,9 @@ export const RegexBuilderTool: React.FC = () => {
         {/* Test Text */}
         <div className="space-y-1">
           <div className="flex justify-between items-center text-xs">
-            <span className="text-slate-300 font-medium">Testovací text pro ověření shod:</span>
+            <span className="text-slate-300 font-medium">{t('test_text_verify_matches', 'Testovací text pro ověření shod:')}</span>
             <span className="text-emerald-400 font-mono font-semibold">
-              Nalezeno {testResults.matches.length} shod
+              {t('matches_found', 'Nalezeno {count} shod', { count: testResults.matches.length })}
             </span>
           </div>
           <textarea
@@ -1910,14 +1917,14 @@ export const RegexBuilderTool: React.FC = () => {
         {/* Matches list */}
         {testResults.matches.length > 0 && (
           <div className="p-3 bg-slate-950 rounded-lg border border-slate-800 space-y-1.5">
-            <span className="text-xs text-slate-400 block font-medium">Seznam zachycených shod:</span>
+            <span className="text-xs text-slate-400 block font-medium">{t('captured_matches_list', 'Seznam zachycených shod:')}</span>
             <div className="flex flex-wrap gap-2">
               {testResults.matches.map((m, idx) => (
                 <span
                   key={idx}
                   className="px-2 py-1 rounded bg-indigo-950/50 border border-indigo-700/50 text-indigo-200 font-mono text-xs"
                 >
-                  #{idx + 1}: &ldquo;{m.text}&rdquo; (pozice {m.index})
+                  #{idx + 1}: &ldquo;{m.text}&rdquo; ({t('position_label', 'pozice')} {m.index})
                 </span>
               ))}
             </div>
@@ -2012,7 +2019,7 @@ export const ColorPickerTool: React.FC = () => {
   return (
     <div className="space-y-5">
       <Header
-        title="Image color picker"
+        title={t('image_color_picker_title', 'Image color picker')}
         desc={t('color_picker_desc', 'Otevřete obrázek a kliknutím na přesný pixel zjistěte jeho HEX, RGB a HSL barvu.')}
       />
       <div className={box + ' space-y-4'}>
@@ -2097,7 +2104,7 @@ export const ScreenshotAnnotatorTool: React.FC = () => {
   const [fileName, setFileName] = useState('');
   const [tool, setTool] = useState<'rect' | 'arrow' | 'text' | 'pen'>('rect');
   const [activeColor, setActiveColor] = useState('#ef4444');
-  const [textInput, setTextInput] = useState('Chyba v zobrazení');
+  const [textInput, setTextInput] = useState(() => t('annotator_sample_text', 'Poznámka k chybě'));
   const [shapes, setShapes] = useState<AnnotationShape[]>([]);
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentStart, setCurrentStart] = useState<{ x: number; y: number } | null>(null);
@@ -2303,7 +2310,7 @@ export const ScreenshotAnnotatorTool: React.FC = () => {
   return (
     <div className="space-y-5">
       <Header
-        title="Screenshot annotator"
+        title={t('screenshot_annotator_title', 'Screenshot annotator')}
         desc={t('screenshot_desc', 'Kreslete rámečky, šipky, text a volnou rukou na snímky s exportem PNG.')}
       />
       <div className={box + ' space-y-4'}>
@@ -2324,33 +2331,33 @@ export const ScreenshotAnnotatorTool: React.FC = () => {
                   type="button"
                   className={tool === 'rect' ? btn : secondary}
                   onClick={() => setTool('rect')}
-                  title="Rámeček / Zvýraznění"
+                  title={t('annot_box', 'Rámeček / Zvýraznění')}
                 >
-                  <Square className="w-3.5 h-3.5 inline mr-1" /> Rámeček
+                  <Square className="w-3.5 h-3.5 inline mr-1" /> {t('annot_box_btn', 'Rámeček')}
                 </button>
                 <button
                   type="button"
                   className={tool === 'arrow' ? btn : secondary}
                   onClick={() => setTool('arrow')}
-                  title="Ukazovací šipka"
+                  title={t('annot_arrow', 'Ukazovací šipka')}
                 >
-                  <ArrowUpRight className="w-3.5 h-3.5 inline mr-1" /> Šipka
+                  <ArrowUpRight className="w-3.5 h-3.5 inline mr-1" /> {t('annot_arrow_btn', 'Šipka')}
                 </button>
                 <button
                   type="button"
                   className={tool === 'pen' ? btn : secondary}
                   onClick={() => setTool('pen')}
-                  title="Kreslení volnou rukou"
+                  title={t('annot_pen', 'Kreslení volnou rukou')}
                 >
-                  <Pencil className="w-3.5 h-3.5 inline mr-1" /> Pero
+                  <Pencil className="w-3.5 h-3.5 inline mr-1" /> {t('annot_pen_btn', 'Pero')}
                 </button>
                 <button
                   type="button"
                   className={tool === 'text' ? btn : secondary}
                   onClick={() => setTool('text')}
-                  title="Textová poznámka"
+                  title={t('annot_text', 'Textová poznámka')}
                 >
-                  <Type className="w-3.5 h-3.5 inline mr-1" /> Text
+                  <Type className="w-3.5 h-3.5 inline mr-1" /> {t('annot_text_btn', 'Text')}
                 </button>
               </div>
 
@@ -2371,26 +2378,26 @@ export const ScreenshotAnnotatorTool: React.FC = () => {
 
               {/* Actions */}
               <div className="flex items-center gap-2">
-                <button className={secondary} onClick={undo} disabled={!shapes.length} title="Vrátit poslední akci">
-                  <Undo className="w-3.5 h-3.5 inline mr-1" /> Vrátit
+                <button className={secondary} onClick={undo} disabled={!shapes.length} title={t('undo_last_action', 'Vrátit poslední akci')}>
+                  <Undo className="w-3.5 h-3.5 inline mr-1" /> {t('undo', 'Vrátit')}
                 </button>
                 <button className={secondary} onClick={() => setShapes([])} disabled={!shapes.length}>
-                  Vymazat vše
+                  {t('clear_all', 'Vymazat vše')}
                 </button>
                 <button className={btn} onClick={save}>
-                  <Download className="w-3.5 h-3.5 inline mr-1" /> Uložit PNG
+                  <Download className="w-3.5 h-3.5 inline mr-1" /> {t('save_png', 'Uložit PNG')}
                 </button>
               </div>
             </div>
 
             {tool === 'text' && (
               <div className="flex gap-2 items-center bg-slate-950 p-2 rounded-lg border border-slate-800 text-xs">
-                <span className="text-slate-400">Text k vložení kliknutím:</span>
+                <span className="text-slate-400">{t('text_to_insert_click', 'Text k vložení kliknutím:')}</span>
                 <input
                   className={input + ' py-1'}
                   value={textInput}
                   onChange={e => setTextInput(e.target.value)}
-                  placeholder="Zadejte text a klikněte do obrázku…"
+                  placeholder={t('enter_text_click_image', 'Zadejte text a klikněte do obrázku…')}
                 />
               </div>
             )}
@@ -2494,11 +2501,11 @@ export const GeoGpsTool: React.FC = () => {
   return (
     <div className="space-y-5">
       <Header
-        title="Geografické výpočty & GPS"
+        title={t('geo_gps_title', 'Geografické výpočty & GPS')}
         desc={t('geo_gps_desc', 'Převeďte souřadnice mezi DD a DMS, spočítejte vzdálenost a zobrazte mapu.')}
       />
       <div className={box + ' space-y-4'}>
-        <h3 className="font-semibold text-white text-sm">Bod 1 (Základní souřadnice)</h3>
+        <h3 className="font-semibold text-white text-sm">{t('point_1_coords', 'Bod 1 (Základní souřadnice)')}</h3>
         <div className="grid grid-cols-2 gap-3">
           <label className="text-xs text-slate-400">
             {t('latitude', 'Zeměpisná šířka (Latitude)')}
@@ -2512,11 +2519,11 @@ export const GeoGpsTool: React.FC = () => {
 
         <div className="p-3 bg-slate-950 rounded-lg border border-slate-800 space-y-1 text-xs">
           <div>
-            <strong className="text-slate-300">DMS formát: </strong>
+            <strong className="text-slate-300">{t('dms_format', 'DMS formát:')} </strong>
             <span className="font-mono text-emerald-400">{dmsLat(lat)}, {dmsLon(lon)}</span>
           </div>
           <div>
-            <strong className="text-slate-300">Desetinný formát: </strong>
+            <strong className="text-slate-300">{t('decimal_format', 'Desetinný formát:')} </strong>
             <span className="font-mono text-slate-200">{lat.toFixed(6)}, {lon.toFixed(6)}</span>
           </div>
           <div className="pt-2">
@@ -2533,23 +2540,23 @@ export const GeoGpsTool: React.FC = () => {
         </div>
 
         <h3 className="font-semibold text-white text-sm pt-2 border-t border-slate-800">
-          Vzdálenost k bodu 2 (Haversine kalkulátor)
+          {t('dist_point_2_haversine', 'Vzdálenost k bodu 2 (Haversine kalkulátor)')}
         </h3>
         <div className="grid grid-cols-2 gap-3">
           <label className="text-xs text-slate-400">
-            Bod 2 - Šířka
+            {t('point_2_lat', 'Bod 2 - Šířka')}
             <input className={input + ' mt-1'} type="number" step="0.0001" value={lat2} onChange={e => setLat2(Number(e.target.value))} />
           </label>
           <label className="text-xs text-slate-400">
-            Bod 2 - Délka
+            {t('point_2_lng', 'Bod 2 - Délka')}
             <input className={input + ' mt-1'} type="number" step="0.0001" value={lon2} onChange={e => setLon2(Number(e.target.value))} />
           </label>
         </div>
 
         <div className="p-3 bg-indigo-950/20 rounded-lg border border-indigo-800/40 text-xs">
-          Vzdušná vzdálenost mezi oběma body:{' '}
+          {t('air_distance_between_points', 'Vzdušná vzdálenost mezi oběma body:')}{' '}
           <strong className="text-indigo-300 text-sm font-mono">{distanceKm} km</strong> (
-          {(Number(distanceKm) * 0.621371).toFixed(2)} mil)
+          {(Number(distanceKm) * 0.621371).toFixed(2)} {t('miles_unit', 'mil')})
         </div>
       </div>
     </div>
@@ -2557,7 +2564,7 @@ export const GeoGpsTool: React.FC = () => {
 };
 
 /* ─────────────────────────────────────────────────────────────
-   PERIODICKÝ FINANČNÍ KALKULÁTOR
+   PERIODIC FINANCE CALCULATOR
    ───────────────────────────────────────────────────────────── */
 export const PeriodicFinanceTool: React.FC = () => {
   const { t } = useI18n();
@@ -2634,11 +2641,11 @@ export const PeriodicFinanceTool: React.FC = () => {
               value={frequency}
               onChange={e => setFrequency(Number(e.target.value))}
             >
-              <option value="12">Měsíčně (12× ročně)</option>
-              <option value="4">Čtvrtletně (4× ročně)</option>
-              <option value="2">Pololetně (2× ročně)</option>
-              <option value="1">Ročně (1× ročně)</option>
-              <option value="365">Denně (365× ročně)</option>
+              <option value="12">{t('freq_monthly', 'Měsíčně (12× ročně)')}</option>
+              <option value="4">{t('freq_quarterly', 'Čtvrtletně (4× ročně)')}</option>
+              <option value="2">{t('freq_semiannually', 'Pololetně (2× ročně)')}</option>
+              <option value="1">{t('freq_annually', 'Ročně (1× ročně)')}</option>
+              <option value="365">{t('freq_daily', 'Denně (365× ročně)')}</option>
             </select>
           </label>
           <label className="text-xs text-slate-400">
@@ -2752,15 +2759,15 @@ export const BinaryHexTool: React.FC = () => {
   return (
     <div className="space-y-5">
       <Header
-        title="Binární & hexadecimální převodník"
+        title={t('binary_hex_title', 'Binární & hexadecimální převodník')}
         desc={t('binary_hex_desc', 'Obousměrný převodník mezi textem, HEX, binárním kódem, decimálními bajty a Base64.')}
       />
       <div className={box + ' space-y-4'}>
         <div className="space-y-1">
           <div className="flex justify-between items-center text-xs">
-            <span className="text-slate-300 font-semibold">1. Text (UTF-8):</span>
+            <span className="text-slate-300 font-semibold">{t('bin_hex_section_text', '1. Text (UTF-8):')}</span>
             <button className="text-indigo-400 hover:text-indigo-300" onClick={() => navigator.clipboard.writeText(text)}>
-              <Copy className="w-3 h-3 inline mr-1" /> Kopírovat
+              <Copy className="w-3 h-3 inline mr-1" /> {t('copy', 'Kopírovat')}
             </button>
           </div>
           <textarea className={input + ' min-h-20 font-mono text-xs'} value={text} onChange={e => updateFromText(e.target.value)} />
@@ -2769,9 +2776,9 @@ export const BinaryHexTool: React.FC = () => {
         <div className="grid md:grid-cols-2 gap-4">
           <div className="space-y-1">
             <div className="flex justify-between items-center text-xs">
-              <span className="text-slate-300 font-semibold">2. Šestnáctková soustava (HEX):</span>
+              <span className="text-slate-300 font-semibold">{t('bin_hex_section_hex', '2. Šestnáctková soustava (HEX):')}</span>
               <button className="text-indigo-400 hover:text-indigo-300" onClick={() => navigator.clipboard.writeText(hex)}>
-                <Copy className="w-3 h-3 inline mr-1" /> Kopírovat
+                <Copy className="w-3 h-3 inline mr-1" /> {t('copy', 'Kopírovat')}
               </button>
             </div>
             <textarea className={input + ' min-h-20 font-mono text-xs text-amber-300'} value={hex} onChange={e => updateFromHex(e.target.value)} />
@@ -2779,9 +2786,9 @@ export const BinaryHexTool: React.FC = () => {
 
           <div className="space-y-1">
             <div className="flex justify-between items-center text-xs">
-              <span className="text-slate-300 font-semibold">3. Binární soustava (BIN):</span>
+              <span className="text-slate-300 font-semibold">{t('bin_hex_section_bin', '3. Binární soustava (BIN):')}</span>
               <button className="text-indigo-400 hover:text-indigo-300" onClick={() => navigator.clipboard.writeText(binary)}>
-                <Copy className="w-3 h-3 inline mr-1" /> Kopírovat
+                <Copy className="w-3 h-3 inline mr-1" /> {t('copy', 'Kopírovat')}
               </button>
             </div>
             <textarea className={input + ' min-h-20 font-mono text-xs text-emerald-300'} value={binary} onChange={e => updateFromBinary(e.target.value)} />
@@ -2791,9 +2798,9 @@ export const BinaryHexTool: React.FC = () => {
         <div className="grid md:grid-cols-2 gap-4">
           <div className="space-y-1">
             <div className="flex justify-between items-center text-xs">
-              <span className="text-slate-300 font-semibold">4. Decimální ASCII bajty (0-255):</span>
+              <span className="text-slate-300 font-semibold">{t('bin_hex_section_ascii', '4. Decimální ASCII bajty (0-255):')}</span>
               <button className="text-indigo-400 hover:text-indigo-300" onClick={() => navigator.clipboard.writeText(decimal)}>
-                <Copy className="w-3 h-3 inline mr-1" /> Kopírovat
+                <Copy className="w-3 h-3 inline mr-1" /> {t('copy', 'Kopírovat')}
               </button>
             </div>
             <input className={input + ' font-mono text-xs text-sky-300'} value={decimal} readOnly />
@@ -2801,9 +2808,9 @@ export const BinaryHexTool: React.FC = () => {
 
           <div className="space-y-1">
             <div className="flex justify-between items-center text-xs">
-              <span className="text-slate-300 font-semibold">5. Base64 kódování:</span>
+              <span className="text-slate-300 font-semibold">{t('bin_hex_section_base64', '5. Base64 kódování:')}</span>
               <button className="text-indigo-400 hover:text-indigo-300" onClick={() => navigator.clipboard.writeText(base64)}>
-                <Copy className="w-3 h-3 inline mr-1" /> Kopírovat
+                <Copy className="w-3 h-3 inline mr-1" /> {t('copy', 'Kopírovat')}
               </button>
             </div>
             <input className={input + ' font-mono text-xs text-purple-300'} value={base64} onChange={e => updateFromBase64(e.target.value)} />

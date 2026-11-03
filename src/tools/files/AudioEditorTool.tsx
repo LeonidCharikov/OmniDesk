@@ -249,8 +249,8 @@ export const AudioEditorTool: React.FC = () => {
     const res = await openFileWithPicker({
       accept: 'audio/*',
       filters: [
-        { name: 'Zvukové soubory (*.mp3, *.wav, *.webm, *.ogg, *.m4a)', extensions: ['mp3', 'wav', 'webm', 'ogg', 'm4a', 'aac', 'flac'] },
-        { name: 'Všechny soubory (*.*)', extensions: ['*'] }
+        { name: t('file_filter_audio', 'Zvukové soubory (*.mp3, *.wav, *.webm, *.ogg, *.m4a)'), extensions: ['mp3', 'wav', 'webm', 'ogg', 'm4a', 'aac', 'flac'] },
+        { name: t('file_filter_all', 'Všechny soubory (*.*)'), extensions: ['*'] }
       ],
       readAs: 'arrayBuffer',
       title: t('open_audio_dialog_title', 'Vybrat audio soubor (Průzkumník)')
@@ -315,7 +315,7 @@ export const AudioEditorTool: React.FC = () => {
       setTimeout(() => setStatusNotice(null), 2500);
     } catch (err: unknown) {
       console.error(err);
-      setErrorMsg('Chyba při generování vzorku');
+      setErrorMsg(t('err_sample_gen', 'Chyba při generování vzorku'));
     } finally {
       setIsLoading(false);
     }
@@ -640,8 +640,8 @@ export const AudioEditorTool: React.FC = () => {
         wavBlob,
         'audio/wav',
         [
-          { name: 'WAV Zvukový soubor (*.wav)', extensions: ['wav'] },
-          { name: 'Všechny soubory (*.*)', extensions: ['*'] }
+          { name: t('file_filter_wav', 'WAV Zvukový soubor (*.wav)'), extensions: ['wav'] },
+          { name: t('file_filter_all', 'Všechny soubory (*.*)'), extensions: ['*'] }
         ],
         t('save_audio_wav_title', 'Uložit upravené WAV audio (Průzkumník)')
       );
@@ -657,8 +657,8 @@ export const AudioEditorTool: React.FC = () => {
         wavBlob,
         'audio/webm',
         [
-          { name: 'WebM Zvukový soubor (*.webm)', extensions: ['webm'] },
-          { name: 'Všechny soubory (*.*)', extensions: ['*'] }
+          { name: t('file_filter_webm', 'WebM Zvukový soubor (*.webm)'), extensions: ['webm'] },
+          { name: t('file_filter_all', 'Všechny soubory (*.*)'), extensions: ['*'] }
         ],
         t('save_audio_webm_title', 'Uložit upravené WebM audio (Průzkumník)')
       );

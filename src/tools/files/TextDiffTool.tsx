@@ -11,8 +11,8 @@ interface DiffLine {
 
 export const TextDiffTool: React.FC = () => {
   const { t } = useI18n();
-  const [textA, setTextA] = useState<string>(
-`// Původní verze konfigurace
+  const [textA, setTextA] = useState<string>(() =>
+`${t('original_config_version', '// Původní verze konfigurace')}
 {
   "appName": "OmniDesk",
   "version": "1.0.0",
@@ -20,8 +20,8 @@ export const TextDiffTool: React.FC = () => {
   "theme": "dark"
 }`);
 
-  const [textB, setTextB] = useState<string>(
-`// Aktualizovaná verze konfigurace
+  const [textB, setTextB] = useState<string>(() =>
+`${t('updated_config_version', '// Aktualizovaná verze konfigurace')}
 {
   "appName": "OmniDesk Tauri Platform",
   "version": "2.0.0",

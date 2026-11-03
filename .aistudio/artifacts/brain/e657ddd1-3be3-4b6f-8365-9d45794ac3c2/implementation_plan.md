@@ -199,17 +199,22 @@ export async function convertDoc(filePath: string, format: string): Promise<stri
 
 ---
 
-## 6. Implementační kroky pro prototyp v tomto prostředí
+## 7. Status dokončení: Kompletní lokalizace všech nástrojů (i18n) & Zero Dead Code
 
-V aktuálním prostředí AI Studio Build vytvoříme plně funkční desktopový frontend se všemi klíčovými nástroji, které budou schopné provádět reálné offline operace přímo v prohlížeči:
-1. **Desktop Shell & Navigace**:
-   - Moderní tmavý design s postranním panelem kategorií a vyhledáváním.
-   - Stavový řádek s možností testovat Online vs. Offline režim.
-   - Správa oblíbených nástrojů ukládaná do lokálního JSON úložiště.
-2. **Plně funkční nástroje**:
-   - **Offline Word do PDF / Text konvertor**: Parsování `.docx` souborů pomocí `mammoth` a generování PDF dokumentu v paměti pomocí `pdf-lib` s možností okamžitého stažení/náhledu.
-   - **Vědecký a technický modul**: Fyzikální a matematický převodník jednotek s přesnou vizualizací.
-   - **Finanční modul**: Hypotéční a úvěrová kalkulačka s interaktivním splátkovým kalendářem.
-   - **Utility modul**: JSON formátovač s validací chyb a syntaxí.
-   - **Hybridní modul**: Nástroj vyžadující online připojení s automatickým vypnutím při offline stavu.
-3. **Dokumentace a šablony**: Vestavěná záložka s připravenými Rust/Tauri šablonami kódu pro snadné zkopírování do nativní desktopové aplikace.
+Všechny nástroje a komponenty aplikace prošly hloubkovým auditem na eliminaci statického / hardcoded textu:
+1. **Centralizovaný překladový systém**: Každý text, nadpis, tlačítko, příklad, tooltip a systémová hláška využívá `t(...)` z `src/i18n/context.tsx`.
+2. **Plná podpora 5 jazyků**: Čeština (`cs`), Angličtina (`en`), Němčina (`de`), Španělština (`es`) i Ruština (`ru`) mají kompletní slovníkovou podporu s dynamickými parametry.
+3. **Auditované a lokalizované nástroje**:
+   - `ArchitectureTool`: Všechny platformní srovnávací karty, popisky a kódové ukázky.
+   - `FunctionGrapherTool`: Vzorce, presety, dialogové filtry a ovládací prvky.
+   - `LatexVisualizerTool`: Matematické kategorie, presety, symboly i exportní dialogy.
+   - `MatrixCalculatorTool`: Dynamické rozměry, chybové hlášky, determinanty a inverze.
+   - `ScientificCalculatorTool`: Chybové stavy, číselník a paměťové funkce.
+   - `CurrencyCryptoTool`: Chybová hlášení, živé kurzy, dialog pro zadání vlastní ceny a tlačítka.
+   - `DocxToPdfTool`: Ukázková smlouva, validace, chybové stavy a číslování stránek v PDF.
+   - `TextEditorTool`, `PdfEditorTool`, `AudioEditorTool`, `SketchpadTool`, `VoiceRecorderTool`, `MultiFormatConverterTool`: Všechny dialogové filtry a editační panely.
+   - `ChemistryTool`: Reakce, molární výpočty, periodická tabulka a presety sloučenin.
+   - `CalendarTool`, `ColorPaletteWcagTool`, `WcagContrastValidatorTool`, `SystemMonitorTool`, `SmartShoppingListTool`: Kompletní lokalizace vzorků, barevných vad a telemetrie.
+   - `AdditionalTools` & `MoreTools`: Kanban, Poznámky, SQL hřiště, Git nástroje, UML editor, Faktury, Šifrování souborů, Markdown tabulky, Minifikátor, Regex builder a Periodický finanční kalkulátor.
+4. **Zero Dead Code & Ověření**: Dočasné skripty smazány, linter `tsc --noEmit` a `compile_applet` prochází s nulovým počtem chyb.
+

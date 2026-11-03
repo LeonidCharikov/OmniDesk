@@ -669,7 +669,7 @@ export const WcagContrastValidatorTool: React.FC = () => {
                 className="p-3 rounded-lg border border-slate-700/50 text-center font-semibold text-xs transition-colors shadow-inner"
                 style={{ backgroundColor: v.simBgHex, color: v.simFgHex }}
               >
-                Ukázkový text
+                {t('sample_text_label', 'Ukázkový text')}
               </div>
 
               <span className="text-[10px] text-slate-500 block leading-tight">

@@ -41,7 +41,7 @@ export const TextEditorTool: React.FC = () => {
   const [content, setContent] = useState(() => {
     return (
       localStorage.getItem(DRAFT_STORAGE_KEY) ||
-      '# OmniDesk Textový Dokument\n\nTento textový editor funguje 100% offline přímo na vašem zařízení.\nMůžete vytvářet nové .txt soubory, otevírat existující z disku a ukládat je zpět.\n\n## Formátování textu\n- Zvýrazněte libovolný úsek textu a aplikujte VELKÁ či malá písmena jen na vybranou část\n- Použijte tlačítka H1, H2, H3 pro vložení nadpisů\n- Nastavte zarovnání (vlevo, na střed, vpravo)\n- Měňte velikost písma celého editoru nebo aplikujte rozměr na vybraný text'
+      `# ${t('text_editor_default_heading', 'OmniDesk Textový Dokument')}\n\n${t('text_editor_default_body', 'Tento textový editor funguje 100% offline přímo na vašem zařízení.\nMůžete vytvářet nové .txt soubory, otevírat existující z disku a ukládat je zpět.\n\n## Formátování textu\n- Zvýrazněte libovolný úsek textu a aplikujte VELKÁ či malá písmena jen na vybranou část\n- Použijte tlačítka H1, H2, H3 pro vložení nadpisů\n- Nastavte zarovnání (vlevo, na střed, vpravo)\n- Měňte velikost písma celého editoru nebo aplikujte rozměr na vybraný text')}`
     );
   });
 
@@ -114,11 +114,11 @@ export const TextEditorTool: React.FC = () => {
       content,
       [
         isMd
-          ? { name: 'Markdown (*.md)', extensions: ['md'] }
-          : { name: 'Textový soubor (*.txt)', extensions: ['txt'] },
-        { name: 'Markdown (*.md)', extensions: ['md'] },
-        { name: 'Textový soubor (*.txt)', extensions: ['txt'] },
-        { name: 'Všechny soubory (*.*)', extensions: ['*'] },
+          ? { name: `${t('markdown_file', 'Markdown')} (*.md)`, extensions: ['md'] }
+          : { name: `${t('text_file', 'Textový soubor')} (*.txt)`, extensions: ['txt'] },
+        { name: `${t('markdown_file', 'Markdown')} (*.md)`, extensions: ['md'] },
+        { name: `${t('text_file', 'Textový soubor')} (*.txt)`, extensions: ['txt'] },
+        { name: `${t('all_files', 'Všechny soubory')} (*.*)`, extensions: ['*'] },
       ],
       t('save_text_dialog_title', 'Uložit textový soubor (Průzkumník)')
     );
@@ -136,8 +136,8 @@ export const TextEditorTool: React.FC = () => {
     const res = await openFileWithPicker({
       accept: '.txt,.md,.text,.log,.json,.csv,.sql,.js,.ts',
       filters: [
-        { name: 'Textové & Markdown soubory (*.txt, *.md)', extensions: ['txt', 'md', 'text', 'log', 'json', 'csv', 'sql', 'js', 'ts'] },
-        { name: 'Všechny soubory (*.*)', extensions: ['*'] }
+        { name: `${t('text_and_md_files', 'Textové & Markdown soubory')} (*.txt, *.md)`, extensions: ['txt', 'md', 'text', 'log', 'json', 'csv', 'sql', 'js', 'ts'] },
+        { name: `${t('all_files', 'Všechny soubory')} (*.*)`, extensions: ['*'] }
       ],
       readAs: 'text',
       title: t('open_file_dialog_title', 'Otevřít textový soubor (Průzkumník)')

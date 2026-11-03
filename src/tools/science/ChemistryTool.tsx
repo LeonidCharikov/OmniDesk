@@ -129,7 +129,7 @@ export const ChemistryTool: React.FC = () => {
         if (!el) {
           return {
             valid: false,
-            error: `${t('unknown_element', 'Neznámý prvek')}: "${sym}". Zkontrolujte velikost písmen (např. "Na" nikoliv "NA").`,
+            error: t('unknown_element_hint', 'Neznámý prvek: "{sym}". Zkontrolujte velikost písmen (např. "Na" nikoliv "NA").', { sym }),
           };
         }
         const elemTotalMass = el.mass * count;
@@ -805,7 +805,7 @@ export const ChemistryTool: React.FC = () => {
                   <span className="text-xs text-slate-400 mt-1 block">
                     {t(
                       'chem_atoms_count',
-                      `Obsahuje celkem ${parsed.totalAtoms} atomů v molekule`,
+                      'Obsahuje celkem {count} atomů v molekule',
                       { count: parsed.totalAtoms }
                     )}
                   </span>
@@ -897,28 +897,28 @@ export const ChemistryTool: React.FC = () => {
               <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-400">
                 <span>{t('presets', 'Předvolby:')}</span>
                 <button
-                  onClick={() => handleSelectPreset('NaCl (Chlorid sodný)', 58.44, 'NaCl')}
+                  onClick={() => handleSelectPreset(t('chem_nacl_label', 'NaCl (Chlorid sodný)'), 58.44, 'NaCl')}
                   className="text-indigo-400 hover:underline"
                 >
                   NaCl
                 </button>
                 <span>·</span>
                 <button
-                  onClick={() => handleSelectPreset('Glukóza', 180.156, 'C6H12O6')}
+                  onClick={() => handleSelectPreset(t('chem_glucose_label', 'Glukóza'), 180.156, 'C6H12O6')}
                   className="text-indigo-400 hover:underline"
                 >
-                  Glukóza
+                  {t('chem_glucose', 'Glukóza')}
                 </button>
                 <span>·</span>
                 <button
-                  onClick={() => handleSelectPreset('Kyselina sírová', 98.078, 'H2SO4')}
+                  onClick={() => handleSelectPreset(t('chem_h2so4_label', 'Kyselina sírová'), 98.078, 'H2SO4')}
                   className="text-indigo-400 hover:underline"
                 >
                   H₂SO₄
                 </button>
                 <span>·</span>
                 <button
-                  onClick={() => handleSelectPreset('Hydroxid sodný', 39.997, 'NaOH')}
+                  onClick={() => handleSelectPreset(t('chem_naoh_label', 'Hydroxid sodný'), 39.997, 'NaOH')}
                   className="text-indigo-400 hover:underline"
                 >
                   NaOH

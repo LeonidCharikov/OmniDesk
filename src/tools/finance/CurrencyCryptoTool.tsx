@@ -82,10 +82,10 @@ export const CurrencyCryptoTool: React.FC<Props> = ({ isOffline }) => {
       setCryptoRates(res.crypto);
       if (res.timestamp) setLastUpdated(res.timestamp);
       if (!res.success) {
-        setRefreshError('Kurzy načteny z lokální cache. Připojení k burze bylo dočasně nedostupné.');
+        setRefreshError(t('err_cached_rates', 'Kurzy načteny z lokální cache. Připojení k burze bylo dočasně nedostupné.'));
       }
     } catch {
-      setRefreshError('Chyba při komunikaci se serverem směnných kurzů.');
+      setRefreshError(t('err_rate_network', 'Chyba při komunikaci se serverem směnných kurzů.'));
     } finally {
       setIsRefreshing(false);
     }
@@ -409,7 +409,7 @@ export const CurrencyCryptoTool: React.FC<Props> = ({ isOffline }) => {
                     <span className="text-xs font-bold font-mono text-white">{c.symbol}</span>
                     {c.isCustom && (
                       <span className="text-[8px] px-1 rounded bg-amber-500/20 text-amber-300 font-mono">
-                        Vlastní
+                        {t('custom_badge', 'Vlastní')}
                       </span>
                     )}
                   </div>
@@ -442,8 +442,8 @@ export const CurrencyCryptoTool: React.FC<Props> = ({ isOffline }) => {
               </span>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-mono text-slate-400">
-                  Cena: <strong>${cryptoInfo.usdPrice.toLocaleString()} USD</strong>
-                  {cryptoInfo.isCustom && ' (Ručně nastaveno)'}
+                  {t('price_label', 'Cena:')} <strong>${cryptoInfo.usdPrice.toLocaleString()} USD</strong>
+                  {cryptoInfo.isCustom && ` (${t('manually_set', 'Ručně nastaveno')})`}
                 </span>
 
                 <button
@@ -472,7 +472,10 @@ export const CurrencyCryptoTool: React.FC<Props> = ({ isOffline }) => {
             {isEditingPrice && (
               <div className="p-3.5 rounded-xl bg-slate-950 border border-indigo-500/40 flex flex-wrap items-center gap-3 animate-fade-in">
                 <span className="text-xs text-slate-300 font-medium">
-                  Zadejte vlastní cenu pro {cryptoInfo.name} ({cryptoInfo.symbol}) v USD:
+                  {t('enter_custom_price_for', `Zadejte vlastní cenu pro ${cryptoInfo.name} (${cryptoInfo.symbol}) v USD:`, {
+                    name: cryptoInfo.name,
+                    symbol: cryptoInfo.symbol,
+                  })}
                 </span>
                 <div className="flex items-center gap-2 flex-1 min-w-[160px] max-w-xs">
                   <span className="text-slate-400 font-mono text-sm">$</span>
@@ -489,13 +492,13 @@ export const CurrencyCryptoTool: React.FC<Props> = ({ isOffline }) => {
                   onClick={handleSaveCustomPrice}
                   className="px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-colors"
                 >
-                  Uložit cenu
+                  {t('save_price', 'Uložit cenu')}
                 </button>
                 <button
                   onClick={() => setIsEditingPrice(false)}
                   className="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-white text-xs transition-colors"
                 >
-                  Zrušit
+                  {t('cancel', 'Zrušit')}
                 </button>
               </div>
             )}

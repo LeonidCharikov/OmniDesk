@@ -229,7 +229,7 @@ export const VoiceRecorderTool: React.FC = () => {
       'audio/webm',
       [
         { name: 'WebM Audio (*.webm)', extensions: ['webm'] },
-        { name: 'Všechny soubory (*.*)', extensions: ['*'] }
+        { name: `${t('all_files', 'Všechny soubory')} (*.*)`, extensions: ['*'] }
       ],
       t('save_audio_title', 'Uložit zvukový záznam')
     );

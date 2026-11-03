@@ -69,7 +69,7 @@ export const ScientificCalculatorTool: React.FC = () => {
       // eslint-disable-next-line no-new-func
       const res = Function(`"use strict"; return (${evalExpr})`)();
       if (typeof res !== 'number' || isNaN(res) || !isFinite(res)) {
-        throw new Error('Neplatný výsledek');
+        throw new Error(t('invalid_result', 'Neplatný výsledek'));
       }
 
       const formatted = Number.isInteger(res) ? res.toString() : parseFloat(res.toFixed(10)).toString();
@@ -77,7 +77,7 @@ export const ScientificCalculatorTool: React.FC = () => {
       setExpression(display + ' =');
       setDisplay(formatted);
     } catch {
-      setDisplay('Chyba');
+      setDisplay(t('error', 'Chyba'));
     }
   };
 
@@ -439,7 +439,7 @@ export const ScientificCalculatorTool: React.FC = () => {
           </div>
 
           <div className="text-[11px] text-slate-500 font-mono text-center pt-2 border-t border-slate-800">
-            Podporuje numpad klávesnici
+            {t('supports_numpad', 'Podporuje numpad klávesnici')}
           </div>
         </div>
       </div>

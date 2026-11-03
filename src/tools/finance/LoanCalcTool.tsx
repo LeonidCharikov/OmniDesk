@@ -72,8 +72,8 @@ export const LoanCalcTool: React.FC = () => {
       `amortization_schedule_${principal}_${years}y_${currency}.csv`,
       csv,
       [
-        { name: 'CSV Tabulka (*.csv)', extensions: ['csv'] },
-        { name: 'Všechny soubory (*.*)', extensions: ['*'] }
+        { name: `${t('csv_table_label', 'CSV Tabulka')} (*.csv)`, extensions: ['csv'] },
+        { name: `${t('all_files', 'Všechny soubory')} (*.*)`, extensions: ['*'] }
       ],
       t('save_csv_title', 'Uložit splátkový kalendář CSV (Průzkumník)')
     );

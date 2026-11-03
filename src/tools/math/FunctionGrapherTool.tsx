@@ -23,13 +23,13 @@ interface GraphFunction {
   visible: boolean;
 }
 
-const PRESET_FUNCTIONS: { name: string; expr: string }[] = [
-  { name: 'Parabola & Kořeny', expr: 'x^2 - 4' },
-  { name: 'Tlumená vlna', expr: 'sin(3*x) * exp(-0.25*abs(x))' },
-  { name: 'Sinc funkce', expr: 'sin(x) / x' },
-  { name: 'Kubický polynom', expr: '0.2*x^3 - x^2 - x + 2' },
-  { name: 'Gaussovský zvon', expr: '3 * exp(-0.5 * x^2)' },
-  { name: 'Racionální lomená', expr: '(2*x) / (x^2 + 1)' },
+const PRESET_FUNCTIONS: { name: string; key: string; expr: string }[] = [
+  { name: 'Parabola & Kořeny', key: 'preset_parabola_roots', expr: 'x^2 - 4' },
+  { name: 'Tlumená vlna', key: 'preset_damped_wave', expr: 'sin(3*x) * exp(-0.25*abs(x))' },
+  { name: 'Sinc funkce', key: 'preset_sinc_function', expr: 'sin(x) / x' },
+  { name: 'Kubický polynom', key: 'preset_cubic_polynomial', expr: '0.2*x^3 - x^2 - x + 2' },
+  { name: 'Gaussovský zvon', key: 'preset_gaussian_bell', expr: '3 * exp(-0.5 * x^2)' },
+  { name: 'Racionální lomená', key: 'preset_rational_function', expr: '(2*x) / (x^2 + 1)' },
 ];
 
 export const FunctionGrapherTool: React.FC = () => {
@@ -346,8 +346,8 @@ export const FunctionGrapherTool: React.FC = () => {
         blob,
         'image/png',
         [
-          { name: 'PNG Obrázek (*.png)', extensions: ['png'] },
-          { name: 'Všechny soubory (*.*)', extensions: ['*'] }
+          { name: t('file_filter_png', 'PNG Obrázek (*.png)'), extensions: ['png'] },
+          { name: t('file_filter_all', 'Všechny soubory (*.*)'), extensions: ['*'] }
         ],
         t('save_graph_title', 'Uložit graf (Průzkumník)')
       );
@@ -384,7 +384,7 @@ export const FunctionGrapherTool: React.FC = () => {
               onClick={() => updateFunctionExpr('1', p.expr)}
               className="px-2 py-1 rounded bg-slate-900 hover:bg-slate-800 text-slate-300 font-mono transition-colors"
             >
-              {t(p.name)}
+              {t(p.key, p.name)}
             </button>
           ))}
         </div>

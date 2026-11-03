@@ -43,8 +43,8 @@ export const OnlineTranslatorTool: React.FC<Props> = ({ isOffline }) => {
   const { t } = useI18n();
   const [sourceLang, setSourceLang] = useState<'cs' | 'en' | 'de' | 'es' | 'ru'>('cs');
   const [targetLang, setTargetLang] = useState<'cs' | 'en' | 'de' | 'es' | 'ru'>('ru');
-  const [inputText, setInputText] = useState('Tento dokument byl bezpečně převeden v lokální aplikaci.');
-  const [outputText, setOutputText] = useState('Этот документ был безопасно преобразован в локальном приложении.');
+  const [inputText, setInputText] = useState(() => t('translator_initial_input', 'Tento dokument byl bezpečně převeden v lokální aplikaci.'));
+  const [outputText, setOutputText] = useState(() => t('translator_initial_output', 'Tento dokument byl bezpečně převeden v lokální aplikaci.'));
   const [isTranslating, setIsTranslating] = useState(false);
 
   const sourceLangId = useId();

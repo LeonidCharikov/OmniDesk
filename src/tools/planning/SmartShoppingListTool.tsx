@@ -50,17 +50,17 @@ export const SmartShoppingListTool: React.FC = () => {
       // ignore
     }
     return [
-      { id: '1', name: 'Čerstvé mléko 1L', quantity: '2 ks', price: 24.9, category: 'groceries', done: false, createdAt: Date.now() - 3600000 },
-      { id: '2', name: 'Kvásový chléb', quantity: '1 ks', price: 49.0, category: 'groceries', done: true, createdAt: Date.now() - 3000000 },
-      { id: '3', name: 'Vejce podestýlková M', quantity: '10 ks', price: 58.0, category: 'groceries', done: false, createdAt: Date.now() - 2500000 },
-      { id: '4', name: 'Zrnková káva 500g', quantity: '1 bal.', price: 189.0, category: 'groceries', done: false, createdAt: Date.now() - 2000000 },
-      { id: '5', name: 'Prací gel na bílé prádlo', quantity: '1 ks', price: 219.0, category: 'drugstore', done: false, createdAt: Date.now() - 1500000 },
+      { id: '1', name: t('sample_milk', 'Čerstvé mléko 1L'), quantity: t('qty_2_pcs', '2 ks'), price: 24.9, category: 'groceries', done: false, createdAt: Date.now() - 3600000 },
+      { id: '2', name: t('sample_bread', 'Kvásový chléb'), quantity: t('qty_1_pcs', '1 ks'), price: 49.0, category: 'groceries', done: true, createdAt: Date.now() - 3000000 },
+      { id: '3', name: t('sample_eggs', 'Vejce podestýlková M'), quantity: t('qty_10_pcs', '10 ks'), price: 58.0, category: 'groceries', done: false, createdAt: Date.now() - 2500000 },
+      { id: '4', name: t('sample_coffee', 'Zrnková káva 500g'), quantity: t('qty_1_pack', '1 bal.'), price: 189.0, category: 'groceries', done: false, createdAt: Date.now() - 2000000 },
+      { id: '5', name: t('sample_detergent', 'Prací gel na bílé prádlo'), quantity: t('qty_1_pcs', '1 ks'), price: 219.0, category: 'drugstore', done: false, createdAt: Date.now() - 1500000 },
     ];
   });
 
   // New item input state
   const [nameInput, setNameInput] = useState('');
-  const [qtyInput, setQtyInput] = useState('1 ks');
+  const [qtyInput, setQtyInput] = useState(() => t('qty_1_pcs', '1 ks'));
   const [priceInput, setPriceInput] = useState('');
   const [categoryInput, setCategoryInput] = useState<ShoppingItem['category']>('groceries');
 
@@ -463,16 +463,16 @@ export const SmartShoppingListTool: React.FC = () => {
                               item.done ? 'line-through text-slate-500' : 'text-slate-100'
                             }`}
                           >
-                            {item.name}
+                            {t(item.name, item.name)}
                           </span>
                           <span
                             className={`text-[10px] font-mono px-1.5 py-0.2 rounded border ${badge.color}`}
                           >
-                            {badge.label}
+                            {t(badge.label, badge.label)}
                           </span>
                         </div>
                         <div className="text-[11px] text-slate-500 font-mono mt-0.5">
-                          {item.quantity}
+                          {t(item.quantity, item.quantity)}
                           {item.price ? ` • ${formatCurrency(item.price, currency)}` : ''}
                         </div>
                       </div>

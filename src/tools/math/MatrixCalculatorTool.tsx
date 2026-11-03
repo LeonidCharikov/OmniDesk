@@ -41,7 +41,7 @@ export const MatrixCalculatorTool: React.FC = () => {
   const [scalar, setScalar] = useState<number>(2);
   const [resultMatrix, setResultMatrix] = useState<Matrix | null>(null);
   const [scalarResult, setScalarResult] = useState<number | null>(null);
-  const [operationLabel, setOperationLabel] = useState<string>('Vyberte maticovou operaci');
+  const [operationLabel, setOperationLabel] = useState<string>(() => t('select_matrix_op', 'Vyberte maticovou operaci'));
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
@@ -242,13 +242,13 @@ export const MatrixCalculatorTool: React.FC = () => {
     const target = mat === 'A' ? matrixA : matrixB;
 
     if (rows !== cols) {
-      setError(`Determinant lze počítat pouze pro čtvercové matice! Matice ${mat} má rozměr ${rows} × ${cols}.`);
+      setError(t('err_matrix_square_det', `Determinant lze počítat pouze pro čtvercové matice! Matice ${mat} má rozměr ${rows} × ${cols}.`, { mat, rows, cols }));
       return;
     }
     const det = computeDeterminant(target);
     setScalarResult(det);
     setResultMatrix(null);
-    setOperationLabel(`Determinant det(${mat}) = ${det}`);
+    setOperationLabel(t('op_det', `Determinant det(${mat}) = ${det}`, { mat, det }));
   };
 
   const handleTrace = (mat: 'A' | 'B') => {
@@ -258,14 +258,14 @@ export const MatrixCalculatorTool: React.FC = () => {
     const target = mat === 'A' ? matrixA : matrixB;
 
     if (rows !== cols) {
-      setError(`Stopu lze počítat pouze pro čtvercové matice! Matice ${mat} má rozměr ${rows} × ${cols}.`);
+      setError(t('err_matrix_square_trace', `Stopu lze počítat pouze pro čtvercové matice! Matice ${mat} má rozměr ${rows} × ${cols}.`, { mat, rows, cols }));
       return;
     }
     let tr = 0;
     for (let i = 0; i < rows; i++) tr += target[i][i];
     setScalarResult(tr);
     setResultMatrix(null);
-    setOperationLabel(`Stopa matice tr(${mat}) = ${tr}`);
+    setOperationLabel(t('op_trace', `Stopa matice tr(${mat}) = ${tr}`, { mat, tr }));
   };
 
   const handleInverse = (mat: 'A' | 'B') => {
@@ -275,13 +275,13 @@ export const MatrixCalculatorTool: React.FC = () => {
     const target = mat === 'A' ? matrixA : matrixB;
 
     if (rows !== cols) {
-      setError(`Inverzní matici lze počítat pouze pro čtvercové matice! Matice ${mat} má rozměr ${rows} × ${cols}.`);
+      setError(t('err_matrix_square_inv', `Inverzní matici lze počítat pouze pro čtvercové matice! Matice ${mat} má rozměr ${rows} × ${cols}.`, { mat, rows, cols }));
       return;
     }
 
     const det = computeDeterminant(target);
     if (Math.abs(det) < 1e-9) {
-      setError(`Matice ${mat} je singulární (det(${mat}) = 0), inverzní matice neexistuje!`);
+      setError(t('err_matrix_singular_det', `Matice ${mat} je singulární (det(${mat}) = 0), inverzní matice neexistuje!`, { mat }));
       setResultMatrix(null);
       setScalarResult(null);
       return;
@@ -289,13 +289,13 @@ export const MatrixCalculatorTool: React.FC = () => {
 
     const inv = invertMatrix(target);
     if (!inv) {
-      setError(`Matice ${mat} je singulární a nelze ji invertovat.`);
+      setError(t('err_matrix_singular', `Matice ${mat} je singulární a nelze ji invertovat.`, { mat }));
       return;
     }
 
     setResultMatrix(inv);
     setScalarResult(null);
-    setOperationLabel(`Inverzní matice (${mat}⁻¹) [${rows} × ${cols}]`);
+    setOperationLabel(t('op_inverse', `Inverzní matice (${mat}⁻¹) [${rows} × ${cols}]`, { mat, rows, cols }));
   };
 
   const handleTranspose = (mat: 'A' | 'B') => {
@@ -309,13 +309,13 @@ export const MatrixCalculatorTool: React.FC = () => {
     );
     setResultMatrix(res);
     setScalarResult(null);
-    setOperationLabel(`Transpozice (${mat}ᵀ) [${cols} × ${rows}]`);
+    setOperationLabel(t('op_transpose', `Transpozice (${mat}ᵀ) [${cols} × ${rows}]`, { mat, cols, rows }));
   };
 
   const handleAddition = () => {
     setError(null);
     if (rowsA !== rowsB || colsA !== colsB) {
-      setError(`Pro sčítání musí mít obě matice stejný rozměr! A má ${rowsA}×${colsA}, B má ${rowsB}×${colsB}.`);
+      setError(t('err_matrix_add_dim', `Pro sčítání musí mít obě matice stejný rozměr! A má ${rowsA}×${colsA}, B má ${rowsB}×${colsB}.`, { rowsA, colsA, rowsB, colsB }));
       return;
     }
     const res: Matrix = Array.from({ length: rowsA }, (_, r) =>
@@ -323,13 +323,13 @@ export const MatrixCalculatorTool: React.FC = () => {
     );
     setResultMatrix(res);
     setScalarResult(null);
-    setOperationLabel(`Součet matic (A + B) [${rowsA} × ${colsA}]`);
+    setOperationLabel(t('op_sum', `Součet matic (A + B) [${rowsA} × ${colsA}]`, { rowsA, colsA }));
   };
 
   const handleSubtraction = () => {
     setError(null);
     if (rowsA !== rowsB || colsA !== colsB) {
-      setError(`Pro odčítání musí mít obě matice stejný rozměr! A má ${rowsA}×${colsA}, B má ${rowsB}×${colsB}.`);
+      setError(t('err_matrix_sub_dim', `Pro odčítání musí mít obě matice stejný rozměr! A má ${rowsA}×${colsA}, B má ${rowsB}×${colsB}.`, { rowsA, colsA, rowsB, colsB }));
       return;
     }
     const res: Matrix = Array.from({ length: rowsA }, (_, r) =>
@@ -337,13 +337,13 @@ export const MatrixCalculatorTool: React.FC = () => {
     );
     setResultMatrix(res);
     setScalarResult(null);
-    setOperationLabel(`Rozdíl matic (A - B) [${rowsA} × ${colsA}]`);
+    setOperationLabel(t('op_diff', `Rozdíl matic (A - B) [${rowsA} × ${colsA}]`, { rowsA, colsA }));
   };
 
   const handleMultiplicationAB = () => {
     setError(null);
     if (colsA !== rowsB) {
-      setError(`Pro násobení A × B se musí počet sloupců A (${colsA}) rovnat počtu řádků B (${rowsB})!`);
+      setError(t('err_matrix_mul_dim', `Pro násobení A × B se musí počet sloupců A (${colsA}) rovnat počtu řádků B (${rowsB})!`, { colsA, rowsB }));
       return;
     }
     const res: Matrix = Array.from({ length: rowsA }, () => Array(colsB).fill(0));
@@ -358,13 +358,13 @@ export const MatrixCalculatorTool: React.FC = () => {
     }
     setResultMatrix(res);
     setScalarResult(null);
-    setOperationLabel(`Násobení matic (A × B) [Výsledek: ${rowsA} × ${colsB}]`);
+    setOperationLabel(t('op_mul_ab', `Násobení matic (A × B) [Výsledek: ${rowsA} × ${colsB}]`, { rowsA, colsB }));
   };
 
   const handleMultiplicationBA = () => {
     setError(null);
     if (colsB !== rowsA) {
-      setError(`Pro násobení B × A se musí počet sloupců B (${colsB}) rovnat počtu řádků A (${rowsA})!`);
+      setError(t('err_matrix_mul_ba_dim', `Pro násobení B × A se musí počet sloupců B (${colsB}) rovnat počtu řádků A (${rowsA})!`, { colsB, rowsA }));
       return;
     }
     const res: Matrix = Array.from({ length: rowsB }, () => Array(colsA).fill(0));
@@ -379,7 +379,7 @@ export const MatrixCalculatorTool: React.FC = () => {
     }
     setResultMatrix(res);
     setScalarResult(null);
-    setOperationLabel(`Násobení matic (B × A) [Výsledek: ${rowsB} × ${colsA}]`);
+    setOperationLabel(t('op_mul_ba', `Násobení matic (B × A) [Výsledek: ${rowsB} × ${colsA}]`, { rowsB, colsA }));
   };
 
   const handleScalar = (mat: 'A' | 'B') => {
@@ -391,7 +391,7 @@ export const MatrixCalculatorTool: React.FC = () => {
     const res: Matrix = target.map(row => row.map(v => v * scalar));
     setResultMatrix(res);
     setScalarResult(null);
-    setOperationLabel(`Skalární násobek (${scalar} · ${mat}) [${rows} × ${cols}]`);
+    setOperationLabel(t('op_scalar', `Skalární násobek (${scalar} · ${mat}) [${rows} × ${cols}]`, { scalar, mat, rows, cols }));
   };
 
   const copyResult = () => {
@@ -414,18 +414,10 @@ export const MatrixCalculatorTool: React.FC = () => {
       <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800 flex flex-wrap items-center justify-between gap-4">
         <div>
           <h2 className="text-lg font-semibold text-white">
-            {currentLanguage === 'cs' ? 'Maticová Kalkulačka (Dynamické Rozměry)' :
-             currentLanguage === 'ru' ? 'Матричный Калькулятор (Динамические Размеры)' :
-             currentLanguage === 'de' ? 'Matrix-Rechner (Dynamische Dimensionen)' :
-             currentLanguage === 'es' ? 'Calculadora de Matrices (Dimensiones Dinámicas)' :
-             'Matrix Calculator (Dynamic Dimensions)'}
+            {t('matrix_calculator_title', 'Maticová kalkulačka (Dynamické rozměry)')}
           </h2>
           <p className="text-sm text-slate-400 mt-1">
-            {currentLanguage === 'cs' ? 'Libovolně nastavitelné rozměry matic A (M × K) a B (K × N) od 1×1 do 6×6, násobení A×B a B×A, inverze i determinanty.' :
-             currentLanguage === 'ru' ? 'Произвольные размеры матриц A (M × K) и B (K × N) от 1×1 до 6×6, умножение A×B и B×A, обратные матрицы и определители.' :
-             currentLanguage === 'de' ? 'Beliebige Dimensionen für Matrizen A (M × K) und B (K × N) von 1×1 bis 6×6, Multiplikation, Inverse und Determinanten.' :
-             currentLanguage === 'es' ? 'Dimensiones arbitrarias de matrices A (M × K) y B (K × N) de 1×1 a 6×6, multiplicación, inversas y determinantes.' :
-             'Fully customizable matrix dimensions A (M × K) and B (K × N) from 1×1 to 6×6, multiplication, inversion, and determinants.'}
+            {t('matrix_calculator_desc', 'Libovolně nastavitelné rozměry matic A (M × K) a B (K × N) od 1×1 do 6×6, násobení A×B a B×A, inverze i determinanty.')}
           </p>
         </div>
 

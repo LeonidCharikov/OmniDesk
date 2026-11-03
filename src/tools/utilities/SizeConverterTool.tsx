@@ -384,7 +384,12 @@ export const SizeConverterTool: React.FC = () => {
               <button
                 onClick={() =>
                   handleCopy(
-                    `Oblečení: ${currentClothes.intl} (EU ${currentClothes.eu}, US ${currentClothes.us}, hrudník ${currentClothes.chestCm} cm)`
+                    t('clothes_size_summary', `Oblečení: ${currentClothes.intl} (EU ${currentClothes.eu}, US ${currentClothes.us}, hrudník ${currentClothes.chestCm} cm)`, {
+                      intl: currentClothes.intl,
+                      eu: currentClothes.eu,
+                      us: currentClothes.us,
+                      chest: currentClothes.chestCm,
+                    })
                   )
                 }
                 className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium transition-colors flex items-center gap-1.5"

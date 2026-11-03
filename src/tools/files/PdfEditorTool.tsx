@@ -1831,7 +1831,7 @@ export const PdfEditorTool: React.FC = () => {
               <button
                 onClick={() => changeSelectedElementFontSize(-2)}
                 className="text-slate-400 hover:text-white text-xs px-1"
-                title="Decrease font size"
+                title={t('decrease_font_size', 'Zmenšit velikost písma')}
               >
                 -
               </button>
@@ -1839,7 +1839,7 @@ export const PdfEditorTool: React.FC = () => {
               <button
                 onClick={() => changeSelectedElementFontSize(2)}
                 className="text-slate-400 hover:text-white text-xs px-1"
-                title="Increase font size"
+                title={t('increase_font_size', 'Zvětšit velikost písma')}
               >
                 +
               </button>
@@ -2761,12 +2761,12 @@ export const PdfEditorTool: React.FC = () => {
                   />
                 </div>
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-500 italic">Sign using mouse or touch screen</span>
+                  <span className="text-slate-500 italic">{t('pdf_editor_sign_hint', 'Podepište myší nebo dotykovou obrazovkou')}</span>
                   <button
                     onClick={clearSigCanvas}
                     className="text-rose-400 hover:underline"
                   >
-                    {t('pdf_editor_clear_signature', 'Clear')}
+                    {t('pdf_editor_clear_signature', 'Vymazat')}
                   </button>
                 </div>
               </div>
@@ -2789,7 +2789,7 @@ export const PdfEditorTool: React.FC = () => {
                     >
                       {st.label}
                     </div>
-                    <span className="text-[10px] text-slate-500 group-hover:text-slate-400">Click to place</span>
+                    <span className="text-[10px] text-slate-500 group-hover:text-slate-400">{t('pdf_editor_click_to_place', 'Klikněte pro vložení')}</span>
                   </button>
                 ))}
               </div>
@@ -2808,7 +2808,7 @@ export const PdfEditorTool: React.FC = () => {
                     const reader = new FileReader();
                     reader.onload = () => {
                       if (typeof reader.result === 'string') {
-                        handleInsertSignature(reader.result, 'Uploaded signature');
+                        handleInsertSignature(reader.result, t('pdf_editor_uploaded_signature', 'Nahraný podpis'));
                       }
                     };
                     reader.readAsDataURL(file);
@@ -2820,9 +2820,9 @@ export const PdfEditorTool: React.FC = () => {
                 >
                   <Upload className="w-8 h-8 text-teal-400" />
                   <span className="text-xs font-medium text-slate-300">
-                    {t('pdf_editor_upload_signature', 'Upload Image')} (PNG / JPG)
+                    {t('pdf_editor_upload_signature', 'Nahrát obrázek')} (PNG / JPG)
                   </span>
-                  <span className="text-[10px] text-slate-500">Transparent PNG recommended</span>
+                  <span className="text-[10px] text-slate-500">{t('pdf_editor_transparent_png_hint', 'Doporučeno průhledné PNG')}</span>
                 </label>
               </div>
             )}

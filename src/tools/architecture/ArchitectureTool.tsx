@@ -13,16 +13,16 @@ export const ArchitectureTool: React.FC = () => {
     setTimeout(() => setCopiedIndex(null), 2000);
   };
 
-  const terminalInitCommands = `# 1. Vytvoření nového projektu s Tauri v2 a Reactem
+  const terminalInitCommands = `# ${t('arch_step_1', '1. Vytvoření nového projektu s Tauri v2 a Reactem')}
 npm create tauri-app@latest omnidesk -- --template react-ts
 
-# 2. Přejděte do složky projektu
+# ${t('arch_step_2', '2. Přejděte do složky projektu')}
 cd omnidesk
 
-# 3. Instalace produkčních knihoven pro UI a offline manipulaci
+# ${t('arch_step_3', '3. Instalace produkčních knihoven pro UI a offline manipulaci')}
 npm install lucide-react clsx tailwindcss @tailwindcss/vite mammoth pdf-lib
 
-# 4. Spuštění lokálního vývojového serveru s Tauri desktopovým oknem
+# ${t('arch_step_4', '4. Spuštění lokálního vývojového serveru s Tauri desktopovým oknem')}
 npm run tauri dev`;
 
   const rustIpcCode = `// src-tauri/src/main.rs
@@ -31,7 +31,7 @@ npm run tauri dev`;
 use std::fs;
 use std::path::Path;
 
-// Rust command pro bezpečný zápis do lokální JSON konfigurace
+// ${t('arch_rust_comment_1', 'Rust command pro bezpečný zápis do lokální JSON konfigurace')}
 #[tauri::command]
 fn save_user_config(app_handle: tauri::AppHandle, config_json: String) -> Result<String, String> {
     use tauri::Manager;
@@ -40,15 +40,15 @@ fn save_user_config(app_handle: tauri::AppHandle, config_json: String) -> Result
     
     let file_path = config_dir.join("omnidesk-config.json");
     fs::write(&file_path, config_json).map_err(|e| e.to_string())?;
-    Ok(format!("Uloženo do: {:?}", file_path))
+    Ok(format!("${t('saved_to_prefix', 'Uloženo do:')} {:?}", file_path))
 }
 
-// Rust command pro offline čtení souboru z disku
+// ${t('arch_rust_comment_2', 'Rust command pro offline čtení souboru z disku')}
 #[tauri::command]
 fn read_local_file(file_path: String) -> Result<Vec<u8>, String> {
     let path = Path::new(&file_path);
     if !path.exists() {
-        return Err("Soubor neexistuje".into());
+        return Err("${t('file_not_found', 'Soubor neexistuje')}".into());
     }
     fs::read(path).map_err(|e| e.to_string())
 }
@@ -61,7 +61,7 @@ fn main() {
             read_local_file
         ])
         .run(tauri::generate_context!())
-        .expect("Chyba při startu aplikace Tauri");
+        .expect("${t('tauri_start_error', 'Chyba při startu aplikace Tauri')}");
 }`;
 
   const reactBridgeCode = `// src/services/fileSystemService.ts
@@ -69,26 +69,26 @@ import { open, save } from '@tauri-apps/plugin-dialog';
 import { readTextFile, readFile, writeTextFile, writeFile } from '@tauri-apps/plugin-fs';
 
 /**
- * 1. Otevření nativního systémového dialogu na hostitelském počítači
+ * ${t('arch_bridge_step_1', '1. Otevření nativního systémového dialogu na hostitelském počítači')}
  */
 export async function pickFileOnHost(): Promise<string | null> {
   const selected = await open({
-    title: 'Vyberte dokument k lokálnímu zpracování',
+    title: '${t('arch_pick_doc_title', 'Vyberte dokument k lokálnímu zpracování')}',
     multiple: false,
-    filters: [{ name: 'Dokumenty', extensions: ['docx', 'md', 'txt', 'csv', 'json'] }]
+    filters: [{ name: '${t('documents', 'Dokumenty')}', extensions: ['docx', 'md', 'txt', 'csv', 'json'] }]
   });
   return selected as string | null;
 }
 
 /**
- * 2. Přímé čtení souboru z disku hostitele přes Tauri FS plugin
+ * ${t('arch_bridge_step_2', '2. Přímé čtení souboru z disku hostitele přes Tauri FS plugin')}
  */
 export async function readHostFile(filePath: string): Promise<Uint8Array> {
   return await readFile(filePath);
 }
 
 /**
- * 3. Zápis převedeného souboru (PDF, WebP) přímo na disk
+ * ${t('arch_bridge_step_3', '3. Zápis převedeného souboru (PDF, WebP) přímo na disk')}
  */
 export async function saveConvertedFile(targetPath: string, data: Uint8Array): Promise<void> {
   await writeFile(targetPath, data);
@@ -161,19 +161,19 @@ export async function saveConvertedFile(targetPath: string, data: Uint8Array): P
               <ul className="text-xs text-slate-300 space-y-2 leading-relaxed">
                 <li className="flex items-start gap-2">
                   <span className="text-emerald-400 font-bold">&#10003;</span>
-                  <span><strong>{t('ram_memory', 'Paměť RAM')}:</strong> ~35 MB (využívá nativní WebView2 na Windows / WebKit na macOS).</span>
+                  <span><strong>{t('ram_memory', 'Paměť RAM')}:</strong> ~35 MB ({t('tauri_webview_desc', 'využívá nativní WebView2 na Windows / WebKit na macOS')}).</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-emerald-400 font-bold">&#10003;</span>
-                  <span><strong>{t('binary_size', 'Velikost binárky')}:</strong> 8–15 MB místo 120+ MB u Electronu.</span>
+                  <span><strong>{t('binary_size', 'Velikost binárky')}:</strong> 8–15 MB {t('instead_of_electron', 'místo 120+ MB u Electronu')}.</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-emerald-400 font-bold">&#10003;</span>
-                  <span><strong>{t('file_performance', 'Výkon pro soubory')}:</strong> Rust má bezkonkurenční rychlost a bezpečnost paměti pro binární konverze dokumentů.</span>
+                  <span><strong>{t('file_performance', 'Výkon pro soubory')}:</strong> {t('rust_performance_desc', 'Rust má bezkonkurenční rychlost a bezpečnost paměti pro binární konverze dokumentů.')}</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-emerald-400 font-bold">&#10003;</span>
-                  <span><strong>{t('security', 'Bezpečnost')}:</strong> Detailní oprávnění (permissions) pro přístup k souborům a oknům.</span>
+                  <span><strong>{t('security', 'Bezpečnost')}:</strong> {t('security_desc', 'Detailní oprávnění (permissions) pro přístup k souborům a oknům.')}</span>
                 </li>
               </ul>
             </div>
@@ -188,7 +188,7 @@ export async function saveConvertedFile(targetPath: string, data: Uint8Array): P
               <ul className="text-xs text-slate-400 space-y-2 leading-relaxed">
                 <li className="flex items-start gap-2">
                   <span className="text-amber-400 font-bold">&#8226;</span>
-                  <span><strong>{t('ram_memory', 'Paměť RAM')}:</strong> 180–400+ MB (přibaluje celý Chromium browser a instanci Node.js).</span>
+                  <span><strong>{t('ram_memory', 'Paměť RAM')}:</strong> 180–400+ MB ({t('electron_ram_desc', 'přibaluje celý Chromium browser a instanci Node.js')}).</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-amber-400 font-bold">&#8226;</span>
@@ -196,11 +196,11 @@ export async function saveConvertedFile(targetPath: string, data: Uint8Array): P
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-emerald-400 font-bold">&#10003;</span>
-                  <span><strong>{t('ecosystem', 'Ekosystém')}:</strong> Přímý přístup k libovolným Node.js modulům přes `npm` i na backendu.</span>
+                  <span><strong>{t('ecosystem', 'Ekosystém')}:</strong> {t('ecosystem_desc', 'Přímý přístup k libovolným Node.js modulům přes `npm` i na backendu.')}</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-amber-400 font-bold">&#8226;</span>
-                  <span><strong>{t('conclusion', 'Závěr')}:</strong> Pro aplikaci, která má tiše běžet na pozadí jako rychlý pomocník, je zbytečně těžkopádný.</span>
+                  <span><strong>{t('conclusion', 'Závěr')}:</strong> {t('electron_conclusion_desc', 'Pro aplikaci, která má tiše běžet na pozadí jako rychlý pomocník, je zbytečně těžkopádný.')}</span>
                 </li>
               </ul>
             </div>
@@ -212,41 +212,41 @@ export async function saveConvertedFile(targetPath: string, data: Uint8Array): P
       {activeTab === 'structure' && (
         <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 font-mono text-xs text-slate-300 leading-relaxed overflow-x-auto">
           <pre>{`omnidesk/
-├── src-tauri/                 # Rust Tauri backend
-│   ├── Cargo.toml             # Rust závislosti (serde, tauri, pdfium/docx crates)
+├── src-tauri/                 # Tauri Rust backend
+│   ├── Cargo.toml             # Rust dependencies (serde, tauri, pdfium/docx crates)
 │   ├── src/
-│   │   ├── main.rs            # Inicializace Tauri a registrace IPC příkazů
-│   │   ├── commands/          # Rust příkazy oddělené podle domén
-│   │   │   ├── file_ops.rs    # Bezpečné čtení/zápis souborů, nativní dialogy
-│   │   │   ├── converter.rs   # Backendová konverze a manipulace
-│   │   │   └── config.rs      # Ukládání a čtení JSON konfigurace na disku
+│   │   ├── main.rs            # Tauri initialization & IPC command registration
+│   │   ├── commands/          # Rust commands separated by domain
+│   │   │   ├── file_ops.rs    # File operations & native dialogs
+│   │   │   ├── converter.rs   # Backend conversion & manipulation
+│   │   │   └── config.rs      # JSON configuration persistence
 │   │   └── lib.rs
-│   └── tauri.conf.json        # Konfigurace oken, oprávnění a bezpečnostních politik
-├── src/                       # Frontendová vrstva (React + TypeScript + Vite)
-│   ├── main.tsx               # Vstupní bod aplikace
-│   ├── App.tsx                # Hlavní shell aplikace (layout, stav aktivního nástroje)
-│   ├── index.css              # Globální styly, Tailwind CSS
+│   └── tauri.conf.json        # Windows, permissions & security policies
+├── src/                       # Frontend layer (React + TypeScript + Vite)
+│   ├── main.tsx               # App entry point
+│   ├── App.tsx                # Main shell (layout, active tool state)
+│   ├── index.css              # Global styles, Tailwind CSS
 │   ├── types/
-│   │   └── tool.ts            # ToolDefinition, Category, UserConfig typy
-│   ├── services/              # Abstrakce komunikace s backendem / lokálním během
-│   │   ├── storage.ts         # Hybridní úložiště (Tauri fs API vs localStorage fallback)
-│   │   ├── tauriBridge.ts     # Wrapper kolem @tauri-apps/api
-│   │   └── networkStatus.ts   # Detekce online/offline stavu
-│   ├── components/            # Globální sdílené komponenty
+│   │   └── tool.ts            # ToolDefinition, Category, UserConfig types
+│   ├── services/              # Backend abstraction & storage
+│   │   ├── storage.ts         # Hybrid storage (Tauri fs API vs localStorage fallback)
+│   │   ├── tauriBridge.ts     # Wrapper around @tauri-apps/api
+│   │   └── networkStatus.ts   # Online/offline detection
+│   ├── components/            # Shared components
 │   │   ├── layout/            # Sidebar, Header, CommandPalette
-│   │   └── ui/                # Tlačítka, dialogy, indikátory stavu, dropzóny
-│   └── tools/                 # MODULÁRNÍ NÁSTROJE (každý ve své složce)
-│       ├── registry.ts        # Centrální registr všech dostupných modulů
+│   │   └── ui/                # Buttons, dialogs, status indicators, dropzones
+│   └── tools/                 # Modular tools (each in its own directory)
+│       ├── registry.ts        # Central tool registry
 │       ├── files/
-│       │   ├── docx-to-pdf/   # Lokální převod DOCX do PDF
-│       │   └── file-inspector/# Hashování a binární inspekce
+│       │   ├── docx-to-pdf/   # Local DOCX to PDF converter
+│       │   └── file-inspector/# Hashing & binary inspection
 │       ├── science/
-│       │   └── unit-converter/# Převodník jednotek (SI, imperiální, fyzika)
+│       │   └── unit-converter/# Unit converter (SI, imperial, physics)
 │       ├── finance/
-│       │   └── loan-calc/     # Úvěrová a hypotéční kalkulačka s amortizací
+│       │   └── loan-calc/     # Loan & mortgage calculator with amortization
 │       └── utilities/
-│           ├── json-formatter/# Formátovač, validátor a linter JSONu
-│           └── translator/    # Hybridní překladač (online)
+│           ├── json-formatter/# JSON formatter, validator & linter
+│           └── translator/    # Hybrid translator (online/offline)
 └── package.json`}</pre>
         </div>
       )}
@@ -328,9 +328,9 @@ export async function saveConvertedFile(targetPath: string, data: Uint8Array): P
               <li>{t('build_rust', 'Rust zkompiluje nativní jádro: Vytvoří binární soubor, který komunikuje přímo s operačním systémem a připojí k němu systémový WebView.')}</li>
               <li>{t('build_installer', 'Vytvoření instalátoru: Tauri automaticky zabalí vše dohromady a vytvoří hotový instalátor:')}
                 <ul className="list-disc list-inside pl-4 mt-1 space-y-0.5 font-mono text-indigo-300">
-                  <li>Windows: <code>src-tauri/target/release/bundle/nsis/omnidesk_setup.exe</code></li>
-                  <li>macOS: <code>src-tauri/target/release/bundle/dmg/omnidesk.dmg</code></li>
-                  <li>Linux: <code>src-tauri/target/release/bundle/deb/omnidesk.deb</code> nebo <code>.AppImage</code></li>
+                  <li>{t('platform_windows', 'Windows')}: <code>src-tauri/target/release/bundle/nsis/omnidesk_setup.exe</code></li>
+                  <li>{t('platform_macos', 'macOS')}: <code>src-tauri/target/release/bundle/dmg/omnidesk.dmg</code></li>
+                  <li>{t('platform_linux', 'Linux')}: <code>src-tauri/target/release/bundle/deb/omnidesk.deb</code> {t('or', 'nebo')} <code>.AppImage</code></li>
                 </ul>
               </li>
             </ol>

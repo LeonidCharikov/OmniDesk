@@ -9,8 +9,8 @@ export const RegexEncoderTool: React.FC = () => {
   // Regex state
   const [pattern, setPattern] = useState<string>('([a-zA-Z0-9._%+-]+)@([a-zA-Z0-9.-]+\\.[a-zA-Z]{2,})');
   const [flags, setFlags] = useState<{ g: boolean; i: boolean; m: boolean }>({ g: true, i: true, m: false });
-  const [testText, setTestText] = useState<string>(
-    'Kontaktujte nás na support@omnidesk.app nebo sales@company.com pro více informací.'
+  const [testText, setTestText] = useState<string>(() =>
+    t('sample_contact_text', 'Kontaktujte nás na support@omnidesk.app nebo sales@company.com pro více informací.')
   );
 
   // Base64 state

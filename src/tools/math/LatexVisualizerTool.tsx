@@ -15,92 +15,102 @@ import { useI18n } from '../../i18n/context';
 import { saveTextWithDialog } from '../../services/fileSystemService';
 
 interface PresetFormula {
+  key: string;
+  categoryKey: string;
   name: string;
   category: string;
   latex: string;
-  description: string;
 }
 
 const PRESETS: PresetFormula[] = [
   {
+    key: 'preset_quad_formula',
+    categoryKey: 'cat_algebra',
     name: 'Kvadratická rovnice',
     category: 'Algebra',
     latex: 'x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}',
-    description: 'Kořeny obecné kvadratické rovnice ax² + bx + c = 0.',
   },
   {
+    key: 'preset_euler_identity',
+    categoryKey: 'cat_analysis',
     name: "Eulerova identita",
     category: 'Analýza',
     latex: 'e^{i\\pi} + 1 = 0',
-    description: 'Propojení pěti nejdůležitějších konstant matematiky (e, i, π, 1, 0).',
   },
   {
+    key: 'preset_gaussian_dist',
+    categoryKey: 'cat_statistics',
     name: 'Gaussovo normální rozdělení',
     category: 'Statistika',
     latex: 'f(x) = \\frac{1}{\\sigma \\sqrt{2\\pi}} e^{-\\frac{1}{2}\\left(\\frac{x-\\mu}{\\sigma}\\right)^2}',
-    description: 'Hustota pravděpodobnosti normálního (Gaussova) rozdělení se střední hodnotou μ a rozptylem σ².',
   },
   {
+    key: 'preset_schrodinger_eq',
+    categoryKey: 'cat_physics',
     name: 'Schrödingerova rovnice',
     category: 'Fyzika',
     latex: 'i\\hbar \\frac{\\partial}{\\partial t}\\Psi(\\mathbf{r}, t) = \\left[ -\\frac{\\hbar^2}{2m}\\nabla^2 + V(\\mathbf{r}, t) \\right] \\Psi(\\mathbf{r}, t)',
-    description: 'Základní pohybová rovnice nerelativistické kvantové mechaniky.',
   },
   {
+    key: 'preset_einstein_energy',
+    categoryKey: 'cat_physics',
     name: 'Einsteinova ekvivalence hmoty a energie',
     category: 'Fyzika',
     latex: 'E = \\frac{m_0 c^2}{\\sqrt{1 - \\frac{v^2}{c^2}}} = m c^2',
-    description: 'Relativistická celková energie částice s klidovou hmotností m₀.',
   },
   {
+    key: 'preset_bayes_theorem',
+    categoryKey: 'cat_probability',
     name: "Bayesův teorém",
     category: 'Pravděpodobnost',
     latex: 'P(A \\mid B) = \\frac{P(B \\mid A) \\, P(A)}{P(B)}',
-    description: 'Výpočet podmíněné pravděpodobnosti jevu A za předpokladu jevu B.',
   },
   {
+    key: 'preset_matrix_prod',
+    categoryKey: 'cat_linear_algebra',
     name: 'Maticový součin (2×2)',
     category: 'Lineární algebra',
     latex: '\\begin{pmatrix} a_{11} & a_{12} \\\\ a_{21} & a_{22} \\end{pmatrix} \\begin{pmatrix} x_1 \\\\ x_2 \\end{pmatrix} = \\begin{pmatrix} b_1 \\\\ b_2 \\end{pmatrix}',
-    description: 'Soustava lineárních algebraických rovnic v maticovém tvaru.',
   },
   {
+    key: 'preset_fourier_trans',
+    categoryKey: 'cat_calculus',
     name: 'Určitý integrál (Fourier)',
     category: 'Kalkulus',
     latex: '\\hat{f}(\\xi) = \\int_{-\\infty}^{\\infty} f(x) \\, e^{-2\\pi i x \\xi} \\, dx',
-    description: 'Fourierova transformace spojité časové funkce na frekvenční spektrum.',
   },
 ];
 
 interface QuickInsert {
+  key: string;
   label: string;
   snippet: string;
   tooltip: string;
 }
 
 const QUICK_INSERTS: QuickInsert[] = [
-  { label: 'a/b', snippet: '\\frac{a}{b}', tooltip: 'Zlomek' },
-  { label: 'x²', snippet: '^{2}', tooltip: 'Mocnina' },
-  { label: 'xᵢ', snippet: '_{i}', tooltip: 'Index' },
-  { label: '√x', snippet: '\\sqrt{x}', tooltip: 'Odmocnina' },
-  { label: 'ⁿ√x', snippet: '\\sqrt[n]{x}', tooltip: 'N-tá odmocnina' },
-  { label: '∫', snippet: '\\int_{a}^{b} f(x) \\, dx', tooltip: 'Určitý integrál' },
-  { label: '∑', snippet: '\\sum_{i=1}^{n} x_i', tooltip: 'Suma' },
-  { label: '∏', snippet: '\\prod_{i=1}^{n} x_i', tooltip: 'Součin' },
-  { label: 'lim', snippet: '\\lim_{x \\to 0}', tooltip: 'Limita' },
-  { label: 'df/dx', snippet: '\\frac{df}{dx}', tooltip: 'Derivace' },
-  { label: '∂f/∂x', snippet: '\\frac{\\partial f}{\\partial x}', tooltip: 'Parciální derivace' },
-  { label: 'α', snippet: '\\alpha', tooltip: 'Alfa' },
-  { label: 'β', snippet: '\\beta', tooltip: 'Beta' },
-  { label: 'π', snippet: '\\pi', tooltip: 'Pí' },
-  { label: 'θ', snippet: '\\theta', tooltip: 'Théta' },
-  { label: 'λ', snippet: '\\lambda', tooltip: 'Lambda' },
-  { label: 'σ', snippet: '\\sigma', tooltip: 'Sigma' },
-  { label: 'Δ', snippet: '\\Delta', tooltip: 'Delta' },
-  { label: '∞', snippet: '\\infty', tooltip: 'Nekonečno' },
-  { label: '±', snippet: '\\pm', tooltip: 'Plus mínus' },
-  { label: 'Matice', snippet: '\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}', tooltip: 'Matice 2x2' },
-  { label: '( ... )', snippet: '\\left( x \\right)', tooltip: 'Dynamické závorky' },
+  { key: 'sym_fraction', label: 'a/b', snippet: '\\frac{a}{b}', tooltip: 'Zlomek' },
+  { key: 'sym_power', label: 'x²', snippet: '^{2}', tooltip: 'Mocnina' },
+  { key: 'sym_subscript', label: 'xᵢ', snippet: '_{i}', tooltip: 'Index' },
+  { key: 'sym_sqrt', label: '√x', snippet: '\\sqrt{x}', tooltip: 'Odmocnina' },
+  { key: 'sym_nth_root', label: 'ⁿ√x', snippet: '\\sqrt[n]{x}', tooltip: 'N-tá odmocnina' },
+  { key: 'sym_integral', label: '∫', snippet: '\\int_{a}^{b} f(x) \\, dx', tooltip: 'Určitý integrál' },
+  { key: 'sym_sum', label: '∑', snippet: '\\sum_{i=1}^{n} x_i', tooltip: 'Suma' },
+  { key: 'sym_prod', label: '∏', snippet: '\\prod_{i=1}^{n} x_i', tooltip: 'Součin' },
+  { key: 'sym_limit', label: 'lim', snippet: '\\lim_{x \\to 0}', tooltip: 'Limita' },
+  { key: 'sym_deriv', label: 'df/dx', snippet: '\\frac{df}{dx}', tooltip: 'Derivace' },
+  { key: 'sym_partial_deriv', label: '∂f/∂x', snippet: '\\frac{\\partial f}{\\partial x}', tooltip: 'Parciální derivace' },
+  { key: 'sym_alpha', label: 'α', snippet: '\\alpha', tooltip: 'Alfa' },
+  { key: 'sym_beta', label: 'β', snippet: '\\beta', tooltip: 'Beta' },
+  { key: 'sym_pi', label: 'π', snippet: '\\pi', tooltip: 'Pí' },
+  { key: 'sym_theta', label: 'θ', snippet: '\\theta', tooltip: 'Théta' },
+  { key: 'sym_lambda', label: 'λ', snippet: '\\lambda', tooltip: 'Lambda' },
+  { key: 'sym_sigma', label: 'σ', snippet: '\\sigma', tooltip: 'Sigma' },
+  { key: 'sym_delta', label: 'Δ', snippet: '\\Delta', tooltip: 'Delta' },
+  { key: 'sym_infinity', label: '∞', snippet: '\\infty', tooltip: 'Nekonečno' },
+  { key: 'sym_plus_minus', label: '±', snippet: '\\pm', tooltip: 'Plus mínus' },
+  { key: 'sym_matrix', label: 'Matice', snippet: '\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}', tooltip: 'Matice 2x2' },
+  { key: 'sym_dyn_parens', label: '( ... )', snippet: '\\left( x \\right)', tooltip: 'Dynamické závorky' },
 ];
 
 export const LatexVisualizerTool: React.FC = () => {
@@ -169,8 +179,8 @@ export const LatexVisualizerTool: React.FC = () => {
       `formula-${Date.now()}.svg`,
       svgContent,
       [
-        { name: 'SVG Vektorový obrázek (*.svg)', extensions: ['svg'] },
-        { name: 'Všechny soubory (*.*)', extensions: ['*'] }
+        { name: `${t('svg_vector_image', 'SVG Vektorový obrázek')} (*.svg)`, extensions: ['svg'] },
+        { name: `${t('all_files', 'Všechny soubory')} (*.*)`, extensions: ['*'] }
       ],
       t('save_svg_title', 'Uložit LaTeX formuli (Průzkumník)')
     );
@@ -236,7 +246,7 @@ export const LatexVisualizerTool: React.FC = () => {
           {latex.trim() ? (
             <div className="text-2xl sm:text-3xl font-medium tracking-wide space-y-2">
               <div className="text-indigo-400 font-mono text-xs not-italic uppercase tracking-widest opacity-60 mb-2">
-                RENDERED FORMULA
+                {t('rendered_formula', 'RENDERED FORMULA')}
               </div>
               <div className="px-4 py-2 rounded-xl border border-indigo-500/20 bg-indigo-500/5 backdrop-blur-sm">
                 {latex}
@@ -282,11 +292,11 @@ export const LatexVisualizerTool: React.FC = () => {
         </span>
 
         <div className="flex flex-wrap items-center gap-1.5">
-          {QUICK_INSERTS.map((item, idx) => (
+          {QUICK_INSERTS.map(item => (
             <button
-              key={idx}
+              key={item.key}
               onClick={() => handleInsert(item.snippet)}
-              title={t(item.tooltip)}
+              title={t(item.key, item.tooltip)}
               className="px-2.5 py-1.5 rounded-lg bg-slate-950 hover:bg-indigo-600 hover:text-white text-slate-300 border border-slate-800 font-mono text-xs transition-colors"
             >
               {item.label}
@@ -330,18 +340,18 @@ export const LatexVisualizerTool: React.FC = () => {
           </span>
 
           <div className="space-y-2 max-h-[170px] overflow-y-auto pr-1">
-            {PRESETS.map((p, idx) => (
+            {PRESETS.map(p => (
               <button
-                key={idx}
+                key={p.key}
                 onClick={() => setLatex(p.latex)}
                 className="w-full p-2.5 rounded-xl bg-slate-900/60 hover:bg-slate-800/80 border border-slate-800 text-left transition-colors group"
               >
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold text-slate-200 group-hover:text-indigo-400">
-                    {t(p.name)}
+                    {t(p.key, p.name)}
                   </span>
                   <span className="text-[10px] text-slate-500 bg-slate-950 px-1.5 py-0.5 rounded">
-                    {t(p.category)}
+                    {t(p.categoryKey, p.category)}
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-400 mt-1 line-clamp-1 font-mono">

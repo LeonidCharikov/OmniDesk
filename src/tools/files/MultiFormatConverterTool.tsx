@@ -307,8 +307,8 @@ export const MultiFormatConverterTool: React.FC = () => {
       resultBlob,
       mime,
       [
-        { name: `Soubor (*.${ext})`, extensions: [ext] },
-        { name: 'Všechny soubory (*.*)', extensions: ['*'] }
+        { name: `${t('file_label', 'Soubor')} (*.${ext})`, extensions: [ext] },
+        { name: `${t('all_files', 'Všechny soubory')} (*.*)`, extensions: ['*'] }
       ],
       t('save_converted_file', 'Uložit převedený soubor (Průzkumník)')
     );

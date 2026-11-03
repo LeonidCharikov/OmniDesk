@@ -63,8 +63,8 @@ export const JsonFormatterTool: React.FC = () => {
       'formatted_omnidesk.json',
       input,
       [
-        { name: 'JSON Soubor (*.json)', extensions: ['json'] },
-        { name: 'Všechny soubory (*.*)', extensions: ['*'] }
+        { name: `${t('json_file_label', 'JSON Soubor')} (*.json)`, extensions: ['json'] },
+        { name: `${t('all_files', 'Všechny soubory')} (*.*)`, extensions: ['*'] }
       ],
       t('save_json_title', 'Uložit JSON soubor (Průzkumník)')
     );

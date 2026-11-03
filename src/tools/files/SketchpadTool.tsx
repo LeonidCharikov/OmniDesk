@@ -175,8 +175,8 @@ export const SketchpadTool: React.FC = () => {
         blob,
         'image/png',
         [
-          { name: 'PNG Obrázek (*.png)', extensions: ['png'] },
-          { name: 'Všechny soubory (*.*)', extensions: ['*'] }
+          { name: `${t('png_image_label', 'PNG Obrázek')} (*.png)`, extensions: ['png'] },
+          { name: `${t('all_files', 'Všechny soubory')} (*.*)`, extensions: ['*'] }
         ],
         t('save_sketch_title', 'Uložit náčrt / podpis (Průzkumník)')
       );

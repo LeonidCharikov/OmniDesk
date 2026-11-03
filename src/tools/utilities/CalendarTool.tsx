@@ -371,7 +371,7 @@ export const CalendarTool: React.FC = () => {
           />
         </div>
         <div className="text-xs text-slate-500">
-          Celkem {events.length} událostí
+          {t('total_events_count', `Celkem ${events.length} událostí`, { count: events.length })}
         </div>
       </div>
 
@@ -379,7 +379,7 @@ export const CalendarTool: React.FC = () => {
       {searchQuery.trim() && (
         <div className="p-3 rounded-xl bg-slate-950 border border-indigo-500/40 space-y-2 max-h-56 overflow-y-auto">
           <span className="text-xs font-semibold text-indigo-400 block">
-            Nalezené události pro &ldquo;{searchQuery}&rdquo;:
+            {t('found_events_for', `Nalezené události pro “{query}”:`, { query: searchQuery })}
           </span>
           {events
             .filter(
@@ -401,10 +401,10 @@ export const CalendarTool: React.FC = () => {
                 <div>
                   <strong className="text-white">{e.title}</strong>
                   <span className="text-slate-400 ml-2">
-                    {e.date} v {formatTime(e.hour, e.minute)} ({e.durationMinutes} min)
+                    {e.date} {t('at_time', 'v')} {formatTime(e.hour, e.minute)} ({e.durationMinutes} min)
                   </span>
                 </div>
-                <span className="text-[10px] text-indigo-400 underline">Otevřít</span>
+                <span className="text-[10px] text-indigo-400 underline">{t('open_event', 'Otevřít')}</span>
               </div>
             ))}
         </div>
@@ -511,6 +511,7 @@ const MonthView: React.FC<{
   getEventsForDate: (ds: string) => CalendarEvent[];
   dayNames: string[];
 }> = ({ currentDate, todayStr, selectedDate, events, onSelectDate, getEventsForDate, dayNames }) => {
+  const { t } = useI18n();
   const days = getMonthDays(currentDate.getFullYear(), currentDate.getMonth());
 
   return (
@@ -563,7 +564,7 @@ const MonthView: React.FC<{
                   );
                 })}
                 {dayEvents.length > 3 && (
-                  <span className="text-[9px] text-slate-500">+{dayEvents.length - 3} další</span>
+                  <span className="text-[9px] text-slate-500">+{dayEvents.length - 3} {t('more_events', 'další')}</span>
                 )}
               </div>
             </button>

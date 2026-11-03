@@ -119,6 +119,7 @@ export const PdfToolkitTool: React.FC = () => {
   const [rotationAngle, setRotationAngle] = useState<90 | 180 | 270>(90);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
+  const [isError, setIsError] = useState(false);
 
   const removeFile = (index: number) => {
     setFiles(files.filter((_, i) => i !== index));
@@ -128,6 +129,7 @@ export const PdfToolkitTool: React.FC = () => {
     if (!files.length) return;
     setBusy(true);
     setMessage('');
+    setIsError(false);
     try {
       const output = await PDFDocument.create();
       for (const file of files) {
@@ -143,6 +145,7 @@ export const PdfToolkitTool: React.FC = () => {
         [{ name: 'PDF (*.pdf)', extensions: ['pdf'] }],
         t('save_merged_pdf', 'Uložit sloučené PDF')
       );
+      setIsError(!result.success);
       setMessage(
         result.success
           ? t('pdf_merged', `Úspěšně sloučeno ${files.length} souborů PDF.`)
@@ -151,6 +154,7 @@ export const PdfToolkitTool: React.FC = () => {
           : result.error || t('pdf_merge_failed', 'Sloučení PDF se nezdařilo.')
       );
     } catch (error) {
+      setIsError(true);
       setMessage(error instanceof Error ? error.message : t('pdf_processing_failed', 'PDF se nepodařilo zpracovat.'));
     } finally {
       setBusy(false);
@@ -161,6 +165,7 @@ export const PdfToolkitTool: React.FC = () => {
     if (!files.length) return;
     setBusy(true);
     setMessage('');
+    setIsError(false);
     try {
       const targetFile = files[0];
       const pdf = await PDFDocument.load(await targetFile.arrayBuffer());
@@ -173,6 +178,7 @@ export const PdfToolkitTool: React.FC = () => {
         [{ name: 'PDF (*.pdf)', extensions: ['pdf'] }],
         t('save_rotated_pdf', 'Uložit otočené PDF')
       );
+      setIsError(!result.success);
       setMessage(
         result.success
           ? t('pdf_rotated', `Otočeno o ${rotationAngle}°: ${targetFile.name}.`)
@@ -181,6 +187,7 @@ export const PdfToolkitTool: React.FC = () => {
           : result.error || t('pdf_rotate_failed', 'Otočení PDF se nezdařilo.')
       );
     } catch (error) {
+      setIsError(true);
       setMessage(error instanceof Error ? error.message : t('pdf_processing_failed', 'Otočení PDF se nezdařilo.'));
     } finally {
       setBusy(false);
@@ -203,7 +210,7 @@ export const PdfToolkitTool: React.FC = () => {
         <FilePicker
           id="pdf-toolkit-files"
           label={mode === 'merge' ? t('choose_pdf_files', 'Vybrat soubory PDF k sloučení') : t('choose_pdf_rotate', 'Vybrat soubor PDF k otočení')}
-          fileName={files.length ? `${files.length} soubor(y) vybráno` : undefined}
+          fileName={files.length ? t('files_selected_count', `${files.length} soubor(y) vybráno`, { count: files.length }) : undefined}
           accept=".pdf,application/pdf"
           multiple={mode === 'merge'}
           onChange={e => {
@@ -272,7 +279,7 @@ export const PdfToolkitTool: React.FC = () => {
         {message && (
           <p
             className={`text-xs p-2 rounded-lg flex items-center gap-2 ${
-              message.includes('selhalo') || message.includes('failed') || message.includes('zrušeno')
+              isError
                 ? 'bg-amber-950/30 text-amber-300 border border-amber-800/40'
                 : 'bg-emerald-950/30 text-emerald-400 border border-emerald-800/40'
             }`}
@@ -368,12 +375,12 @@ export const OcrScannerTool: React.FC = () => {
             <div>
               <label className="text-xs text-slate-300 font-medium block mb-1">{t('ocr_language', 'Jazyk předlohy:')}</label>
               <select className={input} value={selectedLang} onChange={e => setSelectedLang(e.target.value)}>
-                <option value="eng">English (eng)</option>
-                <option value="ces">Čeština (ces)</option>
-                <option value="deu">Deutsch (deu)</option>
-                <option value="spa">Español (spa)</option>
-                <option value="fra">Français (fra)</option>
-                <option value="rus">Русский (rus)</option>
+                <option value="eng">{t('lang_english', 'English (eng)')}</option>
+                <option value="ces">{t('lang_czech', 'Čeština (ces)')}</option>
+                <option value="deu">{t('lang_german', 'Deutsch (deu)')}</option>
+                <option value="spa">{t('lang_spanish', 'Español (spa)')}</option>
+                <option value="fra">{t('lang_french', 'Français (fra)')}</option>
+                <option value="rus">{t('lang_russian', 'Русский (rus)')}</option>
               </select>
             </div>
 
@@ -592,7 +599,7 @@ export const ImageEditorTool: React.FC = () => {
             </select>
           </label>
           <label className="text-xs text-slate-400">
-            {t('quality', 'Kvalita')} ({format === 'image/png' ? 'Bezztrátová' : `${quality}%`})
+            {t('quality', 'Kvalita')} ({format === 'image/png' ? t('lossless', 'Bezztrátová') : `${quality}%`})
             <input
               className={input + ' mt-1'}
               type="range"
@@ -611,35 +618,35 @@ export const ImageEditorTool: React.FC = () => {
             type="button"
             className={secondary}
             onClick={() => setRotation((r => (r + 90) % 360))}
-            title="Otočit o 90 stupňů"
+            title={t('rotate_90', 'Otočit o 90 stupňů')}
           >
             <RotateCw className="w-3.5 h-3.5 inline mr-1" />
-            Otočit ({rotation}°)
+            {t('rotate_deg', `Otočit (${rotation}°)`, { deg: rotation })}
           </button>
           <button
             type="button"
             className={flipH ? button : secondary}
             onClick={() => setFlipH(!flipH)}
-            title="Zrcadlit horizontálně"
+            title={t('flip_horizontal', 'Zrcadlit horizontálně')}
           >
             <FlipHorizontal className="w-3.5 h-3.5 inline mr-1" />
-            Převrátit X
+            {t('flip_x', 'Převrátit X')}
           </button>
           <button
             type="button"
             className={flipV ? button : secondary}
             onClick={() => setFlipV(!flipV)}
-            title="Zrcadlit vertikálně"
+            title={t('flip_vertical', 'Zrcadlit vertikálně')}
           >
             <FlipVertical className="w-3.5 h-3.5 inline mr-1" />
-            Převrátit Y
+            {t('flip_y', 'Převrátit Y')}
           </button>
           <button
             type="button"
             className={grayscale ? button : secondary}
             onClick={() => setGrayscale(!grayscale)}
           >
-            Černobíle (Grayscale)
+            {t('filter_grayscale', 'Černobíle (Grayscale)')}
           </button>
           <label className="flex items-center gap-1.5 text-xs text-slate-300 ml-auto cursor-pointer">
             <input
@@ -657,7 +664,7 @@ export const ImageEditorTool: React.FC = () => {
         <div className="grid grid-cols-2 gap-4 bg-slate-950 p-3 rounded-lg border border-slate-800 text-xs">
           <div>
             <div className="flex justify-between text-slate-400 mb-1">
-              <span>Jas:</span>
+              <span>{t('brightness', 'Jas:')}</span>
               <span className="font-mono">{brightness}%</span>
             </div>
             <input
@@ -671,7 +678,7 @@ export const ImageEditorTool: React.FC = () => {
           </div>
           <div>
             <div className="flex justify-between text-slate-400 mb-1">
-              <span>Kontrast:</span>
+              <span>{t('contrast', 'Kontrast:')}</span>
               <span className="font-mono">{contrast}%</span>
             </div>
             <input
@@ -692,7 +699,7 @@ export const ImageEditorTool: React.FC = () => {
           </button>
           {file && editedSize !== null && (
             <div className="text-xs font-mono text-slate-300">
-              Původní: {(file.size / 1024).toFixed(1)} KB → Cíl: {(editedSize / 1024).toFixed(1)} KB{' '}
+              {t('original_size_label', 'Původní:')} {(file.size / 1024).toFixed(1)} KB → {t('target_size_label', 'Cíl:')} {(editedSize / 1024).toFixed(1)} KB{' '}
               <span className={editedSize < file.size ? 'text-emerald-400 font-bold' : 'text-amber-400'}>
                 ({editedSize < file.size ? `-${Math.round((1 - editedSize / file.size) * 100)}%` : `+${Math.round((editedSize / file.size - 1) * 100)}%`})
               </span>
@@ -792,8 +799,8 @@ function fullMarkdownToHtml(markdown: string): string {
 
 export const MarkdownPreviewTool: React.FC = () => {
   const { t } = useI18n();
-  const [markdown, setMarkdown] = useState(
-    '# OmniDesk Toolkit\n\nKompletní sada lokálních vývojářských a kancelářských utilit.\n\n## Hlavní funkce\n\n- Rychlé spouštění bez závislosti na cloudu\n- Podpora offline režimu\n- Šifrování a zpracování dat v paměti\n\n### Přehled podporovaných formátů\n\n| Formát | Vstup | Výstup | Rychlost |\n| :--- | :--- | :--- | :--- |\n| PDF | Ano | Ano | Blesková |\n| JSON | Ano | Ano | Blesková |\n| SVG | Ano | Ano | Blesková |\n\n> "Jednoduchost je základem spolehlivého softwaru."\n\n```typescript\nconst message = "Vítejte v OmniDesk!";\nconsole.log(message);\n```\n\n- [x] Dokončit audit nástrojů\n- [ ] Otestovat všechny funkce v prohlížeči\n'
+  const [markdown, setMarkdown] = useState(() =>
+    `# ${t('md_sample_heading', 'OmniDesk Toolkit')}\n\n${t('md_sample_desc', 'Kompletní sada lokálních vývojářských a kancelářských utilit.')}\n\n## ${t('md_sample_features', 'Hlavní funkce')}\n\n- ${t('md_sample_f1', 'Rychlé spouštění bez závislosti na cloudu')}\n- ${t('md_sample_f2', 'Podpora offline režimu')}\n- ${t('md_sample_f3', 'Šifrování a zpracování dat v paměti')}\n\n### ${t('md_sample_table_title', 'Přehled podporovaných formátů')}\n\n| Format | Input | Output |\n| :--- | :--- | :--- |\n| PDF | Yes | Yes |\n| JSON | Yes | Yes |\n| SVG | Yes | Yes |\n\n> "${t('md_sample_quote', 'Jednoduchost je základem spolehlivého softwaru.')}"\n\n\`\`\`typescript\nconst message = "${t('md_sample_code_msg', 'Vítejte v OmniDesk!')}";\nconsole.log(message);\n\`\`\`\n`
   );
 
   const html = useMemo(() => fullMarkdownToHtml(markdown), [markdown]);
@@ -809,17 +816,15 @@ export const MarkdownPreviewTool: React.FC = () => {
   const insertTemplate = (type: 'readme' | 'notes' | 'table') => {
     if (type === 'readme') {
       setMarkdown(
-        '# Název projektu\n\nKrátký popis účelu projektu.\n\n## Instalace\n\n```bash\nnpm install\nnpm run dev\n```\n\n## Licence\n\nMIT'
+        `# ${t('tmpl_proj_title', 'Název projektu')}\n\n${t('tmpl_proj_desc', 'Krátký popis účelu projektu.')}\n\n## ${t('tmpl_proj_install', 'Instalace')}\n\n\`\`\`bash\nnpm install\nnpm run dev\n\`\`\`\n\n## ${t('tmpl_proj_license', 'Licence')}\n\nMIT`
       );
     } else if (type === 'notes') {
       setMarkdown(
-        '# Zápis ze schůzky\n\n**Datum:** ' +
-          new Date().toLocaleDateString() +
-          '\n**Účastníci:** Alice, Bob, Martin\n\n## Agenda\n\n1. Shrnutí stavu projektu\n2. Rozdělení úkolů na další sprint\n\n## Úkoly\n\n- [ ] Připravit podklady pro klienta\n- [ ] Zkontrolovat nasazení na server'
+        `# ${t('tmpl_meeting_title', 'Zápis ze schůzky')}\n\n**${t('tmpl_date', 'Datum:')}** ${new Date().toLocaleDateString()}\n**${t('tmpl_attendees', 'Účastníci:')}** Alice, Bob, Martin\n\n## Agenda\n\n1. ${t('tmpl_agenda_1', 'Shrnutí stavu projektu')}\n2. ${t('tmpl_agenda_2', 'Rozdělení úkolů na další sprint')}\n\n## ${t('tmpl_tasks', 'Úkoly')}\n\n- [ ] ${t('tmpl_task_1', 'Připravit podklady pro klienta')}\n- [ ] ${t('tmpl_task_2', 'Zkontrolovat nasazení na server')}`
       );
     } else {
       setMarkdown(
-        '# Srovnávací tabulka\n\n| Položka | Varianta A | Varianta B |\n| :--- | :--- | :--- |\n| Cena | 490 Kč | 790 Kč |\n| Záruka | 2 roky | 5 let |\n| Dostupnost | Skladem | Do 3 dnů |'
+        `# ${t('tmpl_comp_table', 'Srovnávací tabulka')}\n\n| ${t('tmpl_col_item', 'Položka')} | ${t('tmpl_col_a', 'Varianta A')} | ${t('tmpl_col_b', 'Varianta B')} |\n| :--- | :--- | :--- |\n| ${t('tmpl_row_price', 'Cena')} | 490 | 790 |\n| ${t('tmpl_row_warranty', 'Záruka')} | 2 ${t('tmpl_years', 'roky')} | 5 ${t('tmpl_years_gen', 'let')} |\n| ${t('tmpl_row_avail', 'Dostupnost')} | ${t('tmpl_in_stock', 'Skladem')} | 3 ${t('tmpl_days', 'dny')} |`
       );
     }
   };
@@ -830,17 +835,17 @@ export const MarkdownPreviewTool: React.FC = () => {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex gap-2">
           <button className={secondary} onClick={() => insertTemplate('readme')}>
-            <FileText className="w-3.5 h-3.5 inline mr-1" /> Šablona README
+            <FileText className="w-3.5 h-3.5 inline mr-1" /> {t('template_readme', 'Šablona README')}
           </button>
           <button className={secondary} onClick={() => insertTemplate('notes')}>
-            <Clock className="w-3.5 h-3.5 inline mr-1" /> Šablona Poznámky
+            <Clock className="w-3.5 h-3.5 inline mr-1" /> {t('template_notes', 'Šablona Poznámky')}
           </button>
           <button className={secondary} onClick={() => insertTemplate('table')}>
-            <Table className="w-3.5 h-3.5 inline mr-1" /> Šablona Tabulka
+            <Table className="w-3.5 h-3.5 inline mr-1" /> {t('template_table', 'Šablona Tabulka')}
           </button>
         </div>
         <div className="text-xs text-slate-400 font-mono">
-          {stats.words} slov &bull; {stats.chars} znaků &bull; ~{stats.readTimeMinutes} min čtení
+          {stats.words} {t('words_count_label', 'slov')} &bull; {stats.chars} {t('chars_count_label', 'znaků')} &bull; ~{stats.readTimeMinutes} {t('min_reading', 'min čtení')}
         </div>
       </div>
 
@@ -907,9 +912,9 @@ export const KanbanTool: React.FC = () => {
       // ignore
     }
     return [
-      { id: 1, text: 'Připravit čtvrtletní report', column: 'todo', priority: 'high' },
-      { id: 2, text: 'Zkontrolovat zálohy souborů', column: 'doing', priority: 'med' },
-      { id: 3, text: 'Aktualizovat seznam úkolů', column: 'done', priority: 'low' },
+      { id: 1, text: t('task_prep_report', 'Připravit čtvrtletní report'), column: 'todo', priority: 'high' },
+      { id: 2, text: t('task_check_backups', 'Zkontrolovat zálohy souborů'), column: 'doing', priority: 'med' },
+      { id: 3, text: t('task_update_todo', 'Aktualizovat seznam úkolů'), column: 'done', priority: 'low' },
     ];
   });
   const [text, setText] = useState('');
@@ -997,7 +1002,7 @@ export const KanbanTool: React.FC = () => {
                   >
                     <div className="flex items-start justify-between gap-2">
                       <span className={`break-words ${column === 'done' ? 'line-through text-slate-400' : 'text-slate-100'}`}>
-                        {task.text}
+                        {t(task.text, task.text)}
                       </span>
                       <button
                         className="text-slate-500 hover:text-rose-400 p-0.5 opacity-60 group-hover:opacity-100"
@@ -1062,8 +1067,8 @@ export const NotesTool: React.FC = () => {
     return [
       {
         id: 1,
-        title: 'První poznámka',
-        body: 'Vítejte v lokálním poznámkovém bloku. Data se automaticky ukládají do vašeho prohlížeče.',
+        title: t('first_note_title', 'První poznámka'),
+        body: t('first_note_body', 'Vítejte v lokálním poznámkovém bloku. Data se automaticky ukládají do vašeho prohlížeče.'),
         updatedAt: Date.now(),
       },
     ];
@@ -1153,9 +1158,9 @@ export const NotesTool: React.FC = () => {
                 }`}
               >
                 <div className="min-w-0 flex-1 pr-2">
-                  <h4 className="text-xs font-semibold truncate">{note.title || t('untitled', 'Bez názvu')}</h4>
+                  <h4 className="text-xs font-semibold truncate">{t(note.title, note.title) || t('untitled', 'Bez názvu')}</h4>
                   <p className="text-[10px] text-slate-400 truncate mt-0.5">
-                    {note.body.slice(0, 40) || t('empty_note', 'Prázdný text…')}
+                    {t(note.body.slice(0, 40), note.body.slice(0, 40)) || t('empty_note', 'Prázdný text…')}
                   </p>
                 </div>
                 <button
@@ -1224,24 +1229,24 @@ export const NotesTool: React.FC = () => {
    ───────────────────────────────────────────────────────────── */
 const SQL_DATASETS = {
   employees: [
-    { id: 1, name: 'Alice Nováková', department: 'Vývoj', role: 'Senior Developer', city: 'Praha', salary: 85000 },
-    { id: 2, name: 'Bob Černý', department: 'Design', role: 'UI/UX Designer', city: 'Brno', salary: 65000 },
-    { id: 3, name: 'Cecilie Dvořáková', department: 'Vedení', role: 'Product Manager', city: 'Praha', salary: 95000 },
-    { id: 4, name: 'David Kučera', department: 'Vývoj', role: 'Backend Engineer', city: 'Ostrava', salary: 78000 },
-    { id: 5, name: 'Eva Horáková', department: 'Marketing', role: 'Content Specialist', city: 'Brno', salary: 52000 },
+    { id: 1, name: 'Alice Novak', department: 'Development', role: 'Senior Developer', city: 'Prague', salary: 85000 },
+    { id: 2, name: 'Bob Cerny', department: 'Design', role: 'UI/UX Designer', city: 'Brno', salary: 65000 },
+    { id: 3, name: 'Cecilia Dvorak', department: 'Management', role: 'Product Manager', city: 'Prague', salary: 95000 },
+    { id: 4, name: 'David Kucera', department: 'Development', role: 'Backend Engineer', city: 'Ostrava', salary: 78000 },
+    { id: 5, name: 'Eva Horak', department: 'Marketing', role: 'Content Specialist', city: 'Brno', salary: 52000 },
   ],
   orders: [
-    { orderId: 101, customer: 'Petr Svoboda', item: 'Mechanická klávesnice', price: 2990, status: 'Doručeno' },
-    { orderId: 102, customer: 'Jana Veselá', item: 'Herní monitor 27"', price: 8490, status: 'Odesláno' },
-    { orderId: 103, customer: 'Karel Procházka', item: 'Bezdrátová myš', price: 1290, status: 'Zpracovává se' },
-    { orderId: 104, customer: 'Lucie Benešová', item: 'USB-C Dock 100W', price: 2490, status: 'Doručeno' },
+    { orderId: 101, customer: 'Petr Svoboda', item: 'Mechanical Keyboard', price: 2990, status: 'Delivered' },
+    { orderId: 102, customer: 'Jana Vesela', item: 'Gaming Monitor 27"', price: 8490, status: 'Shipped' },
+    { orderId: 103, customer: 'Karel Prochazka', item: 'Wireless Mouse', price: 1290, status: 'Processing' },
+    { orderId: 104, customer: 'Lucie Benes', item: 'USB-C Dock 100W', price: 2490, status: 'Delivered' },
   ],
 };
 
 export const SqlPlaygroundTool: React.FC = () => {
   const { t } = useI18n();
   const [data, setData] = useState(JSON.stringify(SQL_DATASETS.employees, null, 2));
-  const [query, setQuery] = useState("SELECT name, role, salary FROM data WHERE city = 'Praha' ORDER BY salary DESC");
+  const [query, setQuery] = useState("SELECT name, role, salary FROM data WHERE city = 'Prague' ORDER BY salary DESC");
   const [rowsResult, setRowsResult] = useState<Record<string, unknown>[]>([]);
   const [rawOutput, setRawOutput] = useState('');
   const [viewMode, setViewMode] = useState<'table' | 'json'>('table');
@@ -1256,7 +1261,7 @@ export const SqlPlaygroundTool: React.FC = () => {
       const match = query.trim().match(regex);
       if (!match) {
         throw new Error(
-          'Podporovaná syntaxe: SELECT col1, col2 FROM data [WHERE col = val] [ORDER BY col [ASC|DESC]] [LIMIT n]'
+          t('supported_sql_syntax', 'Podporovaná syntaxe: SELECT col1, col2 FROM data [WHERE col = val] [ORDER BY col [ASC|DESC]] [LIMIT n]')
         );
       }
 
@@ -1329,7 +1334,7 @@ export const SqlPlaygroundTool: React.FC = () => {
       setRawOutput(JSON.stringify(projected, null, 2));
     } catch (e) {
       setRowsResult([]);
-      setRawOutput(e instanceof Error ? e.message : 'Chyba při vykonávání dotazu.');
+      setRawOutput(e instanceof Error ? e.message : t('err_sql_exec', 'Chyba při vykonávání dotazu.'));
     }
   };
 
@@ -1344,7 +1349,7 @@ export const SqlPlaygroundTool: React.FC = () => {
     rowsResult.forEach(row => {
       csvLines.push(headers.map(h => JSON.stringify(row[h] ?? '')).join(';'));
     });
-    void saveTextWithDialog('vysledek-dotazu.csv', csvLines.join('\n'), [{ name: 'CSV (*.csv)', extensions: ['csv'] }], 'Uložit CSV');
+    void saveTextWithDialog('vysledek-dotazu.csv', csvLines.join('\n'), [{ name: 'CSV (*.csv)', extensions: ['csv'] }], t('save_csv', 'Uložit CSV'));
   };
 
   return (
@@ -1365,7 +1370,7 @@ export const SqlPlaygroundTool: React.FC = () => {
                   setQuery("SELECT name, role, salary FROM data WHERE salary > 60000 ORDER BY salary DESC");
                 }}
               >
-                Zaměstnanci
+                {t('table_employees', 'Zaměstnanci')}
               </button>
               <button
                 type="button"
@@ -1375,7 +1380,7 @@ export const SqlPlaygroundTool: React.FC = () => {
                   setQuery("SELECT orderId, customer, price, status FROM data WHERE price > 2000");
                 }}
               >
-                Objednávky
+                {t('table_orders', 'Objednávky')}
               </button>
             </div>
           </div>
@@ -1404,7 +1409,7 @@ export const SqlPlaygroundTool: React.FC = () => {
                   onClick={() => setViewMode('table')}
                 >
                   <Table className="w-3.5 h-3.5 inline mr-1" />
-                  Tabulka ({rowsResult.length})
+                  {t('table_view', 'Tabulka')} ({rowsResult.length})
                 </button>
                 <button
                   type="button"
@@ -1420,7 +1425,7 @@ export const SqlPlaygroundTool: React.FC = () => {
                 <div className="flex gap-2">
                   <button className={secondary} onClick={() => navigator.clipboard.writeText(rawOutput)}>
                     <Copy className="inline w-3.5 h-3.5 mr-1" />
-                    Kopírovat
+                    {t('copy', 'Kopírovat')}
                   </button>
                   <button className={secondary} onClick={exportCsv}>
                     <Download className="inline w-3.5 h-3.5 mr-1" />
@@ -1456,7 +1461,7 @@ export const SqlPlaygroundTool: React.FC = () => {
                     </tbody>
                   </table>
                 ) : (
-                  <p className="p-4 text-xs text-slate-500 font-mono">{rawOutput || 'Žádné výsledky'}</p>
+                  <p className="p-4 text-xs text-slate-500 font-mono">{rawOutput || t('no_results', 'Žádné výsledky')}</p>
                 )}
               </div>
             ) : (
@@ -1542,7 +1547,7 @@ export const ApiTesterTool: React.FC = () => {
       setDurationMs(elapsed);
       setErrorMsg(
         error instanceof Error
-          ? `${error.message}. (Poznámka: Pokud server nepovoluje CORS hlavičky, prohlížeč přímý požadavek zablokuje.)`
+          ? `${error.message}. (${t('cors_note', 'Poznámka: Pokud server nepovoluje CORS hlavičky, prohlížeč přímý požadavek zablokuje.')})`
           : t('request_failed', 'Požadavek selhal.')
       );
     } finally {
@@ -1591,7 +1596,7 @@ export const ApiTesterTool: React.FC = () => {
             <div key={i} className="flex gap-2 items-center">
               <input
                 className={input + ' font-mono text-xs'}
-                placeholder="Key (např. Authorization)"
+                placeholder={t('header_key_placeholder', 'Key (např. Authorization)')}
                 value={h.key}
                 onChange={e => {
                   const next = [...headersList];
@@ -1601,7 +1606,7 @@ export const ApiTesterTool: React.FC = () => {
               />
               <input
                 className={input + ' font-mono text-xs'}
-                placeholder="Value (např. Bearer token)"
+                placeholder={t('header_val_placeholder', 'Value (např. Bearer token)')}
                 value={h.value}
                 onChange={e => {
                   const next = [...headersList];
@@ -1735,9 +1740,9 @@ export const GitToolsTool: React.FC = () => {
     const header = `${commitType}${scopePart}${breakingBang}: ${description.trim()}`;
     const parts = [header];
     if (body.trim()) parts.push(body.trim());
-    if (breaking) parts.push('BREAKING CHANGE: Vyžaduje aktualizaci závislostí.');
+    if (breaking) parts.push(`BREAKING CHANGE: ${t('breaking_change_text', 'Vyžaduje aktualizaci závislostí.')}`);
     return parts.join('\n\n');
-  }, [commitType, scope, description, body, breaking]);
+  }, [commitType, scope, description, body, breaking, t]);
 
   // 2. Diff viewer state
   const [diffText, setDiffText] = useState(
@@ -1766,12 +1771,12 @@ export const GitToolsTool: React.FC = () => {
 
   // 3. Command Cheatsheet
   const cheatsheetCommands = [
-    { title: 'Vytvořit a přepnout novou větev', cmd: 'git checkout -b feature/muj-novy-nastroj' },
-    { title: 'Stashnout neuložené změny', cmd: 'git stash save "wip" && git stash pop' },
-    { title: 'Vrátit poslední lokální commit (ponechat změny)', cmd: 'git reset --soft HEAD~1' },
-    { title: 'Přepsat poslední commit message', cmd: 'git commit --amend -m "nová zpráva"' },
-    { title: 'Vyčistit necommitnuté soubory', cmd: 'git clean -fd' },
-    { title: 'Zobrazit zkrácenou historii ve stromu', cmd: 'git log --oneline --graph --decorate --all' },
+    { title: t('git_cmd_branch', 'Vytvořit a přepnout novou větev'), cmd: 'git checkout -b feature/my-new-tool' },
+    { title: t('git_cmd_stash', 'Stashnout neuložené změny'), cmd: 'git stash save "wip" && git stash pop' },
+    { title: t('git_cmd_reset', 'Vrátit poslední lokální commit (ponechat změny)'), cmd: 'git reset --soft HEAD~1' },
+    { title: t('git_cmd_amend', 'Přepsat poslední commit message'), cmd: 'git commit --amend -m "updated commit message"' },
+    { title: t('git_cmd_clean', 'Vyčistit necommitnuté soubory'), cmd: 'git clean -fd' },
+    { title: t('git_cmd_log', 'Zobrazit zkrácenou historii ve stromu'), cmd: 'git log --oneline --graph --decorate --all' },
   ];
 
   return (
@@ -1790,7 +1795,7 @@ export const GitToolsTool: React.FC = () => {
             onClick={() => setActiveTab('commit')}
           >
             <GitCommit className="w-3.5 h-3.5 inline mr-1" />
-            Conventional Commits Builder
+            {t('conventional_commits_builder', 'Conventional Commits Builder')}
           </button>
           <button
             type="button"
@@ -1800,7 +1805,7 @@ export const GitToolsTool: React.FC = () => {
             onClick={() => setActiveTab('diff')}
           >
             <GitPullRequest className="w-3.5 h-3.5 inline mr-1" />
-            Diff & Log Zvýrazňovač
+            {t('diff_highlighter_title', 'Diff & Log Zvýrazňovač')}
           </button>
           <button
             type="button"
@@ -1810,7 +1815,7 @@ export const GitToolsTool: React.FC = () => {
             onClick={() => setActiveTab('cheatsheet')}
           >
             <GitBranch className="w-3.5 h-3.5 inline mr-1" />
-            Git Tahák
+            {t('git_cheatsheet_title', 'Git Tahák')}
           </button>
         </div>
 
@@ -1818,21 +1823,21 @@ export const GitToolsTool: React.FC = () => {
           <div className="space-y-3">
             <div className="grid md:grid-cols-3 gap-3">
               <label className="text-xs text-slate-400">
-                Typ commitu:
+                {t('commit_type_label', 'Typ commitu:')}
                 <select className={input + ' mt-1'} value={commitType} onChange={e => setCommitType(e.target.value)}>
-                  <option value="feat">feat (nová funkce)</option>
-                  <option value="fix">fix (oprava chyby)</option>
-                  <option value="docs">docs (dokumentace)</option>
-                  <option value="style">style (formátování kódu)</option>
-                  <option value="refactor">refactor (úprava bez změny funkce)</option>
-                  <option value="perf">perf (zrychlení výkonu)</option>
-                  <option value="test">test (testy)</option>
-                  <option value="chore">chore (build, závislosti)</option>
+                  <option value="feat">{t('commit_feat', 'feat (nová funkce)')}</option>
+                  <option value="fix">{t('commit_fix', 'fix (oprava chyby)')}</option>
+                  <option value="docs">{t('commit_docs', 'docs (dokumentace)')}</option>
+                  <option value="style">{t('commit_style', 'style (formátování kódu)')}</option>
+                  <option value="refactor">{t('commit_refactor', 'refactor (úprava bez změny funkce)')}</option>
+                  <option value="perf">{t('commit_perf', 'perf (zrychlení výkonu)')}</option>
+                  <option value="test">{t('commit_test', 'test (testy)')}</option>
+                  <option value="chore">{t('commit_chore', 'chore (build, závislosti)')}</option>
                 </select>
               </label>
               <label className="text-xs text-slate-400">
-                Scope (volitelný modul):
-                <input className={input + ' mt-1'} value={scope} onChange={e => setScope(e.target.value)} placeholder="např. auth, ui, core" />
+                {t('scope_label', 'Scope (volitelný modul):')}
+                <input className={input + ' mt-1'} value={scope} onChange={e => setScope(e.target.value)} placeholder={t('scope_placeholder', 'např. auth, ui, core')} />
               </label>
               <label className="flex items-center gap-2 text-xs text-rose-300 pt-6 cursor-pointer">
                 <input type="checkbox" checked={breaking} onChange={e => setBreaking(e.target.checked)} className="rounded text-rose-600 bg-slate-950" />
@@ -1841,26 +1846,26 @@ export const GitToolsTool: React.FC = () => {
             </div>
 
             <label className="text-xs text-slate-400 block">
-              Stručný popis (subject):
+              {t('subject_label', 'Stručný popis (subject):')}
               <input className={input + ' mt-1'} value={description} onChange={e => setDescription(e.target.value)} />
             </label>
 
             <label className="text-xs text-slate-400 block">
-              Doplňující zpráva (body):
-              <textarea className={input + ' mt-1 min-h-20 font-mono text-xs'} value={body} onChange={e => setBody(e.target.value)} placeholder="Podrobnější důvod této změny…" />
+              {t('body_label', 'Doplňující zpráva (body):')}
+              <textarea className={input + ' mt-1 min-h-20 font-mono text-xs'} value={body} onChange={e => setBody(e.target.value)} placeholder={t('body_placeholder', 'Podrobnější důvod této změny…')} />
             </label>
 
             <div className="p-3 bg-slate-950 rounded-lg border border-slate-800 space-y-2">
               <div className="flex justify-between items-center text-xs">
-                <span className="text-slate-400">Výsledná commit zpráva:</span>
+                <span className="text-slate-400">{t('result_commit_msg', 'Výsledná commit zpráva:')}</span>
                 <div className="flex gap-2">
                   <button className={secondary} onClick={() => navigator.clipboard.writeText(fullCommitMessage)}>
                     <Copy className="w-3.5 h-3.5 inline mr-1" />
-                    Zkopírovat zprávu
+                    {t('copy_message', 'Zkopírovat zprávu')}
                   </button>
                   <button className={button} onClick={() => navigator.clipboard.writeText(`git commit -m ${JSON.stringify(fullCommitMessage)}`)}>
                     <Copy className="w-3.5 h-3.5 inline mr-1" />
-                    Kopírovat git příkaz
+                    {t('copy_git_cmd', 'Kopírovat git příkaz')}
                   </button>
                 </div>
               </div>
@@ -1875,13 +1880,13 @@ export const GitToolsTool: React.FC = () => {
               className={input + ' min-h-36 font-mono text-xs leading-relaxed'}
               value={diffText}
               onChange={e => setDiffText(e.target.value)}
-              placeholder="Vložte sem výstup z git diff nebo git log -p…"
+              placeholder={t('diff_input_placeholder', 'Vložte sem výstup z git diff nebo git log -p…')}
             />
             <div className="flex gap-2">
-              <input className={input + ' text-xs'} value={diffFilter} onChange={e => setDiffFilter(e.target.value)} placeholder="Filtrovat řádky diffu…" />
+              <input className={input + ' text-xs'} value={diffFilter} onChange={e => setDiffFilter(e.target.value)} placeholder={t('diff_filter_placeholder', 'Filtrovat řádky diffu…')} />
               <button className={secondary} onClick={() => navigator.clipboard.writeText(diffText)}>
                 <Copy className="w-3.5 h-3.5 inline mr-1" />
-                Kopírovat
+                {t('copy', 'Kopírovat')}
               </button>
             </div>
             <div className={panel + ' min-h-48 max-h-96 overflow-auto font-mono text-xs space-y-0.5 leading-relaxed bg-slate-950'}>
@@ -1906,7 +1911,7 @@ export const GitToolsTool: React.FC = () => {
                 </div>
                 <div className="pt-2">
                   <button className={secondary} onClick={() => navigator.clipboard.writeText(item.cmd)}>
-                    <Copy className="w-3 h-3 inline mr-1" /> Kopírovat příkaz
+                    <Copy className="w-3 h-3 inline mr-1" /> {t('copy_command', 'Kopírovat příkaz')}
                   </button>
                 </div>
               </div>

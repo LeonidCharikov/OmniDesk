@@ -3,6 +3,7 @@ import { Clock, Play, Pause, RotateCcw, Globe, Flame, Coffee } from 'lucide-reac
 import { useI18n } from '../../i18n/context';
 
 interface CityTime {
+  cityKey: string;
   city: string;
   country: string;
   zone: string;
@@ -10,22 +11,13 @@ interface CityTime {
 }
 
 const CITIES: CityTime[] = [
-  { city: 'Praha', country: 'Česká republika', zone: 'Europe/Prague', flag: '🇨🇿' },
-  { city: 'Londýn', country: 'Velká Británie', zone: 'Europe/London', flag: '🇬🇧' },
-  { city: 'New York', country: 'USA (EST)', zone: 'America/New_York', flag: '🇺🇸' },
-  { city: 'San Francisco', country: 'USA (PST)', zone: 'America/Los_Angeles', flag: '🇺🇸' },
-  { city: 'Tokio', country: 'Japonsko', zone: 'Asia/Tokyo', flag: '🇯🇵' },
-  { city: 'Sydney', country: 'Austrálie', zone: 'Australia/Sydney', flag: '🇦🇺' },
+  { cityKey: 'city_prague', city: 'Praha', country: 'Česká republika', zone: 'Europe/Prague', flag: '🇨🇿' },
+  { cityKey: 'city_london', city: 'Londýn', country: 'Velká Británie', zone: 'Europe/London', flag: '🇬🇧' },
+  { cityKey: 'city_new_york', city: 'New York', country: 'USA (EST)', zone: 'America/New_York', flag: '🇺🇸' },
+  { cityKey: 'city_san_francisco', city: 'San Francisco', country: 'USA (PST)', zone: 'America/Los_Angeles', flag: '🇺🇸' },
+  { cityKey: 'city_tokyo', city: 'Tokio', country: 'Japonsko', zone: 'Asia/Tokyo', flag: '🇯🇵' },
+  { cityKey: 'city_sydney', city: 'Sydney', country: 'Austrálie', zone: 'Australia/Sydney', flag: '🇦🇺' },
 ];
-
-const CITY_NAMES: Record<string, string> = {
-  'Europe/Prague': 'Prague',
-  'Europe/London': 'London',
-  'America/New_York': 'New York',
-  'America/Los_Angeles': 'San Francisco',
-  'Asia/Tokyo': 'Tokyo',
-  'Australia/Sydney': 'Sydney',
-};
 
 const COUNTRY_CODES: Record<string, string> = {
   'Europe/Prague': 'CZ',
@@ -231,7 +223,7 @@ export const TimePomodoroTool: React.FC = () => {
                   <span className="text-lg">{c.flag}</span>
                   <div>
                     <h3 className="text-sm font-semibold text-white">
-                      {language === 'cs' ? c.city : CITY_NAMES[c.zone] || c.city}
+                      {t(c.cityKey, c.city)}
                     </h3>
                     <span className="text-[10px] text-slate-500 block">
                       {COUNTRY_CODES[c.zone] ? displayNames.of(COUNTRY_CODES[c.zone]) : c.country}
