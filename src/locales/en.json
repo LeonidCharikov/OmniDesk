@@ -1021,5 +1021,9 @@
   "image_editor_brush_on": "Drawing active",
   "image_editor_brush_off": "Enable brush",
   "image_editor_brush_label": "Brush",
-  "image_editor_erase_label": "Clear"
+  "image_editor_erase_label": "Clear",
+  "image_editor_drop_overlay": "Drop image here to open in editor",
+  "error_boundary_title": "Something went wrong in this tool",
+  "error_boundary_desc": "An unexpected error occurred while running this tool. You can reload it to continue.",
+  "error_boundary_reload": "Reload Tool"
 }

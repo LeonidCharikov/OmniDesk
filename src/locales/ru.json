@@ -867,5 +867,9 @@
   "image_editor_brush_on": "Рисование активно",
   "image_editor_brush_off": "Включить кисть",
   "image_editor_brush_label": "Кисть",
-  "image_editor_erase_label": "Очистить"
+  "image_editor_erase_label": "Очистить",
+  "image_editor_drop_overlay": "Отпустите изображение здесь для открытия в редакторе",
+  "error_boundary_title": "В этом инструменте произошла ошибка",
+  "error_boundary_desc": "Произошла непредвиденная ошибка при работе с инструментом. Вы можете перезагрузить его.",
+  "error_boundary_reload": "Перезагрузить инструмент"
 }

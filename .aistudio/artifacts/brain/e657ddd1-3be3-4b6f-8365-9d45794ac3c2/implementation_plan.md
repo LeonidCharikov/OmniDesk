@@ -216,5 +216,14 @@ Všechny nástroje a komponenty aplikace prošly hloubkovým auditem na eliminac
    - `ChemistryTool`: Reakce, molární výpočty, periodická tabulka a presety sloučenin.
    - `CalendarTool`, `ColorPaletteWcagTool`, `WcagContrastValidatorTool`, `SystemMonitorTool`, `SmartShoppingListTool`: Kompletní lokalizace vzorků, barevných vad a telemetrie.
    - `AdditionalTools` & `MoreTools`: Kanban, Poznámky, SQL hřiště, Git nástroje, UML editor, Faktury, Šifrování souborů, Markdown tabulky, Minifikátor, Regex builder a Periodický finanční kalkulátor.
-4. **Zero Dead Code & Ověření**: Dočasné skripty smazány, linter `tsc --noEmit` a `compile_applet` prochází s nulovým počtem chyb.
+   - `ImageEditorTool`: Vizuální foto studio s manuální změnou šířky/výšky, zachováním poměru stran, ořezem, rotací, barevnými filtry, vodoznaky, kreslením štětcem a cenzurou (černý obdélník / pixelace).
+5. **Oprava stability kreslení v Image Editoru**:
+   - Vyřešena chyba, kdy při kreslení a pohybu myší docházelo k pádu do prázdné obrazovky.
+   - Implementováno plynulé inkrementální kreslení přes pointer events s pointer capture (`touch-none`, `setPointerCapture`), eliminující přealokace a nechtěné čištění canvasu (`targetCanvas.width = ...`).
+   - Ochrana aplikace komponentou `ErrorBoundary` s lokalizovaným rozhraním pro obnovu nástroje.
+6. **Řešení Drag & Drop v desktopové aplikaci (Tauri v2)**:
+   - Nastaveno `"dragDropEnabled": false` v `src-tauri/tauri.conf.json` pro uvolnění nativního odchytávání okna a umožnění standardního HTML5 přetahování souborů do WebView.
+   - Přidán duální fallback `registerTauriDropListener` naslouchající na nativní události `getCurrentWebview().onDragDropEvent` s přímým čtením souborů z disku přes `@tauri-apps/plugin-fs`.
+   - Vylepšena podpora přetahování v `ImageEditorTool` i `DocxToPdfTool` s vizuálním překryvným indikátorem.
+7. **Zero Dead Code & Ověření**: Dočasné skripty smazány, linter `tsc --noEmit` a `compile_applet` prochází s nulovým počtem chyb.
 

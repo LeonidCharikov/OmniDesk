@@ -33,7 +33,7 @@ import {
   CheckSquare,
 } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
-import { saveBinaryWithDialog } from '../../services/fileSystemService';
+import { saveBinaryWithDialog, registerTauriDropListener } from '../../services/fileSystemService';
 
 interface TextOverlayState {
   enabled: boolean;
@@ -163,6 +163,7 @@ export const ImageEditorTool: React.FC = () => {
   const [statusMessage, setStatusMessage] = useState<string>('');
   const [isSuccess, setIsSuccess] = useState<boolean>(false);
   const [copied, setCopied] = useState<boolean>(false);
+  const [isDragOver, setIsDragOver] = useState<boolean>(false);
 
   // History Stacks
   const [history, setHistory] = useState<EditorStateSnapshot[]>([]);
@@ -179,6 +180,7 @@ export const ImageEditorTool: React.FC = () => {
   });
   const isMouseDownRef = useRef<boolean>(false);
   const currentStrokeRef = useRef<DrawingStroke | null>(null);
+  const lastDrawnPosRef = useRef<{ x: number; y: number } | null>(null);
 
   // Helper: Snapshot current state
   const getCurrentSnapshot = useCallback((): EditorStateSnapshot => {
@@ -449,6 +451,51 @@ export const ImageEditorTool: React.FC = () => {
     return () => window.removeEventListener('paste', handlePaste);
   }, [loadImageFromFile]);
 
+  // Tauri Native Drop Listener Fallback (handles OS file drops when running in desktop app)
+  useEffect(() => {
+    const unregister = registerTauriDropListener(files => {
+      const imgFile = files.find(f => f.type.startsWith('image/') || /\.(png|jpe?g|webp|gif|svg|bmp|ico)$/i.test(f.name));
+      if (imgFile) {
+        loadImageFromFile(imgFile);
+      }
+    });
+    return unregister;
+  }, [loadImageFromFile]);
+
+  // Global Drag and Drop event handlers
+  const handleGlobalDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.dataTransfer && e.dataTransfer.types.includes('Files')) {
+      setIsDragOver(true);
+    }
+  };
+
+  const handleGlobalDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.dataTransfer) {
+      e.dataTransfer.dropEffect = 'copy';
+    }
+  };
+
+  const handleGlobalDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+    setIsDragOver(false);
+  };
+
+  const handleGlobalDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+    const dropped = e.dataTransfer.files?.[0];
+    if (dropped && (dropped.type.startsWith('image/') || /\.(png|jpe?g|webp|gif|svg|bmp|ico)$/i.test(dropped.name))) {
+      loadImageFromFile(dropped);
+    }
+  };
+
   // Handle manual width change
   const handleWidthChange = (newW: number) => {
     const val = Math.max(10, Math.min(8000, Math.round(newW)));
@@ -712,177 +759,212 @@ export const ImageEditorTool: React.FC = () => {
   // Main rendering routine: draws the current state onto any canvas target
   const renderMainCanvas = useCallback(
     (targetCanvas: HTMLCanvasElement, forCropping = false) => {
-      if (!sourceImage) return;
-      const ctx = targetCanvas.getContext('2d');
-      if (!ctx) return;
+      try {
+        if (!sourceImage || !sourceImage.complete || sourceImage.naturalWidth === 0) return;
+        const ctx = targetCanvas.getContext('2d');
+        if (!ctx) return;
 
-      const isRotatedQuarter = (rotation / 90) % 2 !== 0;
-      const finalCanvasWidth = isRotatedQuarter ? height : width;
-      const finalCanvasHeight = isRotatedQuarter ? width : height;
+        const isRotatedQuarter = (rotation / 90) % 2 !== 0;
+        const finalCanvasWidth = Math.max(1, Math.round(isRotatedQuarter ? height : width));
+        const finalCanvasHeight = Math.max(1, Math.round(isRotatedQuarter ? width : height));
 
-      if (!forCropping) {
-        targetCanvas.width = finalCanvasWidth;
-        targetCanvas.height = finalCanvasHeight;
-      }
-
-      ctx.save();
-      ctx.clearRect(0, 0, targetCanvas.width, targetCanvas.height);
-
-      // Canvas background color for expand mode
-      if (canvasBgColor !== 'transparent') {
-        ctx.fillStyle = canvasBgColor;
-        ctx.fillRect(0, 0, targetCanvas.width, targetCanvas.height);
-      }
-
-      // If comparing original, render pristine original centered
-      if (isComparingOriginal) {
-        ctx.drawImage(sourceImage, 0, 0, targetCanvas.width, targetCanvas.height);
-        ctx.restore();
-        return;
-      }
-
-      // Build CSS filter string
-      const filters: string[] = [];
-      if (brightness !== 100) filters.push(`brightness(${brightness}%)`);
-      if (contrast !== 100) filters.push(`contrast(${contrast}%)`);
-      if (saturation !== 100) filters.push(`saturate(${saturation}%)`);
-      if (hue !== 0) filters.push(`hue-rotate(${hue}deg)`);
-      if (blur > 0) filters.push(`blur(${blur}px)`);
-      if (sepia > 0) filters.push(`sepia(${sepia}%)`);
-      if (grayscale > 0) filters.push(`grayscale(${grayscale}%)`);
-      if (invert > 0) filters.push(`invert(${invert}%)`);
-
-      if (filters.length > 0) {
-        ctx.filter = filters.join(' ');
-      }
-
-      // Transformations
-      ctx.translate(targetCanvas.width / 2, targetCanvas.height / 2);
-      const totalAngle = ((rotation + fineAngle) * Math.PI) / 180;
-      ctx.rotate(totalAngle);
-      ctx.scale(flipH ? -1 : 1, flipV ? -1 : 1);
-
-      // Draw image
-      if (resizeMode === 'resample') {
-        ctx.drawImage(sourceImage, -width / 2, -height / 2, width, height);
-      } else {
-        // Center original content within canvas
-        ctx.drawImage(sourceImage, -originalWidth / 2, -originalHeight / 2, originalWidth, originalHeight);
-      }
-
-      ctx.restore();
-
-      // Post-transformation pixel overlays: Temperature / Warmth
-      if (warmth !== 0) {
-        ctx.save();
-        ctx.globalCompositeOperation = warmth > 0 ? 'color' : 'color';
-        ctx.fillStyle = warmth > 0 ? `rgba(255, 160, 40, ${Math.abs(warmth) / 300})` : `rgba(40, 140, 255, ${Math.abs(warmth) / 300})`;
-        ctx.fillRect(0, 0, targetCanvas.width, targetCanvas.height);
-        ctx.restore();
-      }
-
-      // Vignette effect
-      if (vignette > 0) {
-        ctx.save();
-        const maxRadius = Math.sqrt(Math.pow(targetCanvas.width / 2, 2) + Math.pow(targetCanvas.height / 2, 2));
-        const vigGrad = ctx.createRadialGradient(
-          targetCanvas.width / 2,
-          targetCanvas.height / 2,
-          maxRadius * 0.45,
-          targetCanvas.width / 2,
-          targetCanvas.height / 2,
-          maxRadius
-        );
-        vigGrad.addColorStop(0, 'rgba(0, 0, 0, 0)');
-        vigGrad.addColorStop(1, `rgba(0, 0, 0, ${(vignette / 100) * 0.85})`);
-        ctx.fillStyle = vigGrad;
-        ctx.fillRect(0, 0, targetCanvas.width, targetCanvas.height);
-        ctx.restore();
-      }
-
-      // Censor Boxes
-      for (const box of censorBoxes) {
-        ctx.save();
-        if (box.type === 'blackout') {
-          ctx.fillStyle = '#000000';
-          ctx.fillRect(box.x, box.y, box.width, box.height);
-        } else {
-          // Pixelate
-          const size = 12;
-          const w = Math.max(1, box.width);
-          const h = Math.max(1, box.height);
-          const sample = ctx.getImageData(box.x, box.y, w, h);
-          ctx.imageSmoothingEnabled = false;
-          // Render low-res offscreen then upscale
-          const mini = document.createElement('canvas');
-          mini.width = Math.max(1, Math.round(w / size));
-          mini.height = Math.max(1, Math.round(h / size));
-          const miniCtx = mini.getContext('2d');
-          if (miniCtx) {
-            miniCtx.putImageData(sample, 0, 0);
-            ctx.drawImage(mini, box.x, box.y, w, h);
+        if (!forCropping) {
+          if (targetCanvas.width !== finalCanvasWidth) {
+            targetCanvas.width = finalCanvasWidth;
+          }
+          if (targetCanvas.height !== finalCanvasHeight) {
+            targetCanvas.height = finalCanvasHeight;
           }
         }
-        ctx.restore();
-      }
 
-      // Render Drawings / Brush strokes
-      for (const stroke of drawings) {
-        if (stroke.points.length < 2) continue;
         ctx.save();
-        ctx.beginPath();
-        ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
-        for (let i = 1; i < stroke.points.length; i++) {
-          ctx.lineTo(stroke.points[i].x, stroke.points[i].y);
+        ctx.clearRect(0, 0, targetCanvas.width, targetCanvas.height);
+
+        // Canvas background color for expand mode
+        if (canvasBgColor !== 'transparent') {
+          ctx.fillStyle = canvasBgColor;
+          ctx.fillRect(0, 0, targetCanvas.width, targetCanvas.height);
         }
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        ctx.lineWidth = stroke.size;
-        if (stroke.isEraser) {
-          ctx.globalCompositeOperation = 'destination-out';
-          ctx.strokeStyle = 'rgba(0,0,0,1)';
+
+        // If comparing original, render pristine original centered
+        if (isComparingOriginal) {
+          ctx.drawImage(sourceImage, 0, 0, targetCanvas.width, targetCanvas.height);
+          ctx.restore();
+          return;
+        }
+
+        // Build CSS filter string
+        const filters: string[] = [];
+        if (brightness !== 100) filters.push(`brightness(${brightness}%)`);
+        if (contrast !== 100) filters.push(`contrast(${contrast}%)`);
+        if (saturation !== 100) filters.push(`saturate(${saturation}%)`);
+        if (hue !== 0) filters.push(`hue-rotate(${hue}deg)`);
+        if (blur > 0) filters.push(`blur(${blur}px)`);
+        if (sepia > 0) filters.push(`sepia(${sepia}%)`);
+        if (grayscale > 0) filters.push(`grayscale(${grayscale}%)`);
+        if (invert > 0) filters.push(`invert(${invert}%)`);
+
+        if (filters.length > 0) {
+          ctx.filter = filters.join(' ');
+        }
+
+        // Transformations
+        ctx.translate(targetCanvas.width / 2, targetCanvas.height / 2);
+        const totalAngle = ((rotation + fineAngle) * Math.PI) / 180;
+        ctx.rotate(totalAngle);
+        ctx.scale(flipH ? -1 : 1, flipV ? -1 : 1);
+
+        // Draw image
+        if (resizeMode === 'resample') {
+          ctx.drawImage(sourceImage, -width / 2, -height / 2, width, height);
         } else {
-          ctx.strokeStyle = stroke.color;
+          // Center original content within canvas
+          ctx.drawImage(sourceImage, -originalWidth / 2, -originalHeight / 2, originalWidth, originalHeight);
         }
-        ctx.stroke();
+
         ctx.restore();
-      }
 
-      // Render Text Overlay
-      if (textOverlay.enabled && textOverlay.text.trim()) {
-        ctx.save();
-        ctx.font = `600 ${textOverlay.fontSize}px sans-serif`;
-        const textMetrics = ctx.measureText(textOverlay.text);
-        const textW = textMetrics.width;
-        const textH = textOverlay.fontSize;
-        const padding = 16;
-        let posX = padding;
-        let posY = textH + padding;
-
-        if (textOverlay.position === 'top-right') {
-          posX = targetCanvas.width - textW - padding * 2;
-          posY = textH + padding;
-        } else if (textOverlay.position === 'center') {
-          posX = (targetCanvas.width - textW) / 2;
-          posY = (targetCanvas.height + textH) / 2;
-        } else if (textOverlay.position === 'bottom-left') {
-          posX = padding;
-          posY = targetCanvas.height - padding * 1.5;
-        } else if (textOverlay.position === 'bottom-right') {
-          posX = targetCanvas.width - textW - padding * 2;
-          posY = targetCanvas.height - padding * 1.5;
+        // Post-transformation pixel overlays: Temperature / Warmth
+        if (warmth !== 0) {
+          ctx.save();
+          ctx.globalCompositeOperation = 'color';
+          ctx.fillStyle = warmth > 0 ? `rgba(255, 160, 40, ${Math.abs(warmth) / 300})` : `rgba(40, 140, 255, ${Math.abs(warmth) / 300})`;
+          ctx.fillRect(0, 0, targetCanvas.width, targetCanvas.height);
+          ctx.restore();
         }
 
-        ctx.globalAlpha = textOverlay.opacity / 100;
-        // Background badge
-        if (textOverlay.bgColor !== 'transparent') {
-          ctx.fillStyle = textOverlay.bgColor;
-          ctx.fillRect(posX - 10, posY - textH, textW + 20, textH + 14);
+        // Vignette effect
+        if (vignette > 0) {
+          ctx.save();
+          const maxRadius = Math.sqrt(Math.pow(targetCanvas.width / 2, 2) + Math.pow(targetCanvas.height / 2, 2));
+          if (maxRadius > 0) {
+            const vigGrad = ctx.createRadialGradient(
+              targetCanvas.width / 2,
+              targetCanvas.height / 2,
+              maxRadius * 0.45,
+              targetCanvas.width / 2,
+              targetCanvas.height / 2,
+              maxRadius
+            );
+            vigGrad.addColorStop(0, 'rgba(0, 0, 0, 0)');
+            vigGrad.addColorStop(1, `rgba(0, 0, 0, ${(vignette / 100) * 0.85})`);
+            ctx.fillStyle = vigGrad;
+            ctx.fillRect(0, 0, targetCanvas.width, targetCanvas.height);
+          }
+          ctx.restore();
         }
-        // Text
-        ctx.fillStyle = textOverlay.color;
-        ctx.fillText(textOverlay.text, posX, posY);
-        ctx.restore();
+
+        // Censor Boxes
+        for (const box of censorBoxes) {
+          ctx.save();
+          if (box.type === 'blackout') {
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(box.x, box.y, box.width, box.height);
+          } else {
+            // Pixelate safely
+            const safeW = Math.max(1, Math.min(targetCanvas.width - box.x, box.width));
+            const safeH = Math.max(1, Math.min(targetCanvas.height - box.y, box.height));
+            if (
+              box.x >= 0 &&
+              box.y >= 0 &&
+              safeW > 0 &&
+              safeH > 0 &&
+              box.x + safeW <= targetCanvas.width &&
+              box.y + safeH <= targetCanvas.height
+            ) {
+              try {
+                const sample = ctx.getImageData(box.x, box.y, safeW, safeH);
+                const mini = document.createElement('canvas');
+                mini.width = Math.max(1, Math.round(safeW / 12));
+                mini.height = Math.max(1, Math.round(safeH / 12));
+                const miniCtx = mini.getContext('2d');
+                if (miniCtx) {
+                  miniCtx.putImageData(sample, 0, 0);
+                  ctx.imageSmoothingEnabled = false;
+                  ctx.drawImage(mini, box.x, box.y, safeW, safeH);
+                }
+              } catch {
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(box.x, box.y, safeW, safeH);
+              }
+            }
+          }
+          ctx.restore();
+        }
+
+        // Render Drawings / Brush strokes
+        for (const stroke of drawings) {
+          if (!stroke.points || stroke.points.length === 0) continue;
+          ctx.save();
+          if (stroke.points.length === 1) {
+            ctx.beginPath();
+            ctx.arc(stroke.points[0].x, stroke.points[0].y, stroke.size / 2, 0, Math.PI * 2);
+            if (stroke.isEraser) {
+              ctx.globalCompositeOperation = 'destination-out';
+              ctx.fillStyle = 'rgba(0,0,0,1)';
+            } else {
+              ctx.fillStyle = stroke.color;
+            }
+            ctx.fill();
+          } else {
+            ctx.beginPath();
+            ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
+            for (let i = 1; i < stroke.points.length; i++) {
+              ctx.lineTo(stroke.points[i].x, stroke.points[i].y);
+            }
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.lineWidth = stroke.size;
+            if (stroke.isEraser) {
+              ctx.globalCompositeOperation = 'destination-out';
+              ctx.strokeStyle = 'rgba(0,0,0,1)';
+            } else {
+              ctx.strokeStyle = stroke.color;
+            }
+            ctx.stroke();
+          }
+          ctx.restore();
+        }
+
+        // Render Text Overlay
+        if (textOverlay.enabled && textOverlay.text.trim()) {
+          ctx.save();
+          const safeFontSize = Math.max(12, Math.min(200, textOverlay.fontSize || 36));
+          ctx.font = `600 ${safeFontSize}px sans-serif`;
+          const textMetrics = ctx.measureText(textOverlay.text);
+          const textW = textMetrics.width;
+          const textH = safeFontSize;
+          const padding = 16;
+          let posX = padding;
+          let posY = textH + padding;
+
+          if (textOverlay.position === 'top-right') {
+            posX = targetCanvas.width - textW - padding * 2;
+            posY = textH + padding;
+          } else if (textOverlay.position === 'center') {
+            posX = (targetCanvas.width - textW) / 2;
+            posY = (targetCanvas.height + textH) / 2;
+          } else if (textOverlay.position === 'bottom-left') {
+            posX = padding;
+            posY = targetCanvas.height - padding * 1.5;
+          } else if (textOverlay.position === 'bottom-right') {
+            posX = targetCanvas.width - textW - padding * 2;
+            posY = targetCanvas.height - padding * 1.5;
+          }
+
+          ctx.globalAlpha = Math.max(0.1, Math.min(1, (textOverlay.opacity || 90) / 100));
+          // Background badge
+          if (textOverlay.bgColor !== 'transparent') {
+            ctx.fillStyle = textOverlay.bgColor;
+            ctx.fillRect(posX - 10, posY - textH, textW + 20, textH + 14);
+          }
+          // Text
+          ctx.fillStyle = textOverlay.color;
+          ctx.fillText(textOverlay.text, posX, posY);
+          ctx.restore();
+        }
+      } catch (err) {
+        console.error('Canvas renderMainCanvas error:', err);
       }
     },
     [
@@ -937,66 +1019,121 @@ export const ImageEditorTool: React.FC = () => {
     return () => clearTimeout(timer);
   }, [renderMainCanvas, sourceImage, exportFormat, exportQuality]);
 
-  // Mouse handlers for Drawing & Cropping
-  const handleCanvasMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!previewCanvasRef.current) return;
+  // Pointer handlers for Drawing (smooth incremental rendering without canvas reset)
+  const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (!previewCanvasRef.current || !isDrawingMode) return;
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {
+      // ignore
+    }
+
     const rect = previewCanvasRef.current.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return;
     const scaleX = previewCanvasRef.current.width / rect.width;
     const scaleY = previewCanvasRef.current.height / rect.height;
     const canvasX = (e.clientX - rect.left) * scaleX;
     const canvasY = (e.clientY - rect.top) * scaleY;
 
-    if (isDrawingMode) {
-      isMouseDownRef.current = true;
-      currentStrokeRef.current = {
-        points: [{ x: canvasX, y: canvasY }],
-        color: brushColor,
-        size: brushSize,
-        isEraser,
-      };
-      return;
+    if (!Number.isFinite(canvasX) || !Number.isFinite(canvasY)) return;
+
+    isMouseDownRef.current = true;
+    lastDrawnPosRef.current = { x: canvasX, y: canvasY };
+    currentStrokeRef.current = {
+      points: [{ x: canvasX, y: canvasY }],
+      color: brushColor,
+      size: brushSize,
+      isEraser,
+    };
+
+    // Draw initial dot directly onto canvas
+    const canvas = previewCanvasRef.current;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(canvasX, canvasY, brushSize / 2, 0, Math.PI * 2);
+      if (isEraser) {
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.fillStyle = 'rgba(0,0,0,1)';
+      } else {
+        ctx.fillStyle = brushColor;
+      }
+      ctx.fill();
+      ctx.restore();
     }
   };
 
-  const handleCanvasMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const handlePointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
     if (!isMouseDownRef.current || !previewCanvasRef.current || !isDrawingMode) return;
+    if (!currentStrokeRef.current || !lastDrawnPosRef.current) return;
+
     const rect = previewCanvasRef.current.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return;
     const scaleX = previewCanvasRef.current.width / rect.width;
     const scaleY = previewCanvasRef.current.height / rect.height;
     const canvasX = (e.clientX - rect.left) * scaleX;
     const canvasY = (e.clientY - rect.top) * scaleY;
 
-    if (currentStrokeRef.current) {
-      currentStrokeRef.current.points.push({ x: canvasX, y: canvasY });
-      // Redraw
-      const canvas = previewCanvasRef.current;
-      renderMainCanvas(canvas);
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.save();
-        ctx.beginPath();
-        const stroke = currentStrokeRef.current;
-        ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
-        for (let i = 1; i < stroke.points.length; i++) {
-          ctx.lineTo(stroke.points[i].x, stroke.points[i].y);
+    if (!Number.isFinite(canvasX) || !Number.isFinite(canvasY)) return;
+
+    currentStrokeRef.current.points.push({ x: canvasX, y: canvasY });
+
+    // Draw segment incrementally directly onto canvas (zero overhead, smooth 120fps)
+    const canvas = previewCanvasRef.current;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(lastDrawnPosRef.current.x, lastDrawnPosRef.current.y);
+      ctx.lineTo(canvasX, canvasY);
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.lineWidth = brushSize;
+      if (isEraser) {
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.strokeStyle = 'rgba(0,0,0,1)';
+      } else {
+        ctx.strokeStyle = brushColor;
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    lastDrawnPosRef.current = { x: canvasX, y: canvasY };
+  };
+
+  const handlePointerUp = (e?: React.PointerEvent<HTMLCanvasElement>) => {
+    if (e) {
+      try {
+        if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+          e.currentTarget.releasePointerCapture(e.pointerId);
         }
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        ctx.lineWidth = stroke.size;
-        ctx.strokeStyle = stroke.isEraser ? '#ffffff' : stroke.color;
-        ctx.stroke();
-        ctx.restore();
+      } catch {
+        // ignore
       }
     }
-  };
 
-  const handleCanvasMouseUp = () => {
-    if (isDrawingMode && currentStrokeRef.current) {
-      pushHistory();
-      setDrawings(prev => [...prev, currentStrokeRef.current!]);
+    if (isDrawingMode && currentStrokeRef.current && currentStrokeRef.current.points.length > 0) {
+      const strokeToCommit = {
+        ...currentStrokeRef.current,
+        points: [...currentStrokeRef.current.points],
+      };
       currentStrokeRef.current = null;
+      lastDrawnPosRef.current = null;
+      pushHistory();
+      setDrawings(prev => [...prev, strokeToCommit]);
+    } else {
+      currentStrokeRef.current = null;
+      lastDrawnPosRef.current = null;
     }
     isMouseDownRef.current = false;
+  };
+
+  const handlePointerLeave = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (isMouseDownRef.current && !e.currentTarget.hasPointerCapture(e.pointerId)) {
+      handlePointerUp(e);
+    }
   };
 
   // Crop Dragging Handlers
@@ -1136,7 +1273,25 @@ export const ImageEditorTool: React.FC = () => {
   const labelStyle = 'block text-[11px] font-medium text-slate-400 mb-1';
 
   return (
-    <div className="space-y-4 max-w-full">
+    <div
+      className="space-y-4 max-w-full relative"
+      onDragEnter={handleGlobalDragEnter}
+      onDragOver={handleGlobalDragOver}
+      onDragLeave={handleGlobalDragLeave}
+      onDrop={handleGlobalDrop}
+    >
+      {/* Drag & Drop Visual Glow Backdrop Overlay */}
+      {isDragOver && (
+        <div className="absolute inset-0 z-50 bg-indigo-950/85 backdrop-blur-sm border-2 border-dashed border-indigo-400 rounded-2xl flex flex-col items-center justify-center pointer-events-none p-6 shadow-2xl transition-all">
+          <div className="w-16 h-16 rounded-2xl bg-indigo-600/30 border border-indigo-400 flex items-center justify-center text-indigo-300 mb-4 animate-bounce">
+            <FileUp className="w-8 h-8" />
+          </div>
+          <p className="text-base font-semibold text-white tracking-wide">
+            {t('image_editor_drop_overlay', 'Pusťte obrázek zde pro otevření v editoru')}
+          </p>
+        </div>
+      )}
+
       {/* Header banner */}
       <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex flex-wrap items-center justify-between gap-3">
         <div>
@@ -1176,11 +1331,21 @@ export const ImageEditorTool: React.FC = () => {
       {!sourceImage && (
         <div
           className="border-2 border-dashed border-slate-800 hover:border-indigo-500/60 rounded-2xl p-10 text-center transition-all bg-slate-950/40 space-y-5"
-          onDragOver={e => e.preventDefault()}
+          onDragEnter={e => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+          onDragOver={e => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy';
+          }}
           onDrop={e => {
             e.preventDefault();
+            e.stopPropagation();
+            setIsDragOver(false);
             const dropped = e.dataTransfer.files?.[0];
-            if (dropped && dropped.type.startsWith('image/')) {
+            if (dropped && (dropped.type.startsWith('image/') || /\.(png|jpe?g|webp|gif|svg|bmp|ico)$/i.test(dropped.name))) {
               loadImageFromFile(dropped);
             }
           }}
@@ -1328,10 +1493,12 @@ export const ImageEditorTool: React.FC = () => {
             >
               <canvas
                 ref={previewCanvasRef}
-                className="rounded-lg shadow-2xl cursor-crosshair block"
-                onMouseDown={handleCanvasMouseDown}
-                onMouseMove={handleCanvasMouseMove}
-                onMouseUp={handleCanvasMouseUp}
+                className="rounded-lg shadow-2xl cursor-crosshair block touch-none"
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                onPointerCancel={handlePointerUp}
+                onPointerLeave={handlePointerLeave}
               />
 
               {/* Interactive Crop Box Overlay */}

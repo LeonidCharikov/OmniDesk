@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import mammoth from 'mammoth';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import { 
@@ -13,7 +13,7 @@ import {
   FileCode
 } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
-import { saveBinaryWithDialog } from '../../services/fileSystemService';
+import { saveBinaryWithDialog, registerTauriDropListener } from '../../services/fileSystemService';
 
 export const DocxToPdfTool: React.FC = () => {
   const { t } = useI18n();
@@ -55,10 +55,7 @@ ${t('sample_confidentiality_body', 'Všechna data podléhají nejpřísnějším
     generatePdfFromText(sample, `${t('sample_doc_name', 'Ukazkovy_dokument')}.pdf`);
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
-    if (!selectedFile) return;
-
+  const processFile = useCallback(async (selectedFile: File) => {
     if (!selectedFile.name.toLowerCase().endsWith('.docx') && !selectedFile.name.toLowerCase().endsWith('.txt')) {
       setError(t('err_select_docx_or_txt', 'Vyberte prosím soubor ve formátu .docx nebo .txt'));
       return;
@@ -89,7 +86,24 @@ ${t('sample_confidentiality_body', 'Všechna data podléhají nejpřísnějším
     } finally {
       setIsProcessing(false);
     }
+  }, [t]);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    if (!selectedFile) return;
+    await processFile(selectedFile);
   };
+
+  // Tauri Native Drop Listener Fallback for Desktop App
+  useEffect(() => {
+    const unregister = registerTauriDropListener(files => {
+      const docFile = files.find(f => f.name.toLowerCase().endsWith('.docx') || f.name.toLowerCase().endsWith('.txt'));
+      if (docFile) {
+        processFile(docFile);
+      }
+    });
+    return unregister;
+  }, [processFile]);
 
   const generatePdfFromText = async (text: string, outputName: string, startTime: number = performance.now()) => {
     setIsProcessing(true);
@@ -284,7 +298,18 @@ ${t('sample_confidentiality_body', 'Všechna data podléhají nejpřísnějším
       </div>
 
       {/* Upload Zone */}
-      <div className="relative border-2 border-dashed border-slate-800 hover:border-indigo-500/50 rounded-2xl p-8 transition-colors text-center bg-slate-900/20">
+      <div
+        className="relative border-2 border-dashed border-slate-800 hover:border-indigo-500/50 rounded-2xl p-8 transition-colors text-center bg-slate-900/20"
+        onDragOver={e => {
+          e.preventDefault();
+          if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy';
+        }}
+        onDrop={e => {
+          e.preventDefault();
+          const f = e.dataTransfer.files?.[0];
+          if (f) processFile(f);
+        }}
+      >
         <input
           type="file"
           accept=".docx,.txt"

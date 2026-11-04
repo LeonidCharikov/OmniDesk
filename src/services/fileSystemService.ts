@@ -474,3 +474,76 @@ export async function invokeRustCommand<T>(cmd: string, args?: Record<string, un
   }
   throw new Error(`Rust příkaz "${cmd}" není v prohlížečovém sandboxu dostupný.`);
 }
+
+/**
+ * Zaregistruje posluchač pro nativní Tauri drag-and-drop události z operačního systému.
+ * Slouží jako fallback pro případ, kdy desktopová aplikace běží s výchozím dragDropEnabled: true.
+ */
+export function registerTauriDropListener(onFiles: (files: File[]) => void): () => void {
+  if (!isTauri()) {
+    return () => {};
+  }
+
+  let unlistenFn: (() => void) | undefined;
+  let isActive = true;
+
+  import('@tauri-apps/api/webview')
+    .then(({ getCurrentWebview }) => {
+      if (!isActive) return;
+      return getCurrentWebview().onDragDropEvent(async event => {
+        if (!isActive || event.payload.type !== 'drop' || !event.payload.paths?.length) return;
+
+        try {
+          const { readFile } = await import('@tauri-apps/plugin-fs');
+          const filePromises = event.payload.paths.map(async (filePath: string) => {
+            const bytes = await readFile(filePath);
+            const filename = filePath.split(/[/\\]/).pop() || 'dropped-file';
+            const ext = filename.split('.').pop()?.toLowerCase() || '';
+            const mimeMap: Record<string, string> = {
+              png: 'image/png',
+              jpg: 'image/jpeg',
+              jpeg: 'image/jpeg',
+              webp: 'image/webp',
+              gif: 'image/gif',
+              svg: 'image/svg+xml',
+              bmp: 'image/bmp',
+              ico: 'image/x-icon',
+              docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+              pdf: 'application/pdf',
+              txt: 'text/plain',
+              json: 'application/json',
+              csv: 'text/csv',
+            };
+            const mime = mimeMap[ext] || 'application/octet-stream';
+            return new File([bytes], filename, { type: mime });
+          });
+
+          const files = await Promise.all(filePromises);
+          if (files.length > 0) {
+            onFiles(files);
+          }
+        } catch (err) {
+          console.warn('registerTauriDropListener: Failed to read dropped files:', err);
+        }
+      });
+    })
+    .then(unlisten => {
+      if (unlisten) {
+        if (!isActive) {
+          unlisten();
+        } else {
+          unlistenFn = unlisten;
+        }
+      }
+    })
+    .catch(err => {
+      console.warn('registerTauriDropListener failed to register:', err);
+    });
+
+  return () => {
+    isActive = false;
+    if (unlistenFn) {
+      unlistenFn();
+    }
+  };
+}

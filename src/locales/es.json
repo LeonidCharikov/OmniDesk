@@ -851,5 +851,9 @@
   "image_editor_brush_on": "Dibujo activo",
   "image_editor_brush_off": "Activar pincel",
   "image_editor_brush_label": "Pincel",
-  "image_editor_erase_label": "Borrar"
+  "image_editor_erase_label": "Borrar",
+  "image_editor_drop_overlay": "Suelta la imagen aquí para abrirla en el editor",
+  "error_boundary_title": "Ocurrió un error en esta herramienta",
+  "error_boundary_desc": "Se produjo un error inesperado al ejecutar esta herramienta. Puedes recargarla.",
+  "error_boundary_reload": "Recargar herramienta"
 }

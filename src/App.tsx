@@ -12,6 +12,7 @@ import { applyTheme } from './services/themes';
 import { useI18n } from './i18n/context';
 import { Info } from 'lucide-react';
 import { getToolCatalogText } from './i18n/toolCatalog';
+import { ErrorBoundary } from './components/ui/ErrorBoundary';
 
 export default function App() {
   const [config, setConfig] = useState<UserConfig>(loadUserConfig);
@@ -275,10 +276,12 @@ export default function App() {
                   </div>
                 )}
                 {/* Active Tool Renderer */}
-                {React.createElement(activeTool.component, {
-                  isOffline: isEffectiveOffline,
-                  currency: config.defaultCurrency || config.widgets?.selectedFiat || 'CZK',
-                } as unknown as Record<string, unknown>)}
+                <ErrorBoundary key={activeTool.id}>
+                  {React.createElement(activeTool.component, {
+                    isOffline: isEffectiveOffline,
+                    currency: config.defaultCurrency || config.widgets?.selectedFiat || 'CZK',
+                  } as unknown as Record<string, unknown>)}
+                </ErrorBoundary>
               </div>
             ) : (
               /* Tool Grid View */

@@ -42,7 +42,7 @@ async function derivePbkdf2Key(
   return crypto.subtle.deriveKey(
     {
       name: 'PBKDF2',
-      salt: salt as ArrayBufferView,
+      salt: salt as unknown as BufferSource,
       iterations: 100000,
       hash: 'SHA-256',
     },
@@ -75,7 +75,7 @@ export async function hashMasterKey(
   const derivedBits = await crypto.subtle.deriveBits(
     {
       name: 'PBKDF2',
-      salt: salt as ArrayBufferView,
+      salt: salt as unknown as BufferSource,
       iterations: 100000,
       hash: 'SHA-256',
     },
@@ -172,10 +172,10 @@ export async function decryptJsonPayload(
   const decryptedBuffer = await crypto.subtle.decrypt(
     {
       name: 'AES-GCM',
-      iv: iv as ArrayBufferView,
+      iv: iv as unknown as BufferSource,
     },
     key,
-    cipherBuffer as ArrayBufferView
+    cipherBuffer as unknown as BufferSource
   );
 
   const decoder = new TextDecoder();

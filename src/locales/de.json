@@ -851,5 +851,9 @@
   "image_editor_brush_on": "Zeichnen aktiv",
   "image_editor_brush_off": "Pinsel aktivieren",
   "image_editor_brush_label": "Pinsel",
-  "image_editor_erase_label": "Löschen"
+  "image_editor_erase_label": "Löschen",
+  "image_editor_drop_overlay": "Bild hier ablegen, um es im Editor zu öffnen",
+  "error_boundary_title": "In diesem Werkzeug ist ein Fehler aufgetreten",
+  "error_boundary_desc": "Unerwarteter Fehler im Werkzeug aufgetreten. Klicken Sie zum Neuladen.",
+  "error_boundary_reload": "Werkzeug neu laden"
 }

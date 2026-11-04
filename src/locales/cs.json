@@ -1019,5 +1019,9 @@
   "image_editor_brush_on": "Kreslení zapnuto",
   "image_editor_brush_off": "Zapnout kreslení",
   "image_editor_brush_label": "Štětec",
-  "image_editor_erase_label": "Vymazat"
+  "image_editor_erase_label": "Vymazat",
+  "image_editor_drop_overlay": "Pusťte obrázek zde pro otevření v editoru",
+  "error_boundary_title": "V tomto nástroji došlo k chybě",
+  "error_boundary_desc": "Během práce s nástrojem nastala neočekávaná chyba. Můžete jej znovu načíst.",
+  "error_boundary_reload": "Znovu načíst nástroj"
 }
