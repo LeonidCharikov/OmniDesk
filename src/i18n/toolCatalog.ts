@@ -29,7 +29,13 @@ const catalog: Record<string, { title: CatalogText; desc: CatalogText }> = {
   },
   'image-editor': {
     title: { cs: 'Editor obrázků', en: 'Image Editor', de: 'Bildeditor', es: 'Editor de imágenes', ru: 'Редактор изображений' },
-    desc: { cs: 'Měňte velikost, komprimujte, zobrazujte náhled a exportujte obrázky jako JPEG.', en: 'Resize, compress, preview, and export images as JPEG.', de: 'Bilder skalieren, komprimieren, in der Vorschau anzeigen und als JPEG exportieren.', es: 'Cambia el tamaño, comprime, previsualiza y exporta imágenes como JPEG.', ru: 'Изменяйте размер, сжимайте, просматривайте и экспортируйте изображения в JPEG.' },
+    desc: {
+      cs: 'Vizuální studio pro úpravu fotografií: změna šířky a výšky, ořez, rotace, filtry, jas, kontrast, vodoznaky a export.',
+      en: 'Visual photo studio editor: manual width & height resize, cropping, rotation, filters, brightness, contrast, watermarks, and export.',
+      de: 'Visuelles Fotostudio: Manuelle Breiten- und Höhenanpassung, Zuschnitt, Drehung, Filter, Helligkeit, Kontrast, Wasserzeichen und Export.',
+      es: 'Estudio visual de fotos: cambio manual de ancho y alto, recorte, rotación, filtros, brillo, contraste, marcas de agua y exportación.',
+      ru: 'Визуальная фотостудия: ручное изменение ширины и высоты, кадрирование, поворот, фильтры, яркость, контрастность, водяные знаки и экспорт.',
+    },
   },
   'markdown-preview': {
     title: { cs: 'Náhled a export Markdownu', en: 'Markdown Preview & Export', de: 'Markdown-Vorschau und Export', es: 'Vista previa y exportación de Markdown', ru: 'Предпросмотр и экспорт Markdown' },

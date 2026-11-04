@@ -1,4 +1,4 @@
-import { UserConfig, WidgetCustomization, ThemeId, DailyTask } from '../types/tool';
+import { UserConfig, WidgetCustomization, ThemeId, DailyTask, SecurityConfig } from '../types/tool';
 
 const CONFIG_KEY = 'omnidesk_user_config_v2';
 const LEGACY_KEY = 'omnidesk_user_config_v1';
@@ -23,6 +23,12 @@ export const DEFAULT_WIDGETS: WidgetCustomization = {
   dailyTasks: DEFAULT_TASKS,
 };
 
+export const DEFAULT_SECURITY: SecurityConfig = {
+  lockEnabled: false,
+  autoLockMinutes: 0,
+  lockOnBlur: false,
+};
+
 export const DEFAULT_CONFIG: UserConfig = {
   version: 2,
   favorites: ['text-editor', 'docx-to-pdf', 'unit-converter', 'currency-crypto', 'pomodoro-timer'],
@@ -34,6 +40,7 @@ export const DEFAULT_CONFIG: UserConfig = {
   widgets: DEFAULT_WIDGETS,
   enabledWidgets: ['clock', 'timer', 'crypto', 'notes', 'tasks', 'calc'],
   language: 'en',
+  security: DEFAULT_SECURITY,
 };
 
 export function loadUserConfig(): UserConfig {
@@ -70,6 +77,19 @@ export function loadUserConfig(): UserConfig {
 
     const themeId: ThemeId = parsed.themeId || (parsed.theme === 'light' ? 'light' : 'midnight');
 
+    const security: SecurityConfig = {
+      lockEnabled: Boolean(parsed.security?.lockEnabled),
+      pinHash: parsed.security?.pinHash || undefined,
+      pinSalt: parsed.security?.pinSalt || undefined,
+      autoLockMinutes: typeof parsed.security?.autoLockMinutes === 'number'
+        ? parsed.security.autoLockMinutes
+        : 0,
+      lockOnBlur: Boolean(parsed.security?.lockOnBlur),
+      securityHint: typeof parsed.security?.securityHint === 'string'
+        ? parsed.security.securityHint
+        : undefined,
+    };
+
     return {
       ...DEFAULT_CONFIG,
       ...parsed,
@@ -77,6 +97,7 @@ export function loadUserConfig(): UserConfig {
       themeId,
       widgets,
       enabledWidgets: widgets.enabledWidgets,
+      security,
     };
   } catch {
     return DEFAULT_CONFIG;
@@ -134,6 +155,18 @@ export function validateConfigJson(jsonString: string): { valid: boolean; config
         dailyTasks: Array.isArray(parsed.widgets?.dailyTasks) ? parsed.widgets.dailyTasks : DEFAULT_TASKS,
       },
       language: ['cs', 'en', 'ru', 'de', 'es'].includes(parsed.language) ? parsed.language : 'en',
+      security: {
+        lockEnabled: Boolean(parsed.security?.lockEnabled),
+        pinHash: parsed.security?.pinHash || undefined,
+        pinSalt: parsed.security?.pinSalt || undefined,
+        autoLockMinutes: typeof parsed.security?.autoLockMinutes === 'number'
+          ? parsed.security.autoLockMinutes
+          : 0,
+        lockOnBlur: Boolean(parsed.security?.lockOnBlur),
+        securityHint: typeof parsed.security?.securityHint === 'string'
+          ? parsed.security.securityHint
+          : undefined,
+      },
     };
 
     config.enabledWidgets = config.widgets.enabledWidgets;

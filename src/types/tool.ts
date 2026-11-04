@@ -45,6 +45,15 @@ export interface WidgetCustomization {
   dailyTasks?: DailyTask[];
 }
 
+export interface SecurityConfig {
+  lockEnabled: boolean;
+  pinHash?: string;
+  pinSalt?: string;
+  autoLockMinutes: number;
+  lockOnBlur: boolean;
+  securityHint?: string;
+}
+
 export interface UserConfig {
   version?: number;
   exportedAt?: string;
@@ -57,4 +66,5 @@ export interface UserConfig {
   widgets: WidgetCustomization;
   enabledWidgets?: string[];
   language?: string;
+  security?: SecurityConfig;
 }

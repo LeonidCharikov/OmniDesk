@@ -33,10 +33,10 @@ import { VoiceRecorderTool } from './files/VoiceRecorderTool';
 import { AudioEditorTool } from './files/AudioEditorTool';
 import { SketchpadTool } from './files/SketchpadTool';
 import { SizeConverterTool } from './utilities/SizeConverterTool';
+import { ImageEditorTool } from './files/ImageEditorTool';
 import {
   PdfToolkitTool,
   OcrScannerTool,
-  ImageEditorTool,
   MarkdownPreviewTool,
   KanbanTool,
   NotesTool,
@@ -430,12 +430,12 @@ export const TOOLS_REGISTRY: ToolDefinition[] = [
   {
     id: 'image-editor',
     title: 'Editor obrázků',
-    shortDesc: 'Měňte velikost, komprimujte, zobrazujte náhled a exportujte obrázky jako JPEG.',
+    shortDesc: 'Vizuální studio pro úpravu fotografií: změna šířky a výšky, ořez, rotace, filtry, jas, kontrast, vodoznaky a export.',
     category: 'files',
     icon: 'Image',
     requiresOnline: false,
     component: ImageEditorTool,
-    tags: ['obrazky', 'editor', 'komprese', 'resize'],
+    tags: ['obrazky', 'editor', 'komprese', 'resize', 'foto', 'orez', 'filtry', 'vodoznak'],
   },
   {
     id: 'markdown-preview',
