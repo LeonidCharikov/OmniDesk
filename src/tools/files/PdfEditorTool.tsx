@@ -184,6 +184,18 @@ const getCssFontFamily = (family?: FontFamilyType) => {
   return found ? found.cssFont : 'Helvetica, Arial, sans-serif';
 };
 
+const clonePdfBytes = (data: Uint8Array | ArrayBuffer): Uint8Array => {
+  if (data instanceof Uint8Array) {
+    const copy = new Uint8Array(data.byteLength);
+    copy.set(data);
+    return copy;
+  }
+  const uint = new Uint8Array(data);
+  const copy = new Uint8Array(uint.byteLength);
+  copy.set(uint);
+  return copy;
+};
+
 export const PdfEditorTool: React.FC = () => {
   const { t } = useI18n();
 
@@ -267,6 +279,8 @@ export const PdfEditorTool: React.FC = () => {
   const pageCanvasRef = useRef<HTMLCanvasElement>(null);
   const stageContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const renderTaskRef = useRef<any>(null);
+  const initialLoadRef = useRef(false);
 
   // Show status notification
   const showNotification = (type: 'success' | 'error', text: string) => {
@@ -485,11 +499,21 @@ export const PdfEditorTool: React.FC = () => {
 
   // Render current PDF page using pdfjs-dist with accurate font style detection
   const renderCurrentPage = useCallback(async (pdfBytes: Uint8Array, pageIdx: number) => {
-    if (!pageCanvasRef.current) return;
+    if (!pageCanvasRef.current || !pdfBytes || pdfBytes.byteLength === 0) return;
     setIsProcessing(true);
 
+    if (renderTaskRef.current) {
+      try {
+        renderTaskRef.current.cancel();
+      } catch {
+        // Ignore render cancellation
+      }
+      renderTaskRef.current = null;
+    }
+
     try {
-      const loadingTask = pdfjsLib.getDocument({ data: pdfBytes });
+      const dataCopy = clonePdfBytes(pdfBytes);
+      const loadingTask = pdfjsLib.getDocument({ data: dataCopy });
       const pdf = await loadingTask.promise;
       setTotalPages(pdf.numPages);
 
@@ -503,6 +527,7 @@ export const PdfEditorTool: React.FC = () => {
       const viewport = page.getViewport({ scale: zoomScale });
 
       const canvas = pageCanvasRef.current;
+      if (!canvas) return;
       const context = canvas.getContext('2d');
       if (!context) return;
 
@@ -518,7 +543,10 @@ export const PdfEditorTool: React.FC = () => {
         viewport: viewport,
       };
 
-      await page.render(renderContext).promise;
+      const currentTask = page.render(renderContext);
+      renderTaskRef.current = currentTask;
+      await currentTask.promise;
+      renderTaskRef.current = null;
 
       // Extract text content items for in-place text detection & font preserving
       const textContent = await page.getTextContent();
@@ -607,7 +635,10 @@ export const PdfEditorTool: React.FC = () => {
       }
 
       setDetectedTexts(detected);
-    } catch (err) {
+    } catch (err: unknown) {
+      if (err && typeof err === 'object' && 'name' in err && (err as { name: string }).name === 'RenderingCancelledException') {
+        return;
+      }
       console.error('Error rendering page:', err);
       showNotification('error', `${t('pdf_editor_error_processing', 'Error processing document: ')} ${err instanceof Error ? err.message : String(err)}`);
     } finally {
@@ -617,8 +648,10 @@ export const PdfEditorTool: React.FC = () => {
 
   // Generate thumbnail previews for all pages
   const generateThumbnails = useCallback(async (pdfBytes: Uint8Array) => {
+    if (!pdfBytes || pdfBytes.byteLength === 0) return;
     try {
-      const loadingTask = pdfjsLib.getDocument({ data: pdfBytes });
+      const dataCopy = clonePdfBytes(pdfBytes);
+      const loadingTask = pdfjsLib.getDocument({ data: dataCopy });
       const pdf = await loadingTask.promise;
       const thumbs: string[] = [];
 
@@ -626,8 +659,8 @@ export const PdfEditorTool: React.FC = () => {
         const page = await pdf.getPage(i);
         const viewport = page.getViewport({ scale: 0.22 });
         const canvas = document.createElement('canvas');
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
+        canvas.width = Math.max(1, Math.floor(viewport.width));
+        canvas.height = Math.max(1, Math.floor(viewport.height));
         const ctx = canvas.getContext('2d');
         if (ctx) {
           await page.render({ canvasContext: ctx, viewport }).promise;
@@ -641,14 +674,16 @@ export const PdfEditorTool: React.FC = () => {
   }, []);
 
   // Load PDF file into editor
-  const handleLoadPdf = useCallback(async (bytes: Uint8Array, name: string) => {
+  const handleLoadPdf = useCallback(async (rawBytes: Uint8Array, name: string) => {
+    if (!rawBytes || rawBytes.byteLength === 0) return;
     try {
       setIsProcessing(true);
-      const pdfDoc = await PDFDocument.load(bytes, { ignoreEncryption: true });
+      const safeBytes = clonePdfBytes(rawBytes);
+      const pdfDoc = await PDFDocument.load(clonePdfBytes(safeBytes), { ignoreEncryption: true });
       const numPages = pdfDoc.getPageCount();
 
-      setCurrentPdfBytes(bytes);
-      setOriginalPdfBytes(bytes);
+      setCurrentPdfBytes(safeBytes);
+      setOriginalPdfBytes(clonePdfBytes(safeBytes));
       setFileName(name);
       setTotalPages(numPages);
       setActivePageIndex(0);
@@ -659,8 +694,7 @@ export const PdfEditorTool: React.FC = () => {
       setSelectedElementId(null);
       setSelectedDetectedText(null);
 
-      await renderCurrentPage(bytes, 0);
-      await generateThumbnails(bytes);
+      generateThumbnails(safeBytes);
       showNotification('success', t('pdf_editor_all_saved', 'Document ready'));
     } catch (err) {
       console.error('Failed to load PDF:', err);
@@ -668,7 +702,7 @@ export const PdfEditorTool: React.FC = () => {
     } finally {
       setIsProcessing(false);
     }
-  }, [renderCurrentPage, generateThumbnails, t]);
+  }, [generateThumbnails, t]);
 
   // Load Sample PDF (Invoice / Business Report)
   const handleLoadSamplePdf = async () => {
@@ -807,7 +841,7 @@ export const PdfEditorTool: React.FC = () => {
         color: rgb(0.6, 0.65, 0.7),
       });
 
-      const sampleBytes = await pdfDoc.save();
+      const sampleBytes = clonePdfBytes(await pdfDoc.save());
       await handleLoadPdf(sampleBytes, 'sample-invoice.pdf');
     } catch (err) {
       console.error('Failed to create sample PDF:', err);
@@ -822,7 +856,7 @@ export const PdfEditorTool: React.FC = () => {
       setIsProcessing(true);
       const pdfDoc = await PDFDocument.create();
       pdfDoc.addPage([595, 842]); // A4
-      const blankBytes = await pdfDoc.save();
+      const blankBytes = clonePdfBytes(await pdfDoc.save());
       await handleLoadPdf(blankBytes, 'blank-document.pdf');
     } catch (err) {
       console.error(err);
@@ -833,14 +867,28 @@ export const PdfEditorTool: React.FC = () => {
 
   // Re-render when page index or zoom changes
   useEffect(() => {
-    if (currentPdfBytes) {
+    if (currentPdfBytes && currentPdfBytes.byteLength > 0) {
       renderCurrentPage(currentPdfBytes, activePageIndex);
     }
   }, [currentPdfBytes, activePageIndex, zoomScale, renderCurrentPage]);
 
   // Load default sample PDF on first mount if none is loaded
   useEffect(() => {
+    if (initialLoadRef.current) return;
+    initialLoadRef.current = true;
     handleLoadSamplePdf();
+  }, []);
+
+  // Cleanup active render on unmount
+  useEffect(() => {
+    return () => {
+      if (renderTaskRef.current) {
+        try {
+          renderTaskRef.current.cancel();
+        } catch {}
+        renderTaskRef.current = null;
+      }
+    };
   }, []);
 
   // Handle file input change
@@ -1071,20 +1119,18 @@ export const PdfEditorTool: React.FC = () => {
 
   // Page Operations
   const handleRotatePage = async (pageIdx: number, angleDiff: number) => {
-    if (!currentPdfBytes) return;
+    if (!currentPdfBytes || currentPdfBytes.byteLength === 0) return;
     try {
       setIsProcessing(true);
-      const pdfDoc = await PDFDocument.load(currentPdfBytes, { ignoreEncryption: true });
+      const pdfDoc = await PDFDocument.load(clonePdfBytes(currentPdfBytes), { ignoreEncryption: true });
       const page = pdfDoc.getPage(pageIdx);
       const currentAngle = page.getRotation().angle;
       const newAngle = (currentAngle + angleDiff + 360) % 360;
       page.setRotation(degrees(newAngle));
 
-      const updatedBytes = await pdfDoc.save();
+      const updatedBytes = clonePdfBytes(await pdfDoc.save());
       setCurrentPdfBytes(updatedBytes);
-
-      await renderCurrentPage(updatedBytes, activePageIndex);
-      await generateThumbnails(updatedBytes);
+      generateThumbnails(updatedBytes);
     } catch (err) {
       console.error(err);
     } finally {
@@ -1093,20 +1139,18 @@ export const PdfEditorTool: React.FC = () => {
   };
 
   const handleDuplicatePage = async (pageIdx: number) => {
-    if (!currentPdfBytes) return;
+    if (!currentPdfBytes || currentPdfBytes.byteLength === 0) return;
     try {
       setIsProcessing(true);
-      const pdfDoc = await PDFDocument.load(currentPdfBytes, { ignoreEncryption: true });
+      const pdfDoc = await PDFDocument.load(clonePdfBytes(currentPdfBytes), { ignoreEncryption: true });
       const [copiedPage] = await pdfDoc.copyPages(pdfDoc, [pageIdx]);
       pdfDoc.insertPage(pageIdx + 1, copiedPage);
 
-      const updatedBytes = await pdfDoc.save();
+      const updatedBytes = clonePdfBytes(await pdfDoc.save());
       setCurrentPdfBytes(updatedBytes);
       setTotalPages(pdfDoc.getPageCount());
       setActivePageIndex(pageIdx + 1);
-
-      await renderCurrentPage(updatedBytes, pageIdx + 1);
-      await generateThumbnails(updatedBytes);
+      generateThumbnails(updatedBytes);
     } catch (err) {
       console.error(err);
     } finally {
@@ -1115,21 +1159,19 @@ export const PdfEditorTool: React.FC = () => {
   };
 
   const handleDeletePage = async (pageIdx: number) => {
-    if (!currentPdfBytes || totalPages <= 1) return;
+    if (!currentPdfBytes || currentPdfBytes.byteLength === 0 || totalPages <= 1) return;
     try {
       setIsProcessing(true);
-      const pdfDoc = await PDFDocument.load(currentPdfBytes, { ignoreEncryption: true });
+      const pdfDoc = await PDFDocument.load(clonePdfBytes(currentPdfBytes), { ignoreEncryption: true });
       pdfDoc.removePage(pageIdx);
 
-      const updatedBytes = await pdfDoc.save();
+      const updatedBytes = clonePdfBytes(await pdfDoc.save());
       setCurrentPdfBytes(updatedBytes);
       const nextTotal = pdfDoc.getPageCount();
       setTotalPages(nextTotal);
       const nextActive = Math.min(pageIdx, nextTotal - 1);
       setActivePageIndex(nextActive);
-
-      await renderCurrentPage(updatedBytes, nextActive);
-      await generateThumbnails(updatedBytes);
+      generateThumbnails(updatedBytes);
     } catch (err) {
       console.error(err);
     } finally {
@@ -1138,19 +1180,17 @@ export const PdfEditorTool: React.FC = () => {
   };
 
   const handleInsertBlankPage = async (afterIdx: number) => {
-    if (!currentPdfBytes) return;
+    if (!currentPdfBytes || currentPdfBytes.byteLength === 0) return;
     try {
       setIsProcessing(true);
-      const pdfDoc = await PDFDocument.load(currentPdfBytes, { ignoreEncryption: true });
+      const pdfDoc = await PDFDocument.load(clonePdfBytes(currentPdfBytes), { ignoreEncryption: true });
       pdfDoc.insertPage(afterIdx + 1, [pageSize.width, pageSize.height]);
 
-      const updatedBytes = await pdfDoc.save();
+      const updatedBytes = clonePdfBytes(await pdfDoc.save());
       setCurrentPdfBytes(updatedBytes);
       setTotalPages(pdfDoc.getPageCount());
       setActivePageIndex(afterIdx + 1);
-
-      await renderCurrentPage(updatedBytes, afterIdx + 1);
-      await generateThumbnails(updatedBytes);
+      generateThumbnails(updatedBytes);
     } catch (err) {
       console.error(err);
     } finally {
@@ -1159,20 +1199,18 @@ export const PdfEditorTool: React.FC = () => {
   };
 
   const handleMovePage = async (fromIdx: number, toIdx: number) => {
-    if (!currentPdfBytes || toIdx < 0 || toIdx >= totalPages) return;
+    if (!currentPdfBytes || currentPdfBytes.byteLength === 0 || toIdx < 0 || toIdx >= totalPages) return;
     try {
       setIsProcessing(true);
-      const pdfDoc = await PDFDocument.load(currentPdfBytes, { ignoreEncryption: true });
+      const pdfDoc = await PDFDocument.load(clonePdfBytes(currentPdfBytes), { ignoreEncryption: true });
       const [copied] = await pdfDoc.copyPages(pdfDoc, [fromIdx]);
       pdfDoc.removePage(fromIdx);
       pdfDoc.insertPage(toIdx, copied);
 
-      const updatedBytes = await pdfDoc.save();
+      const updatedBytes = clonePdfBytes(await pdfDoc.save());
       setCurrentPdfBytes(updatedBytes);
       setActivePageIndex(toIdx);
-
-      await renderCurrentPage(updatedBytes, toIdx);
-      await generateThumbnails(updatedBytes);
+      generateThumbnails(updatedBytes);
     } catch (err) {
       console.error(err);
     } finally {
@@ -1271,10 +1309,10 @@ export const PdfEditorTool: React.FC = () => {
 
   // Apply Watermark to PDF
   const handleApplyWatermark = async () => {
-    if (!currentPdfBytes) return;
+    if (!currentPdfBytes || currentPdfBytes.byteLength === 0) return;
     try {
       setIsProcessing(true);
-      const pdfDoc = await PDFDocument.load(currentPdfBytes, { ignoreEncryption: true });
+      const pdfDoc = await PDFDocument.load(clonePdfBytes(currentPdfBytes), { ignoreEncryption: true });
       const font = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
       const numPages = pdfDoc.getPageCount();
 
@@ -1294,10 +1332,9 @@ export const PdfEditorTool: React.FC = () => {
         });
       }
 
-      const updatedBytes = await pdfDoc.save();
+      const updatedBytes = clonePdfBytes(await pdfDoc.save());
       setCurrentPdfBytes(updatedBytes);
-      await renderCurrentPage(updatedBytes, activePageIndex);
-      await generateThumbnails(updatedBytes);
+      generateThumbnails(updatedBytes);
       setShowWatermarkModal(false);
       showNotification('success', t('pdf_editor_all_saved', 'Watermark applied'));
     } catch (err) {
@@ -1309,10 +1346,10 @@ export const PdfEditorTool: React.FC = () => {
 
   // Compile & Export PDF with all baked elements, drawing strokes, and full font families support
   const handleExportPdf = async () => {
-    if (!currentPdfBytes) return;
+    if (!currentPdfBytes || currentPdfBytes.byteLength === 0) return;
     try {
       setIsProcessing(true);
-      const pdfDoc = await PDFDocument.load(currentPdfBytes, { ignoreEncryption: true });
+      const pdfDoc = await PDFDocument.load(clonePdfBytes(currentPdfBytes), { ignoreEncryption: true });
 
       // Embed standard fonts
       const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
@@ -1514,7 +1551,7 @@ export const PdfEditorTool: React.FC = () => {
         }
       }
 
-      const finalBytes = await pdfDoc.save();
+      const finalBytes = clonePdfBytes(await pdfDoc.save());
       const exportName = fileName.replace(/\.pdf$/i, '') + '-edited.pdf';
 
       await saveBinaryWithDialog(exportName, finalBytes, 'application/pdf');
@@ -1525,8 +1562,7 @@ export const PdfEditorTool: React.FC = () => {
       setHistory([{ elements: [], strokes: [] }]);
       setHistoryIndex(0);
 
-      await renderCurrentPage(finalBytes, activePageIndex);
-      await generateThumbnails(finalBytes);
+      generateThumbnails(finalBytes);
 
       showNotification('success', t('pdf_editor_saved_success', 'PDF exported and saved successfully!'));
     } catch (err) {

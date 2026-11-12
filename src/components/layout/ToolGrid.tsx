@@ -58,6 +58,21 @@ import {
   FileSignature,
   BriefcaseBusiness,
   MapPin,
+  ArrowLeftRight,
+  Type,
+  Network,
+  Braces,
+  Lock,
+  Terminal,
+  Search,
+  Zap,
+  Atom,
+  Dna,
+  Sun,
+  Target,
+  Scale,
+  PiggyBank,
+  HeartPulse,
 } from 'lucide-react';
 import { ToolDefinition, ToolCategory } from '../../types/tool';
 import { useI18n } from '../../i18n/context';
@@ -126,6 +141,21 @@ const ICON_MAP: Record<string, React.ReactNode> = {
   FileSignature: <FileSignature className="w-5 h-5 text-indigo-400" />,
   BriefcaseBusiness: <BriefcaseBusiness className="w-5 h-5 text-indigo-400" />,
   MapPin: <MapPin className="w-5 h-5 text-indigo-400" />,
+  ArrowLeftRight: <ArrowLeftRight className="w-5 h-5 text-indigo-400" />,
+  Type: <Type className="w-5 h-5 text-indigo-400" />,
+  Network: <Network className="w-5 h-5 text-indigo-400" />,
+  Braces: <Braces className="w-5 h-5 text-indigo-400" />,
+  Lock: <Lock className="w-5 h-5 text-indigo-400" />,
+  Terminal: <Terminal className="w-5 h-5 text-indigo-400" />,
+  Search: <Search className="w-5 h-5 text-indigo-400" />,
+  Zap: <Zap className="w-5 h-5 text-amber-400" />,
+  Atom: <Atom className="w-5 h-5 text-indigo-400" />,
+  Dna: <Dna className="w-5 h-5 text-emerald-400" />,
+  Sun: <Sun className="w-5 h-5 text-amber-400" />,
+  Target: <Target className="w-5 h-5 text-amber-400" />,
+  Scale: <Scale className="w-5 h-5 text-indigo-400" />,
+  PiggyBank: <PiggyBank className="w-5 h-5 text-emerald-400" />,
+  HeartPulse: <HeartPulse className="w-5 h-5 text-rose-400" />,
 };
 
 export const ToolGrid: React.FC<ToolGridProps> = ({

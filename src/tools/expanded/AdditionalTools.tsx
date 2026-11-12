@@ -133,7 +133,9 @@ export const PdfToolkitTool: React.FC = () => {
     try {
       const output = await PDFDocument.create();
       for (const file of files) {
-        const source = await PDFDocument.load(await file.arrayBuffer());
+        const buffer = await file.arrayBuffer();
+        if (buffer.byteLength === 0) continue;
+        const source = await PDFDocument.load(buffer, { ignoreEncryption: true });
         const pages = await output.copyPages(source, source.getPageIndices());
         pages.forEach(page => output.addPage(page));
       }
@@ -168,7 +170,11 @@ export const PdfToolkitTool: React.FC = () => {
     setIsError(false);
     try {
       const targetFile = files[0];
-      const pdf = await PDFDocument.load(await targetFile.arrayBuffer());
+      const buffer = await targetFile.arrayBuffer();
+      if (buffer.byteLength === 0) {
+        throw new Error(t('err_empty_pdf', 'Vybraný soubor PDF je prázdný.'));
+      }
+      const pdf = await PDFDocument.load(buffer, { ignoreEncryption: true });
       pdf.getPages().forEach(page => page.setRotation(degrees(rotationAngle)));
       const bytes = await pdf.save();
       const result = await saveBinaryWithDialog(

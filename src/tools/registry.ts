@@ -62,6 +62,30 @@ import {
   PeriodicFinanceTool,
   BinaryHexTool,
 } from './expanded/MoreTools';
+import { HashChecksumSuiteTool } from './programming/HashChecksumSuiteTool';
+import { EncodingSuiteTool } from './programming/EncodingSuiteTool';
+import { UuidGeneratorTool } from './programming/UuidGeneratorTool';
+import { NumberBaseConverterTool } from './programming/NumberBaseConverterTool';
+import { CaseConverterTool } from './utilities/CaseConverterTool';
+import { TimestampConverterTool } from './utilities/TimestampConverterTool';
+import { CronBuilderTool } from './programming/CronBuilderTool';
+import { CidrCalculatorTool } from './programming/CidrCalculatorTool';
+import { DataConverterTool } from './programming/DataConverterTool';
+import { AesCipherStudioTool } from './programming/AesCipherStudioTool';
+import { ChmodReferenceTool } from './programming/ChmodReferenceTool';
+import { JsonPathExplorerTool } from './programming/JsonPathExplorerTool';
+import { ChemicalBalancerTool } from './science/ChemicalBalancerTool';
+import { ElectronicsCalcTool } from './science/ElectronicsCalcTool';
+import { PhysicsToolkitTool } from './science/PhysicsToolkitTool';
+import { DnaAnalyzerTool } from './science/DnaAnalyzerTool';
+import { SolarEphemerisTool } from './science/SolarEphemerisTool';
+import { NpvIrrCalcTool } from './finance/NpvIrrCalcTool';
+import { BreakevenMarginTool } from './finance/BreakevenMarginTool';
+import { PortfolioRebalancerTool } from './finance/PortfolioRebalancerTool';
+import { FireSimulatorTool } from './finance/FireSimulatorTool';
+import { FreelanceRateTool } from './finance/FreelanceRateTool';
+import { BmiCalculatorTool } from './utilities/BmiCalculatorTool';
+import { CaloriesCalculatorTool } from './utilities/CaloriesCalculatorTool';
 
 export const TOOLS_REGISTRY: ToolDefinition[] = [
   // 1. Soubory & Dokumenty (files)
@@ -522,4 +546,244 @@ export const TOOLS_REGISTRY: ToolDefinition[] = [
   { id: 'geo-gps', title: 'Geografický a GPS převodník', shortDesc: 'Převeďte desetinnou šířku a délku na zápis ve stupních, minutách a sekundách.', category: 'science', icon: 'MapPin', requiresOnline: false, component: GeoGpsTool, tags: ['gps', 'coordinates', 'geography', 'dms'] },
   { id: 'periodic-finance', title: 'Periodický finanční kalkulátor', shortDesc: 'Vypočítejte složené úročení z jistiny, roční sazby a počtu úročení.', category: 'finance', icon: 'Percent', requiresOnline: false, component: PeriodicFinanceTool, tags: ['interest', 'finance', 'period', 'investment'] },
   { id: 'binary-hex', title: 'Binární a hexadecimální převodník', shortDesc: 'Převeďte text UTF-8 na bajtový hexadecimální a binární výstup.', category: 'programming', icon: 'Binary', requiresOnline: false, component: BinaryHexTool, tags: ['binary', 'hex', 'converter', 'utf8'] },
+  {
+    id: 'hash-checksum-suite',
+    title: 'Hash, HMAC & Checksum Suite',
+    shortDesc: 'Výpočet MD5, SHA-1, SHA-2, SHA-3, Keccak, CRC-32, Adler-32 a HMAC pro text i soubory.',
+    category: 'programming',
+    icon: 'Hash',
+    requiresOnline: false,
+    component: HashChecksumSuiteTool,
+    tags: ['hash', 'md5', 'sha1', 'sha256', 'sha512', 'sha3', 'keccak', 'crc32', 'adler32', 'hmac', 'checksum', 'emn178'],
+  },
+  {
+    id: 'encoding-suite',
+    title: 'Base32 / Base58 / Base64 & Web Kodér',
+    shortDesc: 'Kódování a dekódování Base32, Base58, Base64URL, HTML entit, URL parametrů a Unicode escape sekvencí.',
+    category: 'programming',
+    icon: 'ArrowLeftRight',
+    requiresOnline: false,
+    component: EncodingSuiteTool,
+    tags: ['base32', 'base58', 'base64', 'html', 'url', 'encode', 'decode', 'unicode', 'escape', 'emn178'],
+  },
+  {
+    id: 'uuid-generator',
+    title: 'Generátor UUID (v1–v7), ULID & NanoID',
+    shortDesc: 'Hromadné generování UUID v1, v3, v4, v5, v6, v7, ULID a NanoID včetně dekodéru časových razítek.',
+    category: 'programming',
+    icon: 'KeyRound',
+    requiresOnline: false,
+    component: UuidGeneratorTool,
+    tags: ['uuid', 'guid', 'v1', 'v3', 'v4', 'v5', 'v6', 'v7', 'ulid', 'nanoid', 'id', 'generator', 'emn178'],
+  },
+  {
+    id: 'number-base-converter',
+    title: 'Převodník Číselných Soustav & Bitové Operace',
+    shortDesc: 'Přesný BigInt převod mezi soustavami (Bin, Oct, Dec, Hex, 2–36), doplňkový kód a bitové operace.',
+    category: 'programming',
+    icon: 'Binary',
+    requiresOnline: false,
+    component: NumberBaseConverterTool,
+    tags: ['binary', 'octal', 'decimal', 'hex', 'radix', 'base', 'bitwise', 'endian', 'bigint', 'emn178'],
+  },
+  {
+    id: 'case-converter',
+    title: 'Konvertor Velikosti Písmen & Textové Utility',
+    shortDesc: 'Okamžitý převod camelCase, snake_case, kebab-case, CONSTANT_CASE, URL slugů a úprava řádků.',
+    category: 'utilities',
+    icon: 'Type',
+    requiresOnline: false,
+    component: CaseConverterTool,
+    tags: ['case', 'camelCase', 'snake_case', 'kebab-case', 'uppercase', 'lowercase', 'slug', 'text', 'sort', 'emn178'],
+  },
+  {
+    id: 'timestamp-converter',
+    title: 'Unix Timestamp & Epoch Konvertor',
+    shortDesc: 'Živé epoch hodiny, převod Unix času (s/ms/µs/ns) na datum ISO/UTC/lokální, aritmetika data a dávkový převod.',
+    category: 'utilities',
+    icon: 'Clock',
+    requiresOnline: false,
+    component: TimestampConverterTool,
+    tags: ['timestamp', 'unix', 'epoch', 'date', 'time', 'iso8601', 'utc', 'converter', 'emn178'],
+  },
+  {
+    id: 'cron-builder',
+    title: 'Cron Expression Builder & Simulator',
+    shortDesc: 'Sestavování a validace 5-polových Cron výrazů se simulací budoucích časů spuštění.',
+    category: 'programming',
+    icon: 'CalendarClock',
+    requiresOnline: false,
+    component: CronBuilderTool,
+    tags: ['cron', 'schedule', 'timer', 'devops', 'linux', 'expression'],
+  },
+  {
+    id: 'cidr-calculator',
+    title: 'IPv4 / IPv6 Subnet & CIDR Kalkulačka',
+    shortDesc: 'Výpočet adres sítě, broadcastu, masek, hostů, binární podoby, IPv6 a dělení podsítí.',
+    category: 'programming',
+    icon: 'Network',
+    requiresOnline: false,
+    component: CidrCalculatorTool,
+    tags: ['cidr', 'subnet', 'ipv4', 'ipv6', 'netmask', 'network', 'ip'],
+  },
+  {
+    id: 'data-converter',
+    title: 'Konvertor Dat & TypeScript Generátor',
+    shortDesc: 'Převod mezi JSON, YAML, TOML a CSV nebo generování TypeScript rozhraní a JSON Schema.',
+    category: 'programming',
+    icon: 'Braces',
+    requiresOnline: false,
+    component: DataConverterTool,
+    tags: ['json', 'yaml', 'toml', 'csv', 'typescript', 'schema', 'converter'],
+  },
+  {
+    id: 'aes-cipher-studio',
+    title: 'AES Cipher & PBKDF2 Studio',
+    shortDesc: 'Šifrování AES-GCM, AES-CBC a AES-CTR se 128/192/256bit klíči, vlastním IV a PBKDF2.',
+    category: 'programming',
+    icon: 'Lock',
+    requiresOnline: false,
+    component: AesCipherStudioTool,
+    tags: ['aes', 'gcm', 'cbc', 'ctr', 'pbkdf2', 'encrypt', 'decrypt', 'crypto'],
+  },
+  {
+    id: 'chmod-reference',
+    title: 'Chmod Kalkulačka & HTTP / MIME / ASCII',
+    shortDesc: 'Interaktivní Unix chmod kalkulačka a vyhledávací přehled HTTP stavů, MIME typů a ASCII.',
+    category: 'programming',
+    icon: 'Terminal',
+    requiresOnline: false,
+    component: ChmodReferenceTool,
+    tags: ['chmod', 'unix', 'permissions', 'http', 'mime', 'ascii', 'reference'],
+  },
+  {
+    id: 'jsonpath-explorer',
+    title: 'JSONPath Query Explorer',
+    shortDesc: 'Filtrování a extrakce dat z JSON pomocí JSONPath dotazů (zástupné znaky, rekurze, filtry).',
+    category: 'programming',
+    icon: 'Search',
+    requiresOnline: false,
+    component: JsonPathExplorerTool,
+    tags: ['jsonpath', 'json', 'query', 'filter', 'path', 'explorer'],
+  },
+  {
+    id: 'chemical-balancer',
+    title: 'Vyvažovač Chemických Rovnic & Stechiometrie',
+    shortDesc: 'Automatické vyčíslení chemických reakcí, limitující reaktant a teoretický výtěžek.',
+    category: 'science',
+    icon: 'FlaskConical',
+    requiresOnline: false,
+    component: ChemicalBalancerTool,
+    tags: ['chemistry', 'equation', 'balancer', 'stoichiometry', 'molar', 'reaction'],
+  },
+  {
+    id: 'electronics-calc',
+    title: 'Elektronika & Výpočty Obvodů',
+    shortDesc: 'Ohmův zákon, sériové/paralelní rezistory, dělič napětí, LED odpor a RC filtr.',
+    category: 'science',
+    icon: 'Zap',
+    requiresOnline: false,
+    component: ElectronicsCalcTool,
+    tags: ['electronics', 'ohm', 'resistor', 'led', 'rc', 'circuit', 'voltage'],
+  },
+  {
+    id: 'physics-toolkit',
+    title: 'Fyzika & Mechanika Toolkit',
+    shortDesc: 'Šikmý vrh, stavová rovnice ideálního plynu (PV=nRT), energie, vlnění a decibely.',
+    category: 'science',
+    icon: 'Atom',
+    requiresOnline: false,
+    component: PhysicsToolkitTool,
+    tags: ['physics', 'kinematics', 'projectile', 'ideal gas', 'energy', 'waves', 'decibel'],
+  },
+  {
+    id: 'dna-analyzer',
+    title: 'Analyzátor DNA / RNA & Proteinů',
+    shortDesc: 'Komplement, reverzní komplement, transkripce mRNA, translace do 3 čtecích rámců a GC%.',
+    category: 'science',
+    icon: 'Dna',
+    requiresOnline: false,
+    component: DnaAnalyzerTool,
+    tags: ['dna', 'rna', 'protein', 'codon', 'fasta', 'biology', 'genetics'],
+  },
+  {
+    id: 'solar-ephemeris',
+    title: 'Sluneční, Měsíční & Geodetická Efemerida',
+    shortDesc: 'Východ a západ Slunce, zlatá hodinka, juliánské datum, fáze Měsíce a Haversine vzdálenost.',
+    category: 'science',
+    icon: 'Sun',
+    requiresOnline: false,
+    component: SolarEphemerisTool,
+    tags: ['solar', 'sunrise', 'sunset', 'moon', 'julian', 'haversine', 'astronomy'],
+  },
+  {
+    id: 'npv-irr-calc',
+    title: 'NPV, IRR & CAGR Analýza Cashflow',
+    shortDesc: 'Výpočet čisté současné hodnoty (NPV), vnitřního výnosového procenta (IRR), návratnosti a CAGR.',
+    category: 'finance',
+    icon: 'TrendingUp',
+    requiresOnline: false,
+    component: NpvIrrCalcTool,
+    tags: ['npv', 'irr', 'cagr', 'cashflow', 'wacc', 'valuation', 'finance'],
+  },
+  {
+    id: 'breakeven-margin',
+    title: 'Bod Zvratu, Marže vs. Přirážka & Cenotvorba',
+    shortDesc: 'Výpočet bodu zvratu, převod marže a přirážky, cílový zisk a SaaS ekonomika LTV/CAC.',
+    category: 'finance',
+    icon: 'Target',
+    requiresOnline: false,
+    component: BreakevenMarginTool,
+    tags: ['breakeven', 'margin', 'markup', 'pricing', 'ltv', 'cac', 'saas'],
+  },
+  {
+    id: 'portfolio-rebalancer',
+    title: 'Rebalancování Portfolia & DCA Plánovač',
+    shortDesc: 'Výpočet přesných nákupních/prodejních příkazů pro rebalancování a srovnání Lump-Sum vs. DCA.',
+    category: 'finance',
+    icon: 'Scale',
+    requiresOnline: false,
+    component: PortfolioRebalancerTool,
+    tags: ['portfolio', 'rebalance', 'dca', 'allocation', 'etf', 'investing'],
+  },
+  {
+    id: 'fire-simulator',
+    title: 'FIRE & Simulátor Finanční Nezávislosti',
+    shortDesc: 'Simulace FIRE, Coast-FIRE, reálného zhodnocení po inflaci a bezpečné míry výběru.',
+    category: 'finance',
+    icon: 'PiggyBank',
+    requiresOnline: false,
+    component: FireSimulatorTool,
+    tags: ['fire', 'retirement', 'inflation', 'swr', 'coast', 'wealth'],
+  },
+  {
+    id: 'freelance-rate-calc',
+    title: 'Freelance Sazba & Převodník Mzdy',
+    shortDesc: 'Výpočet udržitelné hodinové a denní sazby se započtením daní, nákladů a dovolené.',
+    category: 'finance',
+    icon: 'BriefcaseBusiness',
+    requiresOnline: false,
+    component: FreelanceRateTool,
+    tags: ['freelance', 'hourly', 'rate', 'salary', 'contractor', 'taxes'],
+  },
+  {
+    id: 'bmi-calculator',
+    title: 'BMI & Kalkulačka Složení Těla',
+    shortDesc: 'Index tělesné hmotnosti (WHO), rozsah zdravé váhy, Ponderal index a US Navy tělesný tuk.',
+    category: 'utilities',
+    icon: 'Scale',
+    requiresOnline: false,
+    component: BmiCalculatorTool,
+    tags: ['bmi', 'weight', 'body fat', 'health', 'fitness', 'waist'],
+  },
+  {
+    id: 'calories-calculator',
+    title: 'Kalkulačka Kalorií, BMR & Maker',
+    shortDesc: 'Výpočet BMR (Mifflin-St Jeor & Katch-McArdle), denního výdeje TDEE a rozpisu makroživin.',
+    category: 'utilities',
+    icon: 'HeartPulse',
+    requiresOnline: false,
+    component: CaloriesCalculatorTool,
+    tags: ['calories', 'bmr', 'tdee', 'macros', 'protein', 'nutrition', 'diet'],
+  },
 ];
