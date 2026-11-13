@@ -585,6 +585,262 @@ const catalog: Record<string, { title: CatalogText; desc: CatalogText }> = {
       ru: 'Базовый обмен (Mifflin-St Jeor и Katch-McArdle), суточный расход TDEE и баланс БЖУ в граммах.',
     },
   },
+  'date-countdown-calc': {
+    title: {
+      cs: 'Rozdíl Dat, Věk & Odpočítávání',
+      en: 'Date Difference, Age & Countdown',
+      de: 'Datumsdifferenz, Alter & Countdown',
+      es: 'Diferencia de Fechas, Edad y Cuenta Atrás',
+      ru: 'Разница дат, возраст и обратный отсчёт',
+    },
+    desc: {
+      cs: 'Přesný věk, počet dní mezi daty, přičítání/odečítání dní a vlastní odpočty událostí.',
+      en: 'Calculate exact age, days between dates, date offsets, and personal event countdowns.',
+      de: 'Genaues Alter, Tage zwischen Daten, Datumsberechnung und persönliche Event-Countdowns.',
+      es: 'Calcula edad exacta, días entre fechas, desplazamientos de fecha y cuentas atrás.',
+      ru: 'Точный возраст, дни между датами, вычисление дат и персональные таймеры событий.',
+    },
+  },
+  'habit-tracker': {
+    title: {
+      cs: 'Sledování Návyků & Série',
+      en: 'Habit Tracker & Streak Grid',
+      de: 'Gewohnheits-Tracker & Serien',
+      es: 'Seguimiento de Hábitos y Rachas',
+      ru: 'Трекер привычек и серий',
+    },
+    desc: {
+      cs: 'Týdenní přehled každodenních rutin s výpočtem sérií uložený lokálně v prohlížeči.',
+      en: 'Weekly routine check-in grid with streak tracking saved locally on your device.',
+      de: 'Wöchentliche Check-in-Übersicht für tägliche Routinen mit Serien-Zähler.',
+      es: 'Cuadrícula semanal de rutinas diarias con seguimiento de rachas guardado localmente.',
+      ru: 'Еженедельная сетка привычек с подсчётом серий и локальным сохранением.',
+    },
+  },
+  'packing-checklist': {
+    title: {
+      cs: 'Balicí & Cestovní Seznamy',
+      en: 'Packing & Travel Checklists',
+      de: 'Pack- & Reisechecklisten',
+      es: 'Listas de Equipaje y Viaje',
+      ru: 'Списки вещей и сборов в поездку',
+    },
+    desc: {
+      cs: 'Připravené šablony pro víkendový výlet, příruční zavazadlo, kempování, pláž i nouzovou výbavu.',
+      en: 'Reusable checklist templates for weekend trips, carry-on flights, camping, beach, and emergency prep.',
+      de: 'Wiederverwendbare Vorlagen für Wochenendtrips, Handgepäck, Camping, Strand und Notfallausrüstung.',
+      es: 'Plantillas reutilizables para viajes de fin de semana, equipaje de mano, camping, playa y emergencias.',
+      ru: 'Готовые шаблоны для поездок, ручной клади, кемпинга, пляжа и тревожного набора.',
+    },
+  },
+  'flashcards-study': {
+    title: {
+      cs: 'Kartičky pro Učení (Flashcards)',
+      en: 'Simple Flashcards (Study Deck)',
+      de: 'Lernkarten-Trainer (Flashcards)',
+      es: 'Tarjetas de Estudio (Flashcards)',
+      ru: 'Карточки для запоминания (Flashcards)',
+    },
+    desc: {
+      cs: 'Tvorba balíčků otázek a odpovědí, otáčení kartiček a sledování naučených pojmů offline.',
+      en: 'Create Q&A study decks, flip cards to memorize, and track mastery offline.',
+      de: 'Frage-Antwort-Stapel erstellen, Karten umdrehen und Lernfortschritt offline verfolgen.',
+      es: 'Crea mazos de preguntas y respuestas, gira tarjetas y registra tu progreso sin conexión.',
+      ru: 'Создавайте колоды с вопросами и ответами, переворачивайте карточки и отслеживайте прогресс.',
+    },
+  },
+  'percentage-ratio-calc': {
+    title: {
+      cs: 'Kalkulačka Procent & Poměrů',
+      en: 'Simple Percentage & Ratio Calculator',
+      de: 'Prozent- & Verhältnisrechner',
+      es: 'Calculadora Simple de Porcentajes y Proporciones',
+      ru: 'Калькулятор процентов и пропорций',
+    },
+    desc: {
+      cs: 'Rychlé výpočty procent z částky, procentuální změny a přepočet poměrů stran (16:9, 4:3).',
+      en: 'Quick everyday percentages, percentage change, and proportional aspect-ratio scaling.',
+      de: 'Schnelle Alltagsprozente, prozentuale Veränderung und proportionale Seitenverhältnisse.',
+      es: 'Cálculos rápidos de porcentajes, cambio porcentual y escalado proporcional.',
+      ru: 'Быстрый расчёт процентов, процентного изменения и пропорций (16:9, 4:3).',
+    },
+  },
+  'grade-average-calc': {
+    title: {
+      cs: 'Průměr Známek & Vážený Výpočet',
+      en: 'Grade & Weighted Average Calculator',
+      de: 'Noten- & Gewichteter Durchschnittsrechner',
+      es: 'Calculadora de Notas y Promedio Ponderado',
+      ru: 'Калькулятор оценок и среднего балла',
+    },
+    desc: {
+      cs: 'Vážený průměr známek, přepočet na GPA a výpočet potřebného skóre u závěrečné zkoušky.',
+      en: 'Compute weighted course averages, GPA scale, and required final exam scores.',
+      de: 'Gewichtete Kursdurchschnitte, GPA-Umrechnung und benötigte Abschlussnote berechnen.',
+      es: 'Calcula promedios ponderados, escala GPA y la nota necesaria en el examen final.',
+      ru: 'Взвешенный средний балл, шкала GPA и расчёт необходимой оценки на экзамене.',
+    },
+  },
+  'fuel-trip-calc': {
+    title: {
+      cs: 'Spotřeba Paliva, Nabíjení EV & Cesta',
+      en: 'Fuel Cost, EV Charging & Trip Calculator',
+      de: 'Spritkosten-, E-Auto- & Fahrtrechner',
+      es: 'Calculadora de Combustible, VE y Viaje',
+      ru: 'Калькулятор топлива, зарядки ЭМ и поездки',
+    },
+    desc: {
+      cs: 'Cena cesty autem, rozdělení nákladů mezi pasažéry, převod L/100km ↔ MPG a kalkulátor nabíjení EV.',
+      en: 'Estimate trip fuel costs, split expenses, convert L/100km ↔ MPG, and compute EV charging.',
+      de: 'Fahrtkosten berechnen, unter Mitfahrern teilen, L/100km ↔ MPG umrechnen und E-Auto-Ladekosten ermitteln.',
+      es: 'Calcula costos de combustible, divide gastos, convierte L/100km ↔ MPG y carga de vehículos eléctricos.',
+      ru: 'Стоимость поездки на авто, разделение расходов, перевод л/100км ↔ MPG и зарядка электромобиля.',
+    },
+  },
+  'photo-compressor': {
+    title: {
+      cs: 'Kompresor Fotek & Odstranění EXIF',
+      en: 'Photo Compressor & EXIF Stripper',
+      de: 'Foto-Kompressor & EXIF-Entferner',
+      es: 'Compresor de Fotos y Eliminador EXIF',
+      ru: 'Сжатие фото и удаление EXIF',
+    },
+    desc: {
+      cs: 'Zmenšení fotek na cílovou velikost v KB a automatické smazání citlivých EXIF/GPS metadat.',
+      en: 'Shrink photos to a target file size and automatically strip GPS and camera EXIF metadata.',
+      de: 'Fotos auf eine Zielgröße komprimieren und GPS-/Kamera-EXIF-Metadaten lokal entfernen.',
+      es: 'Reduce fotos a un tamaño objetivo y elimina automáticamente metadatos EXIF y GPS.',
+      ru: 'Сжатие фото до нужного размера в КБ и автоматическая очистка EXIF/GPS-метаданных.',
+    },
+  },
+  'screen-webcam-recorder': {
+    title: {
+      cs: 'Záznam Obrazovky & Webkamery',
+      en: 'Screen & Webcam Recorder',
+      de: 'Bildschirm- & Webcam-Rekorder',
+      es: 'Grabador de Pantalla y Cámara Web',
+      ru: 'Запись экрана и веб-камеры',
+    },
+    desc: {
+      cs: 'Lokální nahrávání obrazovky nebo webkamery s volitelným mikrofonem a stažením do WebM.',
+      en: 'Record screen clips or webcam video locally with optional microphone and WebM download.',
+      de: 'Bildschirmclips oder Webcam-Videos lokal mit Mikrofon aufnehmen und als WebM speichern.',
+      es: 'Graba clips de pantalla o cámara web localmente con micrófono opcional y descarga WebM.',
+      ru: 'Локальная запись экрана или веб-камеры с микрофоном и сохранением в WebM.',
+    },
+  },
+  'recipe-scaler': {
+    title: {
+      cs: 'Přepočet Receptů & Kuchyňské Jednotky',
+      en: 'Cooking & Recipe Scaler',
+      de: 'Rezept-Skalierer & Kücheneinheiten',
+      es: 'Escalador de Recetas y Cocina',
+      ru: 'Пересчёт рецептов и кухонных мер',
+    },
+    desc: {
+      cs: 'Přepočet surovin podle počtu porcí, převod hrnků/lžic na gramy a převodník teplot trouby.',
+      en: 'Scale recipe servings, convert cups/tbsp to grams by ingredient, and convert oven temperatures.',
+      de: 'Portionen umrechnen, Tassen/Löffel je Zutat in Gramm konvertieren und Ofentemperaturen umrechnen.',
+      es: 'Escala porciones de recetas, convierte tazas/cucharadas a gramos y temperaturas del horno.',
+      ru: 'Масштабирование порций, перевод стаканов и ложек в граммы и температуры духовки.',
+    },
+  },
+  'random-picker': {
+    title: {
+      cs: 'Kolo Štěstí, Losování & Kostky',
+      en: 'Random Picker, Decision Wheel & Dice',
+      de: 'Glücksrad, Zufallsauswahl & Würfel',
+      es: 'Ruleta de Decisiones, Sorteo y Dados',
+      ru: 'Колесо выбора, жребий и кубики',
+    },
+    desc: {
+      cs: 'Roztočte kolo rozhodnutí, vylosujte vítěze ze seznamu, hoďte kostkami nebo mincí.',
+      en: 'Spin a decision wheel, pick random winners from a list, roll dice, or flip a coin.',
+      de: 'Entscheidungsrad drehen, Zufallsgewinner ziehen, Würfel werfen oder eine Münze werfen.',
+      es: 'Gira la ruleta, elige un ganador al azar, lanza dados o tira una moneda.',
+      ru: 'Крутите колесо решений, выбирайте случайный вариант из списка, бросайте кубики или монетку.',
+    },
+  },
+  'qr-barcode-reader': {
+    title: {
+      cs: 'Čtečka QR Kódů & Čárových Kódů',
+      en: 'QR & Barcode Reader',
+      de: 'QR- & Barcode-Leser',
+      es: 'Lector de Códigos QR y Barras',
+      ru: 'Сканер QR-кодов и штрих-кодов',
+    },
+    desc: {
+      cs: 'Lokální čtení QR a čárových kódů z nahraného obrázku, vloženého snímku (Ctrl+V) i kamery.',
+      en: 'Decode QR codes and barcodes locally from uploaded images, pasted screenshots, or webcam.',
+      de: 'QR-Codes und Barcodes lokal aus Bildern, Screenshots (Strg+V) oder per Kamera auslesen.',
+      es: 'Decodifica códigos QR y de barras localmente desde imágenes, capturas pegadas o cámara.',
+      ru: 'Локальное распознавание QR- и штрих-кодов с фото, скриншотов (Ctrl+V) или веб-камеры.',
+    },
+  },
+  'word-counter-cleaner': {
+    title: {
+      cs: 'Počítadlo Slov & Čistič Textu',
+      en: 'Word Counter & Text Cleaner',
+      de: 'Wortzähler & Textbereiniger',
+      es: 'Contador de Palabras y Limpiador de Texto',
+      ru: 'Счётчик слов и очистка текста',
+    },
+    desc: {
+      cs: 'Počet slov, znaků a doba čtení plus vyčištění mezer, HTML značek a sledovacích parametrů URL.',
+      en: 'Live word, character, and reading-time stats plus whitespace, HTML, and tracking-URL cleanup.',
+      de: 'Wort-, Zeichen- und Lesezeitstatistik sowie Bereinigung von Leerzeichen, HTML und Tracking-URLs.',
+      es: 'Conteo de palabras, caracteres y tiempo de lectura, más limpieza de espacios, HTML y URLs.',
+      ru: 'Подсчёт слов, символов и времени чтения, очистка пробелов, HTML и UTM-меток в ссылках.',
+    },
+  },
+  'ambient-noise-mixer': {
+    title: {
+      cs: 'Mixér Zvuků Přírody & Bílého Šumu',
+      en: 'Ambient Sound & White Noise Mixer',
+      de: 'Umgebungsgeräusch- & Rausch-Mixer',
+      es: 'Mezclador de Sonidos Ambientales y Ruido Blanco',
+      ru: 'Микшер фоновых звуков и белого шума',
+    },
+    desc: {
+      cs: 'Offline generátor zvuku deště, vln, větru a hnědého/růžového/bílého šumu pro soustředění i spánek.',
+      en: 'Offline Web Audio soundscape mixer (rain, ocean waves, wind, brown/pink/white noise).',
+      de: 'Offline-Soundscape-Mixer (Regen, Meereswellen, Wind, braunes/rosa/weißes Rauschen) für Fokus und Schlaf.',
+      es: 'Mezclador de audio sin conexión (lluvia, olas, viento, ruido marrón/rosa/blanco).',
+      ru: 'Офлайн-генератор звуков дождя, волн, ветра и шумов для концентрации и сна.',
+    },
+  },
+  'sleep-cycle-calc': {
+    title: {
+      cs: 'Kalkulačka Spánkových Cyklů',
+      en: 'Sleep Cycle & Nap Calculator',
+      de: 'Schlafphasen- & Nickerchen-Rechner',
+      es: 'Calculadora de Ciclos de Sueño',
+      ru: 'Калькулятор циклов сна',
+    },
+    desc: {
+      cs: 'Výpočet ideálního času usnutí nebo probuzení podle 90minutových spánkových cyklů.',
+      en: 'Find optimal bedtimes or wake-up times based on 90-minute REM sleep cycles.',
+      de: 'Optimale Schlafens- oder Aufwachzeiten basierend auf 90-Minuten-Schlafzyklen berechnen.',
+      es: 'Encuentra horas óptimas para acostarte o despertar según ciclos de sueño de 90 minutos.',
+      ru: 'Оптимальное время отхода ко сну и пробуждения по 90-минутным циклам сна.',
+    },
+  },
+  'breathing-eye-guide': {
+    title: {
+      cs: 'Dechové Cvičení & Odpočinek Očí (20-20-20)',
+      en: 'Guided Breathing & 20-20-20 Eye Break',
+      de: 'Atemübung & 20-20-20 Augenpause',
+      es: 'Respiración Guiada y Descanso Visual 20-20-20',
+      ru: 'Дыхательные практики и отдых для глаз 20-20-20',
+    },
+    desc: {
+      cs: 'Vizuální průvodce dechovými technikami (4-4-4-4, 4-7-8) a časovač přestávek pro oči 20-20-20.',
+      en: 'Visual Box / 4-7-8 breathing pacer and 20-20-20 screen eye-rest timer.',
+      de: 'Visueller Atem-Trainer (Box / 4-7-8) und 20-20-20 Bildschirmpausen-Timer für die Augen.',
+      es: 'Guía visual de respiración (4-4-4-4 / 4-7-8) y temporizador visual de descanso ocular 20-20-20.',
+      ru: 'Визуальный ритм дыхания (4-4-4-4, 4-7-8) и таймер отдыха для глаз 20-20-20.',
+    },
+  },
 };
 
 export function getToolCatalogText(id: string, field: 'title' | 'desc', language: SupportedLanguage, fallback: string) {

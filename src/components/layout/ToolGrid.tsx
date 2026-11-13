@@ -73,6 +73,19 @@ import {
   Scale,
   PiggyBank,
   HeartPulse,
+  CalendarDays,
+  Luggage,
+  BookOpen,
+  GraduationCap,
+  Fuel,
+  ImageDown,
+  Video,
+  Utensils,
+  Dices,
+  ScanLine,
+  Volume2,
+  Moon,
+  Wind,
 } from 'lucide-react';
 import { ToolDefinition, ToolCategory } from '../../types/tool';
 import { useI18n } from '../../i18n/context';
@@ -156,6 +169,19 @@ const ICON_MAP: Record<string, React.ReactNode> = {
   Scale: <Scale className="w-5 h-5 text-indigo-400" />,
   PiggyBank: <PiggyBank className="w-5 h-5 text-emerald-400" />,
   HeartPulse: <HeartPulse className="w-5 h-5 text-rose-400" />,
+  CalendarDays: <CalendarDays className="w-5 h-5 text-indigo-400" />,
+  Luggage: <Luggage className="w-5 h-5 text-amber-400" />,
+  BookOpen: <BookOpen className="w-5 h-5 text-indigo-400" />,
+  GraduationCap: <GraduationCap className="w-5 h-5 text-indigo-400" />,
+  Fuel: <Fuel className="w-5 h-5 text-amber-400" />,
+  ImageDown: <ImageDown className="w-5 h-5 text-indigo-400" />,
+  Video: <Video className="w-5 h-5 text-rose-400" />,
+  Utensils: <Utensils className="w-5 h-5 text-amber-400" />,
+  Dices: <Dices className="w-5 h-5 text-indigo-400" />,
+  ScanLine: <ScanLine className="w-5 h-5 text-cyan-400" />,
+  Volume2: <Volume2 className="w-5 h-5 text-sky-400" />,
+  Moon: <Moon className="w-5 h-5 text-indigo-400" />,
+  Wind: <Wind className="w-5 h-5 text-emerald-400" />,
 };
 
 export const ToolGrid: React.FC<ToolGridProps> = ({

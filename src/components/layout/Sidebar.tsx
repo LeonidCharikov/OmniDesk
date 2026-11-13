@@ -14,6 +14,7 @@ import {
   ChevronRight,
   Code2,
   CalendarCheck,
+  Sparkles,
 } from 'lucide-react';
 import { ToolCategory, WidgetCustomization } from '../../types/tool';
 import { useI18n } from '../../i18n/context';
@@ -62,6 +63,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const categories: Array<{ id: ToolCategory; label: string; icon: React.ReactNode; count?: number }> = [
     { id: 'all', label: t('cat_all', 'All Tools'), icon: <LayoutGrid className="w-4 h-4" /> },
+    { id: 'basic', label: t('cat_basic', 'Everyday Basics'), icon: <Sparkles className="w-4 h-4 text-amber-400" /> },
     { id: 'favorites', label: t('cat_favorites', 'Favorites'), icon: <Star className="w-4 h-4" />, count: favoritesCount },
     { id: 'files', label: t('cat_files', 'Files & Documents'), icon: <FileBox className="w-4 h-4" /> },
     { id: 'programming', label: t('cat_programming', 'Programming & Code'), icon: <Code2 className="w-4 h-4" /> },

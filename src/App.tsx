@@ -97,6 +97,7 @@ export default function App() {
   // Filter tools based on active category
   const filteredTools = TOOLS_REGISTRY.filter(tool => {
     if (activeCategory === 'all') return true;
+    if (activeCategory === 'basic') return Boolean(tool.isBasic);
     if (activeCategory === 'favorites') return config.favorites.includes(tool.id);
     return tool.category === activeCategory;
   });
@@ -187,6 +188,7 @@ export default function App() {
   const getCategoryDisplayName = (cat: ToolCategory) => {
     switch (cat) {
       case 'all': return t('cat_all', 'All Tools');
+      case 'basic': return t('cat_basic', 'Everyday Basics');
       case 'favorites': return t('cat_favorites', 'Favorites');
       case 'files': return t('cat_files', 'Files & Documents');
       case 'programming': return t('cat_programming', 'Programming & Code');

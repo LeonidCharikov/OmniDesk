@@ -2,6 +2,7 @@ import React from 'react';
 
 export type ToolCategory =
   | 'all'
+  | 'basic'
   | 'favorites'
   | 'files'
   | 'programming'
@@ -19,6 +20,7 @@ export interface ToolDefinition {
   category: 'files' | 'programming' | 'planning' | 'math' | 'science' | 'finance' | 'utilities';
   icon: string;
   requiresOnline?: boolean;
+  isBasic?: boolean;
   component: React.ComponentType;
   tags: string[];
 }
