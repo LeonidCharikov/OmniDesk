@@ -6,14 +6,11 @@ import {
   Calculator,
   Check,
   Copy,
-  Info,
   X,
-  ExternalLink,
   Filter,
   Sparkles,
-  ArrowRight,
 } from 'lucide-react';
-import { useI18n, SupportedLanguage } from '../../i18n/context';
+import { useI18n } from '../../i18n/context';
 import {
   ALL_ELEMENTS,
   ELEMENTS_BY_SYMBOL,
@@ -37,7 +34,6 @@ export const ChemistryTool: React.FC = () => {
   const [solMass, setSolMass] = useState<number>(58.44); // g (e.g. NaCl)
   const [solVolume, setSolVolume] = useState<number>(1); // liters
   const [solMolarMass, setSolMolarMass] = useState<number>(58.44); // g/mol
-  const [solPreset, setSolPreset] = useState<string>('NaCl');
 
   const formulaInputId = useId();
   const elementSearchId = useId();
@@ -162,8 +158,7 @@ export const ChemistryTool: React.FC = () => {
   const parsed = useMemo(() => parseFormula(formula), [formula, language]);
 
   // Quick preset loader for solutions
-  const handleSelectPreset = (name: string, mMass: number, formulaStr: string) => {
-    setSolPreset(name);
+  const handleSelectPreset = (_name: string, mMass: number, formulaStr: string) => {
     setSolMolarMass(mMass);
     setFormula(formulaStr);
   };
@@ -815,7 +810,6 @@ export const ChemistryTool: React.FC = () => {
                   <button
                     onClick={() => {
                       setSolMolarMass(+parsed.totalMass!.toFixed(3));
-                      setSolPreset(formula);
                       setActiveTab('solutions');
                     }}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-300 hover:text-white bg-emerald-950/40 rounded-lg transition-colors border border-emerald-500/30"

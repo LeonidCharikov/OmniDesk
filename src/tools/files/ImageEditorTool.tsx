@@ -90,7 +90,6 @@ export const ImageEditorTool: React.FC = () => {
   const { t } = useI18n();
 
   // Primary image states
-  const [file, setFile] = useState<File | null>(null);
   const [fileName, setFileName] = useState<string>('photo.jpg');
   const [sourceImage, setSourceImage] = useState<HTMLImageElement | null>(null);
   const [originalWidth, setOriginalWidth] = useState<number>(0);
@@ -300,7 +299,6 @@ export const ImageEditorTool: React.FC = () => {
       const ratio = img.height > 0 ? img.width / img.height : 1;
       setAspectRatio(ratio);
       setScalePercent(100);
-      setFile(newFile);
       setFileName(newFile.name);
 
       // Reset transformations
@@ -1761,10 +1759,10 @@ export const ImageEditorTool: React.FC = () => {
                       1280 × 720 (16:9 HD)
                     </button>
                     <button type="button" className={btnSecondary + ' py-2'} onClick={() => setPresetResolution(1080, 1080)}>
-                      1080 × 1080 (1:1 Čtverec)
+                      {`1080 × 1080 (1:1 ${t('aspect_square', 'Square')})`}
                     </button>
                     <button type="button" className={btnSecondary + ' py-2'} onClick={() => setPresetResolution(1080, 1920)}>
-                      1080 × 1920 (9:16 Příběh)
+                      {`1080 × 1920 (9:16 ${t('aspect_story', 'Story')})`}
                     </button>
                     <button type="button" className={btnSecondary + ' py-2'} onClick={() => setPresetResolution(1200, 630)}>
                       1200 × 630 (Social / OG)

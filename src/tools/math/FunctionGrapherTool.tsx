@@ -1,14 +1,11 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { 
-  LineChart, 
-  Sparkles, 
   ZoomIn, 
   ZoomOut, 
   RotateCcw, 
   Download, 
   Eye, 
   EyeOff, 
-  Layers, 
   HelpCircle,
   Crosshair
 } from 'lucide-react';
@@ -24,16 +21,16 @@ interface GraphFunction {
 }
 
 const PRESET_FUNCTIONS: { name: string; key: string; expr: string }[] = [
-  { name: 'Parabola & Kořeny', key: 'preset_parabola_roots', expr: 'x^2 - 4' },
-  { name: 'Tlumená vlna', key: 'preset_damped_wave', expr: 'sin(3*x) * exp(-0.25*abs(x))' },
-  { name: 'Sinc funkce', key: 'preset_sinc_function', expr: 'sin(x) / x' },
-  { name: 'Kubický polynom', key: 'preset_cubic_polynomial', expr: '0.2*x^3 - x^2 - x + 2' },
-  { name: 'Gaussovský zvon', key: 'preset_gaussian_bell', expr: '3 * exp(-0.5 * x^2)' },
-  { name: 'Racionální lomená', key: 'preset_rational_function', expr: '(2*x) / (x^2 + 1)' },
+  { name: 'Parabola & Roots', key: 'preset_parabola_roots', expr: 'x^2 - 4' },
+  { name: 'Damped Wave', key: 'preset_damped_wave', expr: 'sin(3*x) * exp(-0.25*abs(x))' },
+  { name: 'Sinc Function', key: 'preset_sinc_function', expr: 'sin(x) / x' },
+  { name: 'Cubic Polynomial', key: 'preset_cubic_polynomial', expr: '0.2*x^3 - x^2 - x + 2' },
+  { name: 'Gaussian Bell', key: 'preset_gaussian_bell', expr: '3 * exp(-0.5 * x^2)' },
+  { name: 'Rational Function', key: 'preset_rational_function', expr: '(2*x) / (x^2 + 1)' },
 ];
 
 export const FunctionGrapherTool: React.FC = () => {
-  const { t, currentLanguage } = useI18n();
+  const { t } = useI18n();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   // Functions state

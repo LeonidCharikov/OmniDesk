@@ -1,5 +1,5 @@
 import React, { useState, useId } from 'react';
-import { Globe, WifiOff, ArrowRightLeft, Sparkles, AlertCircle } from 'lucide-react';
+import { Globe, WifiOff, ArrowRightLeft, Sparkles } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
 
 interface Props {

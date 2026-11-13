@@ -10,8 +10,6 @@ import {
   Cpu, 
   Settings,
   HardDrive,
-  Menu,
-  X,
   ChevronLeft,
   ChevronRight,
   Code2,
@@ -63,16 +61,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const isCollapsed = !isOpen;
 
   const categories: Array<{ id: ToolCategory; label: string; icon: React.ReactNode; count?: number }> = [
-    { id: 'all', label: t('cat_all', 'Všechny nástroje'), icon: <LayoutGrid className="w-4 h-4" /> },
-    { id: 'favorites', label: t('cat_favorites', 'Oblíbené'), icon: <Star className="w-4 h-4" />, count: favoritesCount },
-    { id: 'files', label: t('cat_files', 'Soubory & Dokumenty'), icon: <FileBox className="w-4 h-4" /> },
-    { id: 'programming', label: t('cat_programming', 'Programování & Kód'), icon: <Code2 className="w-4 h-4" /> },
-    { id: 'planning', label: t('cat_planning', 'Plánování & Produktivita'), icon: <CalendarCheck className="w-4 h-4" /> },
-    { id: 'math', label: t('cat_math', 'Matematika'), icon: <Calculator className="w-4 h-4" /> },
-    { id: 'science', label: t('cat_science', 'Věda & Technika'), icon: <FlaskConical className="w-4 h-4" /> },
-    { id: 'finance', label: t('cat_finance', 'Finance & Měny'), icon: <Coins className="w-4 h-4" /> },
-    { id: 'utilities', label: t('cat_utilities', 'Utility'), icon: <Wrench className="w-4 h-4" /> },
-    { id: 'architecture', label: t('cat_architecture', 'Tauri Blueprint'), icon: <Cpu className="w-4 h-4" /> },
+    { id: 'all', label: t('cat_all', 'All Tools'), icon: <LayoutGrid className="w-4 h-4" /> },
+    { id: 'favorites', label: t('cat_favorites', 'Favorites'), icon: <Star className="w-4 h-4" />, count: favoritesCount },
+    { id: 'files', label: t('cat_files', 'Files & Documents'), icon: <FileBox className="w-4 h-4" /> },
+    { id: 'programming', label: t('cat_programming', 'Programming & Code'), icon: <Code2 className="w-4 h-4" /> },
+    { id: 'planning', label: t('cat_planning', 'Planning & Productivity'), icon: <CalendarCheck className="w-4 h-4" /> },
+    { id: 'math', label: t('cat_math', 'Mathematics'), icon: <Calculator className="w-4 h-4" /> },
+    { id: 'science', label: t('cat_science', 'Science & Engineering'), icon: <FlaskConical className="w-4 h-4" /> },
+    { id: 'finance', label: t('cat_finance', 'Finance & Currencies'), icon: <Coins className="w-4 h-4" /> },
+    { id: 'utilities', label: t('cat_utilities', 'Utilities'), icon: <Wrench className="w-4 h-4" /> },
+    { id: 'architecture', label: t('cat_architecture', 'Tauri & Code'), icon: <Cpu className="w-4 h-4" /> },
   ];
 
   return (
@@ -113,7 +111,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             className={`hidden sm:flex p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors shrink-0 ${
               isCollapsed ? 'absolute right-0 top-0' : ''
             }`}
-            title={isOpen ? t('collapse_sidebar', 'Sbalit panel') : t('expand_sidebar', 'Rozbalit panel')}
+            title={isOpen ? t('collapse_sidebar', 'Collapse sidebar') : t('expand_sidebar', 'Expand sidebar')}
           >
             {isOpen ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
           </button>
@@ -123,7 +121,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="space-y-1">
           {isOpen && (
             <span className="px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 block mb-2">
-              {t('categories', 'Kategorie nástrojů')}
+              {t('categories', 'Tool Categories')}
             </span>
           )}
           {categories.map(cat => {
@@ -180,7 +178,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           className="w-full flex items-center justify-center gap-2 py-2 px-3 text-xs font-medium text-slate-300 hover:text-white bg-slate-900/60 hover:bg-slate-800 rounded-lg border border-slate-800 transition-colors"
         >
           <Settings className="w-3.5 h-3.5 text-indigo-400" />
-          {isOpen && <span>{t('settings_and_backup', 'Nastavení & Záloha')}</span>}
+          {isOpen && <span>{t('settings_and_backup', 'Settings & Backup')}</span>}
         </button>
       </div>
     </aside>

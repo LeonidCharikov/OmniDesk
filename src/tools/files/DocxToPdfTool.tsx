@@ -2,15 +2,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import mammoth from 'mammoth';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import { 
-  FileText, 
   Upload, 
   Download, 
   CheckCircle2, 
   AlertCircle, 
   RefreshCw, 
-  Sparkles,
-  Eye,
-  FileCode
+  Sparkles
 } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
 import { saveBinaryWithDialog, registerTauriDropListener } from '../../services/fileSystemService';
@@ -19,7 +16,6 @@ export const DocxToPdfTool: React.FC = () => {
   const { t } = useI18n();
   const [file, setFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [extractedText, setExtractedText] = useState<string>('');
   const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
   const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
   const [stats, setStats] = useState<{
@@ -50,7 +46,6 @@ ${t('sample_confidentiality_body', 'Všechna data podléhají nejpřísnějším
 - ${t('sample_spec_time', 'Doba zpracování: < 200 ms')}
 - ${t('sample_spec_storage', 'Způsob uložení: Místní souborový systém')}`;
 
-    setExtractedText(sample);
     setFile({ name: `${t('sample_doc_name', 'Ukazkovy_dokument')}.docx`, size: 14520 } as File);
     generatePdfFromText(sample, `${t('sample_doc_name', 'Ukazkovy_dokument')}.pdf`);
   };
@@ -78,7 +73,6 @@ ${t('sample_confidentiality_body', 'Všechna data podléhají nejpřísnějším
         text = decoder.decode(arrayBuffer);
       }
 
-      setExtractedText(text);
       await generatePdfFromText(text, selectedFile.name.replace(/\.[^/.]+$/, '') + '.pdf', startTime);
     } catch (err: unknown) {
       console.error(err);

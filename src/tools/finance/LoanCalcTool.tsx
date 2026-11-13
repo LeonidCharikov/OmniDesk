@@ -1,5 +1,5 @@
 import React, { useState, useId } from 'react';
-import { DollarSign, PieChart, Download, Calendar, Coins } from 'lucide-react';
+import { Download, Calendar, Coins } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
 import { saveTextWithDialog } from '../../services/fileSystemService';
 import {

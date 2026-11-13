@@ -10,21 +10,12 @@ import {
   Copy,
   Search,
   RotateCw,
-  Check,
   AlertCircle,
   Clock,
-  Tag,
-  ExternalLink,
   X,
   FileText,
-  RefreshCw,
-  Sliders,
-  CheckSquare,
-  FlipHorizontal,
-  FlipVertical,
   Table,
   Code,
-  Sparkles,
   GitBranch,
   GitCommit,
   GitPullRequest,
@@ -72,28 +63,28 @@ function FilePicker({
 function ToolHeader({ title, description }: { title: string; description: string }) {
   const { t, language } = useI18n();
   const translations: Record<string, [string, string]> = {
-    'PDF Toolkit': ['pdf_toolkit_title', 'PDF nástroje'],
-    'OCR skener': ['ocr_scanner_title', 'OCR skener'],
-    'Image Editor': ['image_editor_title', 'Editor obrázků'],
-    'Markdown Preview & Export': ['markdown_preview_title', 'Náhled a export Markdownu'],
-    'To-do / Kanban': ['kanban_title', 'Úkoly / Kanban'],
-    'Poznámky': ['notes_title', 'Poznámky'],
-    'SQL Playground': ['sql_playground_title', 'SQL hřiště'],
-    'API Tester': ['api_tester_title', 'Tester API'],
-    'Git nástroje': ['git_tools_title', 'Git nástroje'],
-    'UML Diagram Editor': ['diagram_editor_title', 'Editor UML diagramů'],
+    'PDF Toolkit': ['pdf_toolkit_title', 'PDF Toolkit'],
+    'OCR Scanner': ['ocr_scanner_title', 'OCR Scanner'],
+    'Image Editor': ['image_editor_title', 'Image Editor'],
+    'Markdown Preview & Export': ['markdown_preview_title', 'Markdown Preview & Export'],
+    'To-do / Kanban': ['kanban_title', 'To-do / Kanban'],
+    'Notes Workspace': ['notes_title', 'Notes Workspace'],
+    'SQL Playground': ['sql_playground_title', 'SQL Playground'],
+    'API Tester': ['api_tester_title', 'API Tester'],
+    'Git Tools': ['git_tools_title', 'Git Tools'],
+    'Diagram Editor': ['diagram_editor_title', 'Diagram Editor'],
   };
   const descriptions: Record<string, string> = {
-    'PDF Toolkit': 'Lokálně slučujte soubory PDF nebo otočte stránky vybraného dokumentu.',
-    'OCR skener': 'Extrahujte text z obrázku lokálně bez odesílání souboru na server.',
-    'Image Editor': 'Změňte velikost, formát, rotaci a filtry obrázku s porovnáním úspory velikosti.',
-    'Markdown Preview & Export': 'Plnohodnotný živý náhled Markdownu s tabulkami, bloky kódu a exportem do HTML.',
-    'To-do / Kanban': 'Jednoduchá tabule úkolů se třemi sloupci a trvalým ukládáním.',
-    'Poznámky': 'Více lokálních poznámek s vyhledáváním a automatickým ukládáním.',
-    'SQL Playground': 'Lokální dotazování JSON dat syntaxí SELECT ... FROM data s tabulkovým zobrazením.',
-    'API Tester': 'Odesílejte HTTP požadavky s vlastními hlavičkami a kontrolujte stav i odpovědi.',
-    'Git nástroje': 'Tvorba konvenčních commitů, zvýrazněný prohlížeč diffů a generátor Git příkazů.',
-    'UML Diagram Editor': 'Vytvářejte UML uzly, upravujte texty, propojujte je šipkami a exportujte SVG.',
+    'PDF Toolkit': 'Merge selected PDF files or rotate all pages in a PDF locally.',
+    'OCR Scanner': 'Extract text from an image locally without uploading the file to a server.',
+    'Image Editor': 'Resize, convert format, rotate, and apply filters with size comparison.',
+    'Markdown Preview & Export': 'Full-featured live Markdown preview with tables, code blocks, and HTML export.',
+    'To-do / Kanban': 'Simple three-column task board with persistent local storage.',
+    'Notes Workspace': 'Manage multiple local notes with search and automatic saving.',
+    'SQL Playground': 'Query JSON data locally with SELECT ... FROM data syntax and table view.',
+    'API Tester': 'Send HTTP requests with custom headers and inspect response status and payloads.',
+    'Git Tools': 'Build conventional commits, highlight diffs, and copy common Git commands.',
+    'Diagram Editor': 'Create draggable UML class, interface, and actor nodes, connect arrows, and export clean SVG.',
   };
   const catalogId = findToolCatalogIdByTitle(title);
   const catalogTitle = catalogId ? getToolCatalogText(catalogId, 'title', language, title) : title;
@@ -150,10 +141,10 @@ export const PdfToolkitTool: React.FC = () => {
       setIsError(!result.success);
       setMessage(
         result.success
-          ? t('pdf_merged', `Úspěšně sloučeno ${files.length} souborů PDF.`)
+          ? t('pdf_merged', 'Successfully merged {count} PDF files.', { count: files.length })
           : result.canceled
-          ? t('save_canceled', 'Ukládání zrušeno.')
-          : result.error || t('pdf_merge_failed', 'Sloučení PDF se nezdařilo.')
+          ? t('save_canceled', 'Saving canceled.')
+          : result.error || t('pdf_merge_failed', 'PDF merge failed.')
       );
     } catch (error) {
       setIsError(true);
@@ -187,10 +178,10 @@ export const PdfToolkitTool: React.FC = () => {
       setIsError(!result.success);
       setMessage(
         result.success
-          ? t('pdf_rotated', `Otočeno o ${rotationAngle}°: ${targetFile.name}.`)
+          ? t('pdf_rotated', 'Rotated by {angle}°: {name}.', { angle: rotationAngle, name: targetFile.name })
           : result.canceled
-          ? t('save_canceled', 'Ukládání zrušeno.')
-          : result.error || t('pdf_rotate_failed', 'Otočení PDF se nezdařilo.')
+          ? t('save_canceled', 'Saving canceled.')
+          : result.error || t('pdf_rotate_failed', 'PDF rotation failed.')
       );
     } catch (error) {
       setIsError(true);
@@ -202,7 +193,7 @@ export const PdfToolkitTool: React.FC = () => {
 
   return (
     <div className="space-y-5">
-      <ToolHeader title="PDF Toolkit" description={t('pdf_toolkit_desc', 'Lokálně slučujte soubory PDF nebo otočte stránky vybraného PDF.')} />
+      <ToolHeader title="PDF Toolkit" description={t('pdf_toolkit_desc', 'Merge selected PDF files or rotate pages of a PDF locally.')} />
       <div className={panel + ' space-y-4'}>
         <div className="flex flex-wrap gap-2">
           <button className={mode === 'merge' ? button : secondary} onClick={() => setMode('merge')}>
@@ -275,10 +266,10 @@ export const PdfToolkitTool: React.FC = () => {
         <div className="pt-2 flex items-center gap-3">
           <button className={button} disabled={busy || !files.length} onClick={() => (mode === 'merge' ? merge() : rotate())}>
             {busy
-              ? t('processing', 'Zpracování…')
+              ? t('processing', 'Processing…')
               : mode === 'merge'
-              ? t('merge_pdfs', `Sloučit (${files.length}) PDF souborů`)
-              : t('rotate_pdf', `Otočit PDF o ${rotationAngle}°`)}
+              ? t('merge_pdfs', 'Merge ({count}) PDF files', { count: files.length })
+              : t('rotate_pdf', 'Rotate PDF by {angle}°', { angle: rotationAngle })}
           </button>
         </div>
 
@@ -327,7 +318,7 @@ export const OcrScannerTool: React.FC = () => {
     setBusy(true);
     setText('');
     setProgress(0);
-    setStatusMsg(t('loading_ocr_engine', 'Inicializace OCR jádra…'));
+    setStatusMsg(t('loading_ocr_engine', 'Initializing OCR engine…'));
     try {
       const { createWorker } = await import('tesseract.js');
       const worker = await createWorker(selectedLang, 1, {
@@ -338,13 +329,13 @@ export const OcrScannerTool: React.FC = () => {
           }
         },
       });
-      setStatusMsg(t('recognizing_text', 'Rozpoznávání textu…'));
+      setStatusMsg(t('recognizing_text', 'Recognizing text…'));
       const result = await worker.recognize(image);
       setText(result.data.text);
       await worker.terminate();
       setStatusMsg('');
     } catch (error) {
-      setText(error instanceof Error ? error.message : t('ocr_failed', 'OCR se nepodařilo dokončit.'));
+      setText(error instanceof Error ? error.message : t('ocr_failed', 'OCR failed to complete.'));
     } finally {
       setBusy(false);
     }
@@ -360,38 +351,38 @@ export const OcrScannerTool: React.FC = () => {
       'extracted-text.txt',
       text,
       [{ name: 'Text file (*.txt)', extensions: ['txt'] }],
-      t('save_extracted_text', 'Uložit extrahovaný text')
+      t('save_extracted_text', 'Save extracted text')
     );
   };
 
   return (
     <div className="space-y-5">
-      <ToolHeader title="OCR skener" description={t('ocr_scanner_desc', 'Extrahujte text z obrázku lokálně bez odesílání souboru na server.')} />
+      <ToolHeader title="OCR Scanner" description={t('ocr_scanner_desc', 'Extract text from an image locally without uploading the file to a server.')} />
       <div className={panel + ' space-y-4'}>
         <div className="grid md:grid-cols-2 gap-4">
           <div className="space-y-3">
             <FilePicker
               id="ocr-image-file"
-              label={t('choose_image', 'Vybrat obrázek s textem')}
+              label={t('choose_image', 'Choose image')}
               fileName={image?.name}
               accept="image/*"
               onChange={e => setImage(e.target.files?.[0] || null)}
             />
 
             <div>
-              <label className="text-xs text-slate-300 font-medium block mb-1">{t('ocr_language', 'Jazyk předlohy:')}</label>
+              <label className="text-xs text-slate-300 font-medium block mb-1">{t('ocr_language', 'Source language:')}</label>
               <select className={input} value={selectedLang} onChange={e => setSelectedLang(e.target.value)}>
                 <option value="eng">{t('lang_english', 'English (eng)')}</option>
-                <option value="ces">{t('lang_czech', 'Čeština (ces)')}</option>
-                <option value="deu">{t('lang_german', 'Deutsch (deu)')}</option>
-                <option value="spa">{t('lang_spanish', 'Español (spa)')}</option>
-                <option value="fra">{t('lang_french', 'Français (fra)')}</option>
-                <option value="rus">{t('lang_russian', 'Русский (rus)')}</option>
+                <option value="ces">{t('lang_czech', 'Czech (ces)')}</option>
+                <option value="deu">{t('lang_german', 'German (deu)')}</option>
+                <option value="spa">{t('lang_spanish', 'Spanish (spa)')}</option>
+                <option value="fra">{t('lang_french', 'French (fra)')}</option>
+                <option value="rus">{t('lang_russian', 'Russian (rus)')}</option>
               </select>
             </div>
 
             <button className={button + ' w-full'} disabled={!image || busy} onClick={scan}>
-              {busy ? `${t('scanning_progress', 'Skenování')} ${progress}% (${statusMsg})` : t('run_ocr', 'Spustit OCR rozpoznávání')}
+              {busy ? `${t('scanning_progress', 'Scanning {progress}%…', { progress })} (${statusMsg})` : t('run_ocr', 'Run OCR')}
             </button>
 
             {busy && (
@@ -404,12 +395,12 @@ export const OcrScannerTool: React.FC = () => {
           <div>
             {imagePreview ? (
               <div className="border border-slate-800 rounded-lg p-2 bg-slate-950/40 text-center">
-                <p className="text-[11px] text-slate-400 mb-1.5">{t('preview_image', 'Náhled obrázku:')}</p>
-                <img src={imagePreview} alt={t('scanned_image', 'Skenovaný obrázek')} className="max-h-52 max-w-full mx-auto object-contain rounded" />
+                <p className="text-[11px] text-slate-400 mb-1.5">{t('preview_image', 'Image preview:')}</p>
+                <img src={imagePreview} alt={t('scanned_image', 'Scanned image')} className="max-h-52 max-w-full mx-auto object-contain rounded" />
               </div>
             ) : (
               <div className="border border-dashed border-slate-800 rounded-lg p-8 text-center text-slate-500 text-xs">
-                {t('no_image_selected', 'Zatím nebyl vybrán žádný obrázek.')}
+                {t('no_image_selected', 'No image selected yet.')}
               </div>
             )}
           </div>
@@ -418,17 +409,17 @@ export const OcrScannerTool: React.FC = () => {
         <div className="space-y-2 pt-2 border-t border-slate-800">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-slate-300">
-              {t('ocr_result', 'Výsledek rozpoznání textu:')}{' '}
-              {text && <span className="text-slate-500 font-normal">({wordCount} {t('words', 'slov')}, {text.length} {t('chars', 'znaků')})</span>}
+              {t('ocr_result', 'Text recognition result:')}{' '}
+              {text && <span className="text-slate-500 font-normal">({wordCount} {t('words', 'words')}, {text.length} {t('chars', 'chars')})</span>}
             </span>
             <div className="flex gap-2">
               <button className={secondary} disabled={!text} onClick={() => navigator.clipboard.writeText(text)}>
                 <Copy className="inline w-3.5 h-3.5 mr-1" />
-                {t('copy_text', 'Kopírovat')}
+                {t('copy_text', 'Copy text')}
               </button>
               <button className={secondary} disabled={!text} onClick={downloadText}>
                 <Download className="inline w-3.5 h-3.5 mr-1" />
-                {t('download_txt', 'Stáhnout .txt')}
+                {t('download_txt', 'Download .txt')}
               </button>
               <button className={secondary} disabled={!text} onClick={() => setText('')}>
                 <Trash2 className="inline w-3.5 h-3.5" />
@@ -439,7 +430,7 @@ export const OcrScannerTool: React.FC = () => {
             className={input + ' min-h-48 font-mono text-xs leading-relaxed'}
             value={text}
             onChange={e => setText(e.target.value)}
-            placeholder={t('ocr_result_placeholder', 'Rozpoznaný text se zobrazí zde…')}
+            placeholder={t('ocr_result_placeholder', 'The OCR result will appear here…')}
           />
         </div>
       </div>
@@ -566,7 +557,7 @@ export const MarkdownPreviewTool: React.FC = () => {
 
   return (
     <div className="space-y-5">
-      <ToolHeader title="Markdown Preview & Export" description={t('markdown_preview_desc', 'Plnohodnotný živý náhled Markdownu s tabulkami, bloky kódu a exportem do HTML.')} />
+      <ToolHeader title="Markdown Preview & Export" description={t('markdown_preview_desc', 'Full-featured live Markdown preview with tables, code blocks, and HTML export.')} />
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex gap-2">
           <button className={secondary} onClick={() => insertTemplate('readme')}>
@@ -684,7 +675,7 @@ export const KanbanTool: React.FC = () => {
 
   return (
     <div className="space-y-5">
-      <ToolHeader title="To-do / Kanban" description={t('kanban_desc', 'Jednoduchá tabule úkolů se třemi sloupci a trvalým ukládáním.')} />
+      <ToolHeader title="To-do / Kanban" description={t('kanban_desc', 'Simple three-column task board with persistent local storage.')} />
       <div className="flex flex-wrap gap-2 items-center">
         <input
           className={input + ' flex-1 min-w-[200px]'}
@@ -864,7 +855,7 @@ export const NotesTool: React.FC = () => {
 
   return (
     <div className="space-y-5">
-      <ToolHeader title="Poznámky" description={t('notes_desc', 'Více lokálních poznámek s vyhledáváním a automatickým ukládáním.')} />
+      <ToolHeader title="Notes Workspace" description={t('notes_desc', 'Multiple local notes with search and automatic saving.')} />
       <div className="grid md:grid-cols-[260px_1fr] gap-4">
         <div className={panel + ' space-y-3 flex flex-col h-[520px]'}>
           <div className="flex gap-2">
@@ -989,14 +980,14 @@ export const SqlPlaygroundTool: React.FC = () => {
   const executeSql = () => {
     try {
       const rows = JSON.parse(data) as Record<string, unknown>[];
-      if (!Array.isArray(rows)) throw new Error(t('data_must_be_array', 'Vstupní data musí být pole JSON objektů.'));
+      if (!Array.isArray(rows)) throw new Error(t('data_must_be_array', 'Input data must be an array of JSON objects.'));
 
       // Parse SQL statement: SELECT [fields] FROM data [WHERE ...] [ORDER BY ...] [LIMIT ...]
       const regex = /select\s+(.+?)\s+from\s+data(?:\s+where\s+(.+?))?(?:\s+order\s+by\s+(.+?)(?:\s+(asc|desc))?)?(?:\s+limit\s+(\d+))?$/i;
       const match = query.trim().match(regex);
       if (!match) {
         throw new Error(
-          t('supported_sql_syntax', 'Podporovaná syntaxe: SELECT col1, col2 FROM data [WHERE col = val] [ORDER BY col [ASC|DESC]] [LIMIT n]')
+          t('supported_sql_syntax', 'Supported syntax: SELECT col1, col2 FROM data [WHERE col = val] [ORDER BY col [ASC|DESC]] [LIMIT n]')
         );
       }
 
@@ -1069,7 +1060,7 @@ export const SqlPlaygroundTool: React.FC = () => {
       setRawOutput(JSON.stringify(projected, null, 2));
     } catch (e) {
       setRowsResult([]);
-      setRawOutput(e instanceof Error ? e.message : t('err_sql_exec', 'Chyba při vykonávání dotazu.'));
+      setRawOutput(e instanceof Error ? e.message : t('err_sql_exec', 'Error executing query.'));
     }
   };
 
@@ -1084,17 +1075,17 @@ export const SqlPlaygroundTool: React.FC = () => {
     rowsResult.forEach(row => {
       csvLines.push(headers.map(h => JSON.stringify(row[h] ?? '')).join(';'));
     });
-    void saveTextWithDialog('vysledek-dotazu.csv', csvLines.join('\n'), [{ name: 'CSV (*.csv)', extensions: ['csv'] }], t('save_csv', 'Uložit CSV'));
+    void saveTextWithDialog('query-result.csv', csvLines.join('\n'), [{ name: 'CSV (*.csv)', extensions: ['csv'] }], t('save_csv', 'Save CSV'));
   };
 
   return (
     <div className="space-y-5">
-      <ToolHeader title="SQL Playground" description={t('sql_playground_desc', 'Lokální dotazování JSON dat syntaxí SELECT ... FROM data s tabulkovým zobrazením.')} />
+      <ToolHeader title="SQL Playground" description={t('sql_playground_desc', 'Query JSON data locally with SELECT ... FROM data syntax and table view.')} />
       <div className="grid md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <label className="text-xs text-slate-300 font-medium block">
-              {t('json_data_source', 'Vstupní JSON tabulka (data):')}
+              {t('json_data_source', 'Input JSON Table (data):')}
             </label>
             <div className="flex gap-1.5">
               <button
@@ -1105,7 +1096,7 @@ export const SqlPlaygroundTool: React.FC = () => {
                   setQuery("SELECT name, role, salary FROM data WHERE salary > 60000 ORDER BY salary DESC");
                 }}
               >
-                {t('table_employees', 'Zaměstnanci')}
+                {t('table_employees', 'Employees')}
               </button>
               <button
                 type="button"
@@ -1115,7 +1106,7 @@ export const SqlPlaygroundTool: React.FC = () => {
                   setQuery("SELECT orderId, customer, price, status FROM data WHERE price > 2000");
                 }}
               >
-                {t('table_orders', 'Objednávky')}
+                {t('table_orders', 'Orders')}
               </button>
             </div>
           </div>
@@ -1125,12 +1116,12 @@ export const SqlPlaygroundTool: React.FC = () => {
         <div className="space-y-3">
           <div>
             <label className="text-xs text-slate-300 font-medium block mb-1">
-              {t('sql_query', 'SQL dotaz:')}
+              {t('sql_query', 'SQL Query:')}
             </label>
             <div className="flex gap-2">
               <input className={input + ' font-mono text-xs'} value={query} onChange={e => setQuery(e.target.value)} onKeyDown={e => e.key === 'Enter' && executeSql()} />
               <button className={button} onClick={executeSql}>
-                <Play className="inline w-3.5 h-3.5 mr-1" /> {t('run_query', 'Spustit')}
+                <Play className="inline w-3.5 h-3.5 mr-1" /> {t('run_query', 'Run')}
               </button>
             </div>
           </div>
@@ -1144,7 +1135,7 @@ export const SqlPlaygroundTool: React.FC = () => {
                   onClick={() => setViewMode('table')}
                 >
                   <Table className="w-3.5 h-3.5 inline mr-1" />
-                  {t('table_view', 'Tabulka')} ({rowsResult.length})
+                  {t('table_view', 'Table')} ({rowsResult.length})
                 </button>
                 <button
                   type="button"
@@ -1160,7 +1151,7 @@ export const SqlPlaygroundTool: React.FC = () => {
                 <div className="flex gap-2">
                   <button className={secondary} onClick={() => navigator.clipboard.writeText(rawOutput)}>
                     <Copy className="inline w-3.5 h-3.5 mr-1" />
-                    {t('copy', 'Kopírovat')}
+                    {t('copy', 'Copy')}
                   </button>
                   <button className={secondary} onClick={exportCsv}>
                     <Download className="inline w-3.5 h-3.5 mr-1" />
@@ -1196,7 +1187,7 @@ export const SqlPlaygroundTool: React.FC = () => {
                     </tbody>
                   </table>
                 ) : (
-                  <p className="p-4 text-xs text-slate-500 font-mono">{rawOutput || t('no_results', 'Žádné výsledky')}</p>
+                  <p className="p-4 text-xs text-slate-500 font-mono">{rawOutput || t('no_results', 'No results')}</p>
                 )}
               </div>
             ) : (
@@ -1282,8 +1273,8 @@ export const ApiTesterTool: React.FC = () => {
       setDurationMs(elapsed);
       setErrorMsg(
         error instanceof Error
-          ? `${error.message}. (${t('cors_note', 'Poznámka: Pokud server nepovoluje CORS hlavičky, prohlížeč přímý požadavek zablokuje.')})`
-          : t('request_failed', 'Požadavek selhal.')
+          ? `${error.message}. (${t('cors_note', 'Note: Browser blocks direct requests if the server does not allow CORS headers.')})`
+          : t('request_failed', 'Request failed.')
       );
     } finally {
       setBusy(false);
@@ -1292,7 +1283,7 @@ export const ApiTesterTool: React.FC = () => {
 
   return (
     <div className="space-y-5">
-      <ToolHeader title="API Tester" description={t('api_tester_desc', 'Odesílejte HTTP požadavky s vlastními hlavičkami a kontrolujte stav i odpovědi.')} />
+      <ToolHeader title="API Tester" description={t('api_tester_desc', 'Send HTTP requests with custom headers and inspect response status and payloads.')} />
       <div className={panel + ' space-y-4'}>
         <div className="flex flex-wrap gap-2">
           <select
@@ -1314,24 +1305,24 @@ export const ApiTesterTool: React.FC = () => {
           />
           <button className={button} disabled={busy || !url.trim()} onClick={send}>
             <Send className="inline w-3.5 h-3.5 mr-1" />
-            {busy ? t('sending', 'Odesílání…') : t('send', 'Odeslat')}
+            {busy ? t('sending', 'Sending…') : t('send', 'Send')}
           </button>
         </div>
 
         {/* Headers configurator */}
         <div className="space-y-2 border-t border-slate-800 pt-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-300">{t('request_headers', 'Hlavičky požadavku (Headers):')}</span>
+            <span className="text-xs font-medium text-slate-300">{t('request_headers', 'Request Headers:')}</span>
             <button className="text-xs text-indigo-400 hover:text-indigo-300" onClick={addHeader}>
               <Plus className="inline w-3 h-3 mr-1" />
-              {t('add_header', 'Přidat hlavičku')}
+              {t('add_header', 'Add header')}
             </button>
           </div>
           {headersList.map((h, i) => (
             <div key={i} className="flex gap-2 items-center">
               <input
                 className={input + ' font-mono text-xs'}
-                placeholder={t('header_key_placeholder', 'Key (např. Authorization)')}
+                placeholder={t('header_key_placeholder', 'Key (e.g., Authorization)')}
                 value={h.key}
                 onChange={e => {
                   const next = [...headersList];
@@ -1341,7 +1332,7 @@ export const ApiTesterTool: React.FC = () => {
               />
               <input
                 className={input + ' font-mono text-xs'}
-                placeholder={t('header_val_placeholder', 'Value (např. Bearer token)')}
+                placeholder={t('header_val_placeholder', 'Value (e.g., Bearer token)')}
                 value={h.value}
                 onChange={e => {
                   const next = [...headersList];
@@ -1349,7 +1340,7 @@ export const ApiTesterTool: React.FC = () => {
                   setHeadersList(next);
                 }}
               />
-              <button className="text-slate-500 hover:text-rose-400 p-1" onClick={() => removeHeader(i)} title={t('remove', 'Odebrat')}>
+              <button className="text-slate-500 hover:text-rose-400 p-1" onClick={() => removeHeader(i)} title={t('remove', 'Remove')}>
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -1359,7 +1350,7 @@ export const ApiTesterTool: React.FC = () => {
         {method !== 'GET' && (
           <div className="space-y-1">
             <label className="text-xs text-slate-300 font-medium block">
-              {t('json_request_body', 'Tělo požadavku (Request Body):')}
+              {t('json_request_body', 'Request Body:')}
             </label>
             <textarea
               className={input + ' min-h-28 font-mono text-xs'}
@@ -1382,7 +1373,7 @@ export const ApiTesterTool: React.FC = () => {
                   }`}
                   onClick={() => setActiveTab('body')}
                 >
-                  {t('response_body', 'Odpověď (Body)')}
+                  {t('response_body', 'Response Body')}
                 </button>
                 <button
                   type="button"
@@ -1391,7 +1382,7 @@ export const ApiTesterTool: React.FC = () => {
                   }`}
                   onClick={() => setActiveTab('headers')}
                 >
-                  {t('response_headers', 'Hlavičky')} ({Object.keys(resultHeaders).length})
+                  {t('response_headers', 'Headers')} ({Object.keys(resultHeaders).length})
                 </button>
               </div>
 
@@ -1420,7 +1411,7 @@ export const ApiTesterTool: React.FC = () => {
             {resultBody && (
               <button className={secondary} onClick={() => navigator.clipboard.writeText(resultBody)}>
                 <Copy className="w-3.5 h-3.5 inline mr-1" />
-                {t('copy_response', 'Kopírovat')}
+                {t('copy_response', 'Copy')}
               </button>
             )}
           </div>
@@ -1434,7 +1425,7 @@ export const ApiTesterTool: React.FC = () => {
 
           {activeTab === 'body' ? (
             <pre className={panel + ' min-h-48 max-h-96 overflow-auto font-mono text-xs text-slate-200 whitespace-pre-wrap leading-relaxed'}>
-              {resultBody || t('no_response_yet', 'Zatím nebyla přijata žádná odpověď.')}
+              {resultBody || t('no_response_yet', 'No response received yet.')}
             </pre>
           ) : (
             <div className={panel + ' min-h-48 max-h-96 overflow-auto font-mono text-xs space-y-1'}>
@@ -1445,7 +1436,7 @@ export const ApiTesterTool: React.FC = () => {
                 </div>
               ))}
               {Object.keys(resultHeaders).length === 0 && (
-                <p className="text-slate-500">{t('no_headers_received', 'Žádné hlavičky k zobrazení.')}</p>
+                <p className="text-slate-500">{t('no_headers_received', 'No headers to display.')}</p>
               )}
             </div>
           )}
@@ -1475,7 +1466,7 @@ export const GitToolsTool: React.FC = () => {
     const header = `${commitType}${scopePart}${breakingBang}: ${description.trim()}`;
     const parts = [header];
     if (body.trim()) parts.push(body.trim());
-    if (breaking) parts.push(`BREAKING CHANGE: ${t('breaking_change_text', 'Vyžaduje aktualizaci závislostí.')}`);
+    if (breaking) parts.push(`BREAKING CHANGE: ${t('breaking_change_text', 'Requires updating dependent APIs or dependencies.')}`);
     return parts.join('\n\n');
   }, [commitType, scope, description, body, breaking, t]);
 
@@ -1506,19 +1497,19 @@ export const GitToolsTool: React.FC = () => {
 
   // 3. Command Cheatsheet
   const cheatsheetCommands = [
-    { title: t('git_cmd_branch', 'Vytvořit a přepnout novou větev'), cmd: 'git checkout -b feature/my-new-tool' },
-    { title: t('git_cmd_stash', 'Stashnout neuložené změny'), cmd: 'git stash save "wip" && git stash pop' },
-    { title: t('git_cmd_reset', 'Vrátit poslední lokální commit (ponechat změny)'), cmd: 'git reset --soft HEAD~1' },
-    { title: t('git_cmd_amend', 'Přepsat poslední commit message'), cmd: 'git commit --amend -m "updated commit message"' },
-    { title: t('git_cmd_clean', 'Vyčistit necommitnuté soubory'), cmd: 'git clean -fd' },
-    { title: t('git_cmd_log', 'Zobrazit zkrácenou historii ve stromu'), cmd: 'git log --oneline --graph --decorate --all' },
+    { title: t('git_cmd_branch', 'Create and switch to a new branch'), cmd: 'git checkout -b feature/my-new-tool' },
+    { title: t('git_cmd_stash', 'Stash and restore uncommitted changes'), cmd: 'git stash save "wip" && git stash pop' },
+    { title: t('git_cmd_reset', 'Undo the last local commit (keep changes)'), cmd: 'git reset --soft HEAD~1' },
+    { title: t('git_cmd_amend', 'Rewrite the last commit message'), cmd: 'git commit --amend -m "updated commit message"' },
+    { title: t('git_cmd_clean', 'Remove untracked files and directories'), cmd: 'git clean -fd' },
+    { title: t('git_cmd_log', 'View compact commit graph history'), cmd: 'git log --oneline --graph --decorate --all' },
   ];
 
   return (
     <div className="space-y-5">
       <ToolHeader
-        title="Git nástroje"
-        description={t('git_tools_desc', 'Tvorba konvenčních commitů, zvýrazněný prohlížeč diffů a generátor Git příkazů.')}
+        title="Git Tools"
+        description={t('git_tools_desc', 'Build conventional commits, highlight diffs, and copy common Git commands.')}
       />
       <div className={panel + ' space-y-4'}>
         <div className="flex gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800">
@@ -1540,7 +1531,7 @@ export const GitToolsTool: React.FC = () => {
             onClick={() => setActiveTab('diff')}
           >
             <GitPullRequest className="w-3.5 h-3.5 inline mr-1" />
-            {t('diff_highlighter_title', 'Diff & Log Zvýrazňovač')}
+            {t('diff_highlighter_title', 'Diff & Log Highlighter')}
           </button>
           <button
             type="button"
@@ -1550,7 +1541,7 @@ export const GitToolsTool: React.FC = () => {
             onClick={() => setActiveTab('cheatsheet')}
           >
             <GitBranch className="w-3.5 h-3.5 inline mr-1" />
-            {t('git_cheatsheet_title', 'Git Tahák')}
+            {t('git_cheatsheet_title', 'Git Cheatsheet')}
           </button>
         </div>
 
@@ -1558,49 +1549,49 @@ export const GitToolsTool: React.FC = () => {
           <div className="space-y-3">
             <div className="grid md:grid-cols-3 gap-3">
               <label className="text-xs text-slate-400">
-                {t('commit_type_label', 'Typ commitu:')}
+                {t('commit_type_label', 'Commit type:')}
                 <select className={input + ' mt-1'} value={commitType} onChange={e => setCommitType(e.target.value)}>
-                  <option value="feat">{t('commit_feat', 'feat (nová funkce)')}</option>
-                  <option value="fix">{t('commit_fix', 'fix (oprava chyby)')}</option>
-                  <option value="docs">{t('commit_docs', 'docs (dokumentace)')}</option>
-                  <option value="style">{t('commit_style', 'style (formátování kódu)')}</option>
-                  <option value="refactor">{t('commit_refactor', 'refactor (úprava bez změny funkce)')}</option>
-                  <option value="perf">{t('commit_perf', 'perf (zrychlení výkonu)')}</option>
-                  <option value="test">{t('commit_test', 'test (testy)')}</option>
-                  <option value="chore">{t('commit_chore', 'chore (build, závislosti)')}</option>
+                  <option value="feat">{t('commit_feat', 'feat (new feature)')}</option>
+                  <option value="fix">{t('commit_fix', 'fix (bug fix)')}</option>
+                  <option value="docs">{t('commit_docs', 'docs (documentation)')}</option>
+                  <option value="style">{t('commit_style', 'style (formatting)')}</option>
+                  <option value="refactor">{t('commit_refactor', 'refactor (code restructure)')}</option>
+                  <option value="perf">{t('commit_perf', 'perf (performance)')}</option>
+                  <option value="test">{t('commit_test', 'test (tests)')}</option>
+                  <option value="chore">{t('commit_chore', 'chore (build, dependencies)')}</option>
                 </select>
               </label>
               <label className="text-xs text-slate-400">
-                {t('scope_label', 'Scope (volitelný modul):')}
-                <input className={input + ' mt-1'} value={scope} onChange={e => setScope(e.target.value)} placeholder={t('scope_placeholder', 'např. auth, ui, core')} />
+                {t('scope_label', 'Scope (optional module):')}
+                <input className={input + ' mt-1'} value={scope} onChange={e => setScope(e.target.value)} placeholder={t('scope_placeholder', 'e.g., auth, ui, core')} />
               </label>
               <label className="flex items-center gap-2 text-xs text-rose-300 pt-6 cursor-pointer">
                 <input type="checkbox" checked={breaking} onChange={e => setBreaking(e.target.checked)} className="rounded text-rose-600 bg-slate-950" />
-                Breaking Change (!)
+                {t('breaking_change_label', 'Breaking Change (!)')}
               </label>
             </div>
 
             <label className="text-xs text-slate-400 block">
-              {t('subject_label', 'Stručný popis (subject):')}
+              {t('subject_label', 'Short description (subject):')}
               <input className={input + ' mt-1'} value={description} onChange={e => setDescription(e.target.value)} />
             </label>
 
             <label className="text-xs text-slate-400 block">
-              {t('body_label', 'Doplňující zpráva (body):')}
-              <textarea className={input + ' mt-1 min-h-20 font-mono text-xs'} value={body} onChange={e => setBody(e.target.value)} placeholder={t('body_placeholder', 'Podrobnější důvod této změny…')} />
+              {t('body_label', 'Detailed message (body):')}
+              <textarea className={input + ' mt-1 min-h-20 font-mono text-xs'} value={body} onChange={e => setBody(e.target.value)} placeholder={t('body_placeholder', 'Explain the motivation for this change…')} />
             </label>
 
             <div className="p-3 bg-slate-950 rounded-lg border border-slate-800 space-y-2">
               <div className="flex justify-between items-center text-xs">
-                <span className="text-slate-400">{t('result_commit_msg', 'Výsledná commit zpráva:')}</span>
+                <span className="text-slate-400">{t('result_commit_msg', 'Generated Commit Message:')}</span>
                 <div className="flex gap-2">
                   <button className={secondary} onClick={() => navigator.clipboard.writeText(fullCommitMessage)}>
                     <Copy className="w-3.5 h-3.5 inline mr-1" />
-                    {t('copy_message', 'Zkopírovat zprávu')}
+                    {t('copy_message', 'Copy message')}
                   </button>
                   <button className={button} onClick={() => navigator.clipboard.writeText(`git commit -m ${JSON.stringify(fullCommitMessage)}`)}>
                     <Copy className="w-3.5 h-3.5 inline mr-1" />
-                    {t('copy_git_cmd', 'Kopírovat git příkaz')}
+                    {t('copy_git_cmd', 'Copy git command')}
                   </button>
                 </div>
               </div>
@@ -1615,13 +1606,13 @@ export const GitToolsTool: React.FC = () => {
               className={input + ' min-h-36 font-mono text-xs leading-relaxed'}
               value={diffText}
               onChange={e => setDiffText(e.target.value)}
-              placeholder={t('diff_input_placeholder', 'Vložte sem výstup z git diff nebo git log -p…')}
+              placeholder={t('diff_input_placeholder', 'Paste git diff or git log -p output here…')}
             />
             <div className="flex gap-2">
-              <input className={input + ' text-xs'} value={diffFilter} onChange={e => setDiffFilter(e.target.value)} placeholder={t('diff_filter_placeholder', 'Filtrovat řádky diffu…')} />
+              <input className={input + ' text-xs'} value={diffFilter} onChange={e => setDiffFilter(e.target.value)} placeholder={t('diff_filter_placeholder', 'Filter diff lines…')} />
               <button className={secondary} onClick={() => navigator.clipboard.writeText(diffText)}>
                 <Copy className="w-3.5 h-3.5 inline mr-1" />
-                {t('copy', 'Kopírovat')}
+                {t('copy', 'Copy')}
               </button>
             </div>
             <div className={panel + ' min-h-48 max-h-96 overflow-auto font-mono text-xs space-y-0.5 leading-relaxed bg-slate-950'}>
@@ -1646,7 +1637,7 @@ export const GitToolsTool: React.FC = () => {
                 </div>
                 <div className="pt-2">
                   <button className={secondary} onClick={() => navigator.clipboard.writeText(item.cmd)}>
-                    <Copy className="w-3 h-3 inline mr-1" /> {t('copy_command', 'Kopírovat příkaz')}
+                    <Copy className="w-3 h-3 inline mr-1" /> {t('copy_command', 'Copy command')}
                   </button>
                 </div>
               </div>
@@ -1745,7 +1736,7 @@ export const DiagramEditorTool: React.FC = () => {
   return (
     <div className="space-y-5 select-none">
       <ToolHeader
-        title="UML Diagram Editor"
+        title="Diagram Editor"
         description={t(
           'diagram_editor_desc',
           'Vytvářejte přetahovatelné UML uzly tříd, rozhraní a aktérů, propojujte je šipkami a exportujte čistý vektorový SVG soubor.'

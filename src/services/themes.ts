@@ -14,7 +14,7 @@ export const THEMES: ThemeMeta[] = [
   {
     id: 'midnight',
     nameKey: 'theme_midnight',
-    defaultName: 'Půlnoční modrá (Midnight Navy)',
+    defaultName: 'Midnight Navy',
     previewBg: '#030712',
     previewBorder: '#1e293b',
     previewAccent: '#6366f1',
@@ -22,7 +22,7 @@ export const THEMES: ThemeMeta[] = [
   {
     id: 'oled',
     nameKey: 'theme_oled',
-    defaultName: 'Čistě černá (OLED Black)',
+    defaultName: 'OLED Black',
     previewBg: '#000000',
     previewBorder: '#27272a',
     previewAccent: '#3b82f6',
@@ -30,7 +30,7 @@ export const THEMES: ThemeMeta[] = [
   {
     id: 'graphite',
     nameKey: 'theme_graphite',
-    defaultName: 'Grafitově šedá (Charcoal)',
+    defaultName: 'Charcoal Graphite',
     previewBg: '#121417',
     previewBorder: '#2e343f',
     previewAccent: '#38bdf8',
@@ -38,7 +38,7 @@ export const THEMES: ThemeMeta[] = [
   {
     id: 'emerald',
     nameKey: 'theme_emerald',
-    defaultName: 'Kybernetická smaragdová (Emerald)',
+    defaultName: 'Cyber Emerald',
     previewBg: '#040d0a',
     previewBorder: '#13392a',
     previewAccent: '#10b981',
@@ -46,7 +46,7 @@ export const THEMES: ThemeMeta[] = [
   {
     id: 'purple',
     nameKey: 'theme_purple',
-    defaultName: 'Temně fialová (Royal Twilight)',
+    defaultName: 'Royal Twilight',
     previewBg: '#0b0614',
     previewBorder: '#2d1b54',
     previewAccent: '#a855f7',
@@ -54,7 +54,7 @@ export const THEMES: ThemeMeta[] = [
   {
     id: 'light',
     nameKey: 'theme_light',
-    defaultName: 'Čistý moderní světlý (Clean Light)',
+    defaultName: 'Clean Light',
     previewBg: '#f8fafc',
     previewBorder: '#cbd5e1',
     previewAccent: '#4f46e5',

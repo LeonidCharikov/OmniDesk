@@ -1,5 +1,5 @@
 import React, { useState, useId } from 'react';
-import { GitCompare, Plus, Minus, Equal } from 'lucide-react';
+import { Plus, Minus, Equal } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
 
 interface DiffLine {
@@ -12,7 +12,7 @@ interface DiffLine {
 export const TextDiffTool: React.FC = () => {
   const { t } = useI18n();
   const [textA, setTextA] = useState<string>(() =>
-`${t('original_config_version', '// Původní verze konfigurace')}
+`${t('original_config_version', '// Original configuration')}
 {
   "appName": "OmniDesk",
   "version": "1.0.0",
@@ -21,13 +21,13 @@ export const TextDiffTool: React.FC = () => {
 }`);
 
   const [textB, setTextB] = useState<string>(() =>
-`${t('updated_config_version', '// Aktualizovaná verze konfigurace')}
+`${t('updated_config_version', '// Updated configuration')}
 {
   "appName": "OmniDesk Tauri Platform",
   "version": "2.0.0",
   "offlineOnly": false,
   "theme": "dark",
-  "language": "cs"
+  "language": "en"
 }`);
 
   const textAId = useId();
@@ -86,10 +86,10 @@ export const TextDiffTool: React.FC = () => {
     <div className="space-y-6">
       <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800">
         <h2 className="text-lg font-semibold text-white">
-          {t('tool_text_diff_title', 'Text & Souborový Diff Porovnávač')}
+          {t('tool_text_diff_title', 'Text & File Diff Checker')}
         </h2>
         <p className="text-sm text-slate-400 mt-1">
-          {t('text_diff_desc', 'Vizuální porovnání dvou textů nebo konfiguračních souborů řádek po řádce s detekcí změn.')}
+          {t('text_diff_desc', 'Visual line-by-line comparison of two texts or configuration files with change detection.')}
         </p>
       </div>
 
@@ -97,7 +97,7 @@ export const TextDiffTool: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <label htmlFor={textAId} className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
-            {t('original_text_a', 'Původní text (Verze A)')}
+            {t('original_text_a', 'Original Text (Version A)')}
           </label>
           <textarea
             id={textAId}
@@ -110,7 +110,7 @@ export const TextDiffTool: React.FC = () => {
 
         <div className="space-y-2">
           <label htmlFor={textBId} className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
-            {t('modified_text_b', 'Upravený text (Verze B)')}
+            {t('modified_text_b', 'Modified Text (Version B)')}
           </label>
           <textarea
             id={textBId}
@@ -127,24 +127,24 @@ export const TextDiffTool: React.FC = () => {
         <div className="p-3 rounded-xl bg-emerald-950/20 border border-emerald-800/40 flex items-center gap-3">
           <Plus className="w-5 h-5 text-emerald-400 shrink-0" />
           <div>
-            <span className="text-[11px] text-slate-400 block">{t('added_lines', 'Přidáno')}</span>
-            <span className="text-base font-bold font-mono text-emerald-400">+{diffData.added} {t('lines_short', 'řádků')}</span>
+            <span className="text-[11px] text-slate-400 block">{t('added_lines', 'Added')}</span>
+            <span className="text-base font-bold font-mono text-emerald-400">+{diffData.added} {t('lines_short', 'lines')}</span>
           </div>
         </div>
 
         <div className="p-3 rounded-xl bg-red-950/20 border border-red-800/40 flex items-center gap-3">
           <Minus className="w-5 h-5 text-red-400 shrink-0" />
           <div>
-            <span className="text-[11px] text-slate-400 block">{t('removed_lines', 'Odebráno')}</span>
-            <span className="text-base font-bold font-mono text-red-400">-{diffData.removed} {t('lines_short', 'řádků')}</span>
+            <span className="text-[11px] text-slate-400 block">{t('removed_lines', 'Removed')}</span>
+            <span className="text-base font-bold font-mono text-red-400">-{diffData.removed} {t('lines_short', 'lines')}</span>
           </div>
         </div>
 
         <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center gap-3">
           <Equal className="w-5 h-5 text-slate-400 shrink-0" />
           <div>
-            <span className="text-[11px] text-slate-400 block">{t('unchanged_lines', 'Beze změny')}</span>
-            <span className="text-base font-bold font-mono text-slate-200">{diffData.unchanged} {t('lines_short', 'řádků')}</span>
+            <span className="text-[11px] text-slate-400 block">{t('unchanged_lines', 'Unchanged')}</span>
+            <span className="text-base font-bold font-mono text-slate-200">{diffData.unchanged} {t('lines_short', 'lines')}</span>
           </div>
         </div>
       </div>
@@ -152,7 +152,7 @@ export const TextDiffTool: React.FC = () => {
       {/* Visual Diff View */}
       <div className="space-y-2">
         <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
-          {t('line_by_line_diff', 'Výsledné porovnání řádek po řádce')}
+          {t('line_by_line_diff', 'Line-by-Line Comparison Result')}
         </span>
         <div className="border border-slate-800 rounded-xl overflow-hidden bg-slate-950 font-mono text-xs leading-relaxed max-h-96 overflow-y-auto">
           {diffData.lines.map((line, idx) => (

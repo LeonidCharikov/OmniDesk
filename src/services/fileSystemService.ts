@@ -65,7 +65,7 @@ export async function saveFileWithPicker(options: {
   filters?: FileFilterOption[];
   title?: string;
 }): Promise<SaveResult> {
-  const suggestedName = options.suggestedName || options.defaultPath || 'soubor';
+  const suggestedName = options.suggestedName || options.defaultPath || 'file';
   const mimeType = options.mimeType || (typeof options.content === 'string' ? 'text/plain;charset=utf-8' : 'application/octet-stream');
 
   // 1. Režim Tauri (nativní desktopová aplikace Windows / Mac / Linux)
@@ -73,7 +73,7 @@ export async function saveFileWithPicker(options: {
     try {
       const { save } = await import('@tauri-apps/plugin-dialog');
       const selectedPath = await save({
-        title: options.title || 'Uložit soubor jako',
+        title: options.title || 'Save file as',
         defaultPath: suggestedName,
         filters: options.filters,
       });
@@ -101,7 +101,7 @@ export async function saveFileWithPicker(options: {
       const error = err as Error;
       return {
         success: false,
-        error: error?.message || 'Uložení souboru v nativním dialogu selhalo.',
+        error: error?.message || 'Saving file in the native dialog failed.',
       };
     }
   }
@@ -124,7 +124,7 @@ export async function saveFileWithPicker(options: {
         const ext = suggestedName.includes('.') ? `.${suggestedName.split('.').pop()}` : '';
         if (ext) {
           pickerTypes = [{
-            description: options.title || 'Soubor',
+            description: options.title || 'File',
             accept: { [mimeType]: [ext] }
           }];
         }
@@ -181,7 +181,7 @@ export async function saveFileWithPicker(options: {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = suggestedName.split(/[/\\]/).pop() || 'soubor';
+    a.download = suggestedName.split(/[/\\]/).pop() || 'file';
     a.style.display = 'none';
     document.body.appendChild(a);
     a.click();
@@ -193,7 +193,7 @@ export async function saveFileWithPicker(options: {
     return { success: true, path: suggestedName };
   } catch (err: unknown) {
     const error = err as Error;
-    return { success: false, error: error?.message || 'Uložení selhalo' };
+    return { success: false, error: error?.message || 'Save failed' };
   }
 }
 
@@ -210,23 +210,23 @@ export async function saveTextWithDialog(
   const defaultFilters: FileFilterOption[] = filters || (ext === 'md'
     ? [
         { name: 'Markdown (*.md)', extensions: ['md'] },
-        { name: 'Textový soubor (*.txt)', extensions: ['txt'] },
-        { name: 'Všechny soubory (*.*)', extensions: ['*'] }
+        { name: 'Text file (*.txt)', extensions: ['txt'] },
+        { name: 'All files (*.*)', extensions: ['*'] }
       ]
     : ext === 'json'
     ? [
-        { name: 'JSON Soubor (*.json)', extensions: ['json'] },
-        { name: 'Všechny soubory (*.*)', extensions: ['*'] }
+        { name: 'JSON file (*.json)', extensions: ['json'] },
+        { name: 'All files (*.*)', extensions: ['*'] }
       ]
     : ext === 'csv'
     ? [
-        { name: 'CSV Soubor (*.csv)', extensions: ['csv'] },
-        { name: 'Všechny soubory (*.*)', extensions: ['*'] }
+        { name: 'CSV file (*.csv)', extensions: ['csv'] },
+        { name: 'All files (*.*)', extensions: ['*'] }
       ]
     : [
-        { name: 'Textový soubor (*.txt)', extensions: ['txt'] },
+        { name: 'Text file (*.txt)', extensions: ['txt'] },
         { name: 'Markdown (*.md)', extensions: ['md'] },
-        { name: 'Všechny soubory (*.*)', extensions: ['*'] }
+        { name: 'All files (*.*)', extensions: ['*'] }
       ]);
 
   const mimeType = ext === 'json'
@@ -242,7 +242,7 @@ export async function saveTextWithDialog(
     content: text,
     mimeType,
     filters: defaultFilters,
-    title: title || 'Uložit soubor jako',
+    title: title || 'Save file as',
   });
 }
 
@@ -261,7 +261,7 @@ export async function saveBinaryWithDialog(
     content: data,
     mimeType,
     filters,
-    title: title || 'Uložit soubor jako',
+    title: title || 'Save file as',
   });
 }
 
@@ -346,7 +346,7 @@ export async function openFileDialog(options?: OpenFileOptions): Promise<string 
     try {
       const { open } = await import('@tauri-apps/plugin-dialog');
       return await open({
-        title: options?.title || 'Vyberte soubor',
+        title: options?.title || 'Select file',
         multiple: options?.multiple || false,
         directory: options?.directory || false,
         filters: options?.filters,
@@ -392,7 +392,7 @@ export async function saveFileDialog(options?: SaveFileOptions): Promise<string 
     try {
       const { save } = await import('@tauri-apps/plugin-dialog');
       return await save({
-        title: options?.title || 'Uložit soubor jako',
+        title: options?.title || 'Save file as',
         defaultPath: options?.defaultPath || options?.suggestedName,
         filters: options?.filters,
       });
@@ -400,7 +400,7 @@ export async function saveFileDialog(options?: SaveFileOptions): Promise<string 
       console.warn('Tauri save dialog failed, falling back:', err);
     }
   }
-  return options?.defaultPath || options?.suggestedName || 'vystup.dat';
+  return options?.defaultPath || options?.suggestedName || 'output.dat';
 }
 
 /**
@@ -412,7 +412,7 @@ export async function readHostTextFile(target: string | File): Promise<string> {
       const { readTextFile } = await import('@tauri-apps/plugin-fs');
       return await readTextFile(target);
     }
-    throw new Error('Přímé čtení z absolutní cesty disku vyžaduje nativní běh Tauri.');
+    throw new Error('Reading directly from an absolute disk path requires the native Tauri runtime.');
   }
 
   // Web File objekt
@@ -428,7 +428,7 @@ export async function readHostBinaryFile(target: string | File): Promise<Uint8Ar
       const { readFile } = await import('@tauri-apps/plugin-fs');
       return await readFile(target);
     }
-    throw new Error('Přímé čtení binárních dat z absolutní cesty vyžaduje nativní běh Tauri.');
+    throw new Error('Reading binary data from an absolute path requires the native Tauri runtime.');
   }
 
   const arrayBuffer = await target.arrayBuffer();
@@ -472,7 +472,7 @@ export async function invokeRustCommand<T>(cmd: string, args?: Record<string, un
   if (isTauri()) {
     return await invoke<T>(cmd, args);
   }
-  throw new Error(`Rust příkaz "${cmd}" není v prohlížečovém sandboxu dostupný.`);
+  throw new Error(`Rust command "${cmd}" is not available in the browser sandbox.`);
 }
 
 /**

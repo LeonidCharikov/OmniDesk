@@ -1,15 +1,10 @@
 import React, { useState, useMemo } from 'react';
 import { 
-  Palette, 
-  Sparkles, 
   Copy, 
   Check, 
   CheckCircle2, 
   XCircle, 
-  Eye, 
   Shuffle, 
-  Code2, 
-  Layers 
 } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
 
@@ -124,13 +119,12 @@ const getContrastRatio = (fgHex: string, bgHex: string): number => {
 };
 
 export const ColorPaletteWcagTool: React.FC = () => {
-  const { t, currentLanguage } = useI18n();
+  const { t } = useI18n();
   const [baseColor, setBaseColor] = useState<string>('#6366f1'); // Indigo
   const [fgColor, setFgColor] = useState<string>('#ffffff');
   const [bgColor, setBgColor] = useState<string>('#0f172a');
   const [harmonyType, setHarmonyType] = useState<'complementary' | 'analogous' | 'triadic' | 'tetradic' | 'monochromatic'>('analogous');
   const [copiedText, setCopiedText] = useState<string | null>(null);
-  const [colorBlindFilter, setColorBlindFilter] = useState<'none' | 'protanopia' | 'deuteranopia' | 'tritanopia' | 'achromatopsia'>('none');
 
   const baseRgb = useMemo(() => hexToRgb(baseColor), [baseColor]);
   const baseHsl = useMemo(() => rgbToHsl(baseRgb.r, baseRgb.g, baseRgb.b), [baseRgb]);
@@ -139,7 +133,7 @@ export const ColorPaletteWcagTool: React.FC = () => {
   // Generate harmony palette
   const palette = useMemo(() => {
     const { h, s, l } = baseHsl;
-    const colors: { hex: string; label: string }[] = [{ hex: baseColor, label: 'Base' }];
+    const colors: { hex: string; label: string }[] = [{ hex: baseColor, label: t('palette_base', 'Base') }];
 
     if (harmonyType === 'complementary') {
       const compRgb = hslToRgb((h + 180) % 360, s, l);
@@ -462,7 +456,7 @@ export const ColorPaletteWcagTool: React.FC = () => {
                 </span>
               </div>
               <div className="space-y-0.5">
-                <span className="text-[10px] text-slate-500 block">{t(`palette_label_${item.label.toLowerCase().replace(/[^a-z0-9]/g, '_')}`, item.label)}</span>
+                <span className="text-[10px] text-slate-500 block">{item.label}</span>
                 <span className="font-mono text-xs font-bold text-white block uppercase">
                   {item.hex}
                 </span>

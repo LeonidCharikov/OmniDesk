@@ -4,22 +4,22 @@ const CONFIG_KEY = 'omnidesk_user_config_v2';
 const LEGACY_KEY = 'omnidesk_user_config_v1';
 
 export const DEFAULT_TASKS: DailyTask[] = [
-  { id: '1', text: 'Zkontrolovat denní úkoly', done: false },
-  { id: '2', text: 'Kalkulace a převod měn', done: true },
-  { id: '3', text: 'Pomodoro blok soustředění', done: false },
+  { id: '1', text: 'Check daily tasks', done: false },
+  { id: '2', text: 'Calculations & currency conversion', done: true },
+  { id: '3', text: 'Pomodoro focus block', done: false },
 ];
 
 export const DEFAULT_WIDGETS: WidgetCustomization = {
   enabledWidgets: ['clock', 'timer', 'crypto', 'notes', 'tasks', 'calc'],
   selectedCity: 'Europe/Prague',
-  selectedCityName: 'Praha',
+  selectedCityName: 'Prague',
   selectedFiat: 'CZK',
   selectedCrypto: 'BTC',
   selectedCities: ['Europe/Prague'],
   selectedFiats: ['CZK'],
   selectedCryptos: ['BTC'],
   timerDurationMinutes: 25,
-  quickNote: 'OmniDesk rychlá poznámka...',
+  quickNote: 'OmniDesk quick note...',
   dailyTasks: DEFAULT_TASKS,
 };
 
@@ -124,7 +124,7 @@ export function validateConfigJson(jsonString: string): { valid: boolean; config
   try {
     const parsed = JSON.parse(jsonString);
     if (typeof parsed !== 'object' || parsed === null) {
-      return { valid: false, error: 'Konfigurace musí být platný JSON objekt.' };
+      return { valid: false, error: 'Configuration must be a valid JSON object.' };
     }
 
     const config: UserConfig = {
@@ -172,6 +172,6 @@ export function validateConfigJson(jsonString: string): { valid: boolean; config
     config.enabledWidgets = config.widgets.enabledWidgets;
     return { valid: true, config };
   } catch (e) {
-    return { valid: false, error: (e as Error).message || 'Chyba parsování JSON syntaxe.' };
+    return { valid: false, error: (e as Error).message || 'JSON syntax parsing error.' };
   }
 }

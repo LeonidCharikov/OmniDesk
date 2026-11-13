@@ -1,5 +1,5 @@
 import React, { useState, useId } from 'react';
-import { KeyRound, RefreshCw, Copy, Check, ShieldCheck } from 'lucide-react';
+import { RefreshCw, Copy, Check, ShieldCheck } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
 
 const WORDS = [

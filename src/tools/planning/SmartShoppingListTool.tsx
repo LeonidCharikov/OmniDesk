@@ -1,20 +1,13 @@
 import React, { useState, useEffect, useId } from 'react';
 import {
-  ShoppingCart,
   Plus,
   Check,
   Trash2,
   CheckSquare,
   Square,
   Copy,
-  Download,
-  Tag,
-  Apple,
   Sparkles,
   ShoppingBag,
-  Home,
-  Tv,
-  ListFilter,
   CheckCircle2,
 } from 'lucide-react';
 import { useI18n } from '../../i18n/context';

@@ -26,8 +26,6 @@ import { WidgetCustomization, DailyTask } from '../../types/tool';
 import {
   getSavedRates,
   refreshAllRates,
-  FiatRateInfo,
-  CryptoRateInfo,
   formatCurrency,
   getCurrencySymbol,
   convertCryptoToFiat,
@@ -262,7 +260,7 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
 
   // Mini system simulation stats
   const [cpuUsage, setCpuUsage] = useState(18);
-  const [ramUsage, setRamUsage] = useState(42);
+  const ramUsage = 42;
 
   // Mini Calc state
   const [calcInput, setCalcInput] = useState('25 * 4');
@@ -349,28 +347,6 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
   const selectedCityKeys = (widgets.selectedCities?.length ? widgets.selectedCities : [widgets.selectedCity || 'Europe/Prague']).slice(0, 3);
   const customTimerSeconds = Math.min(180, Math.max(1, widgets.timerDurationMinutes || 25)) * 60;
 
-  let timeString = '';
-  let dateString = '';
-  try {
-    timeString = new Intl.DateTimeFormat(locale, {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false,
-      timeZone: selectedCityKeys[0],
-    }).format(now);
-
-    dateString = new Intl.DateTimeFormat(locale, {
-      weekday: 'short',
-      day: 'numeric',
-      month: 'short',
-      timeZone: selectedCityKeys[0],
-    }).format(now);
-  } catch {
-    timeString = now.toLocaleTimeString();
-    dateString = now.toLocaleDateString();
-  }
-
   const enabled = widgets.enabledWidgets || [];
   const showClock = enabled.includes('clock');
   const showTimer = enabled.includes('timer');
@@ -445,13 +421,13 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
 
   const getTaskLabel = (task: DailyTask) => {
     if (task.id === '1' && (task.text === 'Zkontrolovat denní úkoly' || task.text === 'Check daily tasks' || task.text === 'Проверить задачи на день')) {
-      return t('default_task_1', 'Zkontrolovat denní úkoly');
+      return t('default_task_1', 'Check daily tasks');
     }
     if (task.id === '2' && (task.text === 'Kalkulace a převod měn' || task.text === 'Calculations & currency conversion' || task.text === 'Расчеты и конвертация валют')) {
-      return t('default_task_2', 'Kalkulace a převod měn');
+      return t('default_task_2', 'Calculations & currency conversion');
     }
     if (task.id === '3' && (task.text === 'Pomodoro blok soustředění' || task.text === 'Pomodoro focus block' || task.text === 'Блок концентрации Помодоро')) {
-      return t('default_task_3', 'Pomodoro blok soustředění');
+      return t('default_task_3', 'Pomodoro focus block');
     }
     return task.text;
   };
@@ -471,12 +447,12 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
     <div className="px-3 py-2 space-y-2 border-t border-slate-900/80 bg-slate-950/40 max-[767px]:hidden">
       <div className="flex items-center justify-between px-1">
         <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-          {t('sidebar_widgets', 'Mini widgety')}
+          {t('sidebar_widgets', 'Mini Widgets')}
         </span>
         <button
           onClick={onOpenWidgetSettings}
           className="text-slate-500 hover:text-slate-300 transition-colors p-1 rounded hover:bg-slate-900"
-          title={t('configure_widgets', 'Nastavit widgety')}
+          title={t('configure_widgets', 'Configure Widgets')}
         >
           <Sliders className="w-3 h-3" />
         </button>
@@ -506,7 +482,7 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5 text-indigo-300 text-xs font-medium">
               <Flame className="w-3 h-3 text-amber-400" />
-              <span className="text-[11px]">{t('quick_timer', 'Rychlý timer')}</span>
+              <span className="text-[11px]">{t('quick_timer', 'Quick Timer')}</span>
             </div>
             <div className="flex items-center gap-1">
               <button
@@ -523,7 +499,7 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
                 className={`text-[9px] font-mono px-1 py-0.5 rounded transition-colors ${
                   timerTotal === 5 * 60 ? 'bg-indigo-700 text-white' : 'text-slate-400 hover:text-white'
                 }`}
-                title={t('break_5_min', '5 min pauza')}
+                title={t('break_5_min', '5 min break')}
               >
                 5m
               </button>
@@ -542,7 +518,7 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
                     ? 'bg-amber-600 text-white'
                     : 'bg-indigo-600 hover:bg-indigo-500 text-white'
                 }`}
-                title={isTimerRunning ? t('pause', 'Pozastavit') : t('start', 'Spustit')}
+                title={isTimerRunning ? t('pause', 'Pause') : t('start', 'Start')}
               >
                 {isTimerRunning ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
               </button>
@@ -572,15 +548,15 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
           <div className="flex items-center justify-between gap-1.5 text-[10px]">
             <div className="flex items-center gap-1.5 font-semibold text-slate-300 min-w-0">
               <Coins className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-              <span className="truncate" title={t('widget_crypto_title', 'Krypto & Kurzy')}>
-                {t('widget_crypto_title', 'Krypto & Kurzy')}
+              <span className="truncate" title={t('widget_crypto_title', 'Crypto & Rates')}>
+                {t('widget_crypto_title', 'Crypto & Rates')}
               </span>
             </div>
             <button
               onClick={handleManualRefreshRates}
               disabled={isRefreshingRates}
               className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors shrink-0"
-              title={t('refresh_rates', 'Obnovit kurzy')}
+              title={t('refresh_rates', 'Refresh rates')}
             >
               <RefreshCw className={`w-3 h-3 ${isRefreshingRates ? 'animate-spin text-emerald-400' : ''}`} />
             </button>
@@ -594,7 +570,7 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
                 value={activeCrypto}
                 onChange={e => handleSelectCrypto(e.target.value)}
                 className="w-full bg-slate-950/90 border border-slate-700/80 rounded px-2 py-1 text-[10px] font-mono text-emerald-300 font-semibold focus:outline-none cursor-pointer hover:border-slate-600 transition-colors truncate"
-                title={t('selected_crypto', 'Vybrat kryptoměnu')}
+                title={t('selected_crypto', 'Select cryptocurrency')}
               >
                 {AVAILABLE_CRYPTOS.map(c => (
                   <option key={c.code} value={c.code} className="bg-slate-900 text-slate-200">
@@ -610,7 +586,7 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
                 value={activeFiat}
                 onChange={e => handleSelectFiat(e.target.value)}
                 className="w-full bg-slate-950/90 border border-slate-700/80 rounded px-2 py-1 text-[10px] font-mono text-indigo-300 font-semibold focus:outline-none cursor-pointer hover:border-slate-600 transition-colors truncate"
-                title={t('selected_fiat', 'Vybrat měnu')}
+                title={t('selected_fiat', 'Select currency')}
               >
                 {SUPPORTED_FIAT_CURRENCIES.map(f => (
                   <option key={f.code} value={f.code} className="bg-slate-900 text-slate-200">
@@ -641,7 +617,7 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
           {/* Forex Exchange Rates Section in Selected Currency */}
           <div className="pt-1.5 border-t border-slate-800/60 space-y-1">
             <div className="flex items-center justify-between text-[9px] font-semibold text-slate-500 uppercase tracking-wider">
-              <span>{t('exchange_rates_in', 'Kurzy')} ({activeFiat}):</span>
+              <span>{t('exchange_rates_in', 'Rates')} ({activeFiat}):</span>
               <span className="text-[9px] font-normal text-slate-400">{ratesData.timestamp || 'Live'}</span>
             </div>
             <div className="space-y-0.5">
@@ -662,14 +638,14 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
           <div className="flex items-center justify-between text-[10px] text-slate-400">
             <span className="flex items-center gap-1 text-slate-300 font-medium">
               <Calculator className="w-2.5 h-2.5 text-indigo-400" />
-              <span>{t('mini_calc_title', 'Rychlý převodník / kalkulačka')}</span>
+              <span>{t('mini_calc_title', 'Quick Converter / Calculator')}</span>
             </span>
           </div>
           <input
             type="text"
             value={calcInput}
             onChange={e => setCalcInput(e.target.value)}
-            placeholder={t('mini_calc_placeholder', 'např. 50 km to mi, 25 * 4')}
+            placeholder={t('mini_calc_placeholder', 'e.g. 50 km to mi, 25 * 4')}
             className="w-full text-xs font-mono px-2 py-1 bg-slate-950/80 border border-slate-800 rounded text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500"
           />
           {calcResult && (
@@ -680,7 +656,7 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
               <button
                 onClick={handleCopyCalcResult}
                 className="text-slate-400 hover:text-white transition-colors"
-                title={t('copy_result', 'Kopírovat výsledek')}
+                title={t('copy_result', 'Copy result')}
               >
                 {calcCopied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
               </button>
@@ -695,7 +671,7 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
           <div className="flex items-center justify-between text-[10px]">
             <span className="flex items-center gap-1 text-slate-300 font-medium">
               <CheckSquare className="w-2.5 h-2.5 text-emerald-400" />
-              <span>{t('daily_checklist_title', 'Denní checklist')}</span>
+              <span>{t('daily_checklist_title', 'Daily Checklist')}</span>
             </span>
             <span className="text-[9px] font-mono text-slate-500">
               {completedTasksCount}/{dailyTasks.length}
@@ -736,7 +712,7 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
               type="text"
               value={newTaskText}
               onChange={e => setNewTaskText(e.target.value)}
-              placeholder={t('add_task_placeholder', '+ Nový úkol...')}
+              placeholder={t('add_task_placeholder', '+ New task...')}
               className="flex-1 text-[10px] px-1.5 py-0.5 bg-slate-950/80 border border-slate-800 rounded text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500"
             />
             <button
@@ -754,12 +730,12 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
         <div className="p-2 rounded-lg bg-amber-950/15 border border-amber-500/20 space-y-1">
           <div className="flex items-center gap-1 text-[10px] text-amber-400 font-medium">
             <FileEdit className="w-2.5 h-2.5" />
-            <span>{t('quick_scratchpad', 'Rychlá poznámka')}</span>
+            <span>{t('quick_scratchpad', 'Quick Note')}</span>
           </div>
           <textarea
             value={widgets.quickNote}
             onChange={e => onUpdateQuickNote(e.target.value)}
-            placeholder={t('scratchpad_placeholder', 'Napište rychlou myšlenku...')}
+            placeholder={t('scratchpad_placeholder', 'Write a quick thought...')}
             rows={2}
             className="w-full text-[11px] p-1.5 bg-slate-900/60 border border-amber-500/20 rounded text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-400 resize-none font-mono"
           />

@@ -1,9 +1,6 @@
 import React, { useState } from 'react';
 import { 
-  Grid, 
   Sparkles, 
-  RefreshCw, 
-  ArrowRight, 
   Check, 
   Copy, 
   AlertCircle, 
@@ -18,7 +15,7 @@ import { useI18n } from '../../i18n/context';
 type Matrix = number[][];
 
 export const MatrixCalculatorTool: React.FC = () => {
-  const { t, currentLanguage } = useI18n();
+  const { t } = useI18n();
 
   // Dimension state for custom sizes (rows x cols) between 1 and 6
   const [rowsA, setRowsA] = useState<number>(3);

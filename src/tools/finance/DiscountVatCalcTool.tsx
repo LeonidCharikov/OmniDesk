@@ -1,23 +1,15 @@
 import React, { useState, useId } from 'react';
 import {
-  Percent,
   Receipt,
   Users,
   Copy,
   Check,
-  RotateCcw,
-  Sparkles,
-  ArrowRight,
-  TrendingDown,
-  DollarSign,
   Tag,
-  Calculator,
   Coins,
 } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
 import {
   useAppCurrency,
-  getCurrencySymbol,
   SUPPORTED_FIAT_CURRENCIES,
 } from '../../services/currencyService';
 

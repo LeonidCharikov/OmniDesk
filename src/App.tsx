@@ -186,17 +186,17 @@ export default function App() {
 
   const getCategoryDisplayName = (cat: ToolCategory) => {
     switch (cat) {
-      case 'all': return t('cat_all', 'Všechny nástroje');
-      case 'favorites': return t('cat_favorites', 'Oblíbené');
-      case 'files': return t('cat_files', 'Soubory & Dokumenty');
-      case 'programming': return t('cat_programming', 'Programování & Kód');
-      case 'planning': return t('cat_planning', 'Plánování & Produktivita');
-      case 'math': return t('cat_math', 'Matematika & Kalkulačky');
-      case 'science': return t('cat_science', 'Věda & Chemie');
-      case 'finance': return t('cat_finance', 'Finance & Kryptoměny');
-      case 'utilities': return t('cat_utilities', 'Utility & Nástroje');
-      case 'architecture': return t('cat_architecture', 'Tauri Blueprint');
-      default: return t('catalog', 'Katalog');
+      case 'all': return t('cat_all', 'All Tools');
+      case 'favorites': return t('cat_favorites', 'Favorites');
+      case 'files': return t('cat_files', 'Files & Documents');
+      case 'programming': return t('cat_programming', 'Programming & Code');
+      case 'planning': return t('cat_planning', 'Planning & Productivity');
+      case 'math': return t('cat_math', 'Mathematics & Calculators');
+      case 'science': return t('cat_science', 'Science & Chemistry');
+      case 'finance': return t('cat_finance', 'Finance & Crypto');
+      case 'utilities': return t('cat_utilities', 'Utilities & Tools');
+      case 'architecture': return t('cat_architecture', 'Tauri & Code');
+      default: return t('catalog', 'Catalog');
     }
   };
 
@@ -260,7 +260,7 @@ export default function App() {
                   <button
                     type="button"
                     onClick={() => setIsToolInfoOpen(true)}
-                    aria-label={t('tool_info_label', 'Informace o nástroji')}
+                    aria-label={t('tool_info_label', 'Tool info')}
                     className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 border border-slate-800"
                   >
                     <Info className="w-4 h-4" />
@@ -270,7 +270,7 @@ export default function App() {
                   <div role="dialog" aria-modal="true" className="absolute z-30 right-0 top-10 w-80 p-4 rounded-xl border border-indigo-500/40 bg-slate-900 shadow-2xl">
                     <div className="flex items-start justify-between gap-3">
                       <h3 className="font-semibold text-white">{getToolCatalogText(activeTool.id, 'title', language, t(`tool_${activeTool.id.replace(/-/g, '_')}_title`, activeTool.title))}</h3>
-                      <button type="button" onClick={() => setIsToolInfoOpen(false)} className="text-slate-400 hover:text-white" aria-label="Close">×</button>
+                      <button type="button" onClick={() => setIsToolInfoOpen(false)} className="text-slate-400 hover:text-white" aria-label={t('close', 'Close')}>×</button>
                     </div>
                     <p className="mt-2 text-sm leading-relaxed text-slate-300">{getToolCatalogText(activeTool.id, 'desc', language, t(`tool_${activeTool.id.replace(/-/g, '_')}_desc`, activeTool.shortDesc))}</p>
                   </div>

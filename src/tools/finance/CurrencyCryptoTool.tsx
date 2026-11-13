@@ -1,17 +1,13 @@
 import React, { useState, useEffect, useId, useCallback } from 'react';
 import {
-  Coins,
   ArrowRightLeft,
-  TrendingUp,
   RefreshCw,
   Globe,
   WifiOff,
-  Check,
   AlertCircle,
   Clock,
   Edit3,
   RotateCcw,
-  Sparkles,
 } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
 import {
@@ -273,7 +269,7 @@ export const CurrencyCryptoTool: React.FC<Props> = ({ isOffline }) => {
               >
                 {Object.entries(fiatRates).map(([code, c]) => (
                   <option key={code} value={code}>
-                    {c.flag} {code} - {c.name}
+                    {c.flag} {code} - {t(`curr_${code}`, c.name)}
                   </option>
                 ))}
               </select>
@@ -323,7 +319,7 @@ export const CurrencyCryptoTool: React.FC<Props> = ({ isOffline }) => {
               >
                 {Object.entries(fiatRates).map(([code, c]) => (
                   <option key={code} value={code}>
-                    {c.flag} {code} - {c.name}
+                    {c.flag} {code} - {t(`curr_${code}`, c.name)}
                   </option>
                 ))}
               </select>
@@ -530,7 +526,7 @@ export const CurrencyCryptoTool: React.FC<Props> = ({ isOffline }) => {
                 >
                   {Object.entries(fiatRates).map(([code, c]) => (
                     <option key={code} value={code}>
-                      {c.flag} {code} - {c.name}
+                      {c.flag} {code} - {t(`curr_${code}`, c.name)}
                     </option>
                   ))}
                 </select>

@@ -7,12 +7,7 @@ import {
   Check, 
   ArrowLeftRight, 
   Eye, 
-  Info, 
-  RotateCcw,
   Sliders,
-  Type,
-  Layout,
-  Layers,
   ShieldCheck
 } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
@@ -190,7 +185,6 @@ export const WcagContrastValidatorTool: React.FC = () => {
   const bgRgb = useMemo(() => hexToRgb(background), [background]);
 
   const fgHsl = useMemo(() => rgbToHsl(fgRgb.r, fgRgb.g, fgRgb.b), [fgRgb]);
-  const bgHsl = useMemo(() => rgbToHsl(bgRgb.r, bgRgb.g, bgRgb.b), [bgRgb]);
 
   const fgLum = useMemo(() => getLuminance(fgRgb), [fgRgb]);
   const bgLum = useMemo(() => getLuminance(bgRgb), [bgRgb]);

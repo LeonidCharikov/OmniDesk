@@ -3,6 +3,70 @@ import { SupportedLanguage } from './context';
 type CatalogText = Record<SupportedLanguage, string>;
 
 const catalog: Record<string, { title: CatalogText; desc: CatalogText }> = {
+  'regex-encoder': {
+    title: {
+      cs: 'RegEx Tester & Base64 / URL',
+      en: 'RegEx Tester & Base64 / URL',
+      de: 'RegEx-Tester & Base64 / URL',
+      es: 'Probador de RegEx y Base64 / URL',
+      ru: 'Тестер RegEx и Base64 / URL',
+    },
+    desc: {
+      cs: 'Testování regulárních výrazů se skupinami a obousměrné kódování Base64 i URL.',
+      en: 'Test regular expressions with capture groups and encode/decode Base64 or URL strings.',
+      de: 'Reguläre Ausdrücke mit Erfassungsgruppen testen sowie Base64 und URLs kodieren/dekodieren.',
+      es: 'Prueba expresiones regulares con grupos de captura y codifica/decodifica Base64 o URL.',
+      ru: 'Тестирование регулярных выражений с группами захвата и кодирование Base64 / URL.',
+    },
+  },
+  'json-formatter': {
+    title: {
+      cs: 'JSON Formátovač & Validátor',
+      en: 'JSON Formatter & Validator',
+      de: 'JSON-Formatierer & Validator',
+      es: 'Formateador y Validador JSON',
+      ru: 'Форматтер и валидатор JSON',
+    },
+    desc: {
+      cs: 'Odsazení, minifikace a okamžitá syntaktická kontrola JSON struktur.',
+      en: 'Format, minify, and validate JSON structures locally.',
+      de: 'JSON-Strukturen lokal formatieren, minifizieren und validieren.',
+      es: 'Formatea, minifica y valida estructuras JSON localmente.',
+      ru: 'Локальное форматирование, минификация и проверка синтаксиса JSON.',
+    },
+  },
+  'text-diff': {
+    title: {
+      cs: 'Text & Souborový Diff Porovnávač',
+      en: 'Text & File Diff Checker',
+      de: 'Text- & Datei-Diff-Vergleich',
+      es: 'Comparador Diff de Texto y Archivos',
+      ru: 'Сравнение текста и файлов (Diff)',
+    },
+    desc: {
+      cs: 'Vizuální porovnání dvou textů nebo konfiguračních souborů řádek po řádce s detekcí změn.',
+      en: 'Visual line-by-line comparison of two texts or configuration files with change detection.',
+      de: 'Visueller Zeilenvergleich zweier Texte oder Konfigurationsdateien mit Änderungserkennung.',
+      es: 'Comparación visual línea por línea de dos textos o archivos de configuración.',
+      ru: 'Визуальное построчное сравнение двух текстов или конфигурационных файлов.',
+    },
+  },
+  'file-inspector': {
+    title: {
+      cs: 'Inspektor Souborů & Hash',
+      en: 'File Inspector & Hash',
+      de: 'Datei-Inspektor & Hash',
+      es: 'Inspector de Archivos y Hash',
+      ru: 'Инспектор файлов и хеширование',
+    },
+    desc: {
+      cs: 'Kryptografické SHA-256 kontrolní součty, MIME detekce a binární hex dump.',
+      en: 'Cryptographic SHA-256 checksums, MIME inspection, and binary hex dump.',
+      de: 'Kryptografische SHA-256-Prüfsummen, MIME-Erkennung und binärer Hex-Dump.',
+      es: 'Sumas SHA-256 criptográficas, detección MIME y volcado hexadecimal binario.',
+      ru: 'Контрольные суммы SHA-256, определение MIME и бинарный hex-дамп.',
+    },
+  },
   'pdf-editor': {
     title: {
       cs: 'PDF Studio & Vizuální Editor',

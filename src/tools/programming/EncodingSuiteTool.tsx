@@ -36,8 +36,8 @@ export const EncodingSuiteTool: React.FC = () => {
   const [b58Error, setB58Error] = useState<string | null>(null);
 
   // Base64 state
-  const [b64Input, setB64Input] = useState('OmniDesk UTF-8: Příliš žluťoučký kůň');
-  const [b64Output, setB64Output] = useState(() => bytesToBase64(new TextEncoder().encode('OmniDesk UTF-8: Příliš žluťoučký kůň')));
+  const [b64Input, setB64Input] = useState('OmniDesk UTF-8: Hello, Café & 東京 🚀');
+  const [b64Output, setB64Output] = useState(() => bytesToBase64(new TextEncoder().encode('OmniDesk UTF-8: Hello, Café & 東京 🚀')));
   const [b64UrlSafe, setB64UrlSafe] = useState(false);
   const [b64Error, setB64Error] = useState<string | null>(null);
 

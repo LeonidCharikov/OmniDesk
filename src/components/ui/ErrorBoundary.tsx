@@ -45,10 +45,10 @@ class ErrorBoundaryInner extends Component<Props & { t: (key: string, fallback?:
             </div>
             <div className="space-y-1">
               <h3 className="text-base font-semibold text-white">
-                {t('error_boundary_title', 'V tomto nástroji došlo k chybě')}
+                {t('error_boundary_title', 'An error occurred in this tool')}
               </h3>
               <p className="text-xs text-slate-400 leading-relaxed">
-                {t('error_boundary_desc', 'Během práce s nástrojem nastala neočekávaná chyba. Můžete jej znovu načíst.')}
+                {t('error_boundary_desc', 'An unexpected error occurred while using this tool. You can reload it below.')}
               </p>
               {this.state.error?.message && (
                 <pre className="mt-2 p-2.5 rounded-lg bg-slate-950 border border-slate-800 font-mono text-[11px] text-rose-300 overflow-x-auto">
@@ -64,7 +64,7 @@ class ErrorBoundaryInner extends Component<Props & { t: (key: string, fallback?:
               className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium transition-colors flex items-center gap-2 shadow-sm"
             >
               <RefreshCw className="w-3.5 h-3.5" />
-              {t('error_boundary_reload', 'Znovu načíst nástroj')}
+              {t('error_boundary_reload', 'Reload Tool')}
             </button>
           </div>
         </div>

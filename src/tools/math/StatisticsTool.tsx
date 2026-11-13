@@ -1,5 +1,5 @@
 import React, { useState, useId } from 'react';
-import { BarChart3, Sparkles, Copy, Check, Info } from 'lucide-react';
+import { Copy, Check } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
 
 export const StatisticsTool: React.FC = () => {

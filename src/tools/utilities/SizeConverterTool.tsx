@@ -1,15 +1,9 @@
 import React, { useState, useId } from 'react';
 import {
-  Ruler,
   Footprints,
   Shirt,
-  Sparkles,
-  ArrowRight,
   Copy,
   Check,
-  Search,
-  CheckCircle2,
-  Table,
 } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
 
@@ -267,7 +261,12 @@ export const SizeConverterTool: React.FC = () => {
               <button
                 onClick={() =>
                   handleCopy(
-                    `Boty: EU ${currentShoe.eu} | US ${currentShoe.us} | UK ${currentShoe.uk} | ${currentShoe.cm} cm`
+                    t('shoe_size_summary', 'Shoes: EU {eu} | US {us} | UK {uk} | {cm} cm', {
+                      eu: currentShoe.eu,
+                      us: currentShoe.us,
+                      uk: currentShoe.uk,
+                      cm: currentShoe.cm,
+                    })
                   )
                 }
                 className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium transition-colors flex items-center gap-1.5"

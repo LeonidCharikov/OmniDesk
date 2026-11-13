@@ -16,14 +16,13 @@ import {
   FileEdit,
   Cpu,
   Globe,
-  HelpCircle,
   CheckSquare,
   Calculator,
 } from 'lucide-react';
-import { UserConfig, ThemeId, WidgetCustomization } from '../../types/tool';
-import { useI18n } from '../../i18n/context';
+import { UserConfig, ThemeId } from '../../types/tool';
+import { useI18n, SupportedLanguage } from '../../i18n/context';
 import { THEMES } from '../../services/themes';
-import { DEFAULT_CONFIG, validateConfigJson } from '../../services/storage';
+import { validateConfigJson } from '../../services/storage';
 import { saveTextWithDialog } from '../../services/fileSystemService';
 
 interface ConfigModalProps {
@@ -169,10 +168,10 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
       defaultName,
       jsonString,
       [
-        { name: 'JSON Soubor (*.json)', extensions: ['json'] },
-        { name: 'Všechny soubory (*.*)', extensions: ['*'] }
+        { name: `${t('json_file_label', 'JSON File')} (*.json)`, extensions: ['json'] },
+        { name: `${t('all_files', 'All Files')} (*.*)`, extensions: ['*'] }
       ],
-      t('save_profile_title', 'Uložit profil konfigurace (Průzkumník)')
+      t('save_profile_title', 'Save Configuration Profile')
     );
     if (res.success) {
       setDownloaded(true);
@@ -196,17 +195,17 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
       const res = validateConfigJson(text);
       if (res.valid && res.config) {
         if (res.config.language && ['cs', 'en', 'de', 'es', 'ru'].includes(res.config.language)) {
-          setLanguage(res.config.language as 'cs' | 'en' | 'de' | 'es' | 'ru');
+          setLanguage(res.config.language as SupportedLanguage);
         }
         onUpdateConfig(res.config);
         setImportStatus({
           success: true,
-          message: t('config_imported_success', 'Konfigurace byla úspěšně načtena ze souboru!'),
+          message: t('config_imported_success', 'Configuration loaded from file successfully!'),
         });
       } else {
         setImportStatus({
           success: false,
-          message: res.error || t('import_parse_error', 'Chyba při čtení JSON souboru.'),
+          message: res.error || t('import_parse_error', 'Failed to read JSON file.'),
         });
       }
       setTimeout(() => setImportStatus(null), 4000);
@@ -219,19 +218,19 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
     const res = validateConfigJson(pastedJson);
     if (res.valid && res.config) {
       if (res.config.language && ['cs', 'en', 'de', 'es', 'ru'].includes(res.config.language)) {
-        setLanguage(res.config.language as 'cs' | 'en' | 'de' | 'es' | 'ru');
+        setLanguage(res.config.language as SupportedLanguage);
       }
       onUpdateConfig(res.config);
       setPastedJson('');
       setShowPasteArea(false);
       setImportStatus({
         success: true,
-        message: t('config_imported_success', 'Konfigurace byla úspěšně aplikována!'),
+        message: t('config_imported_success', 'Configuration applied successfully!'),
       });
     } else {
       setImportStatus({
         success: false,
-        message: res.error || t('invalid_pasted_json', 'Neplatná syntaxe vloženého JSONu.'),
+        message: res.error || t('invalid_pasted_json', 'Invalid JSON syntax.'),
       });
     }
     setTimeout(() => setImportStatus(null), 4000);
@@ -261,18 +260,6 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
     });
   };
 
-  const handleCityChange = (cityId: string) => {
-    const found = CITIES.find(c => c.id === cityId);
-    onUpdateConfig({
-      ...config,
-      widgets: {
-        ...currentWidgets,
-        selectedCity: cityId,
-        selectedCityName: found?.name || 'Praha',
-      },
-    });
-  };
-
   const updateWidgetList = (key: 'selectedCities' | 'selectedFiats' | 'selectedCryptos', index: number, value: string) => {
     const source = key === 'selectedCities' ? selectedCities : key === 'selectedFiats' ? selectedFiats : selectedCryptos;
     const updated = [...source];
@@ -280,31 +267,11 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
     const next = { ...currentWidgets, [key]: updated };
     if (key === 'selectedCities' && index === 0) {
       next.selectedCity = value;
-      next.selectedCityName = CITIES.find(city => city.id === value)?.name || 'Praha';
+      next.selectedCityName = CITIES.find(city => city.id === value)?.name || 'Prague';
     }
     if (key === 'selectedFiats' && index === 0) next.selectedFiat = value;
     if (key === 'selectedCryptos' && index === 0) next.selectedCrypto = value;
     onUpdateConfig({ ...config, widgets: next });
-  };
-
-  const handleFiatChange = (fiatCode: string) => {
-    onUpdateConfig({
-      ...config,
-      widgets: {
-        ...currentWidgets,
-        selectedFiat: fiatCode,
-      },
-    });
-  };
-
-  const handleCryptoChange = (cryptoCode: string) => {
-    onUpdateConfig({
-      ...config,
-      widgets: {
-        ...currentWidgets,
-        selectedCrypto: cryptoCode,
-      },
-    });
   };
 
   return (
@@ -318,10 +285,10 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
             </div>
             <div>
               <h2 className="text-base font-bold text-white tracking-tight">
-                {t('settings_modal_title', 'Nastavení & Konfigurátor OmniDesk')}
+                {t('settings_modal_title', 'OmniDesk Settings & Configurator')}
               </h2>
               <p className="text-xs text-slate-400">
-                {t('settings_modal_subtitle', 'Barevné režimy, správa postranních widgetů a přenositelné JSON profily')}
+                {t('settings_modal_subtitle', 'Color themes, sidebar widgets, and portable JSON profiles')}
               </p>
             </div>
           </div>
@@ -344,7 +311,7 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
             }`}
           >
             <Palette className="w-3.5 h-3.5" />
-            <span>{t('tab_themes', 'Vzhled & Barvy')}</span>
+            <span>{t('tab_themes', 'Themes & Colors')}</span>
           </button>
 
           <button
@@ -356,7 +323,7 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
             }`}
           >
             <Coins className="w-3.5 h-3.5" />
-            <span>{t('tab_currency', 'Výchozí měna')}</span>
+            <span>{t('tab_currency', 'Default Currency')}</span>
           </button>
 
           <button
@@ -368,7 +335,7 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
             }`}
           >
             <Clock className="w-3.5 h-3.5" />
-            <span>{t('tab_widgets', 'Postranní Widgety')}</span>
+            <span>{t('tab_widgets', 'Sidebar Widgets')}</span>
           </button>
 
           <button
@@ -380,7 +347,7 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
             }`}
           >
             <HardDrive className="w-3.5 h-3.5" />
-            <span>{t('tab_backup', 'Záloha & JSON Export/Import')}</span>
+            <span>{t('tab_backup', 'Backup & JSON Export/Import')}</span>
           </button>
 
           <button
@@ -392,7 +359,7 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
             }`}
           >
             <Globe className="w-3.5 h-3.5" />
-            <span>{t('tab_language', 'Jazyk')}</span>
+            <span>{t('tab_language', 'Language')}</span>
           </button>
         </div>
 
@@ -416,10 +383,10 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
             <div className="space-y-4">
               <div>
                 <h3 className="text-sm font-semibold text-white">
-                  {t('choose_color_theme', 'Vyberte barevný režim aplikace')}
+                  {t('choose_color_theme', 'Choose Application Theme')}
                 </h3>
                 <p className="text-xs text-slate-400">
-                  {t('theme_description', 'Přizpůsobte si kontrast, tónování a celkovou estetiku prostředí OmniDesk.')}
+                  {t('theme_description', 'Customize contrast, tint, and overall aesthetics of the OmniDesk workspace.')}
                 </p>
               </div>
 
@@ -489,14 +456,14 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <h3 className="text-sm font-semibold text-white">
-                    {t('choose_default_currency', 'Výchozí měna aplikace')}
+                    {t('choose_default_currency', 'Default Application Currency')}
                   </h3>
                   <p className="text-xs text-slate-400">
-                    {t('currency_description', 'Tato měna bude předvyplněna v měnovém konvertoru, kalkulátoru kryptoměn i v postranních widgetech.')}
+                    {t('currency_description', 'This currency will be preselected in currency converters, crypto calculators, and sidebar widgets.')}
                   </p>
                 </div>
                 <div className="flex items-center gap-2 px-3 py-1 rounded-xl bg-indigo-950/60 border border-indigo-500/40 text-indigo-300 text-xs font-mono">
-                  <span>{t('active_default_currency', 'Aktivní výchozí měna:')}</span>
+                  <span>{t('active_default_currency', 'Active default currency:')}</span>
                   <strong className="text-white font-bold">{config.defaultCurrency || 'CZK'}</strong>
                 </div>
               </div>
@@ -556,10 +523,10 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-sm font-semibold text-white">
-                      {t('widgets_visibility', 'Aktivní mini widgety v postranním panelu')}
+                      {t('widgets_visibility', 'Active Mini Widgets in Sidebar')}
                     </h3>
                     <p className="text-xs text-slate-400">
-                      {t('widgets_visibility_desc', 'Zapněte nebo vypněte zobrazení jednotlivých mini panelů.')}
+                      {t('widgets_visibility_desc', 'Enable or disable individual mini panels.')}
                     </p>
                   </div>
                 </div>
@@ -568,44 +535,44 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
                   {[
                     {
                       id: 'clock',
-                      title: t('widget_clock_title', 'Živé hodiny a světový čas'),
-                      desc: t('widget_clock_desc', 'Čas a datum pro vybrané světové město'),
+                      title: t('widget_clock_title', 'Live Clock & World Time'),
+                      desc: t('widget_clock_desc', 'Time and date for selected world cities'),
                       icon: <Clock className="w-4 h-4 text-indigo-400" />,
                     },
                     {
                       id: 'timer',
-                      title: t('widget_timer_title', 'Rychlý časovač / Pomodoro'),
-                      desc: t('widget_timer_desc', 'Rychlý odpočet 25m soustředění a pauzy'),
+                      title: t('widget_timer_title', 'Quick Timer / Pomodoro'),
+                      desc: t('widget_timer_desc', 'Quick 25m focus and break countdown'),
                       icon: <Sliders className="w-4 h-4 text-amber-400" />,
                     },
                     {
                       id: 'crypto',
-                      title: t('widget_crypto_title', 'Kurzovní lístek & Krypto'),
-                      desc: t('widget_crypto_desc', 'Sledování vybrané kryptoměny a měny'),
+                      title: t('widget_crypto_title', 'Exchange Rates & Crypto'),
+                      desc: t('widget_crypto_desc', 'Track selected cryptocurrency and fiat currency'),
                       icon: <Coins className="w-4 h-4 text-emerald-400" />,
                     },
                     {
                       id: 'calc',
-                      title: t('widget_calc_title', 'Rychlá kalkulačka & Převodník jednotek'),
-                      desc: t('widget_calc_desc', 'Okamžité výpočty a konverze měn či jednotek'),
+                      title: t('widget_calc_title', 'Quick Calculator & Unit Converter'),
+                      desc: t('widget_calc_desc', 'Instant math calculations and unit conversions'),
                       icon: <Calculator className="w-4 h-4 text-indigo-400" />,
                     },
                     {
                       id: 'tasks',
-                      title: t('widget_tasks_title', 'Denní checklist úkolů'),
-                      desc: t('widget_tasks_desc', 'Rychlý seznam priorit a cílů pro dnešní den'),
+                      title: t('widget_tasks_title', 'Daily Task Checklist'),
+                      desc: t('widget_tasks_desc', 'Quick list of priorities and daily goals'),
                       icon: <CheckSquare className="w-4 h-4 text-emerald-400" />,
                     },
                     {
                       id: 'notes',
-                      title: t('widget_notes_title', 'Rychlý zápisník (Sticky Note)'),
-                      desc: t('widget_notes_desc', 'Okamžité poznámky přímo v postranním panelu'),
+                      title: t('widget_notes_title', 'Quick Sticky Note'),
+                      desc: t('widget_notes_desc', 'Instant notes right in the sidebar'),
                       icon: <FileEdit className="w-4 h-4 text-yellow-400" />,
                     },
                     {
                       id: 'system',
-                      title: t('widget_system_title', 'Systémový hardware gauge'),
-                      desc: t('widget_system_desc', 'Kompaktní ukazatel vytížení CPU a RAM'),
+                      title: t('widget_system_title', 'System Hardware Gauge'),
+                      desc: t('widget_system_desc', 'Compact CPU and RAM load indicator'),
                       icon: <Cpu className="w-4 h-4 text-cyan-400" />,
                     },
                   ].map((w) => {
@@ -653,14 +620,14 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
               <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-4">
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-indigo-400 flex items-center gap-1.5">
                   <Sliders className="w-3.5 h-3.5" />
-                  {t('widget_customization', 'Přizpůsobení obsahu widgetů')}
+                  {t('widget_customization', 'Widget Content Customization')}
                 </h4>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {/* City selector for Clock widget */}
                   <div className="space-y-1.5">
                     <label className="text-xs font-medium text-slate-300">
-                      {t('selected_city_for_clock', 'Město pro hodiny')}
+                      {t('selected_city_for_clock', 'Clock Cities')}
                     </label>
                     <div className="space-y-1">
                       {Array.from({ length: 3 }, (_, index) => (
@@ -674,7 +641,7 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
                   {/* Fiat selector */}
                   <div className="space-y-1.5">
                     <label className="text-xs font-medium text-slate-300">
-                      {t('selected_fiat', 'Sledovaná fiat měna')}
+                      {t('selected_fiat', 'Tracked Fiat Currency')}
                     </label>
                     <div className="space-y-1">
                       {Array.from({ length: 3 }, (_, index) => (
@@ -688,7 +655,7 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
                   {/* Crypto selector */}
                   <div className="space-y-1.5">
                     <label className="text-xs font-medium text-slate-300">
-                      {t('selected_crypto', 'Sledovaná kryptoměna')}
+                      {t('selected_crypto', 'Tracked Cryptocurrency')}
                     </label>
                     <div className="space-y-1">
                       {Array.from({ length: 3 }, (_, index) => (
@@ -697,7 +664,7 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
                         </select>
                       ))}
                       <label className="text-xs font-medium text-slate-300 sm:col-span-3">
-                        {t('widget_timer_custom', 'Vlastní délka timeru (minuty)')}
+                        {t('widget_timer_custom', 'Custom timer duration (minutes)')}
                         <input type="number" min="1" max="180" value={currentWidgets.timerDurationMinutes || 25} onChange={e => onUpdateConfig({ ...config, widgets: { ...currentWidgets, timerDurationMinutes: Math.min(180, Math.max(1, Number(e.target.value) || 1)) } })} className="mt-1 w-full text-xs p-2 rounded-lg bg-slate-900 border border-slate-700 text-white" />
                       </label>
                     </div>
@@ -713,10 +680,10 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
             <div className="space-y-5">
               <div>
                 <h3 className="text-sm font-semibold text-white">
-                  {t('backup_and_migration', 'Záloha a migrace konfigurace mezi zařízeními')}
+                  {t('backup_and_migration', 'Backup & Configuration Migration Across Devices')}
                 </h3>
                 <p className="text-xs text-slate-400">
-                  {t('backup_desc', 'Exportujte své nastavení do standardního JSON souboru nebo jej jednoduše přeneste na jiný počítač.')}
+                  {t('backup_desc', 'Export your settings into a standard JSON file or transfer them easily to another computer.')}
                 </p>
               </div>
 
@@ -727,7 +694,7 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
                   className="flex items-center justify-center gap-2 p-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs shadow-md transition-colors"
                 >
                   {downloaded ? <Check className="w-4 h-4 text-emerald-300" /> : <Download className="w-4 h-4" />}
-                  <span>{downloaded ? t('downloaded', 'Staženo!') : t('download_json_backup', 'Stáhnout zálohu .json')}</span>
+                  <span>{downloaded ? t('downloaded', 'Downloaded!') : t('download_json_backup', 'Download .json Backup')}</span>
                 </button>
 
                 <button
@@ -735,7 +702,7 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
                   className="flex items-center justify-center gap-2 p-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-xs border border-slate-700 transition-colors"
                 >
                   {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-                  <span>{copied ? t('copied_to_clipboard', 'Zkopírováno!') : t('copy_json_clipboard', 'Kopírovat JSON do schránky')}</span>
+                  <span>{copied ? t('copied_to_clipboard', 'Copied!') : t('copy_json_clipboard', 'Copy JSON to Clipboard')}</span>
                 </button>
 
                 <button
@@ -743,7 +710,7 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
                   className="flex items-center justify-center gap-2 p-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-xs border border-slate-700 transition-colors"
                 >
                   <Upload className="w-4 h-4 text-indigo-400" />
-                  <span>{t('import_json_file', 'Nahrát a obnovit ze souboru .json')}</span>
+                  <span>{t('import_json_file', 'Import & Restore from .json File')}</span>
                 </button>
                 <input
                   ref={fileInputRef}
@@ -758,7 +725,7 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
                   className="flex items-center justify-center gap-2 p-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-xs border border-slate-700 transition-colors"
                 >
                   <FileJson className="w-4 h-4 text-amber-400" />
-                  <span>{showPasteArea ? t('hide_paste_area', 'Skrýt vkládání textem') : t('paste_json_text', 'Vložit JSON textem')}</span>
+                  <span>{showPasteArea ? t('hide_paste_area', 'Hide Text Paste Area') : t('paste_json_text', 'Paste JSON Text')}</span>
                 </button>
               </div>
 
@@ -766,7 +733,7 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
               {showPasteArea && (
                 <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-3 animate-fade-in">
                   <label className="text-xs font-semibold text-slate-300 block">
-                    {t('paste_json_label', 'Vložte JSON kód profilu:')}
+                    {t('paste_json_label', 'Paste profile JSON code:')}
                   </label>
                   <textarea
                     value={pastedJson}
@@ -781,7 +748,7 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
                       disabled={!pastedJson.trim()}
                       className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-semibold transition-colors"
                     >
-                      {t('apply_configuration', 'Aplikovat konfiguraci')}
+                      {t('apply_configuration', 'Apply Configuration')}
                     </button>
                   </div>
                 </div>
@@ -790,7 +757,7 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
               {/* JSON preview */}
               <div className="space-y-1.5">
                 <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-                  {t('current_json_preview', 'Aktuální konfigurace (Live JSON)')}
+                  {t('current_json_preview', 'Current Configuration (Live JSON)')}
                 </span>
                 <pre className="p-3 rounded-xl bg-slate-950 border border-slate-850 text-[11px] font-mono text-slate-400 overflow-x-auto max-h-40">
                   {jsonString}
@@ -801,22 +768,22 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
               <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
                 <div>
                   <span className="text-xs font-semibold text-slate-300 block">
-                    {t('factory_reset', 'Tovární nastavení')}
+                    {t('factory_reset', 'Factory Reset')}
                   </span>
                   <span className="text-[11px] text-slate-500 block">
-                    {t('factory_reset_desc', 'Obnovit výchozí barevný režim, widgety i jazyk')}
+                    {t('factory_reset_desc', 'Restore default color theme, widgets, and language')}
                   </span>
                 </div>
                 <button
                   onClick={() => {
-                    if (confirm(t('confirm_reset', 'Opravdu chcete obnovit výchozí nastavení?'))) {
+                    if (confirm(t('confirm_reset', 'Are you sure you want to restore default settings?'))) {
                       onResetDefaults();
                     }
                   }}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-rose-400 hover:text-rose-300 bg-rose-950/30 hover:bg-rose-950/60 border border-rose-900/40 transition-colors"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
-                  <span>{t('reset_defaults', 'Obnovit výchozí')}</span>
+                  <span>{t('reset_defaults', 'Reset Defaults')}</span>
                 </button>
               </div>
             </div>
@@ -827,27 +794,27 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
             <div className="space-y-4">
               <div>
                 <h3 className="text-sm font-semibold text-white">
-                  {t('select_language', 'Výběr jazyka rozhraní')}
+                  {t('select_language', 'Select Interface Language')}
                 </h3>
                 <p className="text-xs text-slate-400">
-                  {t('language_desc', 'OmniDesk podporuje 5 plně lokalizovaných jazyků.')}
+                  {t('language_desc', 'OmniDesk supports 5 fully localized languages.')}
                 </p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {[
-                  { code: 'cs', label: 'Čeština', flag: '🇨🇿', sub: 'Zdrojový jazyk' },
-                  { code: 'ru', label: 'Русский', flag: '🇷🇺', sub: 'Полный перевод' },
-                  { code: 'en', label: 'English', flag: '🇬🇧', sub: 'Universal' },
-                  { code: 'de', label: 'Deutsch', flag: '🇩🇪', sub: 'Vollständig lokalisiert' },
-                  { code: 'es', label: 'Español', flag: '🇪🇸', sub: 'Traducción completa' },
+                  { code: 'cs' as SupportedLanguage, label: 'Čeština', flag: '🇨🇿', sub: 'Czech' },
+                  { code: 'ru' as SupportedLanguage, label: 'Русский', flag: '🇷🇺', sub: 'Russian' },
+                  { code: 'en' as SupportedLanguage, label: 'English', flag: '🇬🇧', sub: 'Universal' },
+                  { code: 'de' as SupportedLanguage, label: 'Deutsch', flag: '🇩🇪', sub: 'German' },
+                  { code: 'es' as SupportedLanguage, label: 'Español', flag: '🇪🇸', sub: 'Spanish' },
                 ].map((lang) => {
                   const isSelected = language === lang.code;
                   return (
                     <div
                       key={lang.code}
                       onClick={() => {
-                        setLanguage(lang.code as any);
+                        setLanguage(lang.code);
                         onUpdateConfig({
                           ...config,
                           language: lang.code,
@@ -866,7 +833,7 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
                             {lang.label}
                           </span>
                           <span className="text-[10px] text-slate-400 block">
-                            {lang.sub}
+                            {t(`lang_name_${lang.code}`, lang.sub)}
                           </span>
                         </div>
                       </div>
@@ -889,7 +856,7 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
             onClick={onClose}
             className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md transition-colors"
           >
-            {t('close', 'Zavřít')}
+            {t('close', 'Close')}
           </button>
         </div>
       </div>

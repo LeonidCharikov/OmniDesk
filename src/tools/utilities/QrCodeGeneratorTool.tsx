@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useId } from 'react';
 import QRCode from 'qrcode';
-import { QrCode, Download, Wifi, Link, AlignLeft, Copy, Check } from 'lucide-react';
+import { Download, Wifi, Link, AlignLeft, Copy, Check } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
 import { saveBinaryWithDialog } from '../../services/fileSystemService';
 

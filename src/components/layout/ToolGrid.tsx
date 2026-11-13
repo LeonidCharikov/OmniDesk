@@ -176,45 +176,45 @@ export const ToolGrid: React.FC<ToolGridProps> = ({
   }> = [
     {
       id: 'files',
-      label: t('cat_files', 'Soubory & Dokumenty'),
+      label: t('cat_files', 'Files & Documents'),
       icon: <FileBox className="w-4 h-4 text-indigo-400" />,
-      desc: t('desc_cat_files', 'Textový editor, offline konverze Wordu a multi-formátový převodník'),
+      desc: t('desc_cat_files', 'Text editor, offline Word conversion, and multi-format converter'),
     },
     {
       id: 'programming',
-      label: t('cat_programming', 'Programování & Kód'),
+      label: t('cat_programming', 'Programming & Code'),
       icon: <Code2 className="w-4 h-4 text-emerald-400" />,
-      desc: t('desc_cat_prog', 'RegEx tester, formátovač JSON, porovnávač diff a kryptografické hashe'),
+      desc: t('desc_cat_prog', 'RegEx tester, JSON formatter, diff checker, and cryptographic hashes'),
     },
     {
       id: 'planning',
-      label: t('cat_planning', 'Plánování & Produktivita'),
+      label: t('cat_planning', 'Planning & Productivity'),
       icon: <CalendarCheck className="w-4 h-4 text-amber-400" />,
-      desc: t('desc_cat_plan', 'Interaktivní kalendář, Pomodoro časovač a světová časová pásma'),
+      desc: t('desc_cat_plan', 'Interactive calendar, Pomodoro timer, and world time zones'),
     },
     {
       id: 'math',
-      label: t('cat_math', 'Matematika & Kalkulačky'),
+      label: t('cat_math', 'Mathematics & Calculators'),
       icon: <Calculator className="w-4 h-4 text-blue-400" />,
-      desc: t('desc_cat_math', 'Vědecké výpočty, matice libovolných rozměrů, grafy funkcí 2D a LaTeX'),
+      desc: t('desc_cat_math', 'Scientific math, arbitrary-size matrices, 2D function grapher, and LaTeX'),
     },
     {
       id: 'science',
-      label: t('cat_science', 'Věda & Chemie'),
+      label: t('cat_science', 'Science & Chemistry'),
       icon: <FlaskConical className="w-4 h-4 text-purple-400" />,
-      desc: t('desc_cat_science', 'Oficiální periodická tabulka 118 prvků, molární hmotnost a vědecké převody'),
+      desc: t('desc_cat_science', 'Official 118-element periodic table, molar mass, and scientific conversions'),
     },
     {
       id: 'finance',
-      label: t('cat_finance', 'Finance & Kryptoměny'),
+      label: t('cat_finance', 'Finance & Crypto'),
       icon: <Coins className="w-4 h-4 text-yellow-400" />,
-      desc: t('desc_cat_finance', 'Měnový konvertor, živé i vlastní kurzy kryptoměn a hypotéční kalkulačka'),
+      desc: t('desc_cat_finance', 'Currency converter, live & custom crypto rates, and mortgage calculator'),
     },
     {
       id: 'utilities',
-      label: t('cat_utilities', 'Utility & Nástroje'),
+      label: t('cat_utilities', 'Utilities & Tools'),
       icon: <Wrench className="w-4 h-4 text-cyan-400" />,
-      desc: t('desc_cat_util', 'Generátor bezpečných hesel, QR kódy, barvy, kontrast a systémový monitor'),
+      desc: t('desc_cat_util', 'Password generator, QR codes, colors, contrast validator, and system monitor'),
     },
   ];
 
@@ -247,12 +247,12 @@ export const ToolGrid: React.FC<ToolGridProps> = ({
                   }`}
                 >
                   {isOffline && <WifiOff className="w-2.5 h-2.5" />}
-                  {isOffline ? t('offline_locked', 'Offline zamčeno') : t('online_api', 'Online API')}
+                  {isOffline ? t('offline_locked', 'Offline locked') : t('online_api', 'Online API')}
                 </span>
               )}
               <button
                 onClick={() => onToggleFavorite(tool.id)}
-                title={isFav ? t('remove_favorite', 'Odebrat z oblíbených') : t('add_favorite', 'Přidat do oblíbených')}
+                title={isFav ? t('remove_favorite', 'Remove from favorites') : t('add_favorite', 'Add to favorites')}
                 className="p-1.5 rounded-lg text-slate-500 hover:text-amber-400 transition-colors"
               >
                 <Star className={`w-4 h-4 ${isFav ? 'fill-amber-400 text-amber-400' : ''}`} />
@@ -281,7 +281,7 @@ export const ToolGrid: React.FC<ToolGridProps> = ({
             <span>{tool.requiresOnline ? t('online_badge', 'Online') : t('offline_badge', 'Offline')}</span>
           </div>
           <span className="font-mono text-slate-600 group-hover:text-slate-400 transition-colors">
-            {t('open', 'Otevřít')} &rarr;
+            {t('open', 'Open')} &rarr;
           </span>
         </div>
       </div>
@@ -292,14 +292,14 @@ export const ToolGrid: React.FC<ToolGridProps> = ({
     return (
       <div className="p-12 text-center rounded-2xl bg-slate-900/20 border border-slate-800 space-y-3">
         <Star className="w-8 h-8 text-slate-600 mx-auto" />
-        <h3 className="text-base font-semibold text-slate-300">{t('no_tools_found', 'Žádné nástroje')}</h3>
+        <h3 className="text-base font-semibold text-slate-300">{t('no_tools_found', 'No tools found')}</h3>
         <p className="text-xs text-slate-500 max-w-sm mx-auto">
           {activeCategory === 'favorites'
             ? t(
                 'no_favorites_hint',
-                'Zatím jste nepřidali žádný nástroj do oblíbených. Klikněte na hvězdičku u libovolného nástroje pro jeho připnutí.'
+                'You have not added any tool to favorites yet. Click the star icon on any tool to pin it.'
               )
-            : t('no_tools_category', 'V této sekci se nenachází žádné moduly.')}
+            : t('no_tools_category', 'No modules found in this section.')}
         </p>
       </div>
     );
@@ -312,12 +312,12 @@ export const ToolGrid: React.FC<ToolGridProps> = ({
         {/* Main lead */}
         <div className="space-y-1">
           <h2 className="text-2xl font-bold tracking-tight text-white">
-            {t('cat_all', 'Všechny integrované nástroje')}
+            {t('cat_all', 'All Integrated Tools')}
           </h2>
           <p className="text-xs text-slate-400">
             {t(
               'subtitle_all',
-              'Všechny integrované nástroje rozdělené do přehledných kategorií pro okamžitou práci přímo na vašem zařízení.'
+              'All integrated tools organized into clear categories for instant local productivity on your device.'
             )}
           </p>
         </div>
@@ -372,12 +372,12 @@ export const ToolGrid: React.FC<ToolGridProps> = ({
     <div className="space-y-6">
       <div className="space-y-1">
         <h2 className="text-xl font-bold tracking-tight text-white">
-          {activeCategory === 'favorites' ? t('cat_favorites', 'Oblíbené nástroje') : t(`cat_${activeCategory}`, activeCategory)}
+          {activeCategory === 'favorites' ? t('cat_favorites', 'Favorite Tools') : t(`cat_${activeCategory}`, activeCategory)}
         </h2>
         <p className="text-xs text-slate-400">
           {activeCategory === 'favorites'
-            ? t('subtitle_fav', 'Rychlý přístup k nástrojům připnutým hvězdičkou.')
-            : t(`desc_cat_${activeCategory}`, 'Nástroje v této kategorii.')}
+            ? t('subtitle_fav', 'Quick access to tools pinned with a star.')
+            : t(`desc_cat_${activeCategory}`, 'Tools in this category.')}
         </p>
       </div>
 

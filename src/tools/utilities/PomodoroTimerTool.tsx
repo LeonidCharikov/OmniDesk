@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Pause, RotateCcw, Flame, Coffee, Timer, Flag, Volume2, Plus, Sparkles, Check } from 'lucide-react';
+import { Play, Pause, RotateCcw, Flame, Timer, Flag, Volume2, Plus, Check } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
 
 interface LapRecord {
@@ -25,7 +25,6 @@ export const PomodoroTimerTool: React.FC = () => {
   const [timerSeconds, setTimerSeconds] = useState<number>(0);
   const [timerRemainingSeconds, setTimerRemainingSeconds] = useState<number>(10 * 60);
   const [isTimerRunning, setIsTimerRunning] = useState<boolean>(false);
-  const [timerTotalDuration, setTimerTotalDuration] = useState<number>(10 * 60);
 
   // --- 3. Stopwatch State ---
   const [stopwatchTimeMs, setStopwatchTimeMs] = useState<number>(0);
@@ -132,17 +131,12 @@ export const PomodoroTimerTool: React.FC = () => {
   const startTimerWithCustom = () => {
     const totalSec = timerHours * 3600 + timerMinutes * 60 + timerSeconds;
     if (totalSec <= 0) return;
-    setTimerTotalDuration(totalSec);
     setTimerRemainingSeconds(totalSec);
     setIsTimerRunning(true);
   };
 
   const addTimerSeconds = (sec: number) => {
-    setTimerRemainingSeconds(prev => {
-      const next = prev + sec;
-      setTimerTotalDuration(t => Math.max(t, next));
-      return next;
-    });
+    setTimerRemainingSeconds(prev => prev + sec);
   };
 
   const resetTimer = () => {

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Calculator, History, Trash2, RotateCcw, Copy, Check } from 'lucide-react';
+import { History, Trash2, Copy, Check } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
 
 export const ScientificCalculatorTool: React.FC = () => {
-  const { t, currentLanguage } = useI18n();
+  const { t } = useI18n();
   const [mode, setMode] = useState<'standard' | 'scientific'>('scientific');
   const [display, setDisplay] = useState('0');
   const [expression, setExpression] = useState('');

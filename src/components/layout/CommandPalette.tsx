@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useId } from 'react';
-import { Search, X, Star, ArrowRight, WifiOff, Globe } from 'lucide-react';
+import { Search, X, Star, ArrowRight, WifiOff } from 'lucide-react';
 import { ToolDefinition } from '../../types/tool';
 
 interface CommandPaletteProps {
@@ -62,12 +62,12 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       >
         {/* Search Input */}
         <div className="flex items-center gap-3 px-4 py-3.5 border-b border-slate-800">
-          <label htmlFor={commandSearchId} className="sr-only">{t('command_search_label', 'Hledat nástroj nebo klíčové slovo')}</label>
+          <label htmlFor={commandSearchId} className="sr-only">{t('command_search_label', 'Search tool or keyword')}</label>
           <Search className="w-4 h-4 text-slate-500 shrink-0" />
           <input
             id={commandSearchId}
             type="text"
-            placeholder={t('search_modal_placeholder', 'Hledat nástroj (např. docx, qr, heslo, matice)...')}
+            placeholder={t('search_modal_placeholder', 'Search tool (e.g. docx, qr, password, matrix)...')}
             value={query}
             onChange={e => setQuery(e.target.value)}
             autoFocus
@@ -85,7 +85,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         <div className="max-h-80 overflow-y-auto p-2 space-y-1">
           {filtered.length === 0 ? (
             <div className="p-8 text-center text-xs text-slate-500">
-              {t('no_tools_query', 'Žádný nástroj neodpovídá zadání "{query}"', { query })}
+              {t('no_tools_query', 'No tool matches "{query}"', { query })}
             </div>
           ) : (
             filtered.map(tool => {
@@ -115,7 +115,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                         </span>
                         {isFav && <Star className="w-3 h-3 fill-amber-400 text-amber-400" />}
                         {isLockedOffline && (
-                          <span className="text-[10px] text-amber-400 font-mono">{t('online_badge', 'Vyžaduje online')}</span>
+                          <span className="text-[10px] text-amber-400 font-mono">{t('online_badge', 'Requires online')}</span>
                         )}
                       </div>
                       <p className="text-[11px] text-slate-400 truncate mt-0.5">
@@ -133,8 +133,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         </div>
 
         <div className="px-4 py-2 bg-slate-950 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-500 font-mono">
-          <span>{t('command_close_hint', 'Stiskněte ESC pro zavření')}</span>
-          <span>{t('tools_found_count', '{count} nalezených nástrojů', { count: filtered.length })}</span>
+          <span>{t('command_close_hint', 'Press ESC to close')}</span>
+          <span>{t('tools_found_count', '{count} tools found', { count: filtered.length })}</span>
         </div>
       </div>
     </div>

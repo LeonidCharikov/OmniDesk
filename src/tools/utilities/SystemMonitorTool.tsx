@@ -7,16 +7,13 @@ import {
   Terminal, 
   Pause, 
   Play, 
-  RefreshCw, 
   ShieldCheck, 
-  Sparkles, 
   Layers, 
   Check, 
   Copy,
   Zap,
   Globe,
   Gauge,
-  Database,
   ArrowDownToLine,
   ArrowUpFromLine
 } from 'lucide-react';

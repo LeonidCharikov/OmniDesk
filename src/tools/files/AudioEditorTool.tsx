@@ -9,21 +9,13 @@ import {
   Download,
   Volume2,
   VolumeX,
-  Volume1,
   Trash2,
-  Split,
   Sparkles,
   Check,
   AlertCircle,
   FileAudio,
-  Radio,
-  Clock,
   Sliders,
-  Maximize2,
-  Minimize2,
   RefreshCw,
-  FastForward,
-  CornerDownRight,
   TrendingUp,
   TrendingDown,
   Repeat,
@@ -113,8 +105,7 @@ export const AudioEditorTool: React.FC = () => {
   // Audio Context & Buffer
   const audioContextRef = useRef<AudioContext | null>(null);
   const [audioBuffer, setAudioBuffer] = useState<AudioBuffer | null>(null);
-  const [fileName, setFileName] = useState<string>('nahravka.wav');
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [fileName, setFileName] = useState<string>('recording.wav');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [statusNotice, setStatusNotice] = useState<string | null>(null);
 
@@ -143,7 +134,6 @@ export const AudioEditorTool: React.FC = () => {
 
   // Waveform canvas ref
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [zoomLevel, setZoomLevel] = useState<number>(1);
 
   // Export format choice
   const [exportFormat, setExportFormat] = useState<'wav' | 'webm'>('wav');
@@ -222,7 +212,6 @@ export const AudioEditorTool: React.FC = () => {
   // Load and decode an audio ArrayBuffer / File
   const loadAudioFromBuffer = useCallback(async (data: ArrayBuffer, name: string) => {
     stopPlayback();
-    setIsLoading(true);
     setErrorMsg(null);
     try {
       const ctx = getAudioContext();
@@ -234,13 +223,11 @@ export const AudioEditorTool: React.FC = () => {
       setCurrentTime(0);
       setHistory([]);
       setFuture([]);
-      setStatusNotice(t('audio_loaded_success', 'Audio úspěšně načteno'));
+      setStatusNotice(t('audio_loaded_success', 'Audio loaded successfully'));
       setTimeout(() => setStatusNotice(null), 2500);
     } catch (err: unknown) {
       console.error(err);
-      setErrorMsg(t('audio_decode_err', 'Nepodařilo se dekódovat zvukový soubor. Zkontrolujte formát.'));
-    } finally {
-      setIsLoading(false);
+      setErrorMsg(t('audio_decode_err', 'Failed to decode audio file. Please check the format.'));
     }
   }, [getAudioContext, stopPlayback, t]);
 
@@ -273,7 +260,6 @@ export const AudioEditorTool: React.FC = () => {
   // Generate synthetic sample melody/speech demo
   const generateSampleAudio = async () => {
     stopPlayback();
-    setIsLoading(true);
     setErrorMsg(null);
     try {
       const ctx = getAudioContext();
@@ -316,8 +302,6 @@ export const AudioEditorTool: React.FC = () => {
     } catch (err: unknown) {
       console.error(err);
       setErrorMsg(t('err_sample_gen', 'Chyba při generování vzorku'));
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -600,7 +584,7 @@ export const AudioEditorTool: React.FC = () => {
     }
 
     pushToHistory(newBuffer);
-    setStatusNotice(t('normalize_success', `Normalizováno na 0 dBFS (faktor: ${(factor).toFixed(2)}x)`));
+    setStatusNotice(t('normalize_success', 'Normalized to 0 dBFS (factor: {factor}x)', { factor: factor.toFixed(2) }));
     setTimeout(() => setStatusNotice(null), 2500);
   };
 
@@ -646,7 +630,7 @@ export const AudioEditorTool: React.FC = () => {
         t('save_audio_wav_title', 'Uložit upravené WAV audio (Průzkumník)')
       );
       if (res.success) {
-        setStatusNotice(t('export_success', `Úspěšně uloženo jako ${outName}`));
+        setStatusNotice(t('export_success', 'Successfully saved as {name}', { name: outName }));
         setTimeout(() => setStatusNotice(null), 3000);
       }
     } else {
@@ -657,13 +641,13 @@ export const AudioEditorTool: React.FC = () => {
         wavBlob,
         'audio/webm',
         [
-          { name: t('file_filter_webm', 'WebM Zvukový soubor (*.webm)'), extensions: ['webm'] },
-          { name: t('file_filter_all', 'Všechny soubory (*.*)'), extensions: ['*'] }
+          { name: t('file_filter_webm', 'WebM Audio File (*.webm)'), extensions: ['webm'] },
+          { name: t('file_filter_all', 'All files (*.*)'), extensions: ['*'] }
         ],
-        t('save_audio_webm_title', 'Uložit upravené WebM audio (Průzkumník)')
+        t('save_audio_webm_title', 'Save edited WebM audio')
       );
       if (res.success) {
-        setStatusNotice(t('export_success', `Úspěšně uloženo jako ${outName}`));
+        setStatusNotice(t('export_success', 'Successfully saved as {name}', { name: outName }));
         setTimeout(() => setStatusNotice(null), 3000);
       }
     }
@@ -745,7 +729,6 @@ export const AudioEditorTool: React.FC = () => {
       const isSelected = x >= startX && x <= endX;
       ctx.fillStyle = isSelected ? '#a5b4fc' : '#475569';
 
-      const barY = (1 + min) * amp;
       const barH = Math.max(1, (max - min) * amp);
       ctx.fillRect(x, height / 2 - (barH / 2), 1, barH);
     }

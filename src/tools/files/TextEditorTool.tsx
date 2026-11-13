@@ -1,13 +1,10 @@
 import React, { useState, useEffect, useRef, useId } from 'react';
 import {
   FileText,
-  Download,
   Upload,
   Copy,
   Check,
   Search,
-  RotateCcw,
-  Sparkles,
   AlignLeft,
   AlignCenter,
   AlignRight,
@@ -17,11 +14,7 @@ import {
   Clock,
   CheckCircle2,
   FilePlus,
-  HelpCircle,
   WrapText,
-  Heading1,
-  Heading2,
-  Heading3,
   Eye,
   Edit3,
 } from 'lucide-react';
@@ -36,12 +29,12 @@ export const TextEditorTool: React.FC = () => {
 
   // File state
   const [fileName, setFileName] = useState(() => {
-    return localStorage.getItem(FILENAME_STORAGE_KEY) || 'dokument.txt';
+    return localStorage.getItem(FILENAME_STORAGE_KEY) || t('default_document_filename', 'document.txt');
   });
   const [content, setContent] = useState(() => {
     return (
       localStorage.getItem(DRAFT_STORAGE_KEY) ||
-      `# ${t('text_editor_default_heading', 'OmniDesk Textový Dokument')}\n\n${t('text_editor_default_body', 'Tento textový editor funguje 100% offline přímo na vašem zařízení.\nMůžete vytvářet nové .txt soubory, otevírat existující z disku a ukládat je zpět.\n\n## Formátování textu\n- Zvýrazněte libovolný úsek textu a aplikujte VELKÁ či malá písmena jen na vybranou část\n- Použijte tlačítka H1, H2, H3 pro vložení nadpisů\n- Nastavte zarovnání (vlevo, na střed, vpravo)\n- Měňte velikost písma celého editoru nebo aplikujte rozměr na vybraný text')}`
+      `# ${t('text_editor_default_heading', 'OmniDesk Text Document')}\n\n${t('text_editor_default_body', 'This text editor runs 100% offline directly on your device.\nYou can create new .txt files, open existing ones from disk, and save them back.\n\n## Text Formatting\n- Select any portion of text and apply UPPERCASE or lowercase to the selection only\n- Use the H1, H2, H3 buttons to insert headings\n- Set alignment (left, center, right)\n- Change the font size for the entire editor or apply a size to selected text')}`
     );
   });
 
@@ -100,14 +93,15 @@ export const TextEditorTool: React.FC = () => {
   // Document statistics
   const linesCount = content.split('\n').length;
   const charsCount = content.length;
-  const charsNoSpacesCount = content.replace(/\s/g, '').length;
   const wordsCount = content.trim() ? content.trim().split(/\s+/).length : 0;
   const bytesCount = new Blob([content]).size;
   const estimatedReadTime = Math.max(1, Math.ceil(wordsCount / 200));
 
   // File download as .txt or .md with native File Explorer
   const downloadFile = async () => {
-    const safeName = fileName.trim() ? (fileName.includes('.') ? fileName : `${fileName}.txt`) : 'dokument.txt';
+    const safeName = fileName.trim()
+      ? (fileName.includes('.') ? fileName : `${fileName}.txt`)
+      : t('default_document_filename', 'document.txt');
     const isMd = safeName.toLowerCase().endsWith('.md');
     const res = await saveTextWithDialog(
       safeName,
@@ -115,12 +109,12 @@ export const TextEditorTool: React.FC = () => {
       [
         isMd
           ? { name: `${t('markdown_file', 'Markdown')} (*.md)`, extensions: ['md'] }
-          : { name: `${t('text_file', 'Textový soubor')} (*.txt)`, extensions: ['txt'] },
+          : { name: `${t('text_file', 'Text file')} (*.txt)`, extensions: ['txt'] },
         { name: `${t('markdown_file', 'Markdown')} (*.md)`, extensions: ['md'] },
-        { name: `${t('text_file', 'Textový soubor')} (*.txt)`, extensions: ['txt'] },
-        { name: `${t('all_files', 'Všechny soubory')} (*.*)`, extensions: ['*'] },
+        { name: `${t('text_file', 'Text file')} (*.txt)`, extensions: ['txt'] },
+        { name: `${t('all_files', 'All files')} (*.*)`, extensions: ['*'] },
       ],
-      t('save_text_dialog_title', 'Uložit textový soubor (Průzkumník)')
+      t('save_text_dialog_title', 'Save text file (Explorer)')
     );
 
     if (res.success && res.path) {
@@ -136,11 +130,11 @@ export const TextEditorTool: React.FC = () => {
     const res = await openFileWithPicker({
       accept: '.txt,.md,.text,.log,.json,.csv,.sql,.js,.ts',
       filters: [
-        { name: `${t('text_and_md_files', 'Textové & Markdown soubory')} (*.txt, *.md)`, extensions: ['txt', 'md', 'text', 'log', 'json', 'csv', 'sql', 'js', 'ts'] },
-        { name: `${t('all_files', 'Všechny soubory')} (*.*)`, extensions: ['*'] }
+        { name: `${t('text_and_md_files', 'Text & Markdown files')} (*.txt, *.md)`, extensions: ['txt', 'md', 'text', 'log', 'json', 'csv', 'sql', 'js', 'ts'] },
+        { name: `${t('all_files', 'All files')} (*.*)`, extensions: ['*'] }
       ],
       readAs: 'text',
-      title: t('open_file_dialog_title', 'Otevřít textový soubor (Průzkumník)')
+      title: t('open_file_dialog_title', 'Open text file (Explorer)')
     });
     if (res) {
       setFileName(res.name);
@@ -174,11 +168,11 @@ export const TextEditorTool: React.FC = () => {
 
   // Create clean new file
   const handleNewFile = () => {
-    if (content.trim() && !window.confirm(t('confirm_new_file', 'Vytvořit nový soubor? Neuložené změny v textu budou přepsány.'))) {
+    if (content.trim() && !window.confirm(t('confirm_new_file', 'Create a new file? Unsaved changes in the text will be overwritten.'))) {
       return;
     }
     setContent('');
-    setFileName('novy_soubor.txt');
+    setFileName(t('new_file_default_name', 'new_file.txt'));
     if (textareaRef.current) textareaRef.current.focus();
   };
 
@@ -332,7 +326,7 @@ export const TextEditorTool: React.FC = () => {
         break;
       case 'timestamp': {
         const now = new Date().toLocaleString();
-        setContent(prev => `${prev}\n\n[${t('record_timestamp', 'Záznam')}: ${now}]\n`);
+        setContent(prev => `${prev}\n\n[${t('record_timestamp', 'Log')}: ${now}]\n`);
         break;
       }
     }
@@ -348,7 +342,7 @@ export const TextEditorTool: React.FC = () => {
         <div>
           <div className="flex items-center gap-2">
             <h2 className="text-lg font-semibold text-white">
-              {t('tool_text_editor_title', 'Textový Editor & Poznámkový blok (.txt)')}
+              {t('tool_text_editor_title', 'Text Editor & Notepad (.txt)')}
             </h2>
             <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-950/60 border border-emerald-800/60 text-emerald-400">
               100% Offline UTF-8
@@ -357,7 +351,7 @@ export const TextEditorTool: React.FC = () => {
           <p className="text-sm text-slate-400 mt-1">
             {t(
               'tool_text_editor_desc',
-              'Vytváření, úprava a stahování textových souborů bez serveru. Podpora vyhledávání, nahrazování, počítadla slov a formátovacích utilit.'
+              'Create, edit, and download text files without a server. Includes search, replace, word counter, and formatting utilities.'
             )}
           </p>
         </div>
@@ -367,19 +361,19 @@ export const TextEditorTool: React.FC = () => {
           <button
             onClick={handleNewFile}
             className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-medium text-slate-300 hover:text-white transition-colors flex items-center gap-1.5"
-            title={t('new_file_tooltip', 'Nový prázdný soubor')}
+            title={t('new_file_tooltip', 'New blank file')}
           >
             <FilePlus className="w-3.5 h-3.5 text-indigo-400" />
-            <span>{t('new_file', 'Nový soubor')}</span>
+            <span>{t('new_file', 'New file')}</span>
           </button>
 
           <button
             onClick={handleOpenFile}
             className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-medium text-slate-300 hover:text-white transition-colors flex items-center gap-1.5"
-            title={t('open_file_tooltip', 'Otevřít soubor z disku pomocí Průzkumníka')}
+            title={t('open_file_tooltip', 'Open .txt/.md file from disk')}
           >
             <Upload className="w-3.5 h-3.5 text-indigo-400" />
-            <span>{t('open_file', 'Otevřít soubor')}</span>
+            <span>{t('open_file', 'Open file')}</span>
           </button>
           <input
             ref={fileInputRef}
@@ -394,16 +388,16 @@ export const TextEditorTool: React.FC = () => {
             className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-medium text-slate-300 hover:text-white transition-colors flex items-center gap-1.5"
           >
             {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-            <span>{copied ? t('copied', 'Zkopírováno') : t('copy_all', 'Kopírovat vše')}</span>
+            <span>{copied ? t('copied', 'Copied') : t('copy_all', 'Copy all')}</span>
           </button>
 
           <button
             onClick={downloadFile}
             className="px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md transition-colors flex items-center gap-1.5"
-            title={t('download_file_tooltip', 'Uložit soubor pomocí Průzkumníka (Ctrl+S)')}
+            title={t('download_file_tooltip', 'Save & download file to disk (Ctrl+S)')}
           >
             <Save className="w-3.5 h-3.5" />
-            <span>{t('save_as_file', 'Uložit jako...')}</span>
+            <span>{t('save_as_file', 'Save as...')}</span>
           </button>
         </div>
       </div>
@@ -419,9 +413,9 @@ export const TextEditorTool: React.FC = () => {
               type="text"
               value={fileName}
               onChange={e => setFileName(e.target.value)}
-              placeholder={t('filename_placeholder', 'nazev_souboru.txt')}
+              placeholder={t('filename_placeholder', 'filename.txt')}
               className="w-full px-2 py-1 bg-slate-900 border border-slate-700 rounded-md font-mono text-xs text-white focus:outline-none focus:border-indigo-500"
-              title={t('filename', 'Název souboru')}
+              title={t('filename', 'File name')}
             />
           </div>
 
@@ -434,20 +428,20 @@ export const TextEditorTool: React.FC = () => {
                 className={`px-2 py-1 rounded text-xs font-medium flex items-center gap-1 transition-colors ${
                   viewMode === 'edit' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'
                 }`}
-                title={t('editor_mode_edit', 'Režim psaní')}
+                title={t('editor_mode_edit', 'Editing mode')}
               >
                 <Edit3 className="w-3 h-3" />
-                <span className="hidden sm:inline">{t('editor_tab_write', 'Psát')}</span>
+                <span className="hidden sm:inline">{t('editor_tab_write', 'Write')}</span>
               </button>
               <button
                 onClick={() => setViewMode('preview')}
                 className={`px-2 py-1 rounded text-xs font-medium flex items-center gap-1 transition-colors ${
                   viewMode === 'preview' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'
                 }`}
-                title={t('editor_preview_toggle', 'Náhled formátování')}
+                title={t('editor_preview_toggle', 'Formatted preview')}
               >
                 <Eye className="w-3 h-3" />
-                <span className="hidden sm:inline">{t('editor_tab_preview', 'Náhled')}</span>
+                <span className="hidden sm:inline">{t('editor_tab_preview', 'Preview')}</span>
               </button>
             </div>
 
@@ -458,28 +452,28 @@ export const TextEditorTool: React.FC = () => {
               <button
                 onClick={() => applyHeading(1)}
                 className="px-1.5 py-1 rounded hover:bg-slate-800 text-[11px] font-bold text-indigo-300 hover:text-white"
-                title={t('editor_heading_h1', 'Nadpis H1 (# text)')}
+                title={t('editor_heading_h1', 'Heading 1 (# text)')}
               >
                 H1
               </button>
               <button
                 onClick={() => applyHeading(2)}
                 className="px-1.5 py-1 rounded hover:bg-slate-800 text-[11px] font-bold text-indigo-300 hover:text-white"
-                title={t('editor_heading_h2', 'Nadpis H2 (## text)')}
+                title={t('editor_heading_h2', 'Heading 2 (## text)')}
               >
                 H2
               </button>
               <button
                 onClick={() => applyHeading(3)}
                 className="px-1.5 py-1 rounded hover:bg-slate-800 text-[11px] font-bold text-indigo-300 hover:text-white"
-                title={t('editor_heading_h3', 'Nadpis H3 (### text)')}
+                title={t('editor_heading_h3', 'Heading 3 (### text)')}
               >
                 H3
               </button>
               <button
                 onClick={() => applyHeading(0)}
                 className="px-1.5 py-1 rounded hover:bg-slate-800 text-[11px] text-slate-400 hover:text-white"
-                title={t('editor_heading_p', 'Běžný odstavec (P)')}
+                title={t('editor_heading_p', 'Normal paragraph (P)')}
               >
                 P
               </button>
@@ -494,7 +488,7 @@ export const TextEditorTool: React.FC = () => {
                 className={`p-1 rounded text-xs transition-colors ${
                   textAlign === 'left' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
                 }`}
-                title={t('editor_align_left', 'Zarovnat vlevo')}
+                title={t('editor_align_left', 'Align left')}
               >
                 <AlignLeft className="w-3.5 h-3.5" />
               </button>
@@ -503,7 +497,7 @@ export const TextEditorTool: React.FC = () => {
                 className={`p-1 rounded text-xs transition-colors ${
                   textAlign === 'center' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
                 }`}
-                title={t('editor_align_center', 'Zarovnat na střed')}
+                title={t('editor_align_center', 'Align center')}
               >
                 <AlignCenter className="w-3.5 h-3.5" />
               </button>
@@ -512,7 +506,7 @@ export const TextEditorTool: React.FC = () => {
                 className={`p-1 rounded text-xs transition-colors ${
                   textAlign === 'right' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
                 }`}
-                title={t('editor_align_right', 'Zarovnat vpravo')}
+                title={t('editor_align_right', 'Align right')}
               >
                 <AlignRight className="w-3.5 h-3.5" />
               </button>
@@ -525,21 +519,21 @@ export const TextEditorTool: React.FC = () => {
               <button
                 onClick={() => applyCaseTransform('upper')}
                 className="px-1.5 py-1 rounded hover:bg-slate-800 text-[11px] font-mono font-bold text-slate-300 hover:text-white"
-                title={t('editor_upper_case', 'VELKÁ PÍSMENA (výběr či vše)')}
+                title={t('editor_upper_case', 'UPPERCASE (selection or all)')}
               >
                 AA
               </button>
               <button
                 onClick={() => applyCaseTransform('lower')}
                 className="px-1.5 py-1 rounded hover:bg-slate-800 text-[11px] font-mono text-slate-300 hover:text-white"
-                title={t('editor_lower_case', 'malá písmena (výběr či vše)')}
+                title={t('editor_lower_case', 'lowercase (selection or all)')}
               >
                 aa
               </button>
               <button
                 onClick={() => applyCaseTransform('title')}
                 className="px-1.5 py-1 rounded hover:bg-slate-800 text-[11px] font-mono text-slate-300 hover:text-white"
-                title={t('editor_title_case', 'První Velká Písmena')}
+                title={t('editor_title_case', 'Title Case')}
               >
                 Aa
               </button>
@@ -552,7 +546,7 @@ export const TextEditorTool: React.FC = () => {
                 value={baseFontSize}
                 onChange={e => applyFontSizeToText(Number(e.target.value))}
                 className="bg-transparent text-xs text-slate-200 font-mono focus:outline-none cursor-pointer"
-                title={t('editor_font_size_tooltip', 'Změnit velikost písma (pro vybraný text či celý editor)')}
+                title={t('editor_font_size_tooltip', 'Change font size (selected text or whole editor)')}
               >
                 <option value={12} className="bg-slate-900">12px</option>
                 <option value={14} className="bg-slate-900">14px</option>
@@ -574,7 +568,7 @@ export const TextEditorTool: React.FC = () => {
                   ? 'bg-indigo-600 text-white border-indigo-500'
                   : 'bg-slate-900 border-slate-800 text-slate-300 hover:text-white'
               }`}
-              title={t('search_replace_shortcut', 'Hledat & Nahradit (Ctrl+F)')}
+              title={t('search_replace_shortcut', 'Find & Replace (Ctrl+F)')}
             >
               <Search className="w-3.5 h-3.5" />
             </button>
@@ -587,7 +581,7 @@ export const TextEditorTool: React.FC = () => {
                   ? 'bg-indigo-950/60 border-indigo-700 text-indigo-300'
                   : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
               }`}
-              title={t('word_wrap', 'Zalamování řádků')}
+              title={t('word_wrap', 'Word wrap')}
             >
               <WrapText className="w-3.5 h-3.5" />
             </button>
@@ -599,7 +593,7 @@ export const TextEditorTool: React.FC = () => {
                   ? 'bg-indigo-950/60 border-indigo-700 text-indigo-300'
                   : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
               }`}
-              title={t('toggle_font_family', 'Přepnout písmo (Monospace / Proporcionální)')}
+              title={t('toggle_font_family', 'Toggle font (Monospace / Sans)')}
             >
               <span className="font-mono text-[10px]">{isMonospace ? 'Mono' : 'Sans'}</span>
             </button>
@@ -608,7 +602,7 @@ export const TextEditorTool: React.FC = () => {
             <button
               onClick={() => applyGeneralTransform('timestamp')}
               className="p-1.5 rounded bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white"
-              title={t('insert_timestamp', 'Vložit časové razítko')}
+              title={t('insert_timestamp', 'Insert timestamp')}
             >
               <Clock className="w-3.5 h-3.5 text-amber-400" />
             </button>
@@ -616,7 +610,7 @@ export const TextEditorTool: React.FC = () => {
             <button
               onClick={() => setContent('')}
               className="p-1.5 rounded bg-slate-900 hover:bg-rose-950/40 border border-slate-800 text-slate-400 hover:text-rose-400"
-              title={t('clear_all_text', 'Vymazat celý text')}
+              title={t('clear_all_text', 'Clear all text')}
             >
               <Trash2 className="w-3.5 h-3.5" />
             </button>
@@ -628,12 +622,12 @@ export const TextEditorTool: React.FC = () => {
           <div className="p-3 bg-slate-950 border-b border-slate-800 flex flex-wrap items-center gap-2 text-xs animate-fade-in">
             <div className="flex items-center gap-1.5">
               <label htmlFor={searchInputId} className="sr-only">
-                {t('search_text_label', 'Hledat text')}
+                {t('search_text_label', 'Find text')}
               </label>
               <input
                 id={searchInputId}
                 type="text"
-                placeholder={t('search_text_placeholder', 'Hledat text...')}
+                placeholder={t('search_text_placeholder', 'Find text...')}
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 className="px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-white font-mono text-xs focus:outline-none focus:border-indigo-500 w-44 sm:w-56"
@@ -642,12 +636,12 @@ export const TextEditorTool: React.FC = () => {
 
             <div className="flex items-center gap-1.5">
               <label htmlFor={replaceInputId} className="sr-only">
-                {t('replace_text_label', 'Nahradit textem')}
+                {t('replace_text_label', 'Replace with')}
               </label>
               <input
                 id={replaceInputId}
                 type="text"
-                placeholder={t('replace_text_placeholder', 'Nahradit čím...')}
+                placeholder={t('replace_text_placeholder', 'Replace with...')}
                 value={replaceQuery}
                 onChange={e => setReplaceQuery(e.target.value)}
                 className="px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-white font-mono text-xs focus:outline-none focus:border-indigo-500 w-44 sm:w-56"
@@ -662,7 +656,7 @@ export const TextEditorTool: React.FC = () => {
                     ? 'bg-indigo-600 text-white border-indigo-500 font-bold'
                     : 'bg-slate-900 border-slate-700 text-slate-400 hover:text-white'
                 }`}
-                title={t('case_sensitive', 'Rozlišovat velikost písmen (Aa)')}
+                title={t('case_sensitive', 'Match case (Aa)')}
               >
                 Aa
               </button>
@@ -672,7 +666,7 @@ export const TextEditorTool: React.FC = () => {
                 disabled={!searchQuery}
                 className="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 disabled:opacity-50 text-slate-200 text-xs font-medium"
               >
-                {t('replace_btn', 'Nahradit')}
+                {t('replace_btn', 'Replace')}
               </button>
 
               <button
@@ -680,7 +674,7 @@ export const TextEditorTool: React.FC = () => {
                 disabled={!searchQuery}
                 className="px-2.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-medium shadow"
               >
-                {t('replace_all_btn', 'Nahradit vše')}
+                {t('replace_all_btn', 'Replace all')}
               </button>
             </div>
           </div>
@@ -707,7 +701,7 @@ export const TextEditorTool: React.FC = () => {
               value={content}
               onChange={e => setContent(e.target.value)}
               onScroll={handleScroll}
-              placeholder={t('editor_start_typing', 'Začněte psát nebo vložte text...')}
+              placeholder={t('editor_start_typing', 'Start writing or paste text...')}
               spellCheck={false}
               style={{ fontSize: `${baseFontSize}px`, lineHeight: 1.6 }}
               className={`flex-1 p-4 bg-transparent text-slate-100 placeholder-slate-600 focus:outline-none resize-none min-h-[460px] ${
@@ -770,23 +764,23 @@ export const TextEditorTool: React.FC = () => {
         <div className="px-4 py-2.5 bg-slate-950/80 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3 text-[11px] text-slate-400">
           <div className="flex flex-wrap items-center gap-3">
             <span>
-              {t('stat_lines', 'Řádků')}: <strong className="text-white font-mono">{linesCount.toLocaleString()}</strong>
+              {t('stat_lines', 'Lines')}: <strong className="text-white font-mono">{linesCount.toLocaleString()}</strong>
             </span>
             <span>·</span>
             <span>
-              {t('stat_words', 'Slov')}: <strong className="text-white font-mono">{wordsCount.toLocaleString()}</strong>
+              {t('stat_words', 'Words')}: <strong className="text-white font-mono">{wordsCount.toLocaleString()}</strong>
             </span>
             <span>·</span>
             <span>
-              {t('stat_chars', 'Znaků')}: <strong className="text-white font-mono">{charsCount.toLocaleString()}</strong>
+              {t('stat_chars', 'Characters')}: <strong className="text-white font-mono">{charsCount.toLocaleString()}</strong>
             </span>
             <span>·</span>
             <span>
-              {t('stat_size', 'Velikost')}: <strong className="text-white font-mono">{(bytesCount / 1024).toFixed(1)} KB</strong>
+              {t('stat_size', 'Size')}: <strong className="text-white font-mono">{(bytesCount / 1024).toFixed(1)} KB</strong>
             </span>
             <span className="hidden sm:inline">·</span>
             <span className="hidden sm:inline">
-              {t('stat_read_time', 'Čas čtení')}: ~{estimatedReadTime} min
+              {t('stat_read_time', 'Reading time')}: ~{estimatedReadTime} min
             </span>
           </div>
 
@@ -794,11 +788,11 @@ export const TextEditorTool: React.FC = () => {
             {savedNotification ? (
               <span className="text-emerald-400 flex items-center gap-1 font-medium animate-fade-in">
                 <CheckCircle2 className="w-3.5 h-3.5" />
-                {t('file_downloaded_success', 'Soubor úspěšně stažen!')}
+                {t('file_downloaded_success', 'File downloaded successfully!')}
               </span>
             ) : (
               <span className="text-slate-500 font-mono text-[10px]">
-                {t('auto_saved_local', 'Automaticky ukládáno do lokální paměti')}
+                {t('auto_saved_local', 'Auto-saved to local memory')}
               </span>
             )}
           </div>

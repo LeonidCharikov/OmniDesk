@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Download, Monitor, Check, X, Smartphone } from 'lucide-react';
+import { Download, Monitor, X, Smartphone } from 'lucide-react';
 import { usePWAInstall } from '../../hooks/usePWAInstall';
 import { useI18n } from '../../i18n/context';
 
@@ -26,11 +26,11 @@ export const PWAInstallButton: React.FC = () => {
       <button
         onClick={handleClick}
         className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-600/90 hover:bg-indigo-600 text-white text-xs font-semibold shadow-sm transition-all hover:scale-[1.02]"
-        title={t('install_app_title', 'Nainstalovat jako samostatnou počítačovou nebo mobilní aplikaci bez spouštění přes terminál')}
+        title={t('install_app_title', 'Install as a standalone desktop or mobile app without launching via terminal')}
       >
         <Download className="w-3.5 h-3.5" />
-        <span className="hidden sm:inline">{t('install_app', 'Instalovat aplikaci')}</span>
-        <span className="sm:hidden">{t('install', 'Instalovat')}</span>
+        <span className="hidden sm:inline">{t('install_app', 'Install App')}</span>
+        <span className="sm:hidden">{t('install', 'Install')}</span>
       </button>
 
       {showGuide && (
@@ -45,7 +45,7 @@ export const PWAInstallButton: React.FC = () => {
                   <Monitor className="w-5 h-5" />
                 </div>
                 <h3 className="text-base font-semibold text-white">
-                  {t('install_standalone_app', 'Instalace aplikace OmniDesk')}
+                  {t('install_standalone_app', 'Install OmniDesk App')}
                 </h3>
               </div>
               <button
@@ -58,31 +58,31 @@ export const PWAInstallButton: React.FC = () => {
 
             <div className="space-y-3 text-xs text-slate-300 leading-relaxed">
               <p>
-                {t('pwa_desc_text', 'OmniDesk je plně optimalizován pro běh jako samostatná aplikace bez nutnosti otevírat terminál nebo VS Code.')}
+                {t('pwa_desc_text', 'OmniDesk is fully optimized to run as a standalone application without needing to open a terminal or IDE.')}
               </p>
 
               {isIOS ? (
                 <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5">
                   <span className="font-semibold text-indigo-400 flex items-center gap-1.5">
                     <Smartphone className="w-4 h-4" />
-                    {t('ios_instructions_title', 'Postup na iPhone / iPad (Safari):')}
+                    {t('ios_instructions_title', 'Steps on iPhone / iPad (Safari):')}
                   </span>
                   <ol className="list-decimal list-inside space-y-1 text-slate-300 pl-1">
-                    <li>{t('ios_step_1', 'V dolní liště prohlížeče klepněte na tlačítko Sdílet (ikona čtverce se šipkou nahoru).')}</li>
-                    <li>{t('ios_step_2', 'V nabídce sjeďte níže a zvolte "Přidat na plochu".')}</li>
-                    <li>{t('ios_step_3', 'Klepněte na "Přidat" v pravém horním rohu.')}</li>
+                    <li>{t('ios_step_1', 'Tap the Share button (square icon with upward arrow) at the bottom bar.')}</li>
+                    <li>{t('ios_step_2', 'Scroll down in the menu and select "Add to Home Screen".')}</li>
+                    <li>{t('ios_step_3', 'Tap "Add" in the top-right corner.')}</li>
                   </ol>
                 </div>
               ) : (
                 <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5">
                   <span className="font-semibold text-indigo-400 flex items-center gap-1.5">
                     <Monitor className="w-4 h-4" />
-                    {t('desktop_instructions_title', 'Postup v prohlížeči (Chrome, Edge, Brave):')}
+                    {t('desktop_instructions_title', 'Steps in Browser (Chrome, Edge, Brave):')}
                   </span>
                   <ol className="list-decimal list-inside space-y-1 text-slate-300 pl-1">
-                    <li>{t('desktop_step_1', 'V adresním řádku prohlížeče vpravo klikněte na ikonu instalace (počítač se šipkou dolů).')}</li>
-                    <li>{t('desktop_step_2', 'Nebo otevřete nabídku tří teček (⋮) → Uložit a sdílet → "Instalovat OmniDesk".')}</li>
-                    <li>{t('desktop_step_3', 'Aplikace se otevře v samostatném okně bez lišt prohlížeče a přidá se do nabídky Start / Docku.')}</li>
+                    <li>{t('desktop_step_1', 'Click the Install icon on the right side of the browser address bar.')}</li>
+                    <li>{t('desktop_step_2', 'Or open the browser menu (⋮) → Save and share → "Install OmniDesk".')}</li>
+                    <li>{t('desktop_step_3', 'The app will open in a dedicated window without browser toolbars.')}</li>
                   </ol>
                 </div>
               )}
@@ -93,7 +93,7 @@ export const PWAInstallButton: React.FC = () => {
                 onClick={() => setShowGuide(false)}
                 className="w-full py-2 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold transition-colors"
               >
-                {t('close', 'Zavřít')}
+                {t('close', 'Close')}
               </button>
             </div>
           </div>

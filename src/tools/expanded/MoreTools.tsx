@@ -2,31 +2,20 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Download,
   FileUp,
-  Play,
   Plus,
   Trash2,
   Copy,
   ExternalLink,
-  MapPin,
-  Check,
   AlertCircle,
   Clock,
-  Tag,
-  KeyRound,
-  ShieldCheck,
   Lock,
   Unlock,
-  RotateCcw,
   Undo,
   Type,
   Square,
   ArrowUpRight,
   Pencil,
-  Sparkles,
   Table as TableIcon,
-  RefreshCw,
-  Search,
-  Code,
   Coins,
 } from 'lucide-react';
 import { saveBinaryWithDialog, saveTextWithDialog } from '../../services/fileSystemService';
@@ -76,38 +65,38 @@ function FilePicker({
 const Header = ({ title, desc }: { title: string; desc: string }) => {
   const { t, language } = useI18n();
   const translations: Record<string, [string, string]> = {
-    'Time tracker': ['time_tracker_title', 'Sledování času'],
-    'Expenses & budget': ['budget_tracker_title', 'Výdaje a rozpočet'],
-    'Investment calculator': ['investment_calculator_title', 'Investiční kalkulačka'],
-    'File hashing & encryption': ['file_crypto_title', 'Hashování a šifrování souborů'],
-    'JWT Decoder': ['jwt_decoder_title', 'Dekodér JWT'],
-    'XML formatter & validator': ['xml_formatter_title', 'Formátovač a validátor XML'],
-    'YAML formatter & validator': ['yaml_formatter_title', 'Formátovač a validátor YAML'],
-    'CSS / HTML / JavaScript minifier': ['minifier_title', 'Minifikátor CSS / HTML / JavaScriptu'],
-    'Markdown table generator': ['markdown_table_title', 'Generátor Markdown tabulek'],
-    'Regex builder': ['regex_builder_title', 'Generátor regulárních výrazů'],
-    'Image color picker': ['color_picker_title', 'Výběr barvy z obrázku'],
-    'Screenshot annotator': ['screenshot_annotator_title', 'Anotace snímků obrazovky'],
-    'Geographic & GPS Converter': ['geo_gps_title', 'Geografický a GPS převodník'],
-    'Periodic Finance Calculator': ['periodic_finance_title', 'Periodický finanční kalkulátor'],
-    'Binary & Hex Converter': ['binary_hex_title', 'Binární a hexadecimální převodník'],
+    'Expense Tracker & Budget': ['budget_tracker_title', 'Expense Tracker & Budget'],
+    'Investment Calculator': ['investment_calculator_title', 'Investment Calculator'],
+    'Invoice Generator': ['invoice_generator_title', 'Invoice Generator'],
+    'File Hashing & Encryption': ['file_crypto_title', 'File Hashing & Encryption'],
+    'JWT Decoder': ['jwt_decoder_title', 'JWT Decoder'],
+    'XML Formatter & Validator': ['xml_formatter_title', 'XML Formatter & Validator'],
+    'YAML Formatter & Validator': ['yaml_formatter_title', 'YAML Formatter & Validator'],
+    'CSS/HTML/JavaScript Minifier': ['minifier_title', 'CSS/HTML/JavaScript Minifier'],
+    'Markdown Table Generator': ['markdown_table_title', 'Markdown Table Generator'],
+    'Regex Builder': ['regex_builder_title', 'Regex Builder'],
+    'Image Color Picker': ['color_picker_title', 'Image Color Picker'],
+    'Screenshot Annotator': ['screenshot_annotator_title', 'Screenshot Annotator'],
+    'Geographic & GPS Converter': ['geo_gps_title', 'Geographic & GPS Converter'],
+    'Periodic Finance Calculator': ['periodic_finance_title', 'Periodic Finance Calculator'],
+    'Binary & Hex Converter': ['binary_hex_title', 'Binary & Hex Converter'],
   };
   const descriptions: Record<string, string> = {
-    'Time tracker': 'Sledujte čas více aktivit současně; data zůstávají v této relaci.',
-    'Expenses & budget': 'Přidávejte výdaje s kategoriemi a sledujte průběžný součet rozpočtu.',
-    'Investment calculator': 'Odhadněte budoucí hodnotu počáteční investice a pravidelných vkladů se složeným úročením.',
-    'File hashing & encryption': 'Vypočítejte SHA-256, SHA-1, SHA-512 nebo zašifrujte a dešifrujte text pomocí AES-GCM.',
-    'JWT Decoder': 'Lokálně dekódujte hlavičku a obsah JWT s validací expirace.',
-    'XML formatter & validator': 'Formátujte, minifikujte, validujte XML nebo jej převeďte do JSON.',
-    'YAML formatter & validator': 'Formátujte, validujte strukturu YAML a převádějte obousměrně do JSON.',
-    'CSS / HTML / JavaScript minifier': 'Minifikujte nebo zkrášlete (beautify) kód CSS, HTML, JS a JSON se statistikou úspory.',
-    'Markdown table generator': 'Vizuální tabulkový editor i převodník CSV do čistých Markdown tabulek.',
-    'Regex builder': 'Interaktivní sestavovač a tester regulárních výrazů s živým zvýrazněním shod.',
-    'Image color picker': 'Otevřete obrázek a kliknutím na přesný pixel zjistěte jeho HEX, RGB a HSL barvu.',
-    'Screenshot annotator': 'Kreslete rámečky, šipky, text a volnou rukou na snímky s exportem PNG.',
-    'Geographic & GPS Converter': 'Převeďte souřadnice mezi DD a DMS, spočítejte vzdálenost a zobrazte mapu.',
-    'Periodic Finance Calculator': 'Vypočítejte složené úročení z počátečního vkladu, pravidelných příspěvků a zvolené periody.',
-    'Binary & Hex Converter': 'Obousměrný převodník mezi textem, HEX, binárním kódem, decimálními bajty a Base64.',
+    'Expense Tracker & Budget': 'Record expense descriptions and amounts and see the running total for the current session.',
+    'Investment Calculator': 'Estimate compound growth from an initial deposit, monthly contributions, annual return, and time horizon.',
+    'Invoice Generator': 'Create an HTML invoice with supplier, customer, and line-item details.',
+    'File Hashing & Encryption': 'Calculate SHA-256, SHA-1, SHA-512 or encrypt/decrypt text and files with AES-GCM.',
+    'JWT Decoder': 'Decode JWT header and payload locally with expiration validation.',
+    'XML Formatter & Validator': 'Format, minify, validate XML or convert it to JSON locally.',
+    'YAML Formatter & Validator': 'Normalize YAML structure and convert seamlessly to JSON.',
+    'CSS/HTML/JavaScript Minifier': 'Minify or beautify CSS, HTML, JS, and JSON code with byte-savings statistics.',
+    'Markdown Table Generator': 'Visual table editor and CSV/TSV converter for clean Markdown tables.',
+    'Regex Builder': 'Interactive regular expression builder and tester with live match inspection.',
+    'Image Color Picker': 'Open an image, click a canvas pixel, and read its HEX, RGB, and HSL color.',
+    'Screenshot Annotator': 'Draw boxes, arrows, text, and freehand marks on screenshots and export PNG.',
+    'Geographic & GPS Converter': 'Convert decimal latitude and longitude to DMS notation, compute distance, and view map links.',
+    'Periodic Finance Calculator': 'Calculate compound interest from initial lump sum, regular contributions, and period.',
+    'Binary & Hex Converter': 'Bidirectional converter between UTF-8 text, HEX, binary, decimal bytes, and Base64.',
   };
   const catalogId = findToolCatalogIdByTitle(title);
   const catalogTitle = catalogId ? getToolCatalogText(catalogId, 'title', language, title) : title;
@@ -123,93 +112,6 @@ const Header = ({ title, desc }: { title: string; desc: string }) => {
 
 const downloadText = (name: string, value: string, extension: string, dialogTitle: string) =>
   saveTextWithDialog(name, value, [{ name: `${extension.toUpperCase()} (*.${extension})`, extensions: [extension] }], dialogTitle);
-
-/* ─────────────────────────────────────────────────────────────
-   TIME TRACKER
-   ───────────────────────────────────────────────────────────── */
-export const TimeTrackerTool: React.FC = () => {
-  const { t } = useI18n();
-  const [items, setItems] = useState<{ id: number; name: string; seconds: number; running: boolean }[]>([]);
-
-  useEffect(() => {
-    const timer = window.setInterval(() => {
-      setItems(current => current.map(item => (item.running ? { ...item, seconds: item.seconds + 1 } : item)));
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const add = () =>
-    setItems([...items, { id: Date.now(), name: `${t('activity', 'Aktivita')} ${items.length + 1}`, seconds: 0, running: false }]);
-
-  return (
-    <div className="space-y-5">
-      <Header title={t('time_tracker', 'Sledování času')} desc={t('time_tracker_desc', 'Sledujte čas více aktivit současně; data zůstávají v této relaci.')} />
-      <button className={btn} onClick={add}>
-        <Plus className="inline w-4 h-4 mr-1" /> {t('add_activity', 'Přidat aktivitu')}
-      </button>
-      <div className="space-y-2">
-        {items.map(item => (
-          <div className={box + ' flex items-center gap-3'} key={item.id}>
-            <input
-              className={input}
-              value={item.name}
-              onChange={e => setItems(items.map(x => (x.id === item.id ? { ...x, name: e.target.value } : x)))}
-            />
-            <strong className="font-mono text-white text-base">
-              {new Date(item.seconds * 1000).toISOString().slice(11, 19)}
-            </strong>
-            <button
-              className={btn}
-              onClick={() => setItems(items.map(x => (x.id === item.id ? { ...x, running: !x.running } : x)))}
-            >
-              {item.running ? t('pause', 'Pauza') : t('start', 'Spustit')}
-            </button>
-            <button
-              className="text-red-400 p-1 hover:text-red-300"
-              aria-label={t('delete', 'Smazat')}
-              onClick={() => setItems(items.filter(x => x.id !== item.id))}
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-export const RecurringCalendarTool: React.FC = () => {
-  const { t } = useI18n();
-  const [title, setTitle] = useState(t('weekly_meeting', 'Týdenní schůzka'));
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
-  const [weeks, setWeeks] = useState(4);
-  const dates = useMemo(() => {
-    return Array.from({ length: weeks }, (_, i) => {
-      const d = new Date(`${date}T12:00:00`);
-      d.setDate(d.getDate() + i * 7);
-      return d.toLocaleDateString();
-    });
-  }, [date, weeks]);
-
-  return (
-    <div className="space-y-5">
-      <Header title={t('recurring_events', 'Opakované události')} desc={t('recurring_events_desc', 'Naplánujte týdenní událost a zobrazte její následující výskyty.')} />
-      <div className={box + ' grid md:grid-cols-3 gap-3'}>
-        <input className={input} value={title} onChange={e => setTitle(e.target.value)} />
-        <input className={input} type="date" value={date} onChange={e => setDate(e.target.value)} />
-        <input className={input} type="number" min="1" max="52" value={weeks} onChange={e => setWeeks(Number(e.target.value))} />
-      </div>
-      <div className="space-y-2">
-        {dates.map(day => (
-          <div className={box} key={day}>
-            <strong className="text-white">{title}</strong>
-            <span className="ml-3 text-slate-400">{day}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
 
 /* ─────────────────────────────────────────────────────────────
    EXPENSES & BUDGET
@@ -290,7 +192,7 @@ export const BudgetTool: React.FC = () => {
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Header title={t('expenses_budget', 'Výdaje a rozpočet')} desc={t('expenses_budget_desc', 'Přidávejte výdaje s kategoriemi a sledujte průběžný součet rozpočtu.')} />
+        <Header title="Expense Tracker & Budget" desc={t('expenses_budget_desc', 'Record expense descriptions and amounts and track the running budget total.')} />
         <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-xs">
           <Coins className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
           <span className="text-slate-400">{t('currency', 'Měna')}:</span>
@@ -416,8 +318,8 @@ export const InvestmentCalculatorTool: React.FC = () => {
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Header
-          title={t('investment_calculator', 'Investiční kalkulačka')}
-          desc={t('investment_calculator_desc', 'Odhadněte budoucí hodnotu počáteční investice a pravidelných vkladů se složeným úročením.')}
+          title="Investment Calculator"
+          desc={t('investment_calculator_desc', 'Estimate compound growth from an initial deposit, regular contributions, annual return, and time horizon.')}
         />
         <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-xs">
           <Coins className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
@@ -622,8 +524,8 @@ export const InvoiceGeneratorTool: React.FC = () => {
   return (
     <div className="space-y-5">
       <Header
-        title={t('invoice_generator_title', 'Generátor faktur')}
-        desc={t('invoice_generator_desc', 'Vytvořte daňový doklad s dodavatelem, odběratelem, položkami a exportujte jako tiskové HTML.')}
+        title="Invoice Generator"
+        desc={t('invoice_generator_desc', 'Create a tax invoice with supplier, customer, and line items and export printable HTML.')}
       />
       <div className={box + ' space-y-4'}>
         <h3 className="font-semibold text-white text-sm">{t('invoice_supplier', 'Dodavatel')}</h3>
@@ -750,10 +652,10 @@ export const FileCryptoTool: React.FC = () => {
         const str = new TextDecoder('utf-8', { fatal: true }).decode(buf);
         setText(str);
       } catch {
-        setText(t('binary_file_preview', '[Binární soubor: {name}, velikost: {size} KB]', { name: file.name, size: (file.size / 1024).toFixed(1) }));
+        setText(t('binary_file_preview', '[Binary file: {name}, size: {size} KB]', { name: file.name, size: (file.size / 1024).toFixed(1) }));
       }
     } else {
-      setText(t('binary_file_preview', '[Binární soubor: {name}, velikost: {size} KB]', { name: file.name, size: (file.size / 1024).toFixed(1) }));
+      setText(t('binary_file_preview', '[Binary file: {name}, size: {size} KB]', { name: file.name, size: (file.size / 1024).toFixed(1) }));
     }
   };
 
@@ -762,7 +664,7 @@ export const FileCryptoTool: React.FC = () => {
     try {
       const dataToHash = fileBytes || new TextEncoder().encode(text);
       if (!dataToHash || (dataToHash instanceof ArrayBuffer && dataToHash.byteLength === 0 && !text)) {
-        setCryptoError(t('err_enter_text_or_file', 'Zadejte text nebo načtěte soubor.'));
+        setCryptoError(t('err_enter_text_or_file', 'Enter text or load a file.'));
         return;
       }
       const digest = await crypto.subtle.digest(selectedAlgo, dataToHash);
@@ -771,14 +673,14 @@ export const FileCryptoTool: React.FC = () => {
         .join('');
       setHash(hashStr);
     } catch (e) {
-      setCryptoError(e instanceof Error ? e.message : t('err_hash_failed', 'Výpočet hashe selhal.'));
+      setCryptoError(e instanceof Error ? e.message : t('err_hash_failed', 'Hash calculation failed.'));
     }
   };
 
   const encrypt = async () => {
     setCryptoError('');
     if (!password) {
-      setCryptoError(t('enter_password', 'Zadejte šifrovací heslo.'));
+      setCryptoError(t('enter_password', 'Enter an encryption password.'));
       return;
     }
     try {
@@ -800,14 +702,14 @@ export const FileCryptoTool: React.FC = () => {
       all.set(new Uint8Array(data), salt.length + iv.length);
       setEncrypted(btoa(String.fromCharCode(...all)));
     } catch (e) {
-      setCryptoError(e instanceof Error ? e.message : t('err_encryption_failed', 'Šifrování selhalo.'));
+      setCryptoError(e instanceof Error ? e.message : t('err_encryption_failed', 'Encryption failed.'));
     }
   };
 
   const decrypt = async () => {
     setCryptoError('');
     if (!password) {
-      setCryptoError(t('enter_password', 'Zadejte šifrovací heslo.'));
+      setCryptoError(t('enter_password', 'Enter an encryption password.'));
       return;
     }
     try {
@@ -829,20 +731,20 @@ export const FileCryptoTool: React.FC = () => {
       const decryptedBuf = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ciphertext);
       setDecrypted(new TextDecoder().decode(decryptedBuf));
     } catch {
-      setCryptoError(t('decrypt_failed', 'Dešifrování selhalo: Neplatné heslo nebo poškozená data.'));
+      setCryptoError(t('decrypt_failed', 'Decryption failed: invalid key, IV, or ciphertext.'));
     }
   };
 
   return (
     <div className="space-y-5">
       <Header
-        title={t('file_hashing_encryption', 'Hashování a šifrování souborů')}
-        desc={t('file_hashing_encryption_desc', 'Vypočítejte SHA-256, SHA-1, SHA-512 nebo zašifrujte a dešifrujte text pomocí AES-GCM.')}
+        title="File Hashing & Encryption"
+        desc={t('file_hashing_encryption_desc', 'Compute SHA-256, SHA-1, SHA-512 or encrypt/decrypt text and files with AES-GCM.')}
       />
       <div className={box + ' space-y-4'}>
         <FilePicker
           id="file-crypto-input"
-          label={t('choose_file', 'Vybrat soubor')}
+          label={t('choose_file', 'Choose file')}
           fileName={fileName || undefined}
           onChange={e => {
             const file = e.target.files?.[0];
@@ -857,47 +759,47 @@ export const FileCryptoTool: React.FC = () => {
             setText(e.target.value);
             setFileBytes(null);
           }}
-          placeholder={t('text_or_file_content', 'Zadejte text nebo načtěte libovolný soubor…')}
+          placeholder={t('text_or_file_content', 'Enter text or load any file…')}
         />
 
         {/* Algorithm & password section */}
         <div className="grid md:grid-cols-2 gap-3 items-end">
           <div>
-            <label className="text-xs text-slate-400 block mb-1">{t('checksum_algo_label', 'Algoritmus kontrolního součtu:')}</label>
+            <label className="text-xs text-slate-400 block mb-1">{t('checksum_algo_label', 'Checksum Algorithm:')}</label>
             <div className="flex gap-2">
               <select
                 className={input}
                 value={selectedAlgo}
                 onChange={e => setSelectedAlgo(e.target.value as typeof selectedAlgo)}
               >
-                <option value="SHA-256">SHA-256 ({t('recommended', 'Doporučeno')})</option>
-                <option value="SHA-512">SHA-512 ({t('max_security', 'Maximální bezpečnost')})</option>
+                <option value="SHA-256">SHA-256 ({t('recommended', 'Recommended')})</option>
+                <option value="SHA-512">SHA-512 ({t('max_security', 'Maximum security')})</option>
                 <option value="SHA-384">SHA-384</option>
                 <option value="SHA-1">SHA-1 ({t('legacy', 'Legacy')})</option>
               </select>
               <button className={btn} onClick={calculateHash}>
-                {t('compute_algo', 'Spočítat {algo}', { algo: selectedAlgo })}
+                {t('compute_algo', 'Compute {algo}', { algo: selectedAlgo })}
               </button>
             </div>
           </div>
 
           <div>
-            <label className="text-xs text-slate-400 block mb-1">{t('aes_password_label', 'Heslo pro AES-GCM šifrování:')}</label>
+            <label className="text-xs text-slate-400 block mb-1">{t('aes_password_label', 'Password for AES-GCM Encryption:')}</label>
             <div className="flex gap-2">
               <input
                 className={input}
                 type="password"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                placeholder={t('enter_secret_password', 'Zadejte tajné heslo…')}
+                placeholder={t('enter_secret_password', 'Enter secret password…')}
               />
               <button className={btn} onClick={encrypt}>
                 <Lock className="w-3.5 h-3.5 inline mr-1" />
-                {t('encrypt', 'Zašifrovat')}
+                {t('encrypt', 'Encrypt')}
               </button>
               <button className={secondary} onClick={decrypt} disabled={!encrypted}>
                 <Unlock className="w-3.5 h-3.5 inline mr-1" />
-                {t('decrypt', 'Dešifrovat')}
+                {t('decrypt', 'Decrypt')}
               </button>
             </div>
           </div>
@@ -915,7 +817,7 @@ export const FileCryptoTool: React.FC = () => {
             <div className="flex justify-between items-center text-xs">
               <span className="text-slate-400">{selectedAlgo} {t('hash_label', 'Hash:')}</span>
               <button className="text-indigo-400 hover:text-indigo-300" onClick={() => navigator.clipboard.writeText(hash)}>
-                <Copy className="w-3 h-3 inline mr-1" /> {t('copy_hash', 'Kopírovat hash')}
+                <Copy className="w-3 h-3 inline mr-1" /> {t('copy_hash', 'Copy hash')}
               </button>
             </div>
             <pre className={box + ' break-all text-emerald-400 font-mono text-xs'}>{hash}</pre>
@@ -925,9 +827,9 @@ export const FileCryptoTool: React.FC = () => {
         {encrypted && (
           <div className="space-y-1">
             <div className="flex justify-between items-center text-xs">
-              <span className="text-slate-400">{t('ciphertext_label', 'Zašifrovaný text (Base64 AES-GCM 256-bit):')}</span>
+              <span className="text-slate-400">{t('ciphertext_label', 'Ciphertext (Base64 AES-GCM 256-bit):')}</span>
               <button className="text-amber-400 hover:text-amber-300" onClick={() => navigator.clipboard.writeText(encrypted)}>
-                <Copy className="w-3 h-3 inline mr-1" /> {t('copy_ciphertext', 'Kopírovat ciphertext')}
+                <Copy className="w-3 h-3 inline mr-1" /> {t('copy_ciphertext', 'Copy ciphertext')}
               </button>
             </div>
             <pre className={box + ' break-all text-amber-300 font-mono text-xs max-h-40 overflow-auto'}>{encrypted}</pre>
@@ -937,9 +839,9 @@ export const FileCryptoTool: React.FC = () => {
         {decrypted && (
           <div className="space-y-1">
             <div className="flex justify-between items-center text-xs">
-              <span className="text-slate-400">{t('decrypted_result_label', 'Dešifrovaný výsledek:')}</span>
+              <span className="text-slate-400">{t('decrypted_result_label', 'Decrypted Output:')}</span>
               <button className="text-emerald-400 hover:text-emerald-300" onClick={() => navigator.clipboard.writeText(decrypted)}>
-                <Copy className="w-3 h-3 inline mr-1" /> {t('copy', 'Kopírovat')}
+                <Copy className="w-3 h-3 inline mr-1" /> {t('copy', 'Copy')}
               </button>
             </div>
             <pre className={box + ' break-all text-emerald-300 font-mono text-xs max-h-40 overflow-auto'}>{decrypted}</pre>
@@ -984,7 +886,7 @@ export const JwtDecoderTool: React.FC = () => {
     try {
       const parts = token.trim().split('.');
       if (parts.length !== 3) {
-        throw new Error(t('jwt_invalid_format', 'JWT token musí mít přesně 3 části oddělené tečkou (hlavička.obsah.podpis).'));
+        throw new Error(t('jwt_invalid_format', 'A JWT token must have exactly 3 dot-separated parts (header.payload.signature).'));
       }
       const headerObj = JSON.parse(decodeBase64Url(parts[0]));
       const payloadObj = JSON.parse(decodeBase64Url(parts[1]));
@@ -998,7 +900,7 @@ export const JwtDecoderTool: React.FC = () => {
         setExpStatus({ isExpired, dateStr: expDate.toLocaleString() });
       }
     } catch (e) {
-      setErrorMsg(e instanceof Error ? e.message : t('invalid_jwt', 'Neplatný token.'));
+      setErrorMsg(e instanceof Error ? e.message : t('invalid_jwt', 'Invalid JWT token.'));
     }
   };
 
@@ -1008,16 +910,16 @@ export const JwtDecoderTool: React.FC = () => {
 
   return (
     <div className="space-y-5">
-      <Header title={t('jwt_decoder', 'Dekodér JWT')} desc={t('jwt_decoder_desc', 'Lokálně dekódujte hlavičku a obsah JWT s validací expirace.')} />
+      <Header title="JWT Decoder" desc={t('jwt_decoder_desc', 'Decode JWT header and payload locally with expiration validation.')} />
       <div className={box + ' space-y-3'}>
         <textarea
           className={input + ' min-h-24 font-mono text-xs break-all'}
           value={token}
           onChange={e => setToken(e.target.value)}
-          placeholder={t('jwt_placeholder', 'Vložte JWT token...')}
+          placeholder={t('jwt_placeholder', 'Paste a JWT token…')}
         />
         <button className={btn} onClick={decode}>
-          {t('decode', 'Dekódovat')}
+          {t('decode', 'Decode')}
         </button>
 
         {errorMsg && (
@@ -1038,7 +940,7 @@ export const JwtDecoderTool: React.FC = () => {
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4" />
               <span>
-                {expStatus.isExpired ? t('token_expired', 'Token je již expirován') : t('token_valid', 'Token je platný')}
+                {expStatus.isExpired ? t('token_expired', 'Token is expired') : t('token_valid', 'Token is valid')}
               </span>
             </div>
             <span className="font-mono">{expStatus.dateStr}</span>
@@ -1055,7 +957,7 @@ export const JwtDecoderTool: React.FC = () => {
                   onClick={() => navigator.clipboard.writeText(headerJson)}
                 >
                   <Copy className="inline w-3 h-3 mr-1" />
-                  {t('copy', 'Kopírovat')}
+                  {t('copy', 'Copy')}
                 </button>
               )}
             </div>
@@ -1066,14 +968,14 @@ export const JwtDecoderTool: React.FC = () => {
 
           <div className="space-y-1">
             <div className="flex justify-between items-center">
-              <span className="text-xs font-semibold text-purple-400">{t('jwt_payload_title', 'PAYLOAD: Data')}</span>
+              <span className="text-xs font-semibold text-purple-400">{t('jwt_payload_title', 'PAYLOAD: Claims & Data')}</span>
               {payloadJson && (
                 <button
                   className="text-xs text-indigo-400 hover:text-indigo-300"
                   onClick={() => navigator.clipboard.writeText(payloadJson)}
                 >
                   <Copy className="inline w-3 h-3 mr-1" />
-                  {t('copy', 'Kopírovat')}
+                  {t('copy', 'Copy')}
                 </button>
               )}
             </div>
@@ -1183,11 +1085,11 @@ export const XmlFormatterTool: React.FC = () => {
       const doc = new DOMParser().parseFromString(value, 'application/xml');
       const parseError = doc.querySelector('parsererror');
       if (parseError) {
-        throw new Error(parseError.textContent || t('xml_syntax_error', 'Chyba syntaxe XML.'));
+        throw new Error(parseError.textContent || t('xml_syntax_error', 'XML syntax error.'));
       }
       setResult(prettifyXml(value, 2));
     } catch (e) {
-      setErrorMsg(e instanceof Error ? e.message : t('invalid_xml', 'Neplatné XML.'));
+      setErrorMsg(e instanceof Error ? e.message : t('invalid_xml', 'Invalid XML.'));
     }
   };
 
@@ -1195,10 +1097,10 @@ export const XmlFormatterTool: React.FC = () => {
     setErrorMsg('');
     try {
       const doc = new DOMParser().parseFromString(value, 'application/xml');
-      if (doc.querySelector('parsererror')) throw new Error(t('invalid_xml', 'Neplatné XML.'));
+      if (doc.querySelector('parsererror')) throw new Error(t('invalid_xml', 'Invalid XML.'));
       setResult(value.replace(/>\s+</g, '><').trim());
     } catch (e) {
-      setErrorMsg(e instanceof Error ? e.message : t('err_minify', 'Chyba při minifikaci.'));
+      setErrorMsg(e instanceof Error ? e.message : t('err_minify', 'Minification error.'));
     }
   };
 
@@ -1206,30 +1108,30 @@ export const XmlFormatterTool: React.FC = () => {
     setErrorMsg('');
     try {
       const doc = new DOMParser().parseFromString(value, 'application/xml');
-      if (doc.querySelector('parsererror')) throw new Error(t('invalid_xml', 'Neplatné XML.'));
+      if (doc.querySelector('parsererror')) throw new Error(t('invalid_xml', 'Invalid XML.'));
       const parsed = xmlToJsonHelper(doc.documentElement);
       setResult(JSON.stringify({ [doc.documentElement.nodeName]: parsed }, null, 2));
     } catch (e) {
-      setErrorMsg(e instanceof Error ? e.message : t('err_json_convert', 'Převod do JSON selhal.'));
+      setErrorMsg(e instanceof Error ? e.message : t('err_json_convert', 'Conversion to JSON failed.'));
     }
   };
 
   return (
     <div className="space-y-5">
       <Header
-        title={t('xml_formatter_title', 'XML formatter & validator')}
-        desc={t('xml_formatter_desc', 'Formátujte, minifikujte, validujte XML nebo jej převeďte do JSON.')}
+        title="XML Formatter & Validator"
+        desc={t('xml_formatter_desc', 'Format, minify, validate XML or convert it to JSON locally.')}
       />
       <div className={box + ' space-y-3'}>
         <div className="flex flex-wrap gap-2">
           <button className={btn} onClick={formatXml}>
-            {t('prettify_xml', 'Zformátovat (Prettify)')}
+            {t('prettify_xml', 'Format (Prettify)')}
           </button>
           <button className={secondary} onClick={minifyXml}>
-            {t('minify', 'Minifikovat')}
+            {t('minify', 'Minify')}
           </button>
           <button className={secondary} onClick={convertToJson}>
-            {t('convert_xml_to_json', 'Převést XML → JSON')}
+            {t('convert_xml_to_json', 'Convert XML → JSON')}
           </button>
         </div>
 
@@ -1238,7 +1140,7 @@ export const XmlFormatterTool: React.FC = () => {
             className={input + ' min-h-64 font-mono text-xs leading-relaxed'}
             value={value}
             onChange={e => setValue(e.target.value)}
-            placeholder={t('insert_xml_placeholder', 'Zde vložte XML…')}
+            placeholder={t('insert_xml_placeholder', 'Paste XML here…')}
           />
           <div className="space-y-2">
             {errorMsg ? (
@@ -1248,21 +1150,21 @@ export const XmlFormatterTool: React.FC = () => {
               </div>
             ) : (
               <pre className={panel + ' min-h-64 max-h-96 overflow-auto font-mono text-xs text-slate-200'}>
-                {result || t('result_placeholder', 'Výsledek se zobrazí zde…')}
+                {result || t('result_placeholder', 'Output will appear here…')}
               </pre>
             )}
             {result && (
               <div className="flex gap-2">
                 <button className={secondary} onClick={() => navigator.clipboard.writeText(result)}>
                   <Copy className="w-3.5 h-3.5 inline mr-1" />
-                  {t('copy', 'Kopírovat')}
+                  {t('copy', 'Copy')}
                 </button>
                 <button
                   className={secondary}
-                  onClick={() => downloadText('data.xml', result, 'xml', t('save_xml', 'Uložit XML'))}
+                  onClick={() => downloadText('data.xml', result, 'xml', t('save_xml', 'Save XML'))}
                 >
                   <Download className="w-3.5 h-3.5 inline mr-1" />
-                  {t('download_xml', 'Stáhnout XML')}
+                  {t('download_xml', 'Download XML')}
                 </button>
               </div>
             )}
@@ -1350,7 +1252,7 @@ export const YamlFormatterTool: React.FC = () => {
       const parsed = simpleYamlToJson(value);
       setResult(jsonToYaml(parsed));
     } catch (e) {
-      setErrorMsg(e instanceof Error ? e.message : t('invalid_yaml', 'Neplatný YAML.'));
+      setErrorMsg(e instanceof Error ? e.message : t('invalid_yaml', 'Invalid YAML.'));
     }
   };
 
@@ -1360,20 +1262,20 @@ export const YamlFormatterTool: React.FC = () => {
       const parsed = simpleYamlToJson(value);
       setResult(JSON.stringify(parsed, null, 2));
     } catch (e) {
-      setErrorMsg(e instanceof Error ? e.message : t('err_json_convert', 'Převod do JSON selhal.'));
+      setErrorMsg(e instanceof Error ? e.message : t('err_json_convert', 'Conversion to JSON failed.'));
     }
   };
 
   return (
     <div className="space-y-5">
       <Header
-        title={t('yaml_formatter_title', 'YAML formatter & validator')}
-        desc={t('yaml_formatter_desc', 'Formátujte, validujte strukturu YAML a převádějte obousměrně do JSON.')}
+        title="YAML Formatter & Validator"
+        desc={t('yaml_formatter_desc', 'Normalize YAML structure and convert seamlessly to JSON.')}
       />
       <div className={box + ' space-y-3'}>
         <div className="flex flex-wrap gap-2">
           <button className={btn} onClick={formatYaml}>
-            {t('normalize_yaml', 'Normalizovat YAML')}
+            {t('normalize_yaml', 'Normalize YAML')}
           </button>
           <button className={secondary} onClick={convertToJson}>
             {t('yaml_to_json', 'YAML → JSON')}
@@ -1385,7 +1287,7 @@ export const YamlFormatterTool: React.FC = () => {
             className={input + ' min-h-64 font-mono text-xs leading-relaxed'}
             value={value}
             onChange={e => setValue(e.target.value)}
-            placeholder={t('insert_yaml_placeholder', 'Zde vložte YAML…')}
+            placeholder={t('insert_yaml_placeholder', 'Paste YAML here…')}
           />
           <div className="space-y-2">
             {errorMsg ? (
@@ -1395,13 +1297,13 @@ export const YamlFormatterTool: React.FC = () => {
               </div>
             ) : (
               <pre className={panel + ' min-h-64 max-h-96 overflow-auto font-mono text-xs text-slate-200'}>
-                {result || t('result_placeholder', 'Výsledek se zobrazí zde…')}
+                {result || t('result_placeholder', 'Output will appear here…')}
               </pre>
             )}
             {result && (
               <button className={secondary} onClick={() => navigator.clipboard.writeText(result)}>
                 <Copy className="w-3.5 h-3.5 inline mr-1" />
-                {t('copy_result', 'Kopírovat výsledek')}
+                {t('copy_result', 'Copy result')}
               </button>
             )}
           </div>
@@ -1467,7 +1369,7 @@ export const MinifierTool: React.FC = () => {
       try {
         setResult(JSON.stringify(JSON.parse(value), null, 2));
       } catch {
-        setResult(t('err_invalid_json', 'Chyba: Neplatný JSON.'));
+        setResult(t('err_invalid_json', 'Error: Invalid JSON.'));
       }
     } else if (kind === 'css') {
       let formatted = '';
@@ -1495,8 +1397,8 @@ export const MinifierTool: React.FC = () => {
   return (
     <div className="space-y-5">
       <Header
-        title={t('minifier_title', 'CSS / HTML / JavaScript minifier')}
-        desc={t('minifier_desc', 'Minifikujte nebo zkrášlete (beautify) kód CSS, HTML, JS a JSON se statistikou úspory.')}
+        title="CSS/HTML/JavaScript Minifier"
+        desc={t('minifier_desc', 'Minify or beautify CSS, HTML, JS, and JSON code with byte-savings statistics.')}
       />
       <div className={box + ' space-y-3'}>
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -1512,16 +1414,16 @@ export const MinifierTool: React.FC = () => {
               <option value="json">JSON</option>
             </select>
             <button className={btn} onClick={minify}>
-              {t('minify', 'Minifikovat')}
+              {t('minify', 'Minify')}
             </button>
             <button className={secondary} onClick={beautify}>
-              {t('beautify', 'Zkrášlit (Beautify)')}
+              {t('beautify', 'Beautify')}
             </button>
           </div>
 
           {origSize > 0 && minSize > 0 && (
             <div className="text-xs font-mono text-slate-300">
-              {t('minifier_savings', 'Původní: {orig} B → Cíl: {min} B (Úspora {saved} B / {percent}%)', {
+              {t('minifier_savings', 'Original: {orig} B → Output: {min} B (Saved {saved} B / {percent}%)', {
                 orig: origSize,
                 min: minSize,
                 saved: origSize - minSize,
@@ -1536,19 +1438,19 @@ export const MinifierTool: React.FC = () => {
             className={input + ' min-h-64 font-mono text-xs leading-relaxed'}
             value={value}
             onChange={e => setValue(e.target.value)}
-            placeholder={t('insert_code_placeholder', 'Zde vložte kód…')}
+            placeholder={t('insert_code_placeholder', 'Paste code here…')}
           />
           <div className="space-y-2">
             <textarea
               className={input + ' min-h-64 font-mono text-xs leading-relaxed bg-slate-950'}
               value={result}
               readOnly
-              placeholder={t('result_placeholder', 'Výsledek se zobrazí zde…')}
+              placeholder={t('result_placeholder', 'Output will appear here…')}
             />
             {result && (
               <button className={secondary} onClick={() => navigator.clipboard.writeText(result)}>
                 <Copy className="w-3.5 h-3.5 inline mr-1" />
-                {t('copy_result', 'Kopírovat výsledek')}
+                {t('copy_result', 'Copy result')}
               </button>
             )}
           </div>
@@ -1564,22 +1466,22 @@ export const MinifierTool: React.FC = () => {
 export const MarkdownTableTool: React.FC = () => {
   const { t } = useI18n();
   const [headers, setHeaders] = useState<string[]>(() => [
-    t('table_col_name', 'Název'),
-    t('table_col_category', 'Kategorie'),
-    t('table_col_price', 'Cena (Kč)'),
-    t('table_col_stock', 'Skladem'),
+    t('table_col_name', 'Name'),
+    t('table_col_category', 'Category'),
+    t('table_col_price', 'Price'),
+    t('table_col_stock', 'In Stock'),
   ]);
   const [alignments, setAlignments] = useState<('left' | 'center' | 'right')[]>(['left', 'left', 'right', 'center']);
   const [rows, setRows] = useState<string[][]>(() => [
-    [t('table_item_kb', 'Mechanická klávesnice'), 'Hardware', '2 490', t('yes', 'Ano')],
-    [t('table_item_mouse', 'Bezdrátová myš'), t('table_cat_acc', 'Příslušenství'), '990', t('yes', 'Ano')],
-    [t('table_item_pad', 'Podložka pod myš XXL'), t('table_cat_acc', 'Příslušenství'), '390', t('no', 'Ne')],
+    [t('table_item_kb', 'Mechanical Keyboard'), 'Hardware', '129', t('yes', 'Yes')],
+    [t('table_item_mouse', 'Wireless Mouse'), t('table_cat_acc', 'Accessories'), '49', t('yes', 'Yes')],
+    [t('table_item_pad', 'XXL Desk Mat'), t('table_cat_acc', 'Accessories'), '25', t('no', 'No')],
   ]);
   const [delimitText, setDelimitText] = useState('');
   const [mode, setMode] = useState<'grid' | 'paste'>('grid');
 
   const addColumn = () => {
-    setHeaders([...headers, `${t('column_label', 'Sloupec')} ${headers.length + 1}`]);
+    setHeaders([...headers, `${t('column_label', 'Column')} ${headers.length + 1}`]);
     setAlignments([...alignments, 'left']);
     setRows(rows.map(r => [...r, '']));
   };
@@ -1630,8 +1532,8 @@ export const MarkdownTableTool: React.FC = () => {
   return (
     <div className="space-y-5">
       <Header
-        title={t('markdown_table_title', 'Markdown table generator')}
-        desc={t('markdown_table_desc', 'Vizuální tabulkový editor i převodník CSV do čistých Markdown tabulek.')}
+        title="Markdown Table Generator"
+        desc={t('markdown_table_desc', 'Visual table editor and CSV/TSV converter for clean Markdown tables.')}
       />
       <div className={box + ' space-y-4'}>
         <div className="flex gap-2 border-b border-slate-800 pb-3">
@@ -1641,14 +1543,14 @@ export const MarkdownTableTool: React.FC = () => {
             onClick={() => setMode('grid')}
           >
             <TableIcon className="w-3.5 h-3.5 inline mr-1" />
-            {t('visual_table', 'Vizuální tabulka')}
+            {t('visual_table', 'Visual Table')}
           </button>
           <button
             type="button"
             className={mode === 'paste' ? btn : secondary}
             onClick={() => setMode('paste')}
           >
-            {t('paste_csv_tsv', 'Vložit CSV / TSV text')}
+            {t('paste_csv_tsv', 'Paste CSV / TSV Text')}
           </button>
         </div>
 
@@ -1658,20 +1560,20 @@ export const MarkdownTableTool: React.FC = () => {
               className={input + ' min-h-40 font-mono text-xs'}
               value={delimitText}
               onChange={e => setDelimitText(e.target.value)}
-              placeholder={t('csv_paste_placeholder', 'Vložte řádky oddělené středníkem (;), čárkou (,) nebo tabulátorem:\nJméno;Role;Lokalita\nAlice;Admin;Praha\nBob;Developer;Brno')}
+              placeholder={t('csv_paste_placeholder', 'Paste rows separated by semicolons (;), commas (,), or tabs:\nName;Role;City\nAlice;Admin;Prague\nBob;Developer;Brno')}
             />
             <button className={btn} onClick={parseDelimited}>
-              {t('load_create_table', 'Načíst a vytvořit tabulku')}
+              {t('load_create_table', 'Parse & Create Table')}
             </button>
           </div>
         ) : (
           <div className="space-y-3">
             <div className="flex flex-wrap gap-2">
               <button className={btn} onClick={addRow}>
-                <Plus className="w-3.5 h-3.5 inline mr-1" /> {t('add_row', 'Přidat řádek')}
+                <Plus className="w-3.5 h-3.5 inline mr-1" /> {t('add_row', 'Add row')}
               </button>
               <button className={secondary} onClick={addColumn}>
-                <Plus className="w-3.5 h-3.5 inline mr-1" /> {t('add_column', 'Přidat sloupec')}
+                <Plus className="w-3.5 h-3.5 inline mr-1" /> {t('add_column', 'Add column')}
               </button>
             </div>
 
@@ -1708,7 +1610,7 @@ export const MarkdownTableTool: React.FC = () => {
                             type="button"
                             className="text-slate-500 hover:text-rose-400 p-0.5"
                             onClick={() => removeColumn(cidx)}
-                            title={t('delete_column', 'Smazat sloupec')}
+                            title={t('delete_column', 'Delete column')}
                           >
                             ×
                           </button>
@@ -1740,7 +1642,7 @@ export const MarkdownTableTool: React.FC = () => {
                           type="button"
                           className="text-slate-500 hover:text-rose-400 p-1"
                           onClick={() => removeRow(ridx)}
-                          title={t('delete_row', 'Smazat řádek')}
+                          title={t('delete_row', 'Delete row')}
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -1755,11 +1657,11 @@ export const MarkdownTableTool: React.FC = () => {
 
         <div className="pt-2 border-t border-slate-800 space-y-2">
           <div className="flex justify-between items-center text-xs">
-            <span className="text-slate-300 font-semibold">{t('generated_markdown_code', 'Generovaný Markdown kód:')}</span>
+            <span className="text-slate-300 font-semibold">{t('generated_markdown_code', 'Generated Markdown Output:')}</span>
             <div className="flex gap-2">
               <button className={btn} onClick={() => navigator.clipboard.writeText(markdownOutput)}>
                 <Copy className="w-3.5 h-3.5 inline mr-1" />
-                {t('copy_markdown', 'Kopírovat Markdown')}
+                {t('copy_markdown', 'Copy Markdown')}
               </button>
             </div>
           </div>
@@ -1776,11 +1678,11 @@ export const MarkdownTableTool: React.FC = () => {
    REGEX BUILDER & TESTER (Interactive Tester, Presets, Token chips)
    ───────────────────────────────────────────────────────────── */
 const REGEX_PRESETS = [
-  { key: 'preset_email', name: 'Emailová adresa', pattern: '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$', flags: 'i' },
-  { key: 'preset_url', name: 'Webová URL adresa', pattern: 'https?:\\/\\/(?:www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b(?:[-a-zA-Z0-9()@:%_\\+.~#?&\\/=]*)', flags: 'gi' },
-  { key: 'preset_ipv4', name: 'IPv4 Adresa', pattern: '\\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\b', flags: 'g' },
-  { key: 'preset_date_ymd', name: 'Datum (YYYY-MM-DD)', pattern: '\\b\\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12][0-9]|3[01])\\b', flags: 'g' },
-  { key: 'preset_hex_color', name: 'HEX Barva (#FFF nebo #FFFFFF)', pattern: '^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$', flags: 'i' },
+  { key: 'preset_email', name: 'Email Address', pattern: '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$', flags: 'i' },
+  { key: 'preset_url', name: 'Web URL', pattern: 'https?:\\/\\/(?:www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b(?:[-a-zA-Z0-9()@:%_\\+.~#?&\\/=]*)', flags: 'gi' },
+  { key: 'preset_ipv4', name: 'IPv4 Address', pattern: '\\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\b', flags: 'g' },
+  { key: 'preset_date_ymd', name: 'Date (YYYY-MM-DD)', pattern: '\\b\\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12][0-9]|3[01])\\b', flags: 'g' },
+  { key: 'preset_hex_color', name: 'HEX Color (#FFF / #FFFFFF)', pattern: '^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$', flags: 'i' },
   { key: 'preset_uuid_v4', name: 'UUID v4', pattern: '[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}', flags: 'gi' },
 ];
 
@@ -1789,7 +1691,7 @@ export const RegexBuilderTool: React.FC = () => {
   const [pattern, setPattern] = useState('[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}');
   const [flags, setFlags] = useState('g');
   const [testText, setTestText] = useState(() =>
-    t('regex_sample_test_text', 'Ahoj, kontaktujte nás na info@omnidesk.app nebo na podpora@firma.cz pro více informací.\nChybný email: user@domain')
+    t('regex_sample_test_text', 'Hello, contact us at info@omnidesk.app or support@company.com for more details.\nInvalid email: user@domain')
   );
 
   const testResults = useMemo(() => {
@@ -1809,7 +1711,7 @@ export const RegexBuilderTool: React.FC = () => {
       }
       return { matches, error: null };
     } catch (e) {
-      return { matches: [], error: e instanceof Error ? e.message : t('err_regex', 'Chyba v regulárním výrazu.') };
+      return { matches: [], error: e instanceof Error ? e.message : t('err_regex', 'Regular expression syntax error.') };
     }
   }, [pattern, flags, testText, t]);
 
@@ -1820,13 +1722,13 @@ export const RegexBuilderTool: React.FC = () => {
   return (
     <div className="space-y-5">
       <Header
-        title={t('regex_builder_title', 'Regex builder')}
-        desc={t('regex_builder_desc', 'Interaktivní sestavovač a tester regulárních výrazů s živým zvýrazněním shod.')}
+        title="Regex Builder"
+        desc={t('regex_builder_desc', 'Interactive regular expression builder and tester with live match inspection.')}
       />
       <div className={box + ' space-y-4'}>
         {/* Presets */}
         <div>
-          <span className="text-xs text-slate-400 block mb-1.5">{t('preset_patterns_library', 'Předpřipravené knihovny vzorů:')}</span>
+          <span className="text-xs text-slate-400 block mb-1.5">{t('preset_patterns_library', 'Pattern Presets:')}</span>
           <div className="flex flex-wrap gap-1.5">
             {REGEX_PRESETS.map(p => (
               <button
@@ -1847,7 +1749,7 @@ export const RegexBuilderTool: React.FC = () => {
         {/* Pattern & Flags */}
         <div className="grid sm:grid-cols-[1fr_120px] gap-2 items-end">
           <label className="text-xs text-slate-400">
-            {t('regex_pattern_label', 'Regulární výraz (Pattern):')}
+            {t('regex_pattern_label', 'Regular Expression (Pattern):')}
             <div className="flex items-center gap-1 bg-slate-950 border border-slate-800 rounded-lg px-2 mt-1">
               <span className="text-slate-500 font-mono text-sm">/</span>
               <input
@@ -1859,7 +1761,7 @@ export const RegexBuilderTool: React.FC = () => {
             </div>
           </label>
           <label className="text-xs text-slate-400">
-            {t('regex_flags_label', 'Příznaky (Flags):')}
+            {t('regex_flags_label', 'Flags:')}
             <input
               className={input + ' mt-1 font-mono text-sm'}
               value={flags}
@@ -1871,15 +1773,15 @@ export const RegexBuilderTool: React.FC = () => {
 
         {/* Quick token chips */}
         <div className="flex flex-wrap gap-1 items-center text-xs text-slate-400">
-          <span className="text-[11px] mr-1">{t('quick_symbols', 'Rychlé symboly:')}</span>
+          <span className="text-[11px] mr-1">{t('quick_symbols', 'Quick Tokens:')}</span>
           {[
-            { label: `${t('regex_sym_digits', 'Čísla')} (\\d+)`, val: '\\d+' },
-            { label: `${t('regex_sym_words', 'Písmena')} (\\w+)`, val: '\\w+' },
-            { label: `${t('regex_sym_spaces', 'Mezera')} (\\s)`, val: '\\s' },
-            { label: `${t('regex_sym_start', 'Začátek')} (^)`, val: '^' },
-            { label: `${t('regex_sym_end', 'Konec')} ($)`, val: '$' },
-            { label: `${t('regex_sym_boundary', 'Hranice')} (\\b)`, val: '\\b' },
-            { label: `${t('regex_sym_group', 'Skupina')} (...)`, val: '()' },
+            { label: `${t('regex_sym_digits', 'Digits')} (\\d+)`, val: '\\d+' },
+            { label: `${t('regex_sym_words', 'Word chars')} (\\w+)`, val: '\\w+' },
+            { label: `${t('regex_sym_spaces', 'Whitespace')} (\\s)`, val: '\\s' },
+            { label: `${t('regex_sym_start', 'Start')} (^)`, val: '^' },
+            { label: `${t('regex_sym_end', 'End')} ($)`, val: '$' },
+            { label: `${t('regex_sym_boundary', 'Boundary')} (\\b)`, val: '\\b' },
+            { label: `${t('regex_sym_group', 'Group')} (...)`, val: '()' },
           ].map(token => (
             <button
               key={token.val}
@@ -1902,9 +1804,9 @@ export const RegexBuilderTool: React.FC = () => {
         {/* Test Text */}
         <div className="space-y-1">
           <div className="flex justify-between items-center text-xs">
-            <span className="text-slate-300 font-medium">{t('test_text_verify_matches', 'Testovací text pro ověření shod:')}</span>
+            <span className="text-slate-300 font-medium">{t('test_text_verify_matches', 'Test text to match against:')}</span>
             <span className="text-emerald-400 font-mono font-semibold">
-              {t('matches_found', 'Nalezeno {count} shod', { count: testResults.matches.length })}
+              {t('matches_found', 'Found {count} matches', { count: testResults.matches.length })}
             </span>
           </div>
           <textarea
@@ -1917,14 +1819,14 @@ export const RegexBuilderTool: React.FC = () => {
         {/* Matches list */}
         {testResults.matches.length > 0 && (
           <div className="p-3 bg-slate-950 rounded-lg border border-slate-800 space-y-1.5">
-            <span className="text-xs text-slate-400 block font-medium">{t('captured_matches_list', 'Seznam zachycených shod:')}</span>
+            <span className="text-xs text-slate-400 block font-medium">{t('captured_matches_list', 'Captured Matches:')}</span>
             <div className="flex flex-wrap gap-2">
               {testResults.matches.map((m, idx) => (
                 <span
                   key={idx}
                   className="px-2 py-1 rounded bg-indigo-950/50 border border-indigo-700/50 text-indigo-200 font-mono text-xs"
                 >
-                  #{idx + 1}: &ldquo;{m.text}&rdquo; ({t('position_label', 'pozice')} {m.index})
+                  #{idx + 1}: &ldquo;{m.text}&rdquo; ({t('position_label', 'index')} {m.index})
                 </span>
               ))}
             </div>
@@ -2019,8 +1921,8 @@ export const ColorPickerTool: React.FC = () => {
   return (
     <div className="space-y-5">
       <Header
-        title={t('image_color_picker_title', 'Image color picker')}
-        desc={t('color_picker_desc', 'Otevřete obrázek a kliknutím na přesný pixel zjistěte jeho HEX, RGB a HSL barvu.')}
+        title="Image Color Picker"
+        desc={t('color_picker_desc', 'Open an image and click any pixel to read its HEX, RGB, and HSL color.')}
       />
       <div className={box + ' space-y-4'}>
         <FilePicker
@@ -2310,8 +2212,8 @@ export const ScreenshotAnnotatorTool: React.FC = () => {
   return (
     <div className="space-y-5">
       <Header
-        title={t('screenshot_annotator_title', 'Screenshot annotator')}
-        desc={t('screenshot_desc', 'Kreslete rámečky, šipky, text a volnou rukou na snímky s exportem PNG.')}
+        title="Screenshot Annotator"
+        desc={t('screenshot_desc', 'Draw boxes, arrows, text, and freehand marks on screenshots and export PNG.')}
       />
       <div className={box + ' space-y-4'}>
         <FilePicker
@@ -2418,46 +2320,6 @@ export const ScreenshotAnnotatorTool: React.FC = () => {
   );
 };
 
-export const WorkdayCalculatorTool: React.FC = () => {
-  const { t, language } = useI18n();
-  const [start, setStart] = useState(new Date().toISOString().slice(0, 10));
-  const [days, setDays] = useState(20);
-  const [result, setResult] = useState('');
-
-  const calculate = () => {
-    const date = new Date(`${start}T12:00:00`);
-    let left = days;
-    while (left > 0) {
-      date.setDate(date.getDate() + 1);
-      if (date.getDay() !== 0 && date.getDay() !== 6) left--;
-    }
-    setResult(date.toLocaleDateString(language));
-  };
-
-  return (
-    <div className="space-y-5">
-      <Header
-        title={t('workday_calculator_title', 'Pracovní dny a dovolená')}
-        desc={t('workday_calculator_desc', 'Přičtěte pracovní dny k datu a ignorujte víkendy.')}
-      />
-      <div className={box + ' space-y-3'}>
-        <div className="grid sm:grid-cols-2 gap-3">
-          <input className={input} type="date" value={start} onChange={e => setStart(e.target.value)} />
-          <input className={input} type="number" value={days} onChange={e => setDays(Number(e.target.value))} />
-        </div>
-        <button className={btn} onClick={calculate}>
-          {t('calculate', 'Vypočítat')}
-        </button>
-        {result && (
-          <div className={box + ' text-emerald-400 font-semibold'}>
-            {t('result_date', 'Cílové datum')}: {result}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
 /* ─────────────────────────────────────────────────────────────
    GEOGRAPHIC & GPS CONVERTER
    ───────────────────────────────────────────────────────────── */
@@ -2501,8 +2363,8 @@ export const GeoGpsTool: React.FC = () => {
   return (
     <div className="space-y-5">
       <Header
-        title={t('geo_gps_title', 'Geografické výpočty & GPS')}
-        desc={t('geo_gps_desc', 'Převeďte souřadnice mezi DD a DMS, spočítejte vzdálenost a zobrazte mapu.')}
+        title="Geographic & GPS Converter"
+        desc={t('geo_gps_desc', 'Convert coordinates between DD and DMS, calculate distance, and open map links.')}
       />
       <div className={box + ' space-y-4'}>
         <h3 className="font-semibold text-white text-sm">{t('point_1_coords', 'Bod 1 (Základní souřadnice)')}</h3>
@@ -2595,10 +2457,10 @@ export const PeriodicFinanceTool: React.FC = () => {
     <div className="space-y-5">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <Header
-          title={t('periodic_finance', 'Periodický finanční kalkulátor')}
+          title="Periodic Finance Calculator"
           desc={t(
             'periodic_finance_desc',
-            'Vypočítejte složené úročení z počátečního vkladu, pravidelných příspěvků a zvolené periody.'
+            'Calculate compound interest from an initial deposit, regular contributions, and selected compounding frequency.'
           )}
         />
         <div className="flex items-center gap-2 self-start sm:self-auto bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 shrink-0">
@@ -2759,15 +2621,15 @@ export const BinaryHexTool: React.FC = () => {
   return (
     <div className="space-y-5">
       <Header
-        title={t('binary_hex_title', 'Binární & hexadecimální převodník')}
-        desc={t('binary_hex_desc', 'Obousměrný převodník mezi textem, HEX, binárním kódem, decimálními bajty a Base64.')}
+        title="Binary & Hex Converter"
+        desc={t('binary_hex_desc', 'Bidirectional converter between UTF-8 text, HEX, binary, decimal bytes, and Base64.')}
       />
       <div className={box + ' space-y-4'}>
         <div className="space-y-1">
           <div className="flex justify-between items-center text-xs">
             <span className="text-slate-300 font-semibold">{t('bin_hex_section_text', '1. Text (UTF-8):')}</span>
             <button className="text-indigo-400 hover:text-indigo-300" onClick={() => navigator.clipboard.writeText(text)}>
-              <Copy className="w-3 h-3 inline mr-1" /> {t('copy', 'Kopírovat')}
+              <Copy className="w-3 h-3 inline mr-1" /> {t('copy', 'Copy')}
             </button>
           </div>
           <textarea className={input + ' min-h-20 font-mono text-xs'} value={text} onChange={e => updateFromText(e.target.value)} />
@@ -2776,9 +2638,9 @@ export const BinaryHexTool: React.FC = () => {
         <div className="grid md:grid-cols-2 gap-4">
           <div className="space-y-1">
             <div className="flex justify-between items-center text-xs">
-              <span className="text-slate-300 font-semibold">{t('bin_hex_section_hex', '2. Šestnáctková soustava (HEX):')}</span>
+              <span className="text-slate-300 font-semibold">{t('bin_hex_section_hex', '2. Hexadecimal (HEX):')}</span>
               <button className="text-indigo-400 hover:text-indigo-300" onClick={() => navigator.clipboard.writeText(hex)}>
-                <Copy className="w-3 h-3 inline mr-1" /> {t('copy', 'Kopírovat')}
+                <Copy className="w-3 h-3 inline mr-1" /> {t('copy', 'Copy')}
               </button>
             </div>
             <textarea className={input + ' min-h-20 font-mono text-xs text-amber-300'} value={hex} onChange={e => updateFromHex(e.target.value)} />
@@ -2786,9 +2648,9 @@ export const BinaryHexTool: React.FC = () => {
 
           <div className="space-y-1">
             <div className="flex justify-between items-center text-xs">
-              <span className="text-slate-300 font-semibold">{t('bin_hex_section_bin', '3. Binární soustava (BIN):')}</span>
+              <span className="text-slate-300 font-semibold">{t('bin_hex_section_bin', '3. Binary (BIN):')}</span>
               <button className="text-indigo-400 hover:text-indigo-300" onClick={() => navigator.clipboard.writeText(binary)}>
-                <Copy className="w-3 h-3 inline mr-1" /> {t('copy', 'Kopírovat')}
+                <Copy className="w-3 h-3 inline mr-1" /> {t('copy', 'Copy')}
               </button>
             </div>
             <textarea className={input + ' min-h-20 font-mono text-xs text-emerald-300'} value={binary} onChange={e => updateFromBinary(e.target.value)} />
@@ -2798,9 +2660,9 @@ export const BinaryHexTool: React.FC = () => {
         <div className="grid md:grid-cols-2 gap-4">
           <div className="space-y-1">
             <div className="flex justify-between items-center text-xs">
-              <span className="text-slate-300 font-semibold">{t('bin_hex_section_ascii', '4. Decimální ASCII bajty (0-255):')}</span>
+              <span className="text-slate-300 font-semibold">{t('bin_hex_section_ascii', '4. Decimal Byte Values (0-255):')}</span>
               <button className="text-indigo-400 hover:text-indigo-300" onClick={() => navigator.clipboard.writeText(decimal)}>
-                <Copy className="w-3 h-3 inline mr-1" /> {t('copy', 'Kopírovat')}
+                <Copy className="w-3 h-3 inline mr-1" /> {t('copy', 'Copy')}
               </button>
             </div>
             <input className={input + ' font-mono text-xs text-sky-300'} value={decimal} readOnly />
@@ -2808,9 +2670,9 @@ export const BinaryHexTool: React.FC = () => {
 
           <div className="space-y-1">
             <div className="flex justify-between items-center text-xs">
-              <span className="text-slate-300 font-semibold">{t('bin_hex_section_base64', '5. Base64 kódování:')}</span>
+              <span className="text-slate-300 font-semibold">{t('bin_hex_section_base64', '5. Base64 Encoding:')}</span>
               <button className="text-indigo-400 hover:text-indigo-300" onClick={() => navigator.clipboard.writeText(base64)}>
-                <Copy className="w-3 h-3 inline mr-1" /> {t('copy', 'Kopírovat')}
+                <Copy className="w-3 h-3 inline mr-1" /> {t('copy', 'Copy')}
               </button>
             </div>
             <input className={input + ' font-mono text-xs text-purple-300'} value={base64} onChange={e => updateFromBase64(e.target.value)} />

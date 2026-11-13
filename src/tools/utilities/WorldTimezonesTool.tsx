@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useId } from 'react';
-import { Globe, Sun, Moon, Search, Clock, Sliders, RotateCcw } from 'lucide-react';
+import { Sun, Moon, Search, Sliders, RotateCcw } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
 
 interface CityTimezone {
+  cityKey: string;
   city: string;
-  country: string;
   zone: string;
   flag: string;
   region: 'europe' | 'americas' | 'asia' | 'pacific' | 'africa';
@@ -12,67 +12,41 @@ interface CityTimezone {
 
 const WORLD_CITIES: CityTimezone[] = [
   // Europe
-  { city: 'Praha', country: 'Česká republika', zone: 'Europe/Prague', flag: '🇨🇿', region: 'europe' },
-  { city: 'Bratislava', country: 'Slovensko', zone: 'Europe/Bratislava', flag: '🇸🇰', region: 'europe' },
-  { city: 'Londýn', country: 'Velká Británie', zone: 'Europe/London', flag: '🇬🇧', region: 'europe' },
-  { city: 'Berlín', country: 'Německo', zone: 'Europe/Berlin', flag: '🇩🇪', region: 'europe' },
-  { city: 'Paříž', country: 'Francie', zone: 'Europe/Paris', flag: '🇫🇷', region: 'europe' },
-  { city: 'Madrid', country: 'Španělsko', zone: 'Europe/Madrid', flag: '🇪🇸', region: 'europe' },
-  { city: 'Řím', country: 'Itálie', zone: 'Europe/Rome', flag: '🇮🇹', region: 'europe' },
-  { city: 'Varšava', country: 'Polsko', zone: 'Europe/Warsaw', flag: '🇵🇱', region: 'europe' },
-  { city: 'Vídeň', country: 'Rakousko', zone: 'Europe/Vienna', flag: '🇦🇹', region: 'europe' },
-  { city: 'Curych', country: 'Švýcarsko', zone: 'Europe/Zurich', flag: '🇨🇭', region: 'europe' },
-  { city: 'Kyjev', country: 'Ukrajina', zone: 'Europe/Kyiv', flag: '🇺🇦', region: 'europe' },
-  { city: 'Moskva', country: 'Rusko', zone: 'Europe/Moscow', flag: '🇷🇺', region: 'europe' },
+  { cityKey: 'city_prague', city: 'Prague', zone: 'Europe/Prague', flag: '🇨🇿', region: 'europe' },
+  { cityKey: 'city_bratislava', city: 'Bratislava', zone: 'Europe/Bratislava', flag: '🇸🇰', region: 'europe' },
+  { cityKey: 'city_london', city: 'London', zone: 'Europe/London', flag: '🇬🇧', region: 'europe' },
+  { cityKey: 'city_berlin', city: 'Berlin', zone: 'Europe/Berlin', flag: '🇩🇪', region: 'europe' },
+  { cityKey: 'city_paris', city: 'Paris', zone: 'Europe/Paris', flag: '🇫🇷', region: 'europe' },
+  { cityKey: 'city_madrid', city: 'Madrid', zone: 'Europe/Madrid', flag: '🇪🇸', region: 'europe' },
+  { cityKey: 'city_rome', city: 'Rome', zone: 'Europe/Rome', flag: '🇮🇹', region: 'europe' },
+  { cityKey: 'city_warsaw', city: 'Warsaw', zone: 'Europe/Warsaw', flag: '🇵🇱', region: 'europe' },
+  { cityKey: 'city_vienna', city: 'Vienna', zone: 'Europe/Vienna', flag: '🇦🇹', region: 'europe' },
+  { cityKey: 'city_zurich', city: 'Zurich', zone: 'Europe/Zurich', flag: '🇨🇭', region: 'europe' },
+  { cityKey: 'city_kyiv', city: 'Kyiv', zone: 'Europe/Kyiv', flag: '🇺🇦', region: 'europe' },
+  { cityKey: 'city_moscow', city: 'Moscow', zone: 'Europe/Moscow', flag: '🇷🇺', region: 'europe' },
 
   // Americas
-  { city: 'New York', country: 'USA (EST)', zone: 'America/New_York', flag: '🇺🇸', region: 'americas' },
-  { city: 'Chicago', country: 'USA (CST)', zone: 'America/Chicago', flag: '🇺🇸', region: 'americas' },
-  { city: 'San Francisco', country: 'USA (PST)', zone: 'America/Los_Angeles', flag: '🇺🇸', region: 'americas' },
-  { city: 'Toronto', country: 'Kanada', zone: 'America/Toronto', flag: '🇨🇦', region: 'americas' },
-  { city: 'Ciudad de México', country: 'Mexiko', zone: 'America/Mexico_City', flag: '🇲🇽', region: 'americas' },
-  { city: 'São Paulo', country: 'Brazílie', zone: 'America/Sao_Paulo', flag: '🇧🇷', region: 'americas' },
+  { cityKey: 'city_new_york', city: 'New York', zone: 'America/New_York', flag: '🇺🇸', region: 'americas' },
+  { cityKey: 'city_chicago', city: 'Chicago', zone: 'America/Chicago', flag: '🇺🇸', region: 'americas' },
+  { cityKey: 'city_san_francisco', city: 'San Francisco', zone: 'America/Los_Angeles', flag: '🇺🇸', region: 'americas' },
+  { cityKey: 'city_toronto', city: 'Toronto', zone: 'America/Toronto', flag: '🇨🇦', region: 'americas' },
+  { cityKey: 'city_mexico_city', city: 'Mexico City', zone: 'America/Mexico_City', flag: '🇲🇽', region: 'americas' },
+  { cityKey: 'city_sao_paulo', city: 'São Paulo', zone: 'America/Sao_Paulo', flag: '🇧🇷', region: 'americas' },
 
   // Asia & Middle East
-  { city: 'Tokio', country: 'Japonsko', zone: 'Asia/Tokyo', flag: '🇯🇵', region: 'asia' },
-  { city: 'Soul', country: 'Jižní Korea', zone: 'Asia/Seoul', flag: '🇰🇷', region: 'asia' },
-  { city: 'Peking', country: 'Čína', zone: 'Asia/Shanghai', flag: '🇨🇳', region: 'asia' },
-  { city: 'Singapur', country: 'Singapur', zone: 'Asia/Singapore', flag: '🇸🇬', region: 'asia' },
-  { city: 'Bombaj', country: 'Indie', zone: 'Asia/Kolkata', flag: '🇮🇳', region: 'asia' },
-  { city: 'Dubaj', country: 'Spojené arabské emiráty', zone: 'Asia/Dubai', flag: '🇦🇪', region: 'asia' },
+  { cityKey: 'city_tokyo', city: 'Tokyo', zone: 'Asia/Tokyo', flag: '🇯🇵', region: 'asia' },
+  { cityKey: 'city_seoul', city: 'Seoul', zone: 'Asia/Seoul', flag: '🇰🇷', region: 'asia' },
+  { cityKey: 'city_beijing', city: 'Beijing', zone: 'Asia/Shanghai', flag: '🇨🇳', region: 'asia' },
+  { cityKey: 'city_singapore', city: 'Singapore', zone: 'Asia/Singapore', flag: '🇸🇬', region: 'asia' },
+  { cityKey: 'city_mumbai', city: 'Mumbai', zone: 'Asia/Kolkata', flag: '🇮🇳', region: 'asia' },
+  { cityKey: 'city_dubai', city: 'Dubai', zone: 'Asia/Dubai', flag: '🇦🇪', region: 'asia' },
 
   // Oceania & Africa
-  { city: 'Sydney', country: 'Austrálie', zone: 'Australia/Sydney', flag: '🇦🇺', region: 'pacific' },
-  { city: 'Auckland', country: 'Nový Zéland', zone: 'Pacific/Auckland', flag: '🇳🇿', region: 'pacific' },
-  { city: 'Káhira', country: 'Egypt', zone: 'Africa/Cairo', flag: '🇪🇬', region: 'africa' },
-  { city: 'Johannesburg', country: 'Jihoafrická republika', zone: 'Africa/Johannesburg', flag: '🇿🇦', region: 'africa' },
+  { cityKey: 'city_sydney', city: 'Sydney', zone: 'Australia/Sydney', flag: '🇦🇺', region: 'pacific' },
+  { cityKey: 'city_auckland', city: 'Auckland', zone: 'Pacific/Auckland', flag: '🇳🇿', region: 'pacific' },
+  { cityKey: 'city_cairo', city: 'Cairo', zone: 'Africa/Cairo', flag: '🇪🇬', region: 'africa' },
+  { cityKey: 'city_johannesburg', city: 'Johannesburg', zone: 'Africa/Johannesburg', flag: '🇿🇦', region: 'africa' },
 ];
-
-const CITY_NAMES: Record<string, string> = {
-  'Europe/Prague': 'Prague',
-  'Europe/Bratislava': 'Bratislava',
-  'Europe/London': 'London',
-  'Europe/Berlin': 'Berlin',
-  'Europe/Paris': 'Paris',
-  'Europe/Madrid': 'Madrid',
-  'Europe/Rome': 'Rome',
-  'Europe/Warsaw': 'Warsaw',
-  'Europe/Vienna': 'Vienna',
-  'Europe/Zurich': 'Zurich',
-  'Europe/Kyiv': 'Kyiv',
-  'Europe/Moscow': 'Moscow',
-  'America/Mexico_City': 'Mexico City',
-  'America/Sao_Paulo': 'São Paulo',
-  'Asia/Tokyo': 'Tokyo',
-  'Asia/Seoul': 'Seoul',
-  'Asia/Shanghai': 'Beijing',
-  'Asia/Kolkata': 'Mumbai',
-  'Asia/Dubai': 'Dubai',
-  'Australia/Sydney': 'Sydney',
-  'Pacific/Auckland': 'Auckland',
-  'Africa/Cairo': 'Cairo',
-  'Africa/Johannesburg': 'Johannesburg',
-};
 
 const COUNTRY_CODES: Record<string, string> = {
   'Europe/Prague': 'CZ', 'Europe/Bratislava': 'SK', 'Europe/London': 'GB', 'Europe/Berlin': 'DE',
@@ -109,8 +83,6 @@ export const WorldTimezonesTool: React.FC = () => {
 
   const getCityInfo = (zone: string) => {
     try {
-      const locale = language === 'ru' ? 'ru-RU' : language === 'en' ? 'en-US' : language === 'de' ? 'de-DE' : language === 'es' ? 'es-ES' : 'cs-CZ';
-      
       const timeStr = new Intl.DateTimeFormat(locale, {
         timeZone: zone,
         hour: '2-digit',
@@ -142,7 +114,7 @@ export const WorldTimezonesTool: React.FC = () => {
       let diff = hourPart - localHours;
       if (diff > 12) diff -= 24;
       if (diff < -12) diff += 24;
-      const diffStr = diff === 0 ? t('same_time', 'Stejný čas') : diff > 0 ? `+${diff}h` : `${diff}h`;
+      const diffStr = diff === 0 ? t('same_time', 'Same time') : diff > 0 ? `+${diff}h` : `${diff}h`;
 
       return { timeStr, dateStr, isDay, diffStr };
     } catch {
@@ -150,10 +122,16 @@ export const WorldTimezonesTool: React.FC = () => {
     }
   };
 
+  const queryLower = searchQuery.toLowerCase();
   const filteredCities = WORLD_CITIES.filter(c => {
-    const matchesSearch = 
-      c.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.country.toLowerCase().includes(searchQuery.toLowerCase());
+    const localizedCity = t(c.cityKey, c.city).toLowerCase();
+    const localizedCountry = (COUNTRY_CODES[c.zone] ? displayNames.of(COUNTRY_CODES[c.zone]) || '' : '').toLowerCase();
+    const matchesSearch =
+      !queryLower ||
+      localizedCity.includes(queryLower) ||
+      c.city.toLowerCase().includes(queryLower) ||
+      localizedCountry.includes(queryLower) ||
+      c.zone.toLowerCase().includes(queryLower);
     const matchesRegion = regionFilter === 'all' || c.region === regionFilter;
     return matchesSearch && matchesRegion;
   });
@@ -273,10 +251,10 @@ export const WorldTimezonesTool: React.FC = () => {
                   <span className="text-xl">{c.flag}</span>
                   <div>
                     <h3 className="text-sm font-semibold text-white tracking-tight">
-                      {language === 'cs' ? c.city : CITY_NAMES[c.zone] || c.city}
+                      {t(c.cityKey, c.city)}
                     </h3>
                     <span className="text-[10px] text-slate-400 block truncate max-w-[130px]">
-                      {COUNTRY_CODES[c.zone] ? displayNames.of(COUNTRY_CODES[c.zone]) : c.country}
+                      {COUNTRY_CODES[c.zone] ? displayNames.of(COUNTRY_CODES[c.zone]) : ''}
                     </span>
                   </div>
                 </div>

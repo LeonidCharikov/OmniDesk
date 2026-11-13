@@ -7,10 +7,7 @@ import {
   X,
   Clock,
   Trash2,
-  Edit3,
-  Check,
   Save,
-  AlertCircle,
   Download,
   Search,
 } from 'lucide-react';
@@ -644,10 +641,6 @@ const WeekView: React.FC<{
                   {/* Events in this slot */}
                   {slotEvents.map(ev => {
                     const color = getColorObj(ev.color);
-                    const evStartMin = ev.hour * 60 + ev.minute;
-                    const slotStartMin = hour * 60;
-                    const offsetFromTop = Math.max(0, evStartMin - slotStartMin);
-                    const visibleDuration = Math.min(60 - offsetFromTop, ev.durationMinutes - (slotStartMin - evStartMin + offsetFromTop));
                     
                     return (
                       <div

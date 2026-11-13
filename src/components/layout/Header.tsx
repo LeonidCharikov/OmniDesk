@@ -1,5 +1,5 @@
 import React, { useId } from 'react';
-import { Search, Star, ArrowLeft, ShieldCheck, Languages, Sliders, Menu, Minus, Square, X } from 'lucide-react';
+import { Search, Star, ArrowLeft, ShieldCheck, Sliders, Menu, Minus, Square, X } from 'lucide-react';
 import { ToolDefinition } from '../../types/tool';
 import { useI18n, SUPPORTED_LANGUAGES, SupportedLanguage } from '../../i18n/context';
 import { getToolCatalogText } from '../../i18n/toolCatalog';
@@ -99,8 +99,8 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             onClick={onToggleSidebar}
             className="p-1.5 sm:p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors shrink-0"
-            title={isSidebarOpen ? t('close_sidebar', 'Zavřít panel') : t('open_sidebar', 'Otevřít panel')}
-            aria-label={isSidebarOpen ? t('close_sidebar', 'Zavřít panel') : t('open_sidebar', 'Otevřít panel')}
+            title={isSidebarOpen ? t('close_sidebar', 'Close sidebar') : t('open_sidebar', 'Open sidebar')}
+            aria-label={isSidebarOpen ? t('close_sidebar', 'Close sidebar') : t('open_sidebar', 'Open sidebar')}
           >
             <Menu className="w-4 h-4" />
           </button>
@@ -111,11 +111,11 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             onClick={onBack}
             className="p-1.5 sm:p-2 rounded-lg text-slate-300 hover:text-white bg-slate-900/80 hover:bg-slate-800 border border-slate-800 transition-colors shrink-0 flex items-center gap-1 text-xs"
-            title={t('back', 'Zpět')}
-            aria-label={t('back', 'Zpět')}
+            title={t('back', 'Back')}
+            aria-label={t('back', 'Back')}
           >
             <ArrowLeft className="w-4 h-4 text-slate-300" />
-            <span className="hidden xl:inline font-medium">{t('back', 'Zpět')}</span>
+            <span className="hidden xl:inline font-medium">{t('back', 'Back')}</span>
           </button>
         )}
 
@@ -159,7 +159,7 @@ export const Header: React.FC<HeaderProps> = ({
         >
           <div className="flex items-center gap-2 min-w-0 overflow-hidden">
             <Search className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-            <span className="truncate">{t('search_placeholder', 'Rychlé hledání nástrojů... Ctrl+K')}</span>
+            <span className="truncate">{t('search_placeholder', 'Quick search tools... Ctrl+K')}</span>
           </div>
           <kbd className="shrink-0 ml-2 font-mono text-[10px] bg-slate-800/90 text-slate-400 px-1.5 py-0.5 rounded border border-slate-700">
             Ctrl+K
@@ -173,8 +173,8 @@ export const Header: React.FC<HeaderProps> = ({
         <button
           onClick={onOpenSearch}
           className="lg:hidden p-1.5 sm:p-2 rounded-lg bg-slate-900/80 border border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200 transition-colors shrink-0"
-          title={t('search_placeholder', 'Hledat')}
-          aria-label={t('search_placeholder', 'Hledat')}
+          title={t('search_placeholder', 'Search')}
+          aria-label={t('search_placeholder', 'Search')}
         >
           <Search className="w-4 h-4" />
         </button>
@@ -188,29 +188,29 @@ export const Header: React.FC<HeaderProps> = ({
                 ? 'bg-amber-500/15 border-amber-500/40 text-amber-300 hover:bg-amber-500/25'
                 : 'bg-slate-900/80 border-slate-800 text-slate-300 hover:bg-slate-800 hover:text-white'
             }`}
-            title={isFavorite ? t('in_favorites', 'V oblíbených') : t('add_favorite', 'Přidat do oblíbených')}
-            aria-label={isFavorite ? t('in_favorites', 'V oblíbených') : t('add_favorite', 'Přidat do oblíbených')}
+            title={isFavorite ? t('in_favorites', 'In Favorites') : t('add_favorite', 'Add to Favorites')}
+            aria-label={isFavorite ? t('in_favorites', 'In Favorites') : t('add_favorite', 'Add to Favorites')}
           >
             <Star className={`w-3.5 h-3.5 shrink-0 ${isFavorite ? 'fill-amber-400 text-amber-400' : 'text-slate-400'}`} />
             <span className="hidden 2xl:inline whitespace-nowrap">
-              {isFavorite ? t('in_favorites', 'V oblíbených') : t('add_favorite', 'Přidat do oblíbených')}
+              {isFavorite ? t('in_favorites', 'In Favorites') : t('add_favorite', 'Add to Favorites')}
             </span>
           </button>
         ) : (
           <div
             className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 shrink-0"
-            title={t('local_sandboxed', 'Lokální sandbox')}
+            title={t('local_sandboxed', 'Local Sandbox')}
           >
             <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
             <span className="hidden 2xl:inline text-xs font-medium text-emerald-300 whitespace-nowrap">
-              {t('local_sandboxed', 'Lokální sandbox')}
+              {t('local_sandboxed', 'Local Sandbox')}
             </span>
           </div>
         )}
 
         {/* Language selector */}
         <div className="relative flex items-center rounded-lg bg-slate-900/80 border border-slate-800 hover:border-slate-700 transition-colors shrink-0">
-          <label htmlFor={langSelectId} className="sr-only">{t('interface_language', 'Jazyk rozhraní')}</label>
+          <label htmlFor={langSelectId} className="sr-only">{t('interface_language', 'Interface Language')}</label>
           <div className="pointer-events-none flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-slate-200 font-medium">
             <span className="text-sm leading-none" aria-hidden="true">{currentLang.flag}</span>
             <span className="text-xs uppercase font-semibold text-slate-300">{currentLang.code}</span>
@@ -219,7 +219,7 @@ export const Header: React.FC<HeaderProps> = ({
             id={langSelectId}
             value={language}
             onChange={e => setLanguage(e.target.value as SupportedLanguage)}
-            aria-label={t('interface_language', 'Jazyk rozhraní')}
+            aria-label={t('interface_language', 'Interface Language')}
             className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
           >
             {SUPPORTED_LANGUAGES.map(lang => (
@@ -235,8 +235,8 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             onClick={onOpenSettings}
             className="p-1.5 sm:p-2 rounded-lg bg-slate-900/80 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition-colors shrink-0"
-            title={t('settings_modal_title', 'Nastavení & Vzhled')}
-            aria-label={t('settings_modal_title', 'Nastavení & Vzhled')}
+            title={t('settings_modal_title', 'Settings & Appearance')}
+            aria-label={t('settings_modal_title', 'Settings & Appearance')}
           >
             <Sliders className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-indigo-400" />
           </button>
@@ -247,24 +247,24 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             onClick={handleMinimize}
             className="p-1.5 rounded text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 transition-colors"
-            title={t('window_minimize', 'Minimalizovat')}
-            aria-label={t('window_minimize', 'Minimalizovat')}
+            title={t('window_minimize', 'Minimize')}
+            aria-label={t('window_minimize', 'Minimize')}
           >
             <Minus className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={handleMaximize}
             className="p-1.5 rounded text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 transition-colors"
-            title={t('window_maximize', 'Maximalizovat')}
-            aria-label={t('window_maximize', 'Maximalizovat')}
+            title={t('window_maximize', 'Maximize')}
+            aria-label={t('window_maximize', 'Maximize')}
           >
             <Square className="w-3 h-3" />
           </button>
           <button
             onClick={handleClose}
             className="p-1.5 rounded text-slate-400 hover:text-rose-100 hover:bg-rose-600/80 transition-colors"
-            title={t('window_close', 'Zavřít')}
-            aria-label={t('window_close', 'Zavřít')}
+            title={t('window_close', 'Close')}
+            aria-label={t('window_close', 'Close')}
           >
             <X className="w-3.5 h-3.5" />
           </button>

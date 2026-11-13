@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, Play, Pause, RotateCcw, Globe, Flame, Coffee } from 'lucide-react';
+import { Play, Pause, RotateCcw, Globe, Flame } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
 
 interface CityTime {
@@ -11,12 +11,12 @@ interface CityTime {
 }
 
 const CITIES: CityTime[] = [
-  { cityKey: 'city_prague', city: 'Praha', country: 'Česká republika', zone: 'Europe/Prague', flag: '🇨🇿' },
-  { cityKey: 'city_london', city: 'Londýn', country: 'Velká Británie', zone: 'Europe/London', flag: '🇬🇧' },
+  { cityKey: 'city_prague', city: 'Prague', country: 'Czech Republic', zone: 'Europe/Prague', flag: '🇨🇿' },
+  { cityKey: 'city_london', city: 'London', country: 'United Kingdom', zone: 'Europe/London', flag: '🇬🇧' },
   { cityKey: 'city_new_york', city: 'New York', country: 'USA (EST)', zone: 'America/New_York', flag: '🇺🇸' },
   { cityKey: 'city_san_francisco', city: 'San Francisco', country: 'USA (PST)', zone: 'America/Los_Angeles', flag: '🇺🇸' },
-  { cityKey: 'city_tokyo', city: 'Tokio', country: 'Japonsko', zone: 'Asia/Tokyo', flag: '🇯🇵' },
-  { cityKey: 'city_sydney', city: 'Sydney', country: 'Austrálie', zone: 'Australia/Sydney', flag: '🇦🇺' },
+  { cityKey: 'city_tokyo', city: 'Tokyo', country: 'Japan', zone: 'Asia/Tokyo', flag: '🇯🇵' },
+  { cityKey: 'city_sydney', city: 'Sydney', country: 'Australia', zone: 'Australia/Sydney', flag: '🇦🇺' },
 ];
 
 const COUNTRY_CODES: Record<string, string> = {

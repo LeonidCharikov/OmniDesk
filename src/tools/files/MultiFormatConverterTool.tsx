@@ -1,17 +1,13 @@
 import React, { useState, useRef, useId } from 'react';
 import { 
-  FileBox, 
   Upload, 
   Download, 
-  ArrowRight, 
   FileText, 
   Image as ImageIcon, 
   Table, 
   CheckCircle2, 
   AlertCircle, 
-  RefreshCw,
-  Sliders,
-  FileCode
+  RefreshCw
 } from 'lucide-react';
 import mammoth from 'mammoth';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
@@ -32,7 +28,6 @@ export const MultiFormatConverterTool: React.FC = () => {
   const { t } = useI18n();
   const [activeCategory, setActiveCategory] = useState<ConversionCategory>('docs');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [sourceFileName, setSourceFileName] = useState<string>('');
   const [resultBlobUrl, setResultBlobUrl] = useState<string | null>(null);
   const [resultBlob, setResultBlob] = useState<Blob | null>(null);
   const [resultFileName, setResultFileName] = useState<string>('');
@@ -68,7 +63,7 @@ export const MultiFormatConverterTool: React.FC = () => {
       }
 
       if (!textContent.trim()) {
-        throw new Error(t('file_empty_error', 'Soubor je prázdný nebo z něj nebylo možné vytáhnout text.'));
+        throw new Error(t('file_empty_error', 'The file is empty or no text could be extracted.'));
       }
 
       // Generate PDF
@@ -134,7 +129,7 @@ export const MultiFormatConverterTool: React.FC = () => {
           y -= lineHeight;
         }
 
-        page.drawText(`${t('page', 'Stránka')} ${p + 1} / ${totalPages}`, {
+        page.drawText(`${t('page', 'Page')} ${p + 1} / ${totalPages}`, {
           x: pageWidth - margin - 60,
           y: margin - 15,
           size: 8,
@@ -157,7 +152,7 @@ export const MultiFormatConverterTool: React.FC = () => {
         durationMs: Math.round(performance.now() - start),
       });
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : t('doc_conv_error', 'Chyba při konverzi dokumentu'));
+      setError(err instanceof Error ? err.message : t('doc_conv_error', 'Error converting document'));
     } finally {
       setIsProcessing(false);
     }
@@ -178,7 +173,7 @@ export const MultiFormatConverterTool: React.FC = () => {
         // CSV to JSON
         const delimiter = file.name.endsWith('.tsv') ? '\t' : ',';
         const lines = text.trim().split('\n').filter(Boolean);
-        if (lines.length < 1) throw new Error(t('csv_empty_error', 'CSV soubor je prázdný'));
+        if (lines.length < 1) throw new Error(t('csv_empty_error', 'CSV file is empty'));
         const headers = lines[0].split(delimiter).map(h => h.trim().replace(/^"|"$/g, ''));
         const rows = lines.slice(1).map(line => {
           const cols = line.split(delimiter).map(c => c.trim().replace(/^"|"$/g, ''));
@@ -199,7 +194,7 @@ export const MultiFormatConverterTool: React.FC = () => {
         // JSON to CSV
         const parsed = JSON.parse(text);
         const arrayData = Array.isArray(parsed) ? parsed : [parsed];
-        if (arrayData.length === 0) throw new Error(t('json_empty_error', 'JSON pole je prázdné'));
+        if (arrayData.length === 0) throw new Error(t('json_empty_error', 'JSON array is empty'));
         const keys = Array.from(new Set(arrayData.flatMap(item => Object.keys(item))));
         const csvRows: string[] = [];
         csvRows.push(keys.map(k => `"${k}"`).join(','));
@@ -214,7 +209,7 @@ export const MultiFormatConverterTool: React.FC = () => {
         outName = file.name.replace(/\.[^/.]+$/, '') + '.csv';
         mime = 'text/csv';
       } else {
-        throw new Error(t('data_format_error', 'Pro převod dat vyberte soubor .csv, .tsv nebo .json'));
+        throw new Error(t('data_format_error', 'Select a .csv, .tsv, or .json file for data conversion'));
       }
 
       const blob = new Blob([outputText], { type: mime });
@@ -229,7 +224,7 @@ export const MultiFormatConverterTool: React.FC = () => {
         durationMs: Math.round(performance.now() - start),
       });
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : t('data_conv_error', 'Chyba při konverzi dat'));
+      setError(err instanceof Error ? err.message : t('data_conv_error', 'Error converting data'));
     } finally {
       setIsProcessing(false);
     }
@@ -245,7 +240,7 @@ export const MultiFormatConverterTool: React.FC = () => {
       const objectUrl = URL.createObjectURL(file);
       await new Promise((resolve, reject) => {
         img.onload = resolve;
-        img.onerror = () => reject(new Error(t('image_load_error', 'Nelze načíst obrázek')));
+        img.onerror = () => reject(new Error(t('image_load_error', 'Unable to load image')));
         img.src = objectUrl;
       });
 
@@ -255,7 +250,7 @@ export const MultiFormatConverterTool: React.FC = () => {
       canvas.height = Math.max(1, Math.round(img.height * scaleFactor));
 
       const ctx = canvas.getContext('2d');
-      if (!ctx) throw new Error(t('canvas_context_error', 'Nelze vytvořit 2D canvas'));
+      if (!ctx) throw new Error(t('canvas_context_error', 'Unable to create 2D canvas'));
 
       // White background for JPEG conversion if transparent
       if (targetImageFormat === 'image/jpeg') {
@@ -270,7 +265,7 @@ export const MultiFormatConverterTool: React.FC = () => {
         canvas.toBlob(
           b => {
             if (b) resolve(b);
-            else reject(new Error(t('canvas_export_error', 'Chyba při exportu canvasu')));
+            else reject(new Error(t('canvas_export_error', 'Error exporting canvas')));
           },
           targetImageFormat,
           quality
@@ -292,7 +287,7 @@ export const MultiFormatConverterTool: React.FC = () => {
         durationMs: Math.round(performance.now() - start),
       });
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : t('image_conv_error', 'Chyba při konverzi obrázku'));
+      setError(err instanceof Error ? err.message : t('image_conv_error', 'Error converting image'));
     } finally {
       setIsProcessing(false);
     }
@@ -307,15 +302,14 @@ export const MultiFormatConverterTool: React.FC = () => {
       resultBlob,
       mime,
       [
-        { name: `${t('file_label', 'Soubor')} (*.${ext})`, extensions: [ext] },
-        { name: `${t('all_files', 'Všechny soubory')} (*.*)`, extensions: ['*'] }
+        { name: `${t('file_label', 'File')} (*.${ext})`, extensions: [ext] },
+        { name: `${t('all_files', 'All files')} (*.*)`, extensions: ['*'] }
       ],
-      t('save_converted_file', 'Uložit převedený soubor (Průzkumník)')
+      t('save_converted_file', 'Save converted file (Explorer)')
     );
   };
 
   const handleFilePicked = (file: File) => {
-    setSourceFileName(file.name);
     if (activeCategory === 'docs') {
       handleDocConversion(file);
     } else if (activeCategory === 'data') {
@@ -338,7 +332,6 @@ Desktop multi-tool built with high performance and zero telemetry:
 ## 2. Security Standards
 Zero external API calls for files. All binary transformations run locally.`;
       const file = new File([mdContent], 'Technical_Document.md', { type: 'text/markdown' });
-      setSourceFileName(file.name);
       handleDocConversion(file);
     } else if (activeCategory === 'data') {
       const csv = `ID,Product,Category,Price,InStock
@@ -346,7 +339,6 @@ Zero external API calls for files. All binary transformations run locally.`;
 2,Mechanical Keyboard,Peripherals,2490,true
 3,Ergonomic Chair,Furniture,6800,false`;
       const file = new File([csv], 'inventory_data.csv', { type: 'text/csv' });
-      setSourceFileName(file.name);
       handleDataConversion(file);
     } else {
       // Create a sample canvas image
@@ -362,7 +354,6 @@ Zero external API calls for files. All binary transformations run locally.`;
       canvas.toBlob(blob => {
         if (blob) {
           const file = new File([blob], 'sample_banner.png', { type: 'image/png' });
-          setSourceFileName(file.name);
           handleImageConversion(file);
         }
       });
@@ -374,10 +365,10 @@ Zero external API calls for files. All binary transformations run locally.`;
       {/* Header */}
       <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800">
         <h2 className="text-lg font-semibold text-white">
-          {t('tool_multi_converter_title', 'Univerzální Multi-Formátový Konvertor')}
+          {t('tool_multi_converter_title', 'Universal Multi-Format Converter')}
         </h2>
         <p className="text-sm text-slate-400 mt-1">
-          {t('multi_converter_desc', 'Převod mezi dokumenty (DOCX, MD, TXT → PDF), strukturovanými daty (CSV ↔ JSON) a optimalizace obrázků (PNG, JPG, WebP).')}
+          {t('multi_converter_desc', 'Convert between documents (DOCX, MD, TXT → PDF), structured data (CSV ↔ JSON), and optimize images (PNG, JPG, WebP).')}
         </p>
       </div>
 
@@ -390,7 +381,7 @@ Zero external API calls for files. All binary transformations run locally.`;
           }`}
         >
           <FileText className="w-3.5 h-3.5" />
-          {t('cat_docs_pdf', 'Dokumenty (DOCX, MD, TXT → PDF)')}
+          {t('cat_docs_pdf', 'Documents (DOCX, MD, TXT → PDF)')}
         </button>
         <button
           onClick={() => { setActiveCategory('data'); setResultBlobUrl(null); }}
@@ -408,7 +399,7 @@ Zero external API calls for files. All binary transformations run locally.`;
           }`}
         >
           <ImageIcon className="w-3.5 h-3.5" />
-          {t('cat_images_webp', 'Obrázky & Grafika (PNG, JPG → WebP)')}
+          {t('cat_images_webp', 'Images & Graphics (PNG, JPG → WebP)')}
         </button>
       </div>
 
@@ -417,7 +408,7 @@ Zero external API calls for files. All binary transformations run locally.`;
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 rounded-xl bg-slate-900/40 border border-slate-800 text-xs">
           <div className="space-y-1.5">
             <label htmlFor={targetFormatSelectId} className="font-semibold text-slate-400 uppercase tracking-wider block">
-              {t('target_format', 'Cílový formát')}
+              {t('target_format', 'Target format')}
             </label>
             <select
               id={targetFormatSelectId}
@@ -425,16 +416,16 @@ Zero external API calls for files. All binary transformations run locally.`;
               onChange={e => setTargetImageFormat(e.target.value as 'image/webp' | 'image/png' | 'image/jpeg')}
               className="w-full px-2.5 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-slate-200"
             >
-              <option value="image/webp">WebP ({t('highest_saving', 'Nejvyšší úspora')})</option>
-              <option value="image/png">PNG ({t('lossless', 'Bezztrátový')})</option>
-              <option value="image/jpeg">JPEG ({t('photo_jpeg', 'Fotografie')})</option>
+              <option value="image/webp">WebP ({t('highest_saving', 'Highest savings')})</option>
+              <option value="image/png">PNG ({t('lossless', 'Lossless')})</option>
+              <option value="image/jpeg">JPEG ({t('photo_jpeg', 'Photo')})</option>
             </select>
           </div>
 
           <div className="space-y-1.5">
             <div className="flex justify-between">
               <label htmlFor={qualityRangeId} className="font-semibold text-slate-400 uppercase tracking-wider">
-                {t('compression_quality', 'Kvalita komprese')}
+                {t('compression_quality', 'Compression quality')}
               </label>
               <span className="font-mono text-indigo-400 font-semibold">{imageQuality} %</span>
             </div>
@@ -451,7 +442,7 @@ Zero external API calls for files. All binary transformations run locally.`;
 
           <div className="space-y-1.5">
             <label htmlFor={scaleSelectId} className="font-semibold text-slate-400 uppercase tracking-wider block">
-              {t('scale_resize', 'Změna měřítka')}
+              {t('scale_resize', 'Scale / Resize')}
             </label>
             <select
               id={scaleSelectId}
@@ -459,10 +450,10 @@ Zero external API calls for files. All binary transformations run locally.`;
               onChange={e => setImageScale(parseInt(e.target.value))}
               className="w-full px-2.5 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-slate-200"
             >
-              <option value="100">100 % ({t('original_size', 'Původní velikost')})</option>
-              <option value="75">75 % ({t('scale_75', '75 % zmenšení')})</option>
-              <option value="50">50 % ({t('scale_50', 'Poloviční rozlišení')})</option>
-              <option value="25">25 % ({t('scale_25', 'Čtvrtinové rozlišení')})</option>
+              <option value="100">100 % ({t('original_size', 'Original size')})</option>
+              <option value="75">75 % ({t('scale_75', '75% scale')})</option>
+              <option value="50">50 % ({t('scale_50', 'Half resolution')})</option>
+              <option value="25">25 % ({t('scale_25', 'Quarter resolution')})</option>
             </select>
           </div>
         </div>
@@ -492,12 +483,12 @@ Zero external API calls for files. All binary transformations run locally.`;
               <Upload className="w-5 h-5" />
             </div>
             <p className="text-sm font-medium text-slate-200">
-              {t('drag_file_here', 'Přetáhněte sem soubor pro okamžitou konverzi')}
+              {t('drag_file_here', 'Drag a file here for instant conversion')}
             </p>
             <p className="text-xs text-slate-500 mt-1">
-              {activeCategory === 'docs' && t('supports_docs', 'Podporuje .docx, .md, .txt')}
-              {activeCategory === 'data' && t('supports_data', 'Podporuje .csv, .tsv, .json')}
-              {activeCategory === 'images' && t('supports_images', 'Podporuje .png, .jpg, .webp, .svg, .bmp')}
+              {activeCategory === 'docs' && t('supports_docs', 'Supports .docx, .md, .txt')}
+              {activeCategory === 'data' && t('supports_data', 'Supports .csv, .tsv, .json')}
+              {activeCategory === 'images' && t('supports_images', 'Supports .png, .jpg, .webp, .svg, .bmp')}
             </p>
           </div>
         </div>
@@ -507,7 +498,7 @@ Zero external API calls for files. All binary transformations run locally.`;
             onClick={loadPresetDemo}
             className="text-xs text-indigo-400 hover:text-indigo-300 font-medium transition-colors"
           >
-            {t('try_sample_file', 'Vyzkoušet na ukázkovém souboru →')}
+            {t('try_sample_file', 'Try with sample file →')}
           </button>
         </div>
       </div>
@@ -523,7 +514,7 @@ Zero external API calls for files. All binary transformations run locally.`;
         <div className="p-6 rounded-xl bg-slate-900/40 border border-slate-800 flex items-center justify-center gap-3">
           <RefreshCw className="w-4 h-4 animate-spin text-indigo-400" />
           <span className="text-xs font-medium text-slate-300">
-            {t('processing_file_in_memory', 'Zpracovávám a optimalizuji soubor v paměti...')}
+            {t('processing_file_in_memory', 'Processing and optimizing file in memory...')}
           </span>
         </div>
       )}
@@ -533,23 +524,23 @@ Zero external API calls for files. All binary transformations run locally.`;
         <div className="space-y-4">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-800">
-              <span className="text-[11px] text-slate-500 block">{t('conversion_time', 'Doba zpracování')}</span>
+              <span className="text-[11px] text-slate-500 block">{t('conversion_time', 'Processing time')}</span>
               <span className="text-sm font-semibold font-mono text-emerald-400">{stats.durationMs} ms</span>
             </div>
             <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-800">
-              <span className="text-[11px] text-slate-500 block">{t('original_size_label', 'Původní velikost')}</span>
+              <span className="text-[11px] text-slate-500 block">{t('original_size_label', 'Original size')}</span>
               <span className="text-sm font-semibold font-mono text-slate-300">
                 {(stats.originalSize / 1024).toFixed(1)} KB
               </span>
             </div>
             <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-800">
-              <span className="text-[11px] text-slate-500 block">{t('new_size_label', 'Výsledná velikost')}</span>
+              <span className="text-[11px] text-slate-500 block">{t('new_size_label', 'Result size')}</span>
               <span className="text-sm font-semibold font-mono text-indigo-300">
                 {(stats.newSize / 1024).toFixed(1)} KB
               </span>
             </div>
             <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-800">
-              <span className="text-[11px] text-slate-500 block">{t('savings_change', 'Úspora / Změna')}</span>
+              <span className="text-[11px] text-slate-500 block">{t('savings_change', 'Savings / Change')}</span>
               <span className={`text-sm font-semibold font-mono ${
                 stats.newSize < stats.originalSize ? 'text-emerald-400' : 'text-slate-300'
               }`}>
@@ -562,7 +553,7 @@ Zero external API calls for files. All binary transformations run locally.`;
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-emerald-400" />
               <span className="text-xs font-medium text-slate-200">
-                {t('conversion_finished', 'Převod dokončen')}: <strong className="text-white font-mono">{resultFileName}</strong>
+                {t('conversion_finished', 'Conversion complete')}: <strong className="text-white font-mono">{resultFileName}</strong>
               </span>
             </div>
             <button
@@ -570,14 +561,14 @@ Zero external API calls for files. All binary transformations run locally.`;
               className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg transition-colors shadow-sm"
             >
               <Download className="w-3.5 h-3.5" />
-              {t('download_converted_file', 'Stáhnout převedený soubor (Průzkumník)')}
+              {t('download_converted_file', 'Save converted file (Explorer)')}
             </button>
           </div>
 
           {/* Preview based on category */}
           {activeCategory === 'docs' && (
             <div className="h-80 border border-slate-800 rounded-xl overflow-hidden bg-slate-950">
-              <iframe src={resultBlobUrl} title={t('pdf_preview', 'Náhled PDF')} className="w-full h-full bg-slate-900" />
+              <iframe src={resultBlobUrl} title={t('pdf_preview', 'PDF Preview')} className="w-full h-full bg-slate-900" />
             </div>
           )}
 
@@ -585,7 +576,7 @@ Zero external API calls for files. All binary transformations run locally.`;
             <div className="p-4 rounded-xl border border-slate-800 bg-slate-950/60 flex items-center justify-center">
               <img
                 src={imagePreviewUrl}
-                alt={t('preview_converted_image', 'Náhled převedeného obrázku')}
+                alt={t('preview_converted_image', 'Converted image preview')}
                 className="max-h-64 rounded-lg object-contain border border-slate-800"
               />
             </div>
