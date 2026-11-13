@@ -7,6 +7,9 @@
   </p>
 
   <p>
+    <a href="https://leonidcharikov.github.io/omnidesk.html">
+      <img src="https://img.shields.io/badge/Website-Presentation-8B5CF6?style=for-the-badge&logo=githubpages&logoColor=white" alt="OmniDesk Presentation Website" />
+    </a>
     <img src="https://img.shields.io/badge/Tools-98%20Integrated-6366f1?style=for-the-badge" alt="98 Tools" />
     <img src="https://img.shields.io/badge/Tauri-v2-24C8DB?style=for-the-badge&logo=tauri&logoColor=white" alt="Tauri v2" />
     <img src="https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React 19" />
@@ -17,6 +20,11 @@
   </p>
 
   <p>
+    <strong>🌐 Project Presentation:</strong> <a href="https://leonidcharikov.github.io/omnidesk.html">https://leonidcharikov.github.io/omnidesk.html</a>
+  </p>
+
+  <p>
+    <a href="https://leonidcharikov.github.io/omnidesk.html">Presentation Website</a> •
     <a href="#-visual-showcase">Visual Showcase</a> •
     <a href="#-key-highlights">Key Highlights</a> •
     <a href="#-complete-tool-catalog-98-tools">Tool Catalog (98)</a> •
