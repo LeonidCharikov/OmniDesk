@@ -60,6 +60,7 @@ export const SmartShoppingListTool: React.FC = () => {
   // Filter state: 'all' | 'pending' | 'completed' | category
   const [activeFilter, setActiveFilter] = useState<string>('all');
   const [copied, setCopied] = useState(false);
+  const [confirmClearAll, setConfirmClearAll] = useState(false);
 
   const nameInputId = useId();
 
@@ -118,9 +119,13 @@ export const SmartShoppingListTool: React.FC = () => {
   };
 
   const clearAll = () => {
-    if (window.confirm(t('confirm_clear_shopping', 'Opravdu chcete vymazat celý nákupní seznam?'))) {
-      setItems([]);
+    if (!confirmClearAll) {
+      setConfirmClearAll(true);
+      setTimeout(() => setConfirmClearAll(false), 4000);
+      return;
     }
+    setConfirmClearAll(false);
+    setItems([]);
   };
 
   // Filter items
@@ -228,10 +233,15 @@ export const SmartShoppingListTool: React.FC = () => {
           {items.length > 0 && (
             <button
               onClick={clearAll}
-              className="p-1.5 rounded-lg bg-slate-900 hover:bg-rose-950/40 border border-slate-800 text-slate-400 hover:text-rose-400 transition-colors"
+              className={`p-1.5 rounded-lg border transition-colors flex items-center gap-1 text-xs ${
+                confirmClearAll
+                  ? 'bg-rose-600 hover:bg-rose-500 border-rose-500 text-white px-2.5'
+                  : 'bg-slate-900 hover:bg-rose-950/40 border-slate-800 text-slate-400 hover:text-rose-400'
+              }`}
               title={t('clear_all_items', 'Vymazat celý seznam')}
             >
               <Trash2 className="w-4 h-4" />
+              {confirmClearAll && <span>{t('confirm_clear_short', 'Clear all?')}</span>}
             </button>
           )}
         </div>

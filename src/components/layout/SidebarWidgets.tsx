@@ -31,6 +31,7 @@ import {
   convertCryptoToFiat,
   SUPPORTED_FIAT_CURRENCIES,
 } from '../../services/currencyService';
+import { evaluateSafeMathExpression } from '../../utils/safeMathParser';
 
 interface SidebarWidgetsProps {
   widgets: WidgetCustomization;
@@ -92,12 +93,10 @@ function evaluateMiniCalc(input: string): string | null {
     }
   }
 
-  // 3. Simple math evaluation
-  const sanitized = trimmed.replace(/\^/g, '**');
-  if (/^[\d\s+\-*/().%]+$/.test(sanitized)) {
+  // 3. Simple math evaluation (deterministic parser, no eval / new Function)
+  if (/^[\d\s+\-*/().%^a-zA-Z]+$/.test(trimmed)) {
     try {
-      const fn = new Function(`return (${sanitized})`);
-      const res = fn();
+      const res = evaluateSafeMathExpression(trimmed);
       if (typeof res === 'number' && !isNaN(res) && isFinite(res)) {
         return Number.isInteger(res) ? res.toString() : res.toFixed(4).replace(/\.?0+$/, '');
       }

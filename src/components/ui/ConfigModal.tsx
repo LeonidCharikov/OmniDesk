@@ -18,12 +18,26 @@ import {
   Globe,
   CheckSquare,
   Calculator,
+  ShieldCheck,
+  Lock,
+  Unlock,
+  WifiOff,
+  Trash2,
+  KeyRound,
 } from 'lucide-react';
 import { UserConfig, ThemeId } from '../../types/tool';
 import { useI18n, SupportedLanguage } from '../../i18n/context';
 import { THEMES } from '../../services/themes';
 import { validateConfigJson } from '../../services/storage';
 import { saveTextWithDialog } from '../../services/fileSystemService';
+import {
+  hashMasterKey,
+  encryptJsonPayload,
+  decryptJsonPayload,
+  getStorageAudit,
+  purgeSensitiveData,
+  StorageAuditItem,
+} from '../../services/securityService';
 
 interface ConfigModalProps {
   isOpen: boolean;
@@ -31,9 +45,10 @@ interface ConfigModalProps {
   config: UserConfig;
   onUpdateConfig: (newConfig: UserConfig) => void;
   onResetDefaults: () => void;
+  onLockNow?: () => void;
 }
 
-type TabType = 'themes' | 'currency' | 'widgets' | 'backup' | 'language';
+type TabType = 'themes' | 'currency' | 'widgets' | 'security' | 'backup' | 'language';
 
 const ALL_CURRENCIES = [
   { code: 'CZK', name: 'Česká koruna', flag: '🇨🇿', symbol: 'Kč' },
@@ -125,6 +140,7 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
   config,
   onUpdateConfig,
   onResetDefaults,
+  onLockNow,
 }) => {
   const { t, language, setLanguage } = useI18n();
   const [activeTab, setActiveTab] = useState<TabType>('themes');
@@ -133,6 +149,12 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
   const [importStatus, setImportStatus] = useState<{ success: boolean; message: string } | null>(null);
   const [pastedJson, setPastedJson] = useState('');
   const [showPasteArea, setShowPasteArea] = useState(false);
+  const [newPin, setNewPin] = useState('');
+  const [newPinHint, setNewPinHint] = useState(config.security?.securityHint || '');
+  const [backupPassword, setBackupPassword] = useState('');
+  const [confirmReset, setConfirmReset] = useState(false);
+  const [confirmPurge, setConfirmPurge] = useState(false);
+  const [auditItems, setAuditItems] = useState<StorageAuditItem[]>(() => getStorageAudit());
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!isOpen) return null;
@@ -190,9 +212,35 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       const text = event.target?.result as string;
-      const res = validateConfigJson(text);
+      let candidateText = text;
+      try {
+        const maybeEncrypted = JSON.parse(text);
+        if (maybeEncrypted && maybeEncrypted.omnidesk_encrypted) {
+          if (!backupPassword) {
+            setImportStatus({
+              success: false,
+              message: t('backup_password_required_import', 'Enter the backup decryption passphrase first, then re-select the encrypted file.'),
+            });
+            setTimeout(() => setImportStatus(null), 5000);
+            return;
+          }
+          const decrypted = await decryptJsonPayload(text, backupPassword);
+          candidateText = JSON.stringify(decrypted);
+        }
+      } catch (err) {
+        if (text.includes('"omnidesk_encrypted"')) {
+          setImportStatus({
+            success: false,
+            message: err instanceof Error ? err.message : t('backup_decrypt_failed', 'Failed to decrypt encrypted backup.'),
+          });
+          setTimeout(() => setImportStatus(null), 4000);
+          return;
+        }
+      }
+
+      const res = validateConfigJson(candidateText);
       if (res.valid && res.config) {
         if (res.config.language && ['cs', 'en', 'de', 'es', 'ru'].includes(res.config.language)) {
           setLanguage(res.config.language as SupportedLanguage);
@@ -212,6 +260,104 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
     };
     reader.readAsText(file);
     if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const downloadEncryptedBackup = async () => {
+    if (!backupPassword.trim()) {
+      setImportStatus({
+        success: false,
+        message: t('backup_password_required', 'Please enter a passphrase to encrypt your backup.'),
+      });
+      setTimeout(() => setImportStatus(null), 4000);
+      return;
+    }
+    const encrypted = await encryptJsonPayload(jsonExportPayload, backupPassword);
+    const defaultName = `omnidesk-profile-${new Date().toISOString().slice(0, 10)}.enc.json`;
+    const res = await saveTextWithDialog(
+      defaultName,
+      encrypted,
+      [
+        { name: `${t('encrypted_backup_file', 'Encrypted Profile')} (*.json)`, extensions: ['json'] },
+        { name: `${t('all_files', 'All Files')} (*.*)`, extensions: ['*'] },
+      ],
+      t('save_encrypted_profile_title', 'Save Encrypted Configuration Profile')
+    );
+    if (res.success) {
+      setImportStatus({
+        success: true,
+        message: t('encrypted_backup_saved', 'AES-256-GCM encrypted profile backup saved.'),
+      });
+      setTimeout(() => setImportStatus(null), 4000);
+    }
+  };
+
+  const handleSaveMasterPin = async () => {
+    if (newPin.trim().length < 4) {
+      setImportStatus({
+        success: false,
+        message: t('pin_min_length_error', 'PIN or passphrase must be at least 4 characters.'),
+      });
+      setTimeout(() => setImportStatus(null), 4000);
+      return;
+    }
+    const { hashHex, saltHex } = await hashMasterKey(newPin.trim());
+    onUpdateConfig({
+      ...config,
+      security: {
+        lockEnabled: true,
+        pinHash: hashHex,
+        pinSalt: saltHex,
+        autoLockMinutes: config.security?.autoLockMinutes ?? 0,
+        lockOnBlur: Boolean(config.security?.lockOnBlur),
+        securityHint: newPinHint.trim() || undefined,
+      },
+    });
+    setNewPin('');
+    setImportStatus({
+      success: true,
+      message: t('security_lock_enabled_msg', 'Workspace PIN / passphrase lock saved.'),
+    });
+    setTimeout(() => setImportStatus(null), 4000);
+  };
+
+  const handleDisableMasterPin = () => {
+    onUpdateConfig({
+      ...config,
+      security: {
+        lockEnabled: false,
+        autoLockMinutes: 0,
+        lockOnBlur: false,
+        pinHash: undefined,
+        pinSalt: undefined,
+        securityHint: undefined,
+      },
+    });
+    setNewPin('');
+    setNewPinHint('');
+    setImportStatus({
+      success: true,
+      message: t('security_lock_disabled_msg', 'Workspace lock disabled.'),
+    });
+    setTimeout(() => setImportStatus(null), 4000);
+  };
+
+  const handlePurgeSensitive = () => {
+    purgeSensitiveData();
+    onUpdateConfig({
+      ...config,
+      widgets: {
+        ...currentWidgets,
+        quickNote: '',
+        dailyTasks: [],
+      },
+    });
+    setConfirmPurge(false);
+    setAuditItems(getStorageAudit());
+    setImportStatus({
+      success: true,
+      message: t('privacy_purge_done', 'Local notes, scratchpads, and daily tasks purged.'),
+    });
+    setTimeout(() => setImportStatus(null), 4000);
   };
 
   const handleApplyPastedJson = () => {
@@ -339,8 +485,23 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
           </button>
 
           <button
+            onClick={() => {
+              setActiveTab('security');
+              setAuditItems(getStorageAudit());
+            }}
+            className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-t-lg transition-colors border-b-2 whitespace-nowrap shrink-0 ${
+              activeTab === 'security'
+                ? 'text-indigo-400 border-indigo-500 bg-slate-800/40'
+                : 'text-slate-400 border-transparent hover:text-slate-200'
+            }`}
+          >
+            <ShieldCheck className="w-3.5 h-3.5" />
+            <span>{t('tab_security', 'Security & Privacy')}</span>
+          </button>
+
+          <button
             onClick={() => setActiveTab('backup')}
-            className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-t-lg transition-colors border-b-2 ${
+            className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-t-lg transition-colors border-b-2 whitespace-nowrap shrink-0 ${
               activeTab === 'backup'
                 ? 'text-indigo-400 border-indigo-500 bg-slate-800/40'
                 : 'text-slate-400 border-transparent hover:text-slate-200'
@@ -675,6 +836,265 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
             </div>
           )}
 
+          {/* TAB: SECURITY & PRIVACY */}
+          {activeTab === 'security' && (
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-sm font-semibold text-white">
+                  {t('security_privacy_title', 'Workspace Lock, Offline Simulation & Storage Audit')}
+                </h3>
+                <p className="text-xs text-slate-400">
+                  {t('security_privacy_desc', 'Protect your local workspace with PBKDF2-SHA256 PIN verification and inspect local browser storage.')}
+                </p>
+              </div>
+
+              {/* Workspace PIN Lock */}
+              <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    {config.security?.lockEnabled ? (
+                      <Lock className="w-4 h-4 text-emerald-400" />
+                    ) : (
+                      <Unlock className="w-4 h-4 text-slate-400" />
+                    )}
+                    <span className="text-xs font-semibold text-white">
+                      {t('master_pin_lock', 'Master PIN / Passphrase Lock')}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-xs font-mono ${config.security?.lockEnabled ? 'text-emerald-400' : 'text-slate-500'}`}>
+                      {config.security?.lockEnabled ? t('enabled', 'Enabled') : t('disabled', 'Disabled')}
+                    </span>
+                    {config.security?.lockEnabled && onLockNow && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onClose();
+                          onLockNow();
+                        }}
+                        className="px-2.5 py-1 rounded-lg bg-amber-500/15 border border-amber-500/40 text-amber-300 text-xs font-medium hover:bg-amber-500/25 transition-colors"
+                      >
+                        {t('lock_workspace_now', 'Lock Workspace')}
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-xs text-slate-300 block">
+                      {config.security?.lockEnabled
+                        ? t('new_pin_label', 'New PIN / Passphrase (min 4 chars)')
+                        : t('set_pin_label', 'Set PIN / Passphrase (min 4 chars)')}
+                    </label>
+                    <input
+                      type="password"
+                      value={newPin}
+                      onChange={e => setNewPin(e.target.value)}
+                      placeholder="••••"
+                      className="w-full text-xs p-2.5 rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-indigo-500"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-slate-300 block">
+                      {t('security_hint_label', 'Optional Hint')}
+                    </label>
+                    <input
+                      type="text"
+                      value={newPinHint}
+                      onChange={e => setNewPinHint(e.target.value)}
+                      placeholder={t('security_hint_placeholder', 'e.g. Favorite year + city')}
+                      className="w-full text-xs p-2.5 rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-indigo-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  <div className="space-y-1">
+                    <label className="text-xs text-slate-300 block">
+                      {t('auto_lock_label', 'Auto-Lock Inactivity Timeout')}
+                    </label>
+                    <select
+                      value={config.security?.autoLockMinutes ?? 0}
+                      onChange={e =>
+                        onUpdateConfig({
+                          ...config,
+                          security: {
+                            lockEnabled: Boolean(config.security?.lockEnabled),
+                            pinHash: config.security?.pinHash,
+                            pinSalt: config.security?.pinSalt,
+                            securityHint: config.security?.securityHint,
+                            lockOnBlur: Boolean(config.security?.lockOnBlur),
+                            autoLockMinutes: Number(e.target.value),
+                          },
+                        })
+                      }
+                      disabled={!config.security?.lockEnabled}
+                      className="w-full text-xs p-2.5 rounded-lg bg-slate-900 border border-slate-700 text-white disabled:opacity-50"
+                    >
+                      <option value={0}>{t('auto_lock_never', 'Never')}</option>
+                      <option value={5}>{t('auto_lock_5m', '5 minutes')}</option>
+                      <option value={15}>{t('auto_lock_15m', '15 minutes')}</option>
+                      <option value={30}>{t('auto_lock_30m', '30 minutes')}</option>
+                    </select>
+                  </div>
+
+                  <div className="flex items-end">
+                    <label className="flex items-center gap-2.5 p-2.5 w-full rounded-lg bg-slate-900 border border-slate-800 cursor-pointer text-xs text-slate-300">
+                      <input
+                        type="checkbox"
+                        checked={Boolean(config.security?.lockOnBlur)}
+                        disabled={!config.security?.lockEnabled}
+                        onChange={e =>
+                          onUpdateConfig({
+                            ...config,
+                            security: {
+                              lockEnabled: Boolean(config.security?.lockEnabled),
+                              pinHash: config.security?.pinHash,
+                              pinSalt: config.security?.pinSalt,
+                              securityHint: config.security?.securityHint,
+                              autoLockMinutes: config.security?.autoLockMinutes ?? 0,
+                              lockOnBlur: e.target.checked,
+                            },
+                          })
+                        }
+                        className="accent-indigo-500"
+                      />
+                      <span>{t('lock_on_blur_label', 'Lock when tab loses focus')}</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={handleSaveMasterPin}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-colors"
+                  >
+                    <KeyRound className="w-3.5 h-3.5" />
+                    <span>{t('save_pin_btn', 'Save PIN Lock')}</span>
+                  </button>
+                  {config.security?.lockEnabled && (
+                    <button
+                      type="button"
+                      onClick={handleDisableMasterPin}
+                      className="px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium transition-colors"
+                    >
+                      {t('disable_pin_btn', 'Disable Lock')}
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Simulated Offline Mode */}
+              <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-slate-900 border border-slate-800 text-amber-400">
+                    <WifiOff className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-semibold text-white block">
+                      {t('simulate_offline_title', 'Simulate Offline Mode')}
+                    </span>
+                    <span className="text-[11px] text-slate-400 block">
+                      {t('simulate_offline_desc', 'Test how OmniDesk behaves without network connectivity by locking online-only tools.')}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() =>
+                    onUpdateConfig({
+                      ...config,
+                      simulatedOffline: !config.simulatedOffline,
+                    })
+                  }
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors shrink-0 ${
+                    config.simulatedOffline
+                      ? 'bg-amber-500/20 border-amber-500/50 text-amber-300'
+                      : 'bg-slate-900 border-slate-700 text-slate-300 hover:text-white'
+                  }`}
+                >
+                  {config.simulatedOffline ? t('enabled', 'Enabled') : t('disabled', 'Disabled')}
+                </button>
+              </div>
+
+              {/* Storage Privacy Audit */}
+              <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div>
+                    <h4 className="text-xs font-semibold text-white">
+                      {t('storage_audit_title', 'Local Storage Privacy Audit')}
+                    </h4>
+                    <p className="text-[11px] text-slate-400">
+                      {t('storage_audit_desc', 'Inspect keys stored locally on this device and purge sensitive scratchpads or tasks.')}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setAuditItems(getStorageAudit())}
+                    className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs transition-colors"
+                  >
+                    {t('refresh', 'Refresh')}
+                  </button>
+                </div>
+
+                <div className="max-h-40 overflow-y-auto divide-y divide-slate-800/80 border border-slate-800 rounded-lg bg-slate-900/40">
+                  {auditItems.length === 0 ? (
+                    <div className="p-3 text-xs text-slate-500 text-center">
+                      {t('storage_audit_empty', 'No local storage entries detected.')}
+                    </div>
+                  ) : (
+                    auditItems.map(item => (
+                      <div key={item.key} className="px-3 py-2 flex items-center justify-between gap-3 text-xs">
+                        <div className="min-w-0">
+                          <span className="font-mono text-slate-200 block truncate">{item.key}</span>
+                          <span className="text-[10px] text-slate-500 uppercase">{item.category}</span>
+                        </div>
+                        <span className="font-mono text-slate-400 tabular-nums shrink-0">
+                          {item.bytes < 1024 ? `${item.bytes} B` : `${(item.bytes / 1024).toFixed(1)} KB`}
+                        </span>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between pt-1">
+                  <span className="text-[11px] text-slate-500">
+                    {t('storage_total_keys', '{count} keys stored locally', { count: auditItems.length })}
+                  </span>
+                  {!confirmPurge ? (
+                    <button
+                      type="button"
+                      onClick={() => setConfirmPurge(true)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-950/40 hover:bg-rose-950/70 text-rose-300 border border-rose-800/40 text-xs font-medium transition-colors"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>{t('purge_sensitive_btn', 'Purge Notes & Tasks')}</span>
+                    </button>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setConfirmPurge(false)}
+                        className="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 text-xs"
+                      >
+                        {t('cancel', 'Cancel')}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handlePurgeSensitive}
+                        className="px-3 py-1 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold"
+                      >
+                        {t('confirm_purge_btn', 'Confirm Purge')}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* TAB 3: BACKUP & JSON MIGRATION */}
           {activeTab === 'backup' && (
             <div className="space-y-5">
@@ -754,6 +1174,36 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
                 </div>
               )}
 
+              {/* Encrypted Backup (AES-256-GCM) */}
+              <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Lock className="w-4 h-4 text-emerald-400" />
+                  <h4 className="text-xs font-semibold text-white">
+                    {t('encrypted_backup_title', 'Encrypted Profile Backup (AES-256-GCM)')}
+                  </h4>
+                </div>
+                <p className="text-[11px] text-slate-400">
+                  {t('encrypted_backup_desc', 'Protect exported backups with a passphrase using PBKDF2-SHA256 + AES-256-GCM. Enter the same passphrase before importing an encrypted file.')}
+                </p>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input
+                    type="password"
+                    value={backupPassword}
+                    onChange={e => setBackupPassword(e.target.value)}
+                    placeholder={t('encrypted_backup_passphrase', 'Backup encryption / decryption passphrase...')}
+                    className="flex-1 text-xs p-2.5 rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-indigo-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={downloadEncryptedBackup}
+                    className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition-colors shrink-0"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>{t('download_encrypted_backup', 'Export Encrypted')}</span>
+                  </button>
+                </div>
+              </div>
+
               {/* JSON preview */}
               <div className="space-y-1.5">
                 <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
@@ -765,7 +1215,7 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
               </div>
 
               {/* Reset to Factory Defaults */}
-              <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
+              <div className="pt-3 border-t border-slate-800 flex items-center justify-between gap-3">
                 <div>
                   <span className="text-xs font-semibold text-slate-300 block">
                     {t('factory_reset', 'Factory Reset')}
@@ -774,17 +1224,36 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
                     {t('factory_reset_desc', 'Restore default color theme, widgets, and language')}
                   </span>
                 </div>
-                <button
-                  onClick={() => {
-                    if (confirm(t('confirm_reset', 'Are you sure you want to restore default settings?'))) {
-                      onResetDefaults();
-                    }
-                  }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-rose-400 hover:text-rose-300 bg-rose-950/30 hover:bg-rose-950/60 border border-rose-900/40 transition-colors"
-                >
-                  <RefreshCw className="w-3.5 h-3.5" />
-                  <span>{t('reset_defaults', 'Reset Defaults')}</span>
-                </button>
+                {!confirmReset ? (
+                  <button
+                    type="button"
+                    onClick={() => setConfirmReset(true)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-rose-400 hover:text-rose-300 bg-rose-950/30 hover:bg-rose-950/60 border border-rose-900/40 transition-colors shrink-0"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>{t('reset_defaults', 'Reset Defaults')}</span>
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setConfirmReset(false)}
+                      className="px-2.5 py-1.5 rounded-lg bg-slate-800 text-slate-300 text-xs"
+                    >
+                      {t('cancel', 'Cancel')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setConfirmReset(false);
+                        onResetDefaults();
+                      }}
+                      className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold"
+                    >
+                      {t('confirm_reset_btn', 'Confirm Reset')}
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           )}

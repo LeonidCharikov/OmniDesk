@@ -1,107 +1,118 @@
 import React from 'react';
 import { ToolDefinition } from '../types/tool';
-import { TextEditorTool } from './files/TextEditorTool';
-import { PdfEditorTool } from './files/PdfEditorTool';
-import { DocxToPdfTool } from './files/DocxToPdfTool';
-import { MultiFormatConverterTool } from './files/MultiFormatConverterTool';
-import { FileInspectorTool } from './files/FileInspectorTool';
-import { TextDiffTool } from './files/TextDiffTool';
-import { ScientificCalculatorTool } from './math/ScientificCalculatorTool';
-import { MatrixCalculatorTool } from './math/MatrixCalculatorTool';
-import { StatisticsTool } from './math/StatisticsTool';
-import { CombinatoricsTool } from './math/CombinatoricsTool';
-import { LatexVisualizerTool } from './math/LatexVisualizerTool';
-import { FunctionGrapherTool } from './math/FunctionGrapherTool';
-import { UnitConverterTool } from './science/UnitConverterTool';
-import { ChemistryTool } from './science/ChemistryTool';
-import { LoanCalcTool } from './finance/LoanCalcTool';
-import { CurrencyCryptoTool } from './finance/CurrencyCryptoTool';
-import { JsonFormatterTool } from './utilities/JsonFormatterTool';
-import { PasswordGeneratorTool } from './utilities/PasswordGeneratorTool';
-import { QrCodeGeneratorTool } from './utilities/QrCodeGeneratorTool';
-import { RegexEncoderTool } from './utilities/RegexEncoderTool';
-import { PomodoroTimerTool } from './utilities/PomodoroTimerTool';
-import { WorldTimezonesTool } from './utilities/WorldTimezonesTool';
-import { OnlineTranslatorTool } from './utilities/OnlineTranslatorTool';
-import { ColorPaletteWcagTool } from './utilities/ColorPaletteWcagTool';
-import { SystemMonitorTool } from './utilities/SystemMonitorTool';
-import { WcagContrastValidatorTool } from './utilities/WcagContrastValidatorTool';
-import { CalendarTool } from './utilities/CalendarTool';
-import { DiscountVatCalcTool } from './finance/DiscountVatCalcTool';
-import { SmartShoppingListTool } from './planning/SmartShoppingListTool';
-import { VoiceRecorderTool } from './files/VoiceRecorderTool';
-import { AudioEditorTool } from './files/AudioEditorTool';
-import { SketchpadTool } from './files/SketchpadTool';
-import { SizeConverterTool } from './utilities/SizeConverterTool';
-import { ImageEditorTool } from './files/ImageEditorTool';
-import {
-  PdfToolkitTool,
-  OcrScannerTool,
-  MarkdownPreviewTool,
-  KanbanTool,
-  NotesTool,
-  SqlPlaygroundTool,
-  ApiTesterTool,
-  GitToolsTool,
-  DiagramEditorTool,
-} from './expanded/AdditionalTools';
-import {
-  BudgetTool,
-  InvestmentCalculatorTool,
-  InvoiceGeneratorTool,
-  FileCryptoTool,
-  JwtDecoderTool,
-  XmlFormatterTool,
-  YamlFormatterTool,
-  MinifierTool,
-  MarkdownTableTool,
-  RegexBuilderTool,
-  ColorPickerTool,
-  ScreenshotAnnotatorTool,
-  GeoGpsTool,
-  PeriodicFinanceTool,
-  BinaryHexTool,
-} from './expanded/MoreTools';
-import { HashChecksumSuiteTool } from './programming/HashChecksumSuiteTool';
-import { EncodingSuiteTool } from './programming/EncodingSuiteTool';
-import { UuidGeneratorTool } from './programming/UuidGeneratorTool';
-import { NumberBaseConverterTool } from './programming/NumberBaseConverterTool';
-import { CaseConverterTool } from './utilities/CaseConverterTool';
-import { TimestampConverterTool } from './utilities/TimestampConverterTool';
-import { CronBuilderTool } from './programming/CronBuilderTool';
-import { CidrCalculatorTool } from './programming/CidrCalculatorTool';
-import { DataConverterTool } from './programming/DataConverterTool';
-import { AesCipherStudioTool } from './programming/AesCipherStudioTool';
-import { ChmodReferenceTool } from './programming/ChmodReferenceTool';
-import { JsonPathExplorerTool } from './programming/JsonPathExplorerTool';
-import { ChemicalBalancerTool } from './science/ChemicalBalancerTool';
-import { ElectronicsCalcTool } from './science/ElectronicsCalcTool';
-import { PhysicsToolkitTool } from './science/PhysicsToolkitTool';
-import { DnaAnalyzerTool } from './science/DnaAnalyzerTool';
-import { SolarEphemerisTool } from './science/SolarEphemerisTool';
-import { NpvIrrCalcTool } from './finance/NpvIrrCalcTool';
-import { BreakevenMarginTool } from './finance/BreakevenMarginTool';
-import { PortfolioRebalancerTool } from './finance/PortfolioRebalancerTool';
-import { FireSimulatorTool } from './finance/FireSimulatorTool';
-import { FreelanceRateTool } from './finance/FreelanceRateTool';
-import { BmiCalculatorTool } from './utilities/BmiCalculatorTool';
-import { CaloriesCalculatorTool } from './utilities/CaloriesCalculatorTool';
-import { DateCountdownCalcTool } from './planning/DateCountdownCalcTool';
-import { HabitTrackerTool } from './planning/HabitTrackerTool';
-import { PackingChecklistTool } from './planning/PackingChecklistTool';
-import { FlashcardsStudyTool } from './planning/FlashcardsStudyTool';
-import { PercentageRatioCalcTool } from './math/PercentageRatioCalcTool';
-import { GradeAverageCalcTool } from './math/GradeAverageCalcTool';
-import { FuelTripCalcTool } from './finance/FuelTripCalcTool';
-import { PhotoCompressorTool } from './files/PhotoCompressorTool';
-import { ScreenWebcamRecorderTool } from './files/ScreenWebcamRecorderTool';
-import { RecipeScalerTool } from './utilities/RecipeScalerTool';
-import { RandomPickerTool } from './utilities/RandomPickerTool';
-import { QrBarcodeReaderTool } from './utilities/QrBarcodeReaderTool';
-import { WordCounterCleanerTool } from './utilities/WordCounterCleanerTool';
-import { AmbientNoiseMixerTool } from './utilities/AmbientNoiseMixerTool';
-import { SleepCycleCalcTool } from './utilities/SleepCycleCalcTool';
-import { BreathingEyeGuideTool } from './utilities/BreathingEyeGuideTool';
+
+function lazyTool(
+  loader: () => Promise<Record<string, unknown>>,
+  exportName: string
+): React.LazyExoticComponent<React.ComponentType> {
+  return React.lazy(async () => {
+    const mod = await loader();
+    return { default: mod[exportName] as React.ComponentType };
+  });
+}
+
+const TextEditorTool = lazyTool(() => import('./files/TextEditorTool'), 'TextEditorTool');
+const PdfEditorTool = lazyTool(() => import('./files/PdfEditorTool'), 'PdfEditorTool');
+const DocxToPdfTool = lazyTool(() => import('./files/DocxToPdfTool'), 'DocxToPdfTool');
+const MultiFormatConverterTool = lazyTool(() => import('./files/MultiFormatConverterTool'), 'MultiFormatConverterTool');
+const FileInspectorTool = lazyTool(() => import('./files/FileInspectorTool'), 'FileInspectorTool');
+const TextDiffTool = lazyTool(() => import('./files/TextDiffTool'), 'TextDiffTool');
+const ScientificCalculatorTool = lazyTool(() => import('./math/ScientificCalculatorTool'), 'ScientificCalculatorTool');
+const MatrixCalculatorTool = lazyTool(() => import('./math/MatrixCalculatorTool'), 'MatrixCalculatorTool');
+const StatisticsTool = lazyTool(() => import('./math/StatisticsTool'), 'StatisticsTool');
+const CombinatoricsTool = lazyTool(() => import('./math/CombinatoricsTool'), 'CombinatoricsTool');
+const LatexVisualizerTool = lazyTool(() => import('./math/LatexVisualizerTool'), 'LatexVisualizerTool');
+const FunctionGrapherTool = lazyTool(() => import('./math/FunctionGrapherTool'), 'FunctionGrapherTool');
+const UnitConverterTool = lazyTool(() => import('./science/UnitConverterTool'), 'UnitConverterTool');
+const ChemistryTool = lazyTool(() => import('./science/ChemistryTool'), 'ChemistryTool');
+const LoanCalcTool = lazyTool(() => import('./finance/LoanCalcTool'), 'LoanCalcTool');
+const CurrencyCryptoTool = lazyTool(() => import('./finance/CurrencyCryptoTool'), 'CurrencyCryptoTool');
+const JsonFormatterTool = lazyTool(() => import('./utilities/JsonFormatterTool'), 'JsonFormatterTool');
+const PasswordGeneratorTool = lazyTool(() => import('./utilities/PasswordGeneratorTool'), 'PasswordGeneratorTool');
+const QrCodeGeneratorTool = lazyTool(() => import('./utilities/QrCodeGeneratorTool'), 'QrCodeGeneratorTool');
+const RegexEncoderTool = lazyTool(() => import('./utilities/RegexEncoderTool'), 'RegexEncoderTool');
+const PomodoroTimerTool = lazyTool(() => import('./utilities/PomodoroTimerTool'), 'PomodoroTimerTool');
+const WorldTimezonesTool = lazyTool(() => import('./utilities/WorldTimezonesTool'), 'WorldTimezonesTool');
+const OnlineTranslatorTool = lazyTool(() => import('./utilities/OnlineTranslatorTool'), 'OnlineTranslatorTool');
+const ColorPaletteWcagTool = lazyTool(() => import('./utilities/ColorPaletteWcagTool'), 'ColorPaletteWcagTool');
+const SystemMonitorTool = lazyTool(() => import('./utilities/SystemMonitorTool'), 'SystemMonitorTool');
+const WcagContrastValidatorTool = lazyTool(() => import('./utilities/WcagContrastValidatorTool'), 'WcagContrastValidatorTool');
+const CalendarTool = lazyTool(() => import('./utilities/CalendarTool'), 'CalendarTool');
+const DiscountVatCalcTool = lazyTool(() => import('./finance/DiscountVatCalcTool'), 'DiscountVatCalcTool');
+const SmartShoppingListTool = lazyTool(() => import('./planning/SmartShoppingListTool'), 'SmartShoppingListTool');
+const VoiceRecorderTool = lazyTool(() => import('./files/VoiceRecorderTool'), 'VoiceRecorderTool');
+const AudioEditorTool = lazyTool(() => import('./files/AudioEditorTool'), 'AudioEditorTool');
+const SketchpadTool = lazyTool(() => import('./files/SketchpadTool'), 'SketchpadTool');
+const SizeConverterTool = lazyTool(() => import('./utilities/SizeConverterTool'), 'SizeConverterTool');
+const ImageEditorTool = lazyTool(() => import('./files/ImageEditorTool'), 'ImageEditorTool');
+
+const PdfToolkitTool = lazyTool(() => import('./expanded/AdditionalTools'), 'PdfToolkitTool');
+const OcrScannerTool = lazyTool(() => import('./expanded/AdditionalTools'), 'OcrScannerTool');
+const MarkdownPreviewTool = lazyTool(() => import('./expanded/AdditionalTools'), 'MarkdownPreviewTool');
+const KanbanTool = lazyTool(() => import('./expanded/AdditionalTools'), 'KanbanTool');
+const NotesTool = lazyTool(() => import('./expanded/AdditionalTools'), 'NotesTool');
+const SqlPlaygroundTool = lazyTool(() => import('./expanded/AdditionalTools'), 'SqlPlaygroundTool');
+const ApiTesterTool = lazyTool(() => import('./expanded/AdditionalTools'), 'ApiTesterTool');
+const GitToolsTool = lazyTool(() => import('./expanded/AdditionalTools'), 'GitToolsTool');
+const DiagramEditorTool = lazyTool(() => import('./expanded/AdditionalTools'), 'DiagramEditorTool');
+
+const BudgetTool = lazyTool(() => import('./expanded/MoreTools'), 'BudgetTool');
+const InvestmentCalculatorTool = lazyTool(() => import('./expanded/MoreTools'), 'InvestmentCalculatorTool');
+const InvoiceGeneratorTool = lazyTool(() => import('./expanded/MoreTools'), 'InvoiceGeneratorTool');
+const FileCryptoTool = lazyTool(() => import('./expanded/MoreTools'), 'FileCryptoTool');
+const JwtDecoderTool = lazyTool(() => import('./expanded/MoreTools'), 'JwtDecoderTool');
+const XmlFormatterTool = lazyTool(() => import('./expanded/MoreTools'), 'XmlFormatterTool');
+const YamlFormatterTool = lazyTool(() => import('./expanded/MoreTools'), 'YamlFormatterTool');
+const MinifierTool = lazyTool(() => import('./expanded/MoreTools'), 'MinifierTool');
+const MarkdownTableTool = lazyTool(() => import('./expanded/MoreTools'), 'MarkdownTableTool');
+const RegexBuilderTool = lazyTool(() => import('./expanded/MoreTools'), 'RegexBuilderTool');
+const ColorPickerTool = lazyTool(() => import('./expanded/MoreTools'), 'ColorPickerTool');
+const ScreenshotAnnotatorTool = lazyTool(() => import('./expanded/MoreTools'), 'ScreenshotAnnotatorTool');
+const GeoGpsTool = lazyTool(() => import('./expanded/MoreTools'), 'GeoGpsTool');
+const PeriodicFinanceTool = lazyTool(() => import('./expanded/MoreTools'), 'PeriodicFinanceTool');
+const BinaryHexTool = lazyTool(() => import('./expanded/MoreTools'), 'BinaryHexTool');
+
+const HashChecksumSuiteTool = lazyTool(() => import('./programming/HashChecksumSuiteTool'), 'HashChecksumSuiteTool');
+const EncodingSuiteTool = lazyTool(() => import('./programming/EncodingSuiteTool'), 'EncodingSuiteTool');
+const UuidGeneratorTool = lazyTool(() => import('./programming/UuidGeneratorTool'), 'UuidGeneratorTool');
+const NumberBaseConverterTool = lazyTool(() => import('./programming/NumberBaseConverterTool'), 'NumberBaseConverterTool');
+const CaseConverterTool = lazyTool(() => import('./utilities/CaseConverterTool'), 'CaseConverterTool');
+const TimestampConverterTool = lazyTool(() => import('./utilities/TimestampConverterTool'), 'TimestampConverterTool');
+const CronBuilderTool = lazyTool(() => import('./programming/CronBuilderTool'), 'CronBuilderTool');
+const CidrCalculatorTool = lazyTool(() => import('./programming/CidrCalculatorTool'), 'CidrCalculatorTool');
+const DataConverterTool = lazyTool(() => import('./programming/DataConverterTool'), 'DataConverterTool');
+const AesCipherStudioTool = lazyTool(() => import('./programming/AesCipherStudioTool'), 'AesCipherStudioTool');
+const ChmodReferenceTool = lazyTool(() => import('./programming/ChmodReferenceTool'), 'ChmodReferenceTool');
+const JsonPathExplorerTool = lazyTool(() => import('./programming/JsonPathExplorerTool'), 'JsonPathExplorerTool');
+const ChemicalBalancerTool = lazyTool(() => import('./science/ChemicalBalancerTool'), 'ChemicalBalancerTool');
+const ElectronicsCalcTool = lazyTool(() => import('./science/ElectronicsCalcTool'), 'ElectronicsCalcTool');
+const PhysicsToolkitTool = lazyTool(() => import('./science/PhysicsToolkitTool'), 'PhysicsToolkitTool');
+const DnaAnalyzerTool = lazyTool(() => import('./science/DnaAnalyzerTool'), 'DnaAnalyzerTool');
+const SolarEphemerisTool = lazyTool(() => import('./science/SolarEphemerisTool'), 'SolarEphemerisTool');
+const NpvIrrCalcTool = lazyTool(() => import('./finance/NpvIrrCalcTool'), 'NpvIrrCalcTool');
+const BreakevenMarginTool = lazyTool(() => import('./finance/BreakevenMarginTool'), 'BreakevenMarginTool');
+const PortfolioRebalancerTool = lazyTool(() => import('./finance/PortfolioRebalancerTool'), 'PortfolioRebalancerTool');
+const FireSimulatorTool = lazyTool(() => import('./finance/FireSimulatorTool'), 'FireSimulatorTool');
+const FreelanceRateTool = lazyTool(() => import('./finance/FreelanceRateTool'), 'FreelanceRateTool');
+const BmiCalculatorTool = lazyTool(() => import('./utilities/BmiCalculatorTool'), 'BmiCalculatorTool');
+const CaloriesCalculatorTool = lazyTool(() => import('./utilities/CaloriesCalculatorTool'), 'CaloriesCalculatorTool');
+const DateCountdownCalcTool = lazyTool(() => import('./planning/DateCountdownCalcTool'), 'DateCountdownCalcTool');
+const HabitTrackerTool = lazyTool(() => import('./planning/HabitTrackerTool'), 'HabitTrackerTool');
+const PackingChecklistTool = lazyTool(() => import('./planning/PackingChecklistTool'), 'PackingChecklistTool');
+const FlashcardsStudyTool = lazyTool(() => import('./planning/FlashcardsStudyTool'), 'FlashcardsStudyTool');
+const PercentageRatioCalcTool = lazyTool(() => import('./math/PercentageRatioCalcTool'), 'PercentageRatioCalcTool');
+const GradeAverageCalcTool = lazyTool(() => import('./math/GradeAverageCalcTool'), 'GradeAverageCalcTool');
+const FuelTripCalcTool = lazyTool(() => import('./finance/FuelTripCalcTool'), 'FuelTripCalcTool');
+const PhotoCompressorTool = lazyTool(() => import('./files/PhotoCompressorTool'), 'PhotoCompressorTool');
+const ScreenWebcamRecorderTool = lazyTool(() => import('./files/ScreenWebcamRecorderTool'), 'ScreenWebcamRecorderTool');
+const RecipeScalerTool = lazyTool(() => import('./utilities/RecipeScalerTool'), 'RecipeScalerTool');
+const RandomPickerTool = lazyTool(() => import('./utilities/RandomPickerTool'), 'RandomPickerTool');
+const QrBarcodeReaderTool = lazyTool(() => import('./utilities/QrBarcodeReaderTool'), 'QrBarcodeReaderTool');
+const WordCounterCleanerTool = lazyTool(() => import('./utilities/WordCounterCleanerTool'), 'WordCounterCleanerTool');
+const AmbientNoiseMixerTool = lazyTool(() => import('./utilities/AmbientNoiseMixerTool'), 'AmbientNoiseMixerTool');
+const SleepCycleCalcTool = lazyTool(() => import('./utilities/SleepCycleCalcTool'), 'SleepCycleCalcTool');
+const BreathingEyeGuideTool = lazyTool(() => import('./utilities/BreathingEyeGuideTool'), 'BreathingEyeGuideTool');
+
 
 export const TOOLS_REGISTRY: ToolDefinition[] = [
   // 1. Soubory & Dokumenty (files)

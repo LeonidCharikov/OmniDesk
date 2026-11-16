@@ -138,6 +138,7 @@ export const ImageEditorTool: React.FC = () => {
   const [brushColor, setBrushColor] = useState<string>('#ef4444');
   const [brushSize, setBrushSize] = useState<number>(6);
   const [isEraser, setIsEraser] = useState<boolean>(false);
+  const [confirmRevert, setConfirmRevert] = useState<boolean>(false);
   const [censorBoxes, setCensorBoxes] = useState<CensorBox[]>([]);
 
   // Crop State
@@ -704,38 +705,42 @@ export const ImageEditorTool: React.FC = () => {
     setFlipV(false);
   };
 
-  // Revert all to original
+  // Revert all to original (2-step inline confirmation)
   const revertToOriginal = () => {
     if (!sourceImage) return;
-    if (window.confirm(t('image_editor_revert_confirm', 'Opravdu vrátit fotografii do původního stavu?'))) {
-      setWidth(originalWidth);
-      setHeight(originalHeight);
-      setAspectRatio(originalHeight > 0 ? originalWidth / originalHeight : 1);
-      setScalePercent(100);
-      setResizeMode('resample');
-      setCanvasBgColor('transparent');
-      setRotation(0);
-      setFineAngle(0);
-      setFlipH(false);
-      setFlipV(false);
-      setBrightness(100);
-      setContrast(100);
-      setSaturation(100);
-      setWarmth(0);
-      setHue(0);
-      setBlur(0);
-      setSepia(0);
-      setGrayscale(0);
-      setInvert(0);
-      setVignette(0);
-      setTextOverlay(prev => ({ ...prev, enabled: false }));
-      setDrawings([]);
-      setCensorBoxes([]);
-      setIsCropping(false);
-      setHistory([]);
-      setRedoStack([]);
-      setStatusMessage('');
+    if (!confirmRevert) {
+      setConfirmRevert(true);
+      setTimeout(() => setConfirmRevert(false), 4000);
+      return;
     }
+    setConfirmRevert(false);
+    setWidth(originalWidth);
+    setHeight(originalHeight);
+    setAspectRatio(originalHeight > 0 ? originalWidth / originalHeight : 1);
+    setScalePercent(100);
+    setResizeMode('resample');
+    setCanvasBgColor('transparent');
+    setRotation(0);
+    setFineAngle(0);
+    setFlipH(false);
+    setFlipV(false);
+    setBrightness(100);
+    setContrast(100);
+    setSaturation(100);
+    setWarmth(0);
+    setHue(0);
+    setBlur(0);
+    setSepia(0);
+    setGrayscale(0);
+    setInvert(0);
+    setVignette(0);
+    setTextOverlay(prev => ({ ...prev, enabled: false }));
+    setDrawings([]);
+    setCensorBoxes([]);
+    setIsCropping(false);
+    setHistory([]);
+    setRedoStack([]);
+    setStatusMessage('');
   };
 
   // Add Censor Box
@@ -1317,9 +1322,18 @@ export const ImageEditorTool: React.FC = () => {
                 }}
               />
             </label>
-            <button type="button" className={btnSecondary} onClick={revertToOriginal} title={t('image_editor_revert_original', 'Obnovit původní')}>
+            <button
+              type="button"
+              className={confirmRevert
+                ? 'px-3 py-1.5 text-xs font-medium rounded-lg bg-rose-600 hover:bg-rose-500 text-white border border-rose-500 flex items-center gap-1.5 transition-colors'
+                : btnSecondary}
+              onClick={revertToOriginal}
+              title={t('image_editor_revert_original', 'Obnovit původní')}
+            >
               <RefreshCw className="w-3.5 h-3.5" />
-              {t('image_editor_revert_original', 'Obnovit původní')}
+              {confirmRevert
+                ? t('confirm_action_again', 'Confirm revert')
+                : t('image_editor_revert_original', 'Obnovit původní')}
             </button>
           </div>
         )}

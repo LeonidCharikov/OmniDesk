@@ -1,8 +1,10 @@
 import React, { useId } from 'react';
-import { Search, Star, ArrowLeft, ShieldCheck, Sliders, Menu, Minus, Square, X } from 'lucide-react';
+import { Search, Star, ArrowLeft, ShieldCheck, Sliders, Menu, Minus, Square, X, WifiOff, Lock } from 'lucide-react';
 import { ToolDefinition } from '../../types/tool';
 import { useI18n, SUPPORTED_LANGUAGES, SupportedLanguage } from '../../i18n/context';
 import { getToolCatalogText } from '../../i18n/toolCatalog';
+import { PWAInstallButton } from '../ui/PWAInstallButton';
+import { isTauri } from '../../services/fileSystemService';
 
 interface HeaderProps {
   currentCategoryName: string;
@@ -14,6 +16,9 @@ interface HeaderProps {
   onOpenSettings?: () => void;
   onToggleSidebar?: () => void;
   isSidebarOpen?: boolean;
+  isOffline?: boolean;
+  canLock?: boolean;
+  onLockNow?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -26,9 +31,13 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenSettings,
   onToggleSidebar,
   isSidebarOpen,
+  isOffline = false,
+  canLock = false,
+  onLockNow,
 }) => {
   const { language, setLanguage, t } = useI18n();
   const langSelectId = useId();
+  const runningInTauri = isTauri();
 
   const handleHeaderMouseDown = async (event: React.MouseEvent<HTMLElement>) => {
     if (event.button !== 0 || (event.target instanceof Element && event.target.closest('button, select, input, a'))) {
@@ -94,7 +103,6 @@ export const Header: React.FC<HeaderProps> = ({
     >
       {/* Zone 1: Hamburger + Breadcrumbs & Back Navigation */}
       <div className="flex items-center gap-1.5 sm:gap-2.5 min-w-0 shrink-0 max-w-[50%] lg:max-w-[40%] overflow-hidden">
-        {/* Hamburger toggle */}
         {onToggleSidebar && (
           <button
             onClick={onToggleSidebar}
@@ -106,7 +114,6 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         )}
 
-        {/* Back button (when tool is open) */}
         {activeTool && (
           <button
             onClick={onBack}
@@ -119,28 +126,21 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         )}
 
-        {/* Breadcrumb & Title */}
         <div data-tauri-drag-region className="flex items-center gap-1.5 text-xs text-slate-400 truncate min-w-0">
           {activeTool ? (
             <>
-              {/* Desktop (>= 1280px): OmniDesk / Category / Tool */}
               <span className="font-semibold text-slate-300 hidden xl:inline shrink-0">OmniDesk</span>
               <span aria-hidden="true" className="text-slate-600 hidden xl:inline shrink-0">/</span>
-
-              {/* Tablet & Desktop (>= 640px): Category */}
               <span className="text-slate-400 truncate hidden sm:inline shrink-0 max-w-28 xl:max-w-none">
                 {currentCategoryName}
               </span>
               <span aria-hidden="true" className="text-slate-600 hidden sm:inline shrink-0">/</span>
-
-              {/* Active Tool Name: Always visible and prominent */}
               <span className="text-indigo-400 font-semibold text-xs sm:text-sm truncate min-w-0">
                 {toolTitle}
               </span>
             </>
           ) : (
             <>
-              {/* Main menu: OmniDesk / Category */}
               <span className="font-semibold text-slate-200 text-xs sm:text-sm shrink-0">OmniDesk</span>
               <span aria-hidden="true" className="text-slate-600 shrink-0">/</span>
               <span className="text-slate-300 font-medium truncate min-w-0">
@@ -167,9 +167,8 @@ export const Header: React.FC<HeaderProps> = ({
         </button>
       </div>
 
-      {/* Zone 3: Language Selector, Tool Actions & Window Controls */}
+      {/* Zone 3: PWA Install, Connectivity/Lock, Language, Settings & Window Controls */}
       <div className="flex items-center justify-end gap-1.5 sm:gap-2 shrink-0">
-        {/* Compact search button (< 1024px) */}
         <button
           onClick={onOpenSearch}
           className="lg:hidden p-1.5 sm:p-2 rounded-lg bg-slate-900/80 border border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200 transition-colors shrink-0"
@@ -179,7 +178,20 @@ export const Header: React.FC<HeaderProps> = ({
           <Search className="w-4 h-4" />
         </button>
 
-        {/* Active tool: Favorite toggle; Main menu: Sandboxed badge */}
+        {!runningInTauri && <PWAInstallButton />}
+
+        {isOffline && (
+          <div
+            className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 shrink-0"
+            title={t('offline_mode_active', 'Offline mode active')}
+          >
+            <WifiOff className="w-3.5 h-3.5 shrink-0" />
+            <span className="hidden 2xl:inline text-xs font-medium whitespace-nowrap">
+              {t('offline_badge', 'Offline')}
+            </span>
+          </div>
+        )}
+
         {activeTool ? (
           <button
             onClick={onToggleFavorite}
@@ -196,7 +208,7 @@ export const Header: React.FC<HeaderProps> = ({
               {isFavorite ? t('in_favorites', 'In Favorites') : t('add_favorite', 'Add to Favorites')}
             </span>
           </button>
-        ) : (
+        ) : !isOffline ? (
           <div
             className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 shrink-0"
             title={t('local_sandboxed', 'Local Sandbox')}
@@ -206,9 +218,19 @@ export const Header: React.FC<HeaderProps> = ({
               {t('local_sandboxed', 'Local Sandbox')}
             </span>
           </div>
+        ) : null}
+
+        {canLock && onLockNow && (
+          <button
+            onClick={onLockNow}
+            className="p-1.5 sm:p-2 rounded-lg bg-slate-900/80 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-amber-300 transition-colors shrink-0"
+            title={t('lock_workspace_now', 'Lock Workspace')}
+            aria-label={t('lock_workspace_now', 'Lock Workspace')}
+          >
+            <Lock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          </button>
         )}
 
-        {/* Language selector */}
         <div className="relative flex items-center rounded-lg bg-slate-900/80 border border-slate-800 hover:border-slate-700 transition-colors shrink-0">
           <label htmlFor={langSelectId} className="sr-only">{t('interface_language', 'Interface Language')}</label>
           <div className="pointer-events-none flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-slate-200 font-medium">
@@ -230,7 +252,6 @@ export const Header: React.FC<HeaderProps> = ({
           </select>
         </div>
 
-        {/* Settings button */}
         {onOpenSettings && (
           <button
             onClick={onOpenSettings}
@@ -242,7 +263,6 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         )}
 
-        {/* Window action buttons (Tauri & Desktop >= 640px) */}
         <div className="hidden sm:flex items-center ml-0.5 pl-1.5 sm:pl-2 border-l border-slate-800/80 gap-0.5 shrink-0">
           <button
             onClick={handleMinimize}

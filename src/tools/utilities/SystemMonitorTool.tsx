@@ -18,8 +18,18 @@ import {
   ArrowUpFromLine
 } from 'lucide-react';
 import * as tauriOs from '@tauri-apps/plugin-os';
-import { isTauri } from '../../services/fileSystemService';
+import { invokeRustCommand, isTauri } from '../../services/fileSystemService';
 import { useI18n } from '../../i18n/context';
+
+interface NativeSystemTelemetry {
+  cpu_usage: number;
+  cores: number[];
+  ram_used_gb: number;
+  ram_total_gb: number;
+  disk_used_gb: number;
+  disk_total_gb: number;
+  uptime_seconds: number;
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -493,6 +503,41 @@ export const SystemMonitorTool: React.FC = () => {
     if (!isRunning) return;
 
     const timer = setInterval(async () => {
+      // Native Tauri desktop path: invoke Rust sysinfo command
+      if (isTauri()) {
+        try {
+          const native = await invokeRustCommand<NativeSystemTelemetry>('get_system_telemetry');
+          const cpuVal = stressSimulated
+            ? Math.min(99, native.cpu_usage + 45)
+            : native.cpu_usage;
+          const coresVal = native.cores.map(c =>
+            Math.round(stressSimulated ? Math.min(99, c + 45) : c)
+          );
+          const ramPercent =
+            native.ram_total_gb > 0 ? (native.ram_used_gb / native.ram_total_gb) * 100 : 0;
+          const diskPercent =
+            native.disk_total_gb > 0 ? (native.disk_used_gb / native.disk_total_gb) * 100 : 0;
+
+          setTelemetry(prev => ({
+            ...prev,
+            cpuUsage: Math.round(cpuVal * 10) / 10,
+            cores: coresVal,
+            ramUsedGb: Math.round(native.ram_used_gb * 100) / 100,
+            ramTotalGb: Math.round(native.ram_total_gb * 100) / 100,
+            ramPercent: Math.round(ramPercent * 10) / 10,
+            diskUsedGb: Math.round(native.disk_used_gb * 100) / 100,
+            diskTotalGb: Math.round(native.disk_total_gb * 100) / 100,
+            diskPercent: Math.round(diskPercent * 10) / 10,
+            uptimeSeconds: native.uptime_seconds,
+          }));
+          setCpuHistory(hist => [...hist.slice(1), Math.round(cpuVal)]);
+          setBrowserMetrics(collectBrowserMetrics());
+          return;
+        } catch (err) {
+          console.warn('Native sysinfo IPC unavailable, falling back to Web APIs:', err);
+        }
+      }
+
       // Calculate real session uptime
       const sessionUptimeSeconds = Math.floor((performance.now() - mountTimeRef.current) / 1000);
 
@@ -519,7 +564,6 @@ export const SystemMonitorTool: React.FC = () => {
 
         const mem = getPerformanceMemory();
         if (mem) {
-          // We can show JS heap usage as the "used" memory (this is what's actually measurable)
           ramUsed = mem.usedJSHeapSize / (1024 ** 3);
           ramTotal = mem.jsHeapSizeLimit / (1024 ** 3);
           ramCached = (mem.totalJSHeapSize - mem.usedJSHeapSize) / (1024 ** 3);
@@ -536,7 +580,6 @@ export const SystemMonitorTool: React.FC = () => {
           ramCachedGb: Math.round(ramCached * 1000) / 1000,
           ramPercent: Math.round(ramPercent * 10) / 10,
           uptimeSeconds: sessionUptimeSeconds,
-          // Disk I/O not available in browser; leave as 0
           diskReadMbs: 0,
           diskWriteMbs: 0,
         };
@@ -601,8 +644,8 @@ serde = { version = "1.0", features = ["derive"] }
   ]
 }
 
-// src-tauri/src/main.rs
-use sysinfo::{CpuRefreshKind, Disks, RefreshKind, System};
+// src-tauri/src/lib.rs
+use sysinfo::{CpuRefreshKind, Disks, MemoryRefreshKind, RefreshKind, System};
 use std::sync::Mutex;
 use tauri::State;
 
@@ -612,23 +655,24 @@ fn get_system_telemetry(state: State<'_, Mutex<System>>) -> Result<serde_json::V
     sys.refresh_specifics(
         RefreshKind::new()
             .with_cpu(CpuRefreshKind::everything())
-            .with_memory(),
+            .with_memory(MemoryRefreshKind::everything()),
     );
 
     let cpu_usage = sys.global_cpu_info().cpu_usage();
     let cores: Vec<f32> = sys.cpus().iter().map(|c| c.cpu_usage()).collect();
-    let ram_total = sys.total_memory() as f32 / 1e9;
-    let ram_used = sys.used_memory() as f32 / 1e9;
+    let ram_total = sys.total_memory() as f64 / 1_073_741_824.0;
+    let ram_used = sys.used_memory() as f64 / 1_073_741_824.0;
 
     Ok(serde_json::json!({
         "cpu_usage": cpu_usage,
         "cores": cores,
         "ram_used_gb": ram_used,
         "ram_total_gb": ram_total,
+        "uptime_seconds": System::uptime(),
     }))
 }
 
-fn main() {
+pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_os::init())
         .manage(Mutex::new(System::new_all()))
@@ -838,7 +882,7 @@ fn main() {
                   </div>
                   {!osInfo.isNative && (
                     <span className="text-[10px] text-slate-500 mt-1 block">
-                      Estimated via requestAnimationFrame timing
+                      {t('sys_raf_estimate_hint', 'Estimated via requestAnimationFrame timing')}
                     </span>
                   )}
                 </div>

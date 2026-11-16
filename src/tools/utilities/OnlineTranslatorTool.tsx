@@ -41,10 +41,14 @@ const PHRASE_DICTIONARY: Record<string, Record<string, string>> = {
 
 export const OnlineTranslatorTool: React.FC<Props> = ({ isOffline }) => {
   const { t } = useI18n();
-  const [sourceLang, setSourceLang] = useState<'cs' | 'en' | 'de' | 'es' | 'ru'>('cs');
-  const [targetLang, setTargetLang] = useState<'cs' | 'en' | 'de' | 'es' | 'ru'>('ru');
-  const [inputText, setInputText] = useState(() => t('translator_initial_input', 'Tento dokument byl bezpečně převeden v lokální aplikaci.'));
-  const [outputText, setOutputText] = useState(() => t('translator_initial_output', 'Tento dokument byl bezpečně převeden v lokální aplikaci.'));
+  const [sourceLang, setSourceLang] = useState<'cs' | 'en' | 'de' | 'es' | 'ru'>('en');
+  const [targetLang, setTargetLang] = useState<'cs' | 'en' | 'de' | 'es' | 'ru'>('cs');
+  const [inputText, setInputText] = useState(() =>
+    t('translator_initial_input', 'This document was securely converted in a local application.')
+  );
+  const [outputText, setOutputText] = useState(() =>
+    t('translator_initial_output', 'Tento dokument byl bezpečně převeden v lokální aplikaci.')
+  );
   const [isTranslating, setIsTranslating] = useState(false);
 
   const sourceLangId = useId();
@@ -63,14 +67,14 @@ export const OnlineTranslatorTool: React.FC<Props> = ({ isOffline }) => {
         translation = PHRASE_DICTIONARY[targetLang]?.offline || PHRASE_DICTIONARY.en.offline;
       } else if (lower.includes('tauri') || lower.includes('desktop') || lower.includes('настольн')) {
         translation = PHRASE_DICTIONARY[targetLang]?.tauri || PHRASE_DICTIONARY.en.tauri;
-      } else if (lower.includes('dokument') || lower.includes('document')) {
+      } else if (lower.includes('dokument') || lower.includes('document') || lower.includes('документ')) {
         translation = PHRASE_DICTIONARY[targetLang]?.doc || PHRASE_DICTIONARY.en.doc;
       } else {
         translation = `[${targetLang.toUpperCase()}]: ${inputText}`;
       }
       setOutputText(translation);
       setIsTranslating(false);
-    }, 350);
+    }, 250);
   };
 
   const swapLanguages = () => {

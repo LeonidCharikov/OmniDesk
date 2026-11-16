@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
 import { ToolGrid } from './components/layout/ToolGrid';
 import { CommandPalette } from './components/layout/CommandPalette';
 import { ConfigModal } from './components/ui/ConfigModal';
-import { ArchitectureTool } from './tools/architecture/ArchitectureTool';
+import { LockScreen } from './components/ui/LockScreen';
 import { TOOLS_REGISTRY } from './tools/registry';
 import { ToolCategory, UserConfig, WidgetCustomization } from './types/tool';
 import { loadUserConfig, saveUserConfig, DEFAULT_CONFIG } from './services/storage';
@@ -14,19 +14,68 @@ import { Info } from 'lucide-react';
 import { getToolCatalogText } from './i18n/toolCatalog';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
 
+const ArchitectureTool = React.lazy(() =>
+  import('./tools/architecture/ArchitectureTool').then(m => ({ default: m.ArchitectureTool }))
+);
+
+const VALID_CATEGORIES = new Set<ToolCategory>([
+  'all',
+  'basic',
+  'favorites',
+  'files',
+  'programming',
+  'planning',
+  'math',
+  'science',
+  'finance',
+  'utilities',
+  'architecture',
+]);
+
+function readLocationState(): { category: ToolCategory; toolId: string | null } {
+  if (typeof window === 'undefined') return { category: 'all', toolId: null };
+  const rawHash = window.location.hash.replace(/^#/, '');
+  if (!rawHash) return { category: 'all', toolId: null };
+  const params = new URLSearchParams(rawHash);
+  const toolParam = params.get('tool');
+  const catParam = params.get('cat') as ToolCategory | null;
+
+  if (toolParam) {
+    const found = TOOLS_REGISTRY.find(t => t.id === toolParam);
+    if (found) {
+      return {
+        category: catParam && VALID_CATEGORIES.has(catParam) ? catParam : found.category,
+        toolId: found.id,
+      };
+    }
+  }
+
+  if (catParam && VALID_CATEGORIES.has(catParam)) {
+    return { category: catParam, toolId: null };
+  }
+
+  return { category: 'all', toolId: null };
+}
+
 export default function App() {
   const [config, setConfig] = useState<UserConfig>(loadUserConfig);
-  const [activeCategory, setActiveCategory] = useState<ToolCategory>('all');
-  const [selectedToolId, setSelectedToolId] = useState<string | null>(null);
+  const initialNav = React.useMemo(readLocationState, []);
+  const [activeCategory, setActiveCategory] = useState<ToolCategory>(initialNav.category);
+  const [selectedToolId, setSelectedToolId] = useState<string | null>(initialNav.toolId);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isConfigOpen, setIsConfigOpen] = useState(false);
-  const [isBrowserOnline, setIsBrowserOnline] = useState(navigator.onLine);
+  const [isBrowserOnline, setIsBrowserOnline] = useState(
+    typeof navigator !== 'undefined' ? navigator.onLine : true
+  );
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isToolInfoOpen, setIsToolInfoOpen] = useState(false);
+  const [isLocked, setIsLocked] = useState<boolean>(() => {
+    const initial = loadUserConfig();
+    return Boolean(initial.security?.lockEnabled && initial.security?.pinHash && initial.security?.pinSalt);
+  });
 
   const toggleSidebar = useCallback(() => setIsSidebarOpen(prev => !prev), []);
 
-  // Close sidebar overlay on mobile when navigating
   const closeSidebarOnMobile = useCallback(() => {
     if (window.innerWidth < 640) {
       setIsSidebarOpen(false);
@@ -43,6 +92,42 @@ export default function App() {
   useEffect(() => {
     setIsToolInfoOpen(false);
   }, [selectedToolId]);
+
+  // Global Ctrl+K / Cmd+K shortcut to toggle Command Palette
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        if (!isLocked) {
+          setIsSearchOpen(prev => !prev);
+        }
+      }
+    };
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, [isLocked]);
+
+  // Sync URL hash with current category / active tool
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams();
+    if (activeCategory !== 'all') params.set('cat', activeCategory);
+    if (selectedToolId) params.set('tool', selectedToolId);
+    const nextHash = params.toString() ? `#${params.toString()}` : '';
+    if (window.location.hash !== nextHash) {
+      window.history.replaceState(null, '', nextHash || window.location.pathname + window.location.search);
+    }
+  }, [activeCategory, selectedToolId]);
+
+  useEffect(() => {
+    const handleHashChange = () => {
+      const next = readLocationState();
+      setActiveCategory(next.category);
+      setSelectedToolId(next.toolId);
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
 
   useEffect(() => {
     const collapseSidebarForSmallWindow = () => {
@@ -69,11 +154,64 @@ export default function App() {
     };
   }, []);
 
+  // Lock on blur & inactivity auto-lock enforcement
+  const canLock = Boolean(config.security?.lockEnabled && config.security?.pinHash && config.security?.pinSalt);
+
+  useEffect(() => {
+    if (!canLock || isLocked) return;
+
+    const handleVisibilityOrBlur = () => {
+      if (config.security?.lockOnBlur && (document.hidden || !document.hasFocus())) {
+        setIsLocked(true);
+      }
+    };
+
+    window.addEventListener('blur', handleVisibilityOrBlur);
+    document.addEventListener('visibilitychange', handleVisibilityOrBlur);
+    return () => {
+      window.removeEventListener('blur', handleVisibilityOrBlur);
+      document.removeEventListener('visibilitychange', handleVisibilityOrBlur);
+    };
+  }, [canLock, isLocked, config.security?.lockOnBlur]);
+
+  useEffect(() => {
+    const minutes = config.security?.autoLockMinutes ?? 0;
+    if (!canLock || isLocked || minutes <= 0) return;
+
+    let timeoutId: number;
+    const resetTimer = () => {
+      window.clearTimeout(timeoutId);
+      timeoutId = window.setTimeout(() => setIsLocked(true), minutes * 60 * 1000);
+    };
+
+    resetTimer();
+    const events: Array<keyof WindowEventMap> = ['pointerdown', 'keydown', 'mousemove'];
+    events.forEach(ev => window.addEventListener(ev, resetTimer, { passive: true }));
+
+    return () => {
+      window.clearTimeout(timeoutId);
+      events.forEach(ev => window.removeEventListener(ev, resetTimer));
+    };
+  }, [canLock, isLocked, config.security?.autoLockMinutes]);
+
   // Save config
-  const updateConfig = (newConfig: UserConfig) => {
+  const updateConfig = useCallback((newConfig: UserConfig) => {
     setConfig(newConfig);
     saveUserConfig(newConfig);
-  };
+  }, []);
+
+  const handleSelectTool = useCallback(
+    (toolId: string) => {
+      setSelectedToolId(toolId);
+      setConfig(prev => {
+        const nextRecent = [toolId, ...(prev.recentToolIds || []).filter(id => id !== toolId)].slice(0, 8);
+        const updated = { ...prev, recentToolIds: nextRecent };
+        saveUserConfig(updated);
+        return updated;
+      });
+    },
+    []
+  );
 
   const handleToggleFavorite = (toolId: string) => {
     const isFav = config.favorites.includes(toolId);
@@ -90,9 +228,10 @@ export default function App() {
   const handleResetDefaults = () => {
     updateConfig(DEFAULT_CONFIG);
     applyTheme(DEFAULT_CONFIG.themeId);
+    setIsLocked(false);
   };
 
-  const isEffectiveOffline = !isBrowserOnline;
+  const isEffectiveOffline = !isBrowserOnline || Boolean(config.simulatedOffline);
 
   // Filter tools based on active category
   const filteredTools = TOOLS_REGISTRY.filter(tool => {
@@ -202,9 +341,28 @@ export default function App() {
     }
   };
 
+  const toolLoadingFallback = (
+    <div className="p-8 rounded-2xl bg-slate-900/40 border border-slate-800 space-y-4 animate-pulse">
+      <div className="h-6 w-48 rounded-lg bg-slate-800" />
+      <div className="h-4 w-80 rounded bg-slate-800/80" />
+      <div className="h-48 w-full rounded-xl bg-slate-950/70 border border-slate-800/60" />
+    </div>
+  );
+
+  if (isLocked && config.security) {
+    return (
+      <div className={`theme-${config.themeId || 'midnight'}`}>
+        <LockScreen
+          security={config.security}
+          onUnlock={() => setIsLocked(false)}
+          onFactoryReset={handleResetDefaults}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className={`flex h-screen w-screen overflow-hidden font-sans text-slate-100 theme-${config.themeId || 'midnight'} bg-slate-950`}>
-      {/* Mobile sidebar backdrop overlay */}
       {isSidebarOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-30 sm:hidden"
@@ -212,7 +370,6 @@ export default function App() {
         />
       )}
 
-      {/* Sidebar */}
       <Sidebar
         activeCategory={activeCategory}
         onSelectCategory={cat => {
@@ -236,9 +393,7 @@ export default function App() {
         onToggle={toggleSidebar}
       />
 
-      {/* Main Workspace Area */}
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
-        {/* Header */}
         <Header
           currentCategoryName={getCategoryDisplayName(activeCategory)}
           activeTool={activeTool}
@@ -249,13 +404,19 @@ export default function App() {
           onOpenSettings={() => setIsConfigOpen(true)}
           onToggleSidebar={toggleSidebar}
           isSidebarOpen={isSidebarOpen}
+          isOffline={isEffectiveOffline}
+          canLock={canLock}
+          onLockNow={() => setIsLocked(true)}
         />
 
-        {/* Content Viewport */}
         <main className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-6 md:p-8 bg-slate-950/40">
           <div className="max-w-7xl mx-auto">
             {activeCategory === 'architecture' ? (
-              <ArchitectureTool />
+              <ErrorBoundary key="architecture">
+                <Suspense fallback={toolLoadingFallback}>
+                  <ArchitectureTool />
+                </Suspense>
+              </ErrorBoundary>
             ) : activeTool ? (
               <div className="overflow-x-hidden relative">
                 <div className="flex justify-end mb-2">
@@ -277,20 +438,21 @@ export default function App() {
                     <p className="mt-2 text-sm leading-relaxed text-slate-300">{getToolCatalogText(activeTool.id, 'desc', language, t(`tool_${activeTool.id.replace(/-/g, '_')}_desc`, activeTool.shortDesc))}</p>
                   </div>
                 )}
-                {/* Active Tool Renderer */}
                 <ErrorBoundary key={activeTool.id}>
-                  {React.createElement(activeTool.component, {
-                    isOffline: isEffectiveOffline,
-                    currency: config.defaultCurrency || config.widgets?.selectedFiat || 'CZK',
-                  } as unknown as Record<string, unknown>)}
+                  <Suspense fallback={toolLoadingFallback}>
+                    {React.createElement(activeTool.component, {
+                      isOffline: isEffectiveOffline,
+                      currency: config.defaultCurrency || config.widgets?.selectedFiat || 'CZK',
+                    } as unknown as Record<string, unknown>)}
+                  </Suspense>
                 </ErrorBoundary>
               </div>
             ) : (
-              /* Tool Grid View */
               <ToolGrid
                 tools={filteredTools}
                 favorites={config.favorites}
-                onSelectTool={id => setSelectedToolId(id)}
+                recentToolIds={config.recentToolIds || []}
+                onSelectTool={handleSelectTool}
                 onToggleFavorite={handleToggleFavorite}
                 isOffline={isEffectiveOffline}
                 activeCategory={activeCategory}
@@ -300,27 +462,27 @@ export default function App() {
         </main>
       </div>
 
-      {/* Command Palette (Ctrl+K) */}
       <CommandPalette
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
         tools={TOOLS_REGISTRY}
         favorites={config.favorites}
+        recentToolIds={config.recentToolIds || []}
         onSelectTool={id => {
-          setSelectedToolId(id);
+          handleSelectTool(id);
           const tool = TOOLS_REGISTRY.find(t => t.id === id);
           if (tool) setActiveCategory(tool.category);
         }}
         isOffline={isEffectiveOffline}
       />
 
-      {/* Settings & Config Modal */}
       <ConfigModal
         isOpen={isConfigOpen}
         onClose={() => setIsConfigOpen(false)}
         config={config}
         onResetDefaults={handleResetDefaults}
         onUpdateConfig={handleUpdateConfig}
+        onLockNow={() => setIsLocked(true)}
       />
     </div>
   );

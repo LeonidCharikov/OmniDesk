@@ -10,7 +10,11 @@ jobs:
   release:
     permissions:
       contents: write
-    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [macos-latest, ubuntu-22.04, windows-latest]
+    runs-on: ${{ matrix.platform }}
 
     steps:
       - name: Checkout
@@ -22,8 +26,19 @@ jobs:
           node-version: 22
           cache: npm
 
+      - name: Install Linux webkit/tauri dependencies
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
       - name: Install frontend dependencies
         run: npm ci
+
+      - name: Verify i18n parity & unit tests
+        run: |
+          npm run i18n:check
+          npm test
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
@@ -37,6 +52,6 @@ jobs:
           tagName: ${{ github.ref_name }}
           releaseName: OmniDesk ${{ github.ref_name }}
           releaseBody: |
-            Download the Windows installer below.
+            Download the installer for your platform (Windows, macOS, Linux) below.
           releaseDraft: false
           prerelease: false

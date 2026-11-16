@@ -21,7 +21,7 @@ export interface ToolDefinition {
   icon: string;
   requiresOnline?: boolean;
   isBasic?: boolean;
-  component: React.ComponentType;
+  component: React.ComponentType | React.LazyExoticComponent<React.ComponentType>;
   tags: string[];
 }
 

@@ -86,6 +86,7 @@ import {
   Volume2,
   Moon,
   Wind,
+  History,
 } from 'lucide-react';
 import { ToolDefinition, ToolCategory } from '../../types/tool';
 import { useI18n } from '../../i18n/context';
@@ -94,6 +95,7 @@ import { getToolCatalogText } from '../../i18n/toolCatalog';
 interface ToolGridProps {
   tools: ToolDefinition[];
   favorites: string[];
+  recentToolIds?: string[];
   onSelectTool: (id: string) => void;
   onToggleFavorite: (id: string) => void;
   isOffline: boolean;
@@ -187,6 +189,7 @@ const ICON_MAP: Record<string, React.ReactNode> = {
 export const ToolGrid: React.FC<ToolGridProps> = ({
   tools,
   favorites,
+  recentToolIds = [],
   onSelectTool,
   onToggleFavorite,
   isOffline,
@@ -333,6 +336,11 @@ export const ToolGrid: React.FC<ToolGridProps> = ({
 
   // CASE 1: MAIN PAGE (activeCategory === 'all') -> Grouped into distinct Category Sections with Headings
   if (activeCategory === 'all') {
+    const recentTools = recentToolIds
+      .map(id => tools.find(tool => tool.id === id))
+      .filter((tool): tool is ToolDefinition => Boolean(tool))
+      .slice(0, 4);
+
     return (
       <div className="space-y-10">
         {/* Main lead */}
@@ -347,6 +355,33 @@ export const ToolGrid: React.FC<ToolGridProps> = ({
             )}
           </p>
         </div>
+
+        {/* Recently Used Tools */}
+        {recentTools.length > 0 && (
+          <section className="space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-slate-900 border border-slate-800 shadow-sm">
+                  <History className="w-4 h-4 text-indigo-400" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white tracking-tight">
+                    {t('recent_tools_title', 'Recently Used')}
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    {t('recent_tools_desc', 'Jump right back into tools you opened recently.')}
+                  </p>
+                </div>
+              </div>
+              <span className="text-xs font-mono text-slate-400 tabular-nums">
+                {recentTools.length}
+              </span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {recentTools.map(renderToolCard)}
+            </div>
+          </section>
+        )}
 
         {/* Category Sections */}
         {CATEGORIES_METADATA.map(cat => {

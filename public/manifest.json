@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "OmniDesk - Desktop Multi-Tool",
+  "name": "OmniDesk - Desktop Multi-Tool Platform",
   "short_name": "OmniDesk",
-  "description": "Univerzální offline desktopová a mobilní multi-tool platforma pro konverze souborů, matematiku, finance a utility.",
+  "description": "Offline-first modular desktop and web multi-tool workstation for documents, code, math, science, finance, and everyday utilities.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

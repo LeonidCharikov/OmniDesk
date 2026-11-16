@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
 import { saveBinaryWithDialog } from '../../services/fileSystemService';
+import { compileSafeMathExpression } from '../../utils/safeMathParser';
 
 interface GraphFunction {
   id: string;
@@ -54,34 +55,11 @@ export const FunctionGrapherTool: React.FC = () => {
   const [inspectX, setInspectX] = useState<number>(1.5);
   const [evalResults, setEvalResults] = useState<{ f: number | null; df: number | null }>({ f: null, df: null });
 
-  // Safe Math expression evaluator
+  // Safe Math expression evaluator (no eval / new Function)
   const compileMath = (expr: string): ((x: number) => number) => {
     try {
-      // Clean and normalize expression
-      let clean = expr
-        .replace(/\^/g, '**')
-        .replace(/\bpi\b/gi, 'Math.PI')
-        .replace(/\be\b/gi, 'Math.E')
-        .replace(/\bsin\b/gi, 'Math.sin')
-        .replace(/\bcos\b/gi, 'Math.cos')
-        .replace(/\btan\b/gi, 'Math.tan')
-        .replace(/\basin\b/gi, 'Math.asin')
-        .replace(/\bacos\b/gi, 'Math.acos')
-        .replace(/\batan\b/gi, 'Math.atan')
-        .replace(/\bsqrt\b/gi, 'Math.sqrt')
-        .replace(/\babs\b/gi, 'Math.abs')
-        .replace(/\bexp\b/gi, 'Math.exp')
-        .replace(/\bln\b/gi, 'Math.log')
-        .replace(/\blog\b/gi, 'Math.log10')
-        .replace(/\bfloor\b/gi, 'Math.floor')
-        .replace(/\bceil\b/gi, 'Math.ceil');
-
-      // Create function
-      const fn = new Function('x', `"use strict"; try { return (${clean}); } catch(e) { return NaN; }`);
-      return (x: number) => {
-        const val = fn(x);
-        return typeof val === 'number' && !isNaN(val) && isFinite(val) ? val : NaN;
-      };
+      const compiled = compileSafeMathExpression(expr);
+      return (x: number) => compiled(x);
     } catch {
       return () => NaN;
     }

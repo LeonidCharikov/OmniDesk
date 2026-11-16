@@ -18,6 +18,7 @@ import {
   Eye,
   Edit3,
 } from 'lucide-react';
+import DOMPurify from 'dompurify';
 import { useI18n } from '../../i18n/context';
 import { saveTextWithDialog, openFileWithPicker } from '../../services/fileSystemService';
 
@@ -50,6 +51,7 @@ export const TextEditorTool: React.FC = () => {
   const [matchCase, setMatchCase] = useState(false);
   const [copied, setCopied] = useState(false);
   const [savedNotification, setSavedNotification] = useState(false);
+  const [confirmNewFile, setConfirmNewFile] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const lineNumbersRef = useRef<HTMLDivElement>(null);
@@ -166,11 +168,14 @@ export const TextEditorTool: React.FC = () => {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  // Create clean new file
+  // Create clean new file (two-step confirmation when unsaved content exists)
   const handleNewFile = () => {
-    if (content.trim() && !window.confirm(t('confirm_new_file', 'Create a new file? Unsaved changes in the text will be overwritten.'))) {
+    if (content.trim() && !confirmNewFile) {
+      setConfirmNewFile(true);
+      setTimeout(() => setConfirmNewFile(false), 4000);
       return;
     }
+    setConfirmNewFile(false);
     setContent('');
     setFileName(t('new_file_default_name', 'new_file.txt'));
     if (textareaRef.current) textareaRef.current.focus();
@@ -360,11 +365,15 @@ export const TextEditorTool: React.FC = () => {
         <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={handleNewFile}
-            className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-medium text-slate-300 hover:text-white transition-colors flex items-center gap-1.5"
+            className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors flex items-center gap-1.5 ${
+              confirmNewFile
+                ? 'bg-amber-600 hover:bg-amber-500 border-amber-500 text-white'
+                : 'bg-slate-900 hover:bg-slate-800 border-slate-800 text-slate-300 hover:text-white'
+            }`}
             title={t('new_file_tooltip', 'New blank file')}
           >
-            <FilePlus className="w-3.5 h-3.5 text-indigo-400" />
-            <span>{t('new_file', 'New file')}</span>
+            <FilePlus className={`w-3.5 h-3.5 ${confirmNewFile ? 'text-white' : 'text-indigo-400'}`} />
+            <span>{confirmNewFile ? t('confirm_overwrite', 'Click again to clear') : t('new_file', 'New file')}</span>
           </button>
 
           <button
@@ -747,12 +756,15 @@ export const TextEditorTool: React.FC = () => {
                   key={bIdx}
                   className="whitespace-pre-wrap text-slate-300"
                   dangerouslySetInnerHTML={{
-                    __html: block
-                      .replace(/</g, '&lt;')
-                      .replace(/>/g, '&gt;')
-                      .replace(/&lt;span style="font-size: (\d+)px"&gt;([\s\S]*?)&lt;\/span&gt;/g, '<span style="font-size: $1px" class="text-indigo-200 font-semibold">$2</span>')
-                      .replace(/\*\*(.*?)\*\*/g, '<strong class="text-white">$1</strong>')
-                      .replace(/\*(.*?)\*/g, '<em class="text-slate-200">$1</em>'),
+                    __html: DOMPurify.sanitize(
+                      block
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;')
+                        .replace(/&lt;span style="font-size: (\d+)px"&gt;([\s\S]*?)&lt;\/span&gt;/g, '<span style="font-size: $1px" class="text-indigo-200 font-semibold">$2</span>')
+                        .replace(/\*\*(.*?)\*\*/g, '<strong class="text-white">$1</strong>')
+                        .replace(/\*(.*?)\*/g, '<em class="text-slate-200">$1</em>'),
+                      { ALLOWED_TAGS: ['span', 'strong', 'em'], ALLOWED_ATTR: ['style', 'class'] }
+                    ),
                   }}
                 />
               );

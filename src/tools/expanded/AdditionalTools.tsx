@@ -20,6 +20,7 @@ import {
   GitCommit,
   GitPullRequest,
 } from 'lucide-react';
+import DOMPurify from 'dompurify';
 import { saveBinaryWithDialog, saveTextWithDialog } from '../../services/fileSystemService';
 import { useI18n } from '../../i18n/context';
 import { findToolCatalogIdByTitle, getToolCatalogText } from '../../i18n/toolCatalog';
@@ -507,9 +508,15 @@ function fullMarkdownToHtml(markdown: string): string {
   // 9. Inline code: `code`
   html = html.replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 rounded bg-slate-800 text-indigo-300 font-mono text-[11px]">$1</code>');
 
-  // 10. Links and Images
-  html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" class="my-2 rounded max-h-64 max-w-full" />');
-  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-indigo-400 underline hover:text-indigo-300">$1</a>');
+  // 10. Links and Images (protocol-validated to block javascript: / vbscript: URIs)
+  const sanitizeMarkdownUrl = (rawUrl: string, allowDataImage = false): string => {
+    const trimmed = rawUrl.trim();
+    if (/^(https?:|mailto:|tel:|#|\/)/i.test(trimmed)) return trimmed;
+    if (allowDataImage && /^data:image\/(png|jpeg|jpg|gif|webp);base64,/i.test(trimmed)) return trimmed;
+    return '#';
+  };
+  html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_, alt, src) => `<img src="${sanitizeMarkdownUrl(src, true)}" alt="${alt}" class="my-2 rounded max-h-64 max-w-full" />`);
+  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, label, href) => `<a href="${sanitizeMarkdownUrl(href)}" target="_blank" rel="noopener noreferrer" class="text-indigo-400 underline hover:text-indigo-300">${label}</a>`);
 
   // 11. Bold, Italic, Strikethrough
   html = html
@@ -520,7 +527,10 @@ function fullMarkdownToHtml(markdown: string): string {
   // 12. Paragraphs / Linebreaks
   html = html.replace(/\n\n/g, '<p class="my-2 leading-relaxed"></p>').replace(/\n/g, '<br />');
 
-  return html;
+  return DOMPurify.sanitize(html, {
+    USE_PROFILES: { html: true },
+    ADD_ATTR: ['target', 'rel'],
+  });
 }
 
 export const MarkdownPreviewTool: React.FC = () => {
