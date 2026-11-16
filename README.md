@@ -7,6 +7,9 @@
   </p>
 
   <p>
+    <a href="https://leonidcharikov.github.io/OmniDesk/">
+      <img src="https://img.shields.io/badge/Live%20Web%20App-Launch%20in%20Browser-4F46E5?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Launch OmniDesk Live Web App" />
+    </a>
     <a href="https://leonidcharikov.github.io/omnidesk.html">
       <img src="https://img.shields.io/badge/Website-Presentation-8B5CF6?style=for-the-badge&logo=githubpages&logoColor=white" alt="OmniDesk Presentation Website" />
     </a>
@@ -20,10 +23,12 @@
   </p>
 
   <p>
+    <strong>🚀 Live Web App (Run in Browser):</strong> <a href="https://leonidcharikov.github.io/OmniDesk/">https://leonidcharikov.github.io/OmniDesk/</a><br />
     <strong>🌐 Project Presentation:</strong> <a href="https://leonidcharikov.github.io/omnidesk.html">https://leonidcharikov.github.io/omnidesk.html</a>
   </p>
 
   <p>
+    <a href="https://leonidcharikov.github.io/OmniDesk/">Live Web App</a> •
     <a href="https://leonidcharikov.github.io/omnidesk.html">Presentation Website</a> •
     <a href="#-visual-showcase">Visual Showcase</a> •
     <a href="#-key-highlights">Key Highlights</a> •
@@ -329,14 +334,17 @@ On smaller viewports (`< 1024px` wide or `< 880px` tall), mini-widgets automatic
 
 ## 🚀 Quick Start
 
-### Option 1 — Pre-Built Desktop Releases
+### Option 1 — Live Web App (Browser / Offline PWA)
+Launch OmniDesk directly in your browser with zero installation at **[https://leonidcharikov.github.io/OmniDesk/](https://leonidcharikov.github.io/OmniDesk/)** — optionally click **Install App** in the header to install it as an offline-capable PWA.
+
+### Option 2 — Pre-Built Desktop Releases
 Download the latest installer for **Windows** (`.exe` / `.msi`), **macOS** (`.dmg`), or **Linux** (`.AppImage` / `.deb`) from the **Releases** page.
 
-### Option 2 — One-Click Launcher
+### Option 3 — One-Click Launcher
 - **Windows:** Double-click `start.bat`
 - **macOS / Linux:** Run `./start.sh`
 
-### Option 3 — Web Development Server, Tests & PWA
+### Option 4 — Web Development Server, Tests & PWA
 ```bash
 npm install
 npm run dev          # Start dev server on http://localhost:3000
@@ -345,7 +353,7 @@ npm run i18n:check   # Verify all translation keys exist across all 5 locales
 ```
 Open **[http://localhost:3000](http://localhost:3000)** and optionally click **Install App** in the header to install OmniDesk as an offline-capable PWA.
 
-### Option 4 — Tauri v2 Desktop Development
+### Option 5 — Tauri v2 Desktop Development
 ```bash
 npm install
 npm run tauri dev
