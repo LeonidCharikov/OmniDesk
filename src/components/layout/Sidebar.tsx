@@ -78,51 +78,52 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <aside
       className={`
-        h-screen bg-slate-950 border-r border-slate-800/80 flex flex-col justify-between select-none overflow-hidden sidebar-container
+        h-screen bg-slate-950 border-r border-slate-800/80 flex flex-col select-none overflow-hidden sidebar-container
         transition-all duration-300 ease-in-out
         ${isOpen ? 'w-64' : 'w-16'}
         max-sm:fixed max-sm:top-0 max-sm:left-0 max-sm:z-40
         ${isOpen ? 'max-sm:w-64' : 'max-sm:w-0 max-sm:border-r-0'}
       `}
     >
-      <div className="p-4 space-y-5 overflow-y-auto flex-1 min-w-0">
-        {/* Brand Lockup + Toggle */}
-        <div className={`relative flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
-          <div 
-            onClick={onBackToOverview}
-            className={`flex items-center gap-3 cursor-pointer group min-w-0 ${isCollapsed ? 'px-0' : 'px-2'}`}
-          >
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-400 flex items-center justify-center text-white shadow-md shadow-indigo-500/20 group-hover:scale-105 transition-transform shrink-0">
-              <HardDrive className="w-5 h-5" />
-            </div>
-            {isOpen && (
-              <div className="sidebar-brand-copy min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-sm font-bold tracking-tight text-white">OmniDesk</span>
-                  <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-indigo-950 text-indigo-400 border border-indigo-800/50">
-                    TAURI
-                  </span>
-                </div>
-                <span className="text-xs text-slate-400 block -mt-0.5">Desktop Multi-Tool</span>
-              </div>
-            )}
+      {/* Top Brand Lockup + Toggle (pinned) */}
+      <div className={`px-4 pt-4 pb-2 shrink-0 relative flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
+        <div
+          onClick={onBackToOverview}
+          className={`flex items-center gap-3 cursor-pointer group min-w-0 ${isCollapsed ? 'px-0' : 'px-1'}`}
+        >
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-400 flex items-center justify-center text-white shadow-md shadow-indigo-500/20 group-hover:scale-105 transition-transform shrink-0">
+            <HardDrive className="w-5 h-5" />
           </div>
-          {/* Collapse/expand toggle – hidden on mobile (hamburger is in header) */}
-          <button
-            onClick={onToggle}
-            className={`hidden sm:flex p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors shrink-0 ${
-              isCollapsed ? 'absolute right-0 top-0' : ''
-            }`}
-            title={isOpen ? t('collapse_sidebar', 'Collapse sidebar') : t('expand_sidebar', 'Expand sidebar')}
-          >
-            {isOpen ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-          </button>
-        </div>
-
-        {/* Categories Navigation */}
-        <div className="space-y-1">
           {isOpen && (
-            <span className="px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 block mb-2">
+            <div className="sidebar-brand-copy min-w-0">
+              <div className="flex items-center gap-1.5">
+                <span className="text-sm font-bold tracking-tight text-white">OmniDesk</span>
+                <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-indigo-950 text-indigo-400 border border-indigo-800/50">
+                  TAURI
+                </span>
+              </div>
+              <span className="text-xs text-slate-400 block -mt-0.5">Desktop Multi-Tool</span>
+            </div>
+          )}
+        </div>
+        {/* Collapse/expand toggle – hidden on mobile (hamburger is in header) */}
+        <button
+          onClick={onToggle}
+          className={`hidden sm:flex p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors shrink-0 ${
+            isCollapsed ? 'absolute right-0 top-3' : ''
+          }`}
+          title={isOpen ? t('collapse_sidebar', 'Collapse sidebar') : t('expand_sidebar', 'Expand sidebar')}
+        >
+          {isOpen ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+        </button>
+      </div>
+
+      {/* Scrollable Middle Area: Categories + Adaptive Mini-Widgets */}
+      <div className="flex-1 min-h-0 overflow-y-auto px-3 py-2 space-y-3 min-w-0">
+        {/* Categories Navigation */}
+        <div className="space-y-0.5 shrink-0">
+          {isOpen && (
+            <span className="px-2.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500 block mb-1.5">
               {t('categories', 'Tool Categories')}
             </span>
           )}
@@ -135,7 +136,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   onSelectCategory(cat.id);
                   onBackToOverview();
                 }}
-                className={`${isCollapsed ? 'w-10 h-10 p-0 justify-center mx-auto' : 'w-full px-3 py-2 justify-between min-w-0'} flex items-center rounded-lg text-xs font-medium transition-colors ${
+                className={`${isCollapsed ? 'w-10 h-9 p-0 justify-center mx-auto' : 'w-full px-2.5 py-1.5 justify-between min-w-0'} flex items-center rounded-lg text-xs font-medium transition-colors ${
                   isActive
                     ? 'bg-indigo-600 text-white shadow-sm'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/80'
@@ -157,23 +158,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
             );
           })}
         </div>
+
+        {/* Mini-Widgets Area – adaptive compact tabbed mode on smaller screens */}
+        <SidebarWidgets
+          widgets={widgets}
+          onToggleWidget={onToggleWidget}
+          onUpdateQuickNote={onUpdateQuickNote}
+          onToggleTask={onToggleTask}
+          onAddTask={onAddTask}
+          onDeleteTask={onDeleteTask}
+          onOpenWidgetSettings={onOpenConfig}
+          onUpdateWidgetCustomization={onUpdateWidgetCustomization}
+          defaultCurrency={defaultCurrency}
+          isCollapsed={isCollapsed}
+        />
       </div>
 
-      {/* Mini-Widgets Area – hidden when collapsed */}
-      <SidebarWidgets
-        widgets={widgets}
-        onToggleWidget={onToggleWidget}
-        onUpdateQuickNote={onUpdateQuickNote}
-        onToggleTask={onToggleTask}
-        onAddTask={onAddTask}
-        onDeleteTask={onDeleteTask}
-        onOpenWidgetSettings={onOpenConfig}
-        onUpdateWidgetCustomization={onUpdateWidgetCustomization}
-        defaultCurrency={defaultCurrency}
-        isCollapsed={isCollapsed}
-      />
-
-      {/* Footer / System Settings */}
+      {/* Footer / System Settings (pinned) */}
       <div className="p-3 border-t border-slate-900 bg-slate-950/80 shrink-0">
         <button
           onClick={onOpenConfig}

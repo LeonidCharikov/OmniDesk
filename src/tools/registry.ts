@@ -112,6 +112,7 @@ const WordCounterCleanerTool = lazyTool(() => import('./utilities/WordCounterCle
 const AmbientNoiseMixerTool = lazyTool(() => import('./utilities/AmbientNoiseMixerTool'), 'AmbientNoiseMixerTool');
 const SleepCycleCalcTool = lazyTool(() => import('./utilities/SleepCycleCalcTool'), 'SleepCycleCalcTool');
 const BreathingEyeGuideTool = lazyTool(() => import('./utilities/BreathingEyeGuideTool'), 'BreathingEyeGuideTool');
+const ColorStudioTool = lazyTool(() => import('./utilities/ColorStudioTool'), 'ColorStudioTool');
 
 
 export const TOOLS_REGISTRY: ToolDefinition[] = [
@@ -1009,5 +1010,16 @@ export const TOOLS_REGISTRY: ToolDefinition[] = [
     isBasic: true,
     component: BreathingEyeGuideTool,
     tags: ['breathing', 'relax', 'eye', '20-20-20', 'wellness', 'break', 'basic'],
+  },
+  {
+    id: 'color-studio',
+    title: 'Color Picker, Wheel & Charts Studio',
+    shortDesc: 'Classic HSV picker, interactive color wheel, Tailwind/Material/Web-Safe charts, harmonies & live RGB <-> Hex converter.',
+    category: 'utilities',
+    icon: 'Palette',
+    requiresOnline: false,
+    isBasic: true,
+    component: ColorStudioTool,
+    tags: ['color', 'picker', 'palette', 'wheel', 'chart', 'tailwind', 'hex', 'rgb', 'hsl', 'oklch', 'converter', 'basic'],
   },
 ];

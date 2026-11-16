@@ -841,6 +841,22 @@ const catalog: Record<string, { title: CatalogText; desc: CatalogText }> = {
       ru: 'Визуальный ритм дыхания (4-4-4-4, 4-7-8) и таймер отдыха для глаз 20-20-20.',
     },
   },
+  'color-studio': {
+    title: {
+      cs: 'Color Picker, Barevné Kolo & Vzorníky',
+      en: 'Color Picker, Wheel & Charts Studio',
+      de: 'Farbwähler, Farbkreis & Farbtabellen-Studio',
+      es: 'Selector de Color, Rueda y Cartas Cromáticas',
+      ru: 'Палитра, Цветовой Круг и Таблицы Цветов',
+    },
+    desc: {
+      cs: 'Klasický HSV výběr barvy, interaktivní barevné kolo, vzorníky Tailwind/Material/Web-Safe, harmonie a převodník RGB ↔ Hex.',
+      en: 'Classic HSV picker, interactive color wheel, Tailwind/Material/Web-Safe charts, harmonies & live RGB <-> Hex converter.',
+      de: 'Klassischer HSV-Farbwähler, interaktiver Farbkreis, Tailwind-/Material-/Web-Safe-Tabellen, Harmonien & RGB <-> Hex-Konverter.',
+      es: 'Selector HSV clásico, rueda de color interactiva, tablas Tailwind/Material/Web-Safe, armonías y conversor RGB <-> Hex.',
+      ru: 'Классический HSV-выбор, интерактивный цветовой круг, таблицы Tailwind/Material/Web-Safe, гармонии и конвертер RGB <-> Hex.',
+    },
+  },
 };
 
 export function getToolCatalogText(id: string, field: 'title' | 'desc', language: SupportedLanguage, fallback: string) {

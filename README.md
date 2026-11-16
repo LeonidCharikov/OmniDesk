@@ -3,14 +3,14 @@
   <h1>OmniDesk</h1>
   <p><strong>The 100% Offline-First Desktop & Web Multi-Tool Workstation</strong></p>
   <p>
-    98 integrated utilities for files, code, math, science, finance, planning, and everyday tasks — running locally in memory or natively via Tauri v2 with zero server telemetry.
+    99 integrated utilities for files, code, math, science, finance, planning, and everyday tasks — running locally in memory or natively via Tauri v2 with zero server telemetry.
   </p>
 
   <p>
     <a href="https://leonidcharikov.github.io/omnidesk.html">
       <img src="https://img.shields.io/badge/Website-Presentation-8B5CF6?style=for-the-badge&logo=githubpages&logoColor=white" alt="OmniDesk Presentation Website" />
     </a>
-    <img src="https://img.shields.io/badge/Tools-98%20Integrated-6366f1?style=for-the-badge" alt="98 Tools" />
+    <img src="https://img.shields.io/badge/Tools-99%20Integrated-6366f1?style=for-the-badge" alt="99 Tools" />
     <img src="https://img.shields.io/badge/Tauri-v2-24C8DB?style=for-the-badge&logo=tauri&logoColor=white" alt="Tauri v2" />
     <img src="https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React 19" />
     <img src="https://img.shields.io/badge/TypeScript-7.0-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
@@ -27,7 +27,7 @@
     <a href="https://leonidcharikov.github.io/omnidesk.html">Presentation Website</a> •
     <a href="#-visual-showcase">Visual Showcase</a> •
     <a href="#-key-highlights">Key Highlights</a> •
-    <a href="#-complete-tool-catalog-98-tools">Tool Catalog (98)</a> •
+    <a href="#-complete-tool-catalog-99-tools">Tool Catalog (99)</a> •
     <a href="#-themes-widgets--localization">Themes & Widgets</a> •
     <a href="#-quick-start">Quick Start</a> •
     <a href="#-project-structure">Project Structure</a>
@@ -50,12 +50,12 @@
 
 | Capability | Details |
 | :--- | :--- |
-| 🔒 **Privacy & Offline-First** | Every file edit, hash, PDF transformation, QR scan, image compression, and audio synthesis runs 100% locally in your browser or native Tauri runtime — zero tracking or cloud uploads. |
-| ⚡ **Dual Runtime (Tauri v2 + Web/PWA)** | Run as a lightweight native desktop app powered by Rust/Tauri (with hardware telemetry & native filesystem dialogs) or install directly from your browser as a Progressive Web App. |
-| 🧭 **Command Palette & Everyday Basics** | Press `Ctrl+K` (`⌘K`) anywhere to jump to any of the **98 tools**, pin favorites, or switch to **Everyday Basics** for instant access to 37 high-frequency daily utilities. |
+| 🔒 **Privacy, Workspace Lock & Offline PWA** | Every file edit, hash, PDF transformation, QR scan, image compression, and color conversion runs 100% locally — installable as an offline-first PWA, with optional **PBKDF2 PIN Lock Screen** and **AES-256-GCM encrypted backups**. |
+| ⚡ **Dual Runtime (Tauri v2 + Web/PWA)** | Run as a lightweight native desktop app powered by Rust/Tauri (`sysinfo` hardware telemetry & native filesystem dialogs) or install directly from your browser as an offline Progressive Web App. |
+| 🧭 **Command Palette & Everyday Basics** | Press `Ctrl+K` (`⌘K`) anywhere to jump to any of the **99 tools**, pin favorites, or switch to **Everyday Basics** for instant access to 38 high-frequency daily utilities. |
 | 💱 **Universal Multi-Currency Engine** | Configure a global default currency across 13+ world currencies (`CZK`, `EUR`, `USD`, `GBP`, `CHF`, `PLN`, `JPY`, etc.) — automatically synced across finance, loan, fuel, and shopping tools. |
-| 🎨 **6 Color Themes & 7 Sidebar Widgets** | Switch seamlessly between 5 curated dark palettes and Clean Light mode, while toggling live world clocks, Pomodoro timer, crypto ticker, scratchpad, tasks, and system gauges. |
-| 🌍 **5 Built-In Languages (i18n)** | Instant localization across **English** (`en`, default), **Čeština** (`cs`), **Deutsch** (`de`), **Español** (`es`), and **Русский** (`ru`), compatible with i18n Ally. |
+| 🎨 **6 Themes & Adaptive Mini-Widgets** | Switch seamlessly between 5 curated dark palettes and Clean Light mode, while toggling 7 sidebar mini-widgets with automatic **compact tabbed mode** on smaller screens so categories stay accessible. |
+| 🌍 **5 Built-In Languages (i18n)** | Instant localization across **English** (`en`, default), **Čeština** (`cs`), **Deutsch** (`de`), **Español** (`es`), and **Русский** (`ru`), verified via automated i18n checks. |
 
 ---
 
@@ -148,9 +148,9 @@
 
 ---
 
-## 🛠️ Complete Tool Catalog (98 Tools)
+## 🛠️ Complete Tool Catalog (99 Tools)
 
-OmniDesk organizes **98 specialized tools** into **7 primary categories**, plus the **Everyday Basics** (`37` tools) quick filter for daily workflows.
+OmniDesk organizes **99 specialized tools** into **7 primary categories**, plus the **Everyday Basics** (`38` tools) quick filter for daily workflows.
 
 <details open>
 <summary><strong>📁 1. Files, Media &amp; Documents (14 Tools)</strong></summary>
@@ -267,28 +267,29 @@ OmniDesk organizes **98 specialized tools** into **7 primary categories**, plus 
 </details>
 
 <details>
-<summary><strong>⚙️ 7. Everyday Utilities &amp; Wellness (20 Tools)</strong></summary>
+<summary><strong>⚙️ 7. Everyday Utilities &amp; Wellness (21 Tools)</strong></summary>
 
-1. **Cooking & Recipe Scaler** — Scale recipe servings, convert cups/tbsp to grams by ingredient density & convert oven temperatures (`°C`, `Fan`, `°F`, `Gas Mark`).
-2. **Random Picker, Decision Wheel & Dice** — Animated SVG decision wheel (with optional winner removal), multi-dice roller & coin flip.
-3. **QR & Barcode Reader** — Decode QR codes and barcodes locally from uploaded images, pasted screenshots (`Ctrl+V`) or webcam.
-4. **Offline QR Code Generator** — Vector QR codes for URLs, Wi-Fi networks & plain text with PNG export.
-5. **Word Counter & Text Cleaner** — Word, character, reading-time & top-word stats plus whitespace, HTML & tracking-URL (`utm_*`, `fbclid`) cleanup.
-6. **Case Converter & Text Utilities** — Instant `camelCase`, `snake_case`, `kebab-case`, `CONSTANT_CASE`, URL slugs & line sorting.
-7. **Ambient Sound & White Noise Mixer** — Offline Web Audio soundscape generator (rain, waves, wind, brown/pink/white noise) with presets & sleep timer.
-8. **Sleep Cycle & Nap Calculator** — Optimal 90-minute sleep cycle bedtimes/wake-up times and power-nap guide.
-9. **Guided Breathing & 20-20-20 Eye Break** — Visual Box, 4-7-8 & Coherent breathing pacer with chime + 20-20-20 screen eye-rest timer.
-10. **BMI & Body Composition Calculator** — WHO BMI, healthy weight window, Ponderal Index & US Navy body fat estimate.
-11. **Calories, BMR & Macro Calculator** — Mifflin-St Jeor & Katch-McArdle BMR, TDEE activity multipliers & macro split.
-12. **Clothing & Shoe Size Converter** — Men's & women's international shoe (`EU/US/UK/CM/in`) and apparel (`XS–3XL`) charts.
-13. **Cryptographic Password Generator** — Custom-charset passwords and memorable Diceware passphrases with bit-entropy scoring.
-14. **Unix Timestamp & Epoch Converter** — Live epoch clock, `s/ms/µs/ns` conversion, date arithmetic & batch parsing.
-15. **WCAG Contrast Validator** — Level AA/AAA contrast verification, color-blindness simulation & automated contrast tuning.
-16. **Color Palette & Generator** — Harmonic color schemes with HEX/RGB/HSL conversions.
-17. **Image Color Picker** — Click any image pixel to extract its exact HEX color value.
-18. **Diagram Editor** — Create UML classes, actors, use-cases, and labeled arrows with SVG export.
-19. **System Hardware Monitor** — Native CPU core, RAM & disk telemetry via Tauri Rust APIs.
-20. **Hybrid Online Translator** — Quick translation tool with automatic connectivity detection.
+1. **Color Picker, Wheel & Charts Studio** — Classic 2D HSV picker + EyeDropper, interactive HSV color wheel with draggable brightness ring, Tailwind CSS / Material Design / Flat UI / Web-Safe (216) charts, 7 color harmony schemes, live bi-directional `RGB ↔ Hex` converter (`Hex`, `RGB`, `HSL`, `OKLCH`, `CMYK`), custom saved palette & `CSS`/`Tailwind`/`JSON`/`SVG`/`PNG` export.
+2. **Cooking & Recipe Scaler** — Scale recipe servings, convert cups/tbsp to grams by ingredient density & convert oven temperatures (`°C`, `Fan`, `°F`, `Gas Mark`).
+3. **Random Picker, Decision Wheel & Dice** — Animated SVG decision wheel (with optional winner removal), multi-dice roller & coin flip.
+4. **QR & Barcode Reader** — Decode QR codes and barcodes locally from uploaded images, pasted screenshots (`Ctrl+V`) or webcam.
+5. **Offline QR Code Generator** — Vector QR codes for URLs, Wi-Fi networks & plain text with PNG export.
+6. **Word Counter & Text Cleaner** — Word, character, reading-time & top-word stats plus whitespace, HTML & tracking-URL (`utm_*`, `fbclid`) cleanup.
+7. **Case Converter & Text Utilities** — Instant `camelCase`, `snake_case`, `kebab-case`, `CONSTANT_CASE`, URL slugs & line sorting.
+8. **Ambient Sound & White Noise Mixer** — Offline Web Audio soundscape generator (rain, waves, wind, brown/pink/white noise) with presets & sleep timer.
+9. **Sleep Cycle & Nap Calculator** — Optimal 90-minute sleep cycle bedtimes/wake-up times and power-nap guide.
+10. **Guided Breathing & 20-20-20 Eye Break** — Visual Box, 4-7-8 & Coherent breathing pacer with chime + 20-20-20 screen eye-rest timer.
+11. **BMI & Body Composition Calculator** — WHO BMI, healthy weight window, Ponderal Index & US Navy body fat estimate.
+12. **Calories, BMR & Macro Calculator** — Mifflin-St Jeor & Katch-McArdle BMR, TDEE activity multipliers & macro split.
+13. **Clothing & Shoe Size Converter** — Men's & women's international shoe (`EU/US/UK/CM/in`) and apparel (`XS–3XL`) charts.
+14. **Cryptographic Password Generator** — Custom-charset passwords and memorable Diceware passphrases with bit-entropy scoring.
+15. **Unix Timestamp & Epoch Converter** — Live epoch clock, `s/ms/µs/ns` conversion, date arithmetic & batch parsing.
+16. **WCAG Contrast Validator** — Level AA/AAA contrast verification, color-blindness simulation & automated contrast tuning.
+17. **Color Palette & Generator** — Harmonic color schemes with HEX/RGB/HSL conversions.
+18. **Image Color Picker** — Click any image pixel to extract its exact HEX color value.
+19. **Diagram Editor** — Create UML classes, actors, use-cases, and labeled arrows with SVG export.
+20. **System Hardware Monitor** — Native CPU core, RAM & disk telemetry via Tauri Rust APIs.
+21. **Hybrid Online Translator** — Quick translation tool with automatic connectivity detection.
 
 </details>
 
@@ -307,18 +308,20 @@ OmniDesk organizes **98 specialized tools** into **7 primary categories**, plus 
 - **Royal Twilight** — Deep amethyst & violet tones
 - **Light** — Clean daylight theme with crisp white surfaces
 
-### 7 Configurable Sidebar Mini-Widgets
+### 7 Adaptive Sidebar Mini-Widgets (Compact Tabbed & Collapsible)
+On smaller viewports (`< 1024px` wide or `< 880px` tall), mini-widgets automatically switch into a **collapsible compact tabbed bar** inside the shared scrollable sidebar so tool categories always stay visible and reachable, with a one-click toggle between compact and stacked views:
 1. **World Clock & Date** — Live local time for selected global cities
-2. **Quick Focus / Pomodoro Timer** — 25-minute timer with circular progress ring
+2. **Quick Focus / Pomodoro Timer** — Customizable timer with circular progress ring
 3. **Currency & Crypto Ticker** — Live cross-rates and crypto selector right in the sidebar
 4. **Daily Tasks Checklist** — Quick interactive todo list
-5. **Quick Calculator** — Inline math & expression evaluator
+5. **Quick Calculator** — Inline safe math & unit expression evaluator
 6. **Scratchpad Note** — Auto-saved sticky note for quick snippets
 7. **System Gauge** — CPU & RAM utilization overview
 
-### 5 Languages & JSON Profile Backup
+### 5 Languages, Workspace Lock & Encrypted Backup
 - **Supported Locales**: English (`en`), Čeština (`cs`), Deutsch (`de`), Español (`es`), Русский (`ru`)
-- **Backup & Portability**: Export or restore your entire configuration (`omnidesk-profile.json`), copy/paste JSON settings across devices, or factory-reset at any time.
+- **Workspace PIN Lock & Storage Audit**: Optional local PBKDF2-SHA256 PIN/passphrase lock screen with inactivity timeout and local-storage inspection/purge.
+- **Backup & Portability**: Export or restore your configuration as plain JSON (`omnidesk-profile.json`) or **AES-256-GCM passphrase-encrypted** bundles across devices.
 
 </details>
 
@@ -333,12 +336,14 @@ Download the latest installer for **Windows** (`.exe` / `.msi`), **macOS** (`.dm
 - **Windows:** Double-click `start.bat`
 - **macOS / Linux:** Run `./start.sh`
 
-### Option 3 — Web Development Server & PWA
+### Option 3 — Web Development Server, Tests & PWA
 ```bash
 npm install
-npm run dev
+npm run dev          # Start dev server on http://localhost:3000
+npm test             # Run Vitest unit & registry tests
+npm run i18n:check   # Verify all translation keys exist across all 5 locales
 ```
-Open **[http://localhost:3000](http://localhost:3000)** and optionally click **Install App** in the header to install OmniDesk as a standalone PWA.
+Open **[http://localhost:3000](http://localhost:3000)** and optionally click **Install App** in the header to install OmniDesk as an offline-capable PWA.
 
 ### Option 4 — Tauri v2 Desktop Development
 ```bash
@@ -387,9 +392,11 @@ npm run tauri dev
 │   │   ├── math/              # Calculator, 2D Grapher, Matrix, LaTeX, Statistics, Grades, % & Ratio
 │   │   ├── science/           # 118-Element Chemistry, Balancer, Electronics, Physics, DNA, Ephemeris
 │   │   ├── finance/           # Currency/Crypto, Loans, Fuel/EV Trip, FIRE, Portfolio, NPV/IRR
-│   │   ├── utilities/         # Random Picker, QR Reader, Recipe Scaler, Noise Mixer, Sleep, Breathing...
+│   │   ├── utilities/         # Color Studio, Random Picker, QR Reader, Recipe Scaler, Noise Mixer...
 │   │   ├── expanded/          # Additional & More workspace utilities
-│   │   └── registry.ts        # Central 98-tool registry & Everyday Basics metadata
+│   │   └── registry.ts        # Central 99-tool lazy registry & Everyday Basics metadata
+│   ├── utils/                 # colorMath, safeMathParser & pure calculation helpers
+│   ├── __tests__/             # Vitest unit & registry test suites
 │   ├── types/                 # Strict TypeScript tool & category interfaces
 │   ├── App.tsx                # Root workspace layout & category routing
 │   └── index.css              # Tailwind CSS v4 + 6 theme overrides
