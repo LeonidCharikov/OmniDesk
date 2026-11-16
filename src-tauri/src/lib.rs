@@ -62,7 +62,11 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_os::init())
-        .manage(Mutex::new(System::new_all()))
+        .manage(Mutex::new(System::new_with_specifics(
+            RefreshKind::new()
+                .with_cpu(CpuRefreshKind::everything())
+                .with_memory(MemoryRefreshKind::everything()),
+        )))
         .invoke_handler(tauri::generate_handler![get_system_telemetry])
         .setup(|app| {
             if cfg!(debug_assertions) {

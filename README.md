@@ -131,12 +131,12 @@
       <sub>Simultaneous MD5, SHA-1, SHA-2, SHA-3, Keccak, CRC-32, Adler-32 &amp; keyed HMAC verification for text and files.</sub>
     </td>
     <td width="50%" align="center">
-      <a href="docs/screenshots/random-picker.png">
-        <img src="docs/screenshots/random-picker.png" alt="Random Picker, Decision Wheel & Dice" />
+      <a href="docs/screenshots/color-picker.png">
+        <img src="docs/screenshots/color-picker.png" alt="Color Picker, Wheel &amp; Charts Studio" />
       </a>
       <br />
-      <strong>🎲 Random Picker, Decision Wheel &amp; Dice</strong><br />
-      <sub>Animated SVG decision wheel with winner removal, multi-dice roller (d4–d100) &amp; coin flip tracker.</sub>
+      <strong>🎨 Color Picker, Wheel &amp; Charts Studio</strong><br />
+      <sub>Classic HSV picker, interactive color wheel, Tailwind/Material/Web-Safe charts, 7 harmony schemes &amp; live RGB ↔ Hex converter.</sub>
     </td>
   </tr>
   <tr>
