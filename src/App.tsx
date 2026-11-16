@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, Suspense } from 'react';
+import React, { useState, useEffect, useCallback, useRef, Suspense } from 'react';
 import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
 import { ToolGrid } from './components/layout/ToolGrid';
@@ -13,6 +13,13 @@ import { useI18n } from './i18n/context';
 import { Info } from 'lucide-react';
 import { getToolCatalogText } from './i18n/toolCatalog';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
+import {
+  createTransportFromConfig,
+  McpConnectedToolCapability,
+  McpConnectionStatus,
+  McpLogEntry,
+  OmniDeskMcpClient,
+} from './services/mcpClient';
 
 const ArchitectureTool = React.lazy(() =>
   import('./tools/architecture/ArchitectureTool').then(m => ({ default: m.ArchitectureTool }))
@@ -73,6 +80,11 @@ export default function App() {
     const initial = loadUserConfig();
     return Boolean(initial.security?.lockEnabled && initial.security?.pinHash && initial.security?.pinSalt);
   });
+  const [mcpStatus, setMcpStatus] = useState<McpConnectionStatus>('disconnected');
+  const [mcpError, setMcpError] = useState<string | undefined>(undefined);
+  const [mcpLogs, setMcpLogs] = useState<McpLogEntry[]>([]);
+  const isLockedRef = useRef(isLocked);
+  isLockedRef.current = isLocked;
 
   const toggleSidebar = useCallback(() => setIsSidebarOpen(prev => !prev), []);
 
@@ -213,6 +225,97 @@ export default function App() {
     []
   );
 
+  // Sync config when modified externally (e.g., via MCP daily task updates)
+  useEffect(() => {
+    const handleConfigUpdated = (event: Event) => {
+      const detail = (event as CustomEvent<UserConfig>).detail;
+      if (detail) {
+        setConfig(detail);
+      }
+    };
+    window.addEventListener('omnidesk-config-updated', handleConfigUpdated);
+    return () => window.removeEventListener('omnidesk-config-updated', handleConfigUpdated);
+  }, []);
+
+  // Manage MCP Bridge client lifecycle
+  const mcpClientRef = useRef<OmniDeskMcpClient | null>(null);
+  if (!mcpClientRef.current) {
+    mcpClientRef.current = new OmniDeskMcpClient({
+      accessMode: config.mcp?.accessMode ?? 'readonly',
+      isLocked: () => isLockedRef.current,
+      getAvailableTools: () =>
+        TOOLS_REGISTRY.map(tool => ({
+          id: tool.id,
+          title: tool.title,
+          category: tool.category,
+          shortDesc: tool.shortDesc,
+        })),
+      onOpenTool: (toolId: string) => {
+        const target = TOOLS_REGISTRY.find(tool => tool.id === toolId);
+        if (target) {
+          setActiveCategory(target.category);
+          handleSelectTool(target.id);
+        }
+      },
+    });
+  }
+
+  useEffect(() => {
+    const client = mcpClientRef.current;
+    if (!client) return;
+    const unbindStatus = client.onStatusChange((status, err) => {
+      setMcpStatus(status);
+      setMcpError(err);
+    });
+    const unbindLog = client.onLog(setMcpLogs);
+    return () => {
+      unbindStatus();
+      unbindLog();
+    };
+  }, []);
+
+  const handleClearMcpLogs = useCallback(() => {
+    mcpClientRef.current?.clearLogs();
+  }, []);
+
+  const handleReconnectMcp = useCallback(() => {
+    const client = mcpClientRef.current;
+    const mcpCfg = config.mcp;
+    if (!client || !mcpCfg?.enabled || isLockedRef.current) return;
+    const transport = createTransportFromConfig(mcpCfg);
+    void client.connect(transport, { autoReconnect: mcpCfg.transport === 'websocket' }).catch(() => {
+      // Status listener already receives connection error
+    });
+  }, [config.mcp]);
+
+  useEffect(() => {
+    const client = mcpClientRef.current;
+    if (!client) return;
+    const mcpCfg = config.mcp;
+    client.setAccessMode(mcpCfg?.accessMode ?? 'readonly');
+
+    if (!mcpCfg?.enabled || isLocked) {
+      void client.disconnect();
+      return;
+    }
+
+    const transport = createTransportFromConfig(mcpCfg);
+    void client.connect(transport, { autoReconnect: mcpCfg.transport === 'websocket' }).catch(() => {
+      // Status listener already receives connection error
+    });
+
+    return () => {
+      void client.disconnect();
+    };
+  }, [
+    config.mcp?.enabled,
+    config.mcp?.transport,
+    config.mcp?.wsUrl,
+    config.mcp?.authToken,
+    config.mcp?.accessMode,
+    isLocked,
+  ]);
+
   const handleToggleFavorite = (toolId: string) => {
     const isFav = config.favorites.includes(toolId);
     const newFavorites = isFav
@@ -230,6 +333,14 @@ export default function App() {
     applyTheme(DEFAULT_CONFIG.themeId);
     setIsLocked(false);
   };
+
+  const mcpConnectedCapabilities: McpConnectedToolCapability[] = React.useMemo(() => {
+    const client = mcpClientRef.current;
+    if (!client) return [];
+    client.setAccessMode(config.mcp?.accessMode ?? 'readonly');
+    return client.getConnectedToolCapabilities();
+    // Recompute whenever connection status, permission level, or lock state changes
+  }, [mcpStatus, config.mcp?.accessMode, config.mcp?.enabled, isLocked]);
 
   const isEffectiveOffline = !isBrowserOnline || Boolean(config.simulatedOffline);
 
@@ -483,6 +594,12 @@ export default function App() {
         onResetDefaults={handleResetDefaults}
         onUpdateConfig={handleUpdateConfig}
         onLockNow={() => setIsLocked(true)}
+        mcpStatus={mcpStatus}
+        mcpError={mcpError}
+        mcpLogs={mcpLogs}
+        mcpConnectedCapabilities={mcpConnectedCapabilities}
+        onClearMcpLogs={handleClearMcpLogs}
+        onReconnectMcp={handleReconnectMcp}
       />
     </div>
   );

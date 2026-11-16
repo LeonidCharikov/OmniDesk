@@ -20,6 +20,9 @@
     "os:allow-version",
     "os:allow-arch",
     "os:allow-hostname",
-    "os:allow-locale"
+    "os:allow-locale",
+    "clipboard-manager:default",
+    "clipboard-manager:allow-read-text",
+    "clipboard-manager:allow-write-text"
   ]
 }

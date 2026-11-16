@@ -32,13 +32,16 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
 
-      - name: Install frontend dependencies
-        run: npm ci
+      - name: Install frontend & MCP server dependencies
+        run: |
+          npm ci
+          npm --prefix docs/mcp-server-template ci
 
-      - name: Verify i18n parity & unit tests
+      - name: Verify i18n parity, unit & MCP E2E tests
         run: |
           npm run i18n:check
           npm test
+          npm --prefix docs/mcp-server-template test
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable

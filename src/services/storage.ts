@@ -1,4 +1,4 @@
-import { UserConfig, WidgetCustomization, ThemeId, DailyTask, SecurityConfig } from '../types/tool';
+import { UserConfig, WidgetCustomization, ThemeId, DailyTask, SecurityConfig, McpBridgeConfig } from '../types/tool';
 
 const CONFIG_KEY = 'omnidesk_user_config_v2';
 const LEGACY_KEY = 'omnidesk_user_config_v1';
@@ -29,6 +29,13 @@ export const DEFAULT_SECURITY: SecurityConfig = {
   lockOnBlur: false,
 };
 
+export const DEFAULT_MCP: McpBridgeConfig = {
+  enabled: false,
+  transport: 'websocket',
+  wsUrl: 'ws://127.0.0.1:3847/bridge',
+  accessMode: 'readonly',
+};
+
 export const DEFAULT_CONFIG: UserConfig = {
   version: 2,
   favorites: ['text-editor', 'docx-to-pdf', 'unit-converter', 'currency-crypto', 'pomodoro-timer'],
@@ -41,6 +48,7 @@ export const DEFAULT_CONFIG: UserConfig = {
   enabledWidgets: ['clock', 'timer', 'crypto', 'notes', 'tasks', 'calc'],
   language: 'en',
   security: DEFAULT_SECURITY,
+  mcp: DEFAULT_MCP,
 };
 
 export function loadUserConfig(): UserConfig {
@@ -90,6 +98,18 @@ export function loadUserConfig(): UserConfig {
         : undefined,
     };
 
+    const mcp: McpBridgeConfig = {
+      enabled: Boolean(parsed.mcp?.enabled),
+      transport: parsed.mcp?.transport === 'stdio' ? 'stdio' : 'websocket',
+      wsUrl: typeof parsed.mcp?.wsUrl === 'string' && parsed.mcp.wsUrl.trim()
+        ? parsed.mcp.wsUrl.trim()
+        : DEFAULT_MCP.wsUrl,
+      accessMode: parsed.mcp?.accessMode === 'readwrite' ? 'readwrite' : 'readonly',
+      authToken: typeof parsed.mcp?.authToken === 'string' && parsed.mcp.authToken.trim()
+        ? parsed.mcp.authToken.trim()
+        : undefined,
+    };
+
     return {
       ...DEFAULT_CONFIG,
       ...parsed,
@@ -98,6 +118,7 @@ export function loadUserConfig(): UserConfig {
       widgets,
       enabledWidgets: widgets.enabledWidgets,
       security,
+      mcp,
     };
   } catch {
     return DEFAULT_CONFIG;
@@ -165,6 +186,17 @@ export function validateConfigJson(jsonString: string): { valid: boolean; config
         lockOnBlur: Boolean(parsed.security?.lockOnBlur),
         securityHint: typeof parsed.security?.securityHint === 'string'
           ? parsed.security.securityHint
+          : undefined,
+      },
+      mcp: {
+        enabled: Boolean(parsed.mcp?.enabled),
+        transport: parsed.mcp?.transport === 'stdio' ? 'stdio' : 'websocket',
+        wsUrl: typeof parsed.mcp?.wsUrl === 'string' && parsed.mcp.wsUrl.trim()
+          ? parsed.mcp.wsUrl.trim()
+          : DEFAULT_MCP.wsUrl,
+        accessMode: parsed.mcp?.accessMode === 'readwrite' ? 'readwrite' : 'readonly',
+        authToken: typeof parsed.mcp?.authToken === 'string' && parsed.mcp.authToken.trim()
+          ? parsed.mcp.authToken.trim()
           : undefined,
       },
     };

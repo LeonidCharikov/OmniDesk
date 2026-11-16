@@ -664,6 +664,19 @@ export const KanbanTool: React.FC = () => {
     }
   }, [tasks]);
 
+  useEffect(() => {
+    const handleExternalKanban = () => {
+      try {
+        const saved = localStorage.getItem(KANBAN_STORAGE_KEY);
+        if (saved) setTasks(JSON.parse(saved));
+      } catch {
+        // ignore
+      }
+    };
+    window.addEventListener('omnidesk-kanban-updated', handleExternalKanban);
+    return () => window.removeEventListener('omnidesk-kanban-updated', handleExternalKanban);
+  }, []);
+
   const add = () => {
     if (text.trim()) {
       setTasks([...tasks, { id: Date.now(), text: text.trim(), column: 'todo', priority }]);
@@ -822,6 +835,19 @@ export const NotesTool: React.FC = () => {
       // ignore
     }
   };
+
+  useEffect(() => {
+    const handleExternalNotes = () => {
+      try {
+        const saved = localStorage.getItem('omnidesk-notes');
+        if (saved) setNotes(JSON.parse(saved));
+      } catch {
+        // ignore
+      }
+    };
+    window.addEventListener('omnidesk-notes-updated', handleExternalNotes);
+    return () => window.removeEventListener('omnidesk-notes-updated', handleExternalNotes);
+  }, []);
 
   const update = (patch: Partial<Note>) => {
     const next = notes.map(note =>

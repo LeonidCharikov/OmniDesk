@@ -1842,29 +1842,55 @@ export const RegexBuilderTool: React.FC = () => {
    ───────────────────────────────────────────────────────────── */
 export const ColorPickerTool: React.FC = () => {
   const { t } = useI18n();
-  const [src, setSrc] = useState('');
+  const [loadedImage, setLoadedImage] = useState<HTMLImageElement | null>(null);
   const [fileName, setFileName] = useState('');
   const [hexColor, setHexColor] = useState('#6366f1');
   const [rgbColor, setRgbColor] = useState('rgb(99, 102, 241)');
   const [hslColor, setHslColor] = useState('hsl(239, 84%, 67%)');
   const [history, setHistory] = useState<string[]>(['#6366f1', '#10b981', '#f59e0b', '#ef4444']);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const objectUrlRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (objectUrlRef.current) {
+        URL.revokeObjectURL(objectUrlRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!loadedImage || !canvasRef.current) return;
+    const c = canvasRef.current;
+    c.width = loadedImage.naturalWidth || loadedImage.width;
+    c.height = loadedImage.naturalHeight || loadedImage.height;
+    const ctx = c.getContext('2d', { willReadFrequently: true });
+    if (ctx) {
+      ctx.clearRect(0, 0, c.width, c.height);
+      ctx.drawImage(loadedImage, 0, 0);
+    }
+  }, [loadedImage]);
 
   const load = (file: File) => {
     setFileName(file.name);
+    if (objectUrlRef.current) {
+      URL.revokeObjectURL(objectUrlRef.current);
+    }
+    const url = URL.createObjectURL(file);
+    objectUrlRef.current = url;
+
     const image = new Image();
     image.onload = () => {
-      const c = canvasRef.current;
-      if (!c) return;
-      c.width = image.width;
-      c.height = image.height;
-      const ctx = c.getContext('2d');
-      if (ctx) {
-        ctx.drawImage(image, 0, 0);
-      }
-      setSrc(URL.createObjectURL(file));
+      setLoadedImage(image);
     };
-    image.src = URL.createObjectURL(file);
+    image.onerror = () => {
+      URL.revokeObjectURL(url);
+      if (objectUrlRef.current === url) {
+        objectUrlRef.current = null;
+      }
+      setLoadedImage(null);
+    };
+    image.src = url;
   };
 
   const rgbToHsl = (r: number, g: number, b: number) => {
@@ -1896,14 +1922,29 @@ export const ColorPickerTool: React.FC = () => {
     return `hsl(${Math.round(h * 360)}, ${Math.round(s * 100)}%, ${Math.round(l * 100)}%)`;
   };
 
+  const applyHexSelection = (hex: string) => {
+    const normalized = hex.replace('#', '');
+    if (normalized.length !== 6) {
+      setHexColor(hex);
+      return;
+    }
+    const r = parseInt(normalized.slice(0, 2), 16);
+    const g = parseInt(normalized.slice(2, 4), 16);
+    const b = parseInt(normalized.slice(4, 6), 16);
+    setHexColor(hex);
+    setRgbColor(`rgb(${r}, ${g}, ${b})`);
+    setHslColor(rgbToHsl(r, g, b));
+  };
+
   const pick = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const c = canvasRef.current;
-    if (!c) return;
+    if (!c || c.width === 0 || c.height === 0) return;
     const rect = c.getBoundingClientRect();
-    const x = Math.floor((e.clientX - rect.left) * (c.width / rect.width));
-    const y = Math.floor((e.clientY - rect.top) * (c.height / rect.height));
+    if (rect.width === 0 || rect.height === 0) return;
+    const x = Math.max(0, Math.min(c.width - 1, Math.floor((e.clientX - rect.left) * (c.width / rect.width))));
+    const y = Math.max(0, Math.min(c.height - 1, Math.floor((e.clientY - rect.top) * (c.height / rect.height))));
 
-    const ctx = c.getContext('2d');
+    const ctx = c.getContext('2d', { willReadFrequently: true });
     if (!ctx) return;
     const pixel = ctx.getImageData(x, y, 1, 1).data;
     const hex = `#${Array.from(pixel.slice(0, 3)).map(val => val.toString(16).padStart(2, '0')).join('')}`;
@@ -1930,10 +1971,14 @@ export const ColorPickerTool: React.FC = () => {
           label={t('choose_image', 'Vybrat obrázek')}
           fileName={fileName || undefined}
           accept="image/*"
-          onChange={e => e.target.files?.[0] && load(e.target.files[0])}
+          onChange={e => {
+            const file = e.target.files?.[0];
+            if (file) load(file);
+            e.currentTarget.value = '';
+          }}
         />
 
-        {src ? (
+        {loadedImage ? (
           <div className="overflow-auto max-h-[500px] border border-slate-800 rounded-lg p-2 bg-slate-950 text-center">
             <p className="text-xs text-slate-400 mb-2">
               💡 {t('click_pixel_to_pick', 'Klikněte kdekoliv do obrázku pro výběr barvy:')}
@@ -1977,7 +2022,7 @@ export const ColorPickerTool: React.FC = () => {
                   className="w-7 h-7 rounded border border-slate-700 hover:scale-110 transition-transform"
                   style={{ backgroundColor: c }}
                   onClick={() => {
-                    setHexColor(c);
+                    applyHexSelection(c);
                     navigator.clipboard.writeText(c);
                   }}
                   title={c}

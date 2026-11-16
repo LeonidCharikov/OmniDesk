@@ -133,8 +133,16 @@ export const CalendarTool: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Persist events
+  // Persist events and sync external MCP updates
   useEffect(() => { saveEvents(events); }, [events]);
+
+  useEffect(() => {
+    const handleExternalUpdate = () => {
+      setEvents(loadEvents());
+    };
+    window.addEventListener('omnidesk-calendar-updated', handleExternalUpdate);
+    return () => window.removeEventListener('omnidesk-calendar-updated', handleExternalUpdate);
+  }, []);
 
   const exportIcs = () => {
     if (!events.length) return;

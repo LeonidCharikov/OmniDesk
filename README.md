@@ -60,6 +60,7 @@
 | 🧭 **Command Palette & Everyday Basics** | Press `Ctrl+K` (`⌘K`) anywhere to jump to any of the **99 tools**, pin favorites, or switch to **Everyday Basics** for instant access to 38 high-frequency daily utilities. |
 | 💱 **Universal Multi-Currency Engine** | Configure a global default currency across 13+ world currencies (`CZK`, `EUR`, `USD`, `GBP`, `CHF`, `PLN`, `JPY`, etc.) — automatically synced across finance, loan, fuel, and shopping tools. |
 | 🎨 **6 Themes & Adaptive Mini-Widgets** | Switch seamlessly between 5 curated dark palettes and Clean Light mode, while toggling 7 sidebar mini-widgets with automatic **compact tabbed mode** on smaller screens so categories stay accessible. |
+| 🤖 **Model Context Protocol (MCP) Bridge** | Connect external AI assistants (Claude Desktop, Cursor, VS Code, Windsurf, etc.) via local WebSocket or Tauri IPC to read/update Calendar, Tasks, Notes, System Telemetry, Tool Navigation, and **Clipboard Synchronization**, complete with live **Connected Tools** status, **MCP Log** debugger, and an interactive in-app setup tutorial in Settings. |
 | 🌍 **5 Built-In Languages (i18n)** | Instant localization across **English** (`en`, default), **Čeština** (`cs`), **Deutsch** (`de`), **Español** (`es`), and **Русский** (`ru`), verified via automated i18n checks. |
 
 ---
@@ -332,6 +333,80 @@ On smaller viewports (`< 1024px` wide or `< 880px` tall), mini-widgets automatic
 
 ---
 
+## 🤖 Model Context Protocol (MCP) Bridge & Live Debugger
+
+OmniDesk includes full end-to-end MCP support across the React/WebView client (`src/services/mcpClient.ts`), the **Tauri v2 Rust backend** (`src-tauri/src/lib.rs`), and the standalone **Node.js MCP server template** (`docs/mcp-server-template/server.mjs`):
+
+- **13 Exposed MCP Tools (`readonly` & `readwrite` modes)**: Calendar (`calendar_list_events`, `calendar_create_event`, `calendar_delete_event`), Tasks (`tasks_list`, `tasks_create`, `tasks_update_status`), Notes (`notes_search`, `notes_create`), System Telemetry (`system_get_info`), App Navigation (`app_list_tools`, `app_open_tool`), and **Clipboard Synchronization** (`clipboard_read`, `clipboard_write`).
+- **3 MCP Resources**: `omnidesk://calendar/events`, `omnidesk://tasks/summary`, and `omnidesk://system/telemetry`.
+- **Dual Native & WebSocket Transports**:
+  - **WebSocket Bridge (`ws://127.0.0.1:3847/bridge`)**: Connects with exponential backoff auto-reconnect to `docs/mcp-server-template/server.mjs` (also provides `omnidesk_bridge_status` + scoped `OMNIDESK_WORKSPACE_DIR` file tools and `notifications/tools/list_changed`).
+  - **Native Tauri `stdio` IPC (`--mcp-stdio`) & Background Clipboard**: Rust `stdin`/`stdout` JSON-RPC bridge (`mcp_stdio_ready`, `mcp_stdio_tx`) with startup line buffering and `tauri-plugin-clipboard-manager` (`mcp_read_clipboard`, `mcp_write_clipboard`).
+- **In-App Tutorial, Connected Tools & Live MCP Log**: Built directly into **Settings → MCP Bridge** — includes an interactive **Setup Tutorial** (`McpSetupTutorialPanel`) with copyable config snippets for Claude Desktop / Cursor / VS Code / Windsurf, a **Connected Tools** capability matrix (`McpConnectedToolsPanel`) with a searchable 99-tool catalog, and a live **MCP Log** (`McpLogPanel`) with JSON-RPC payload inspection.
+- **Security Controls**: Loopback-only (`127.0.0.1` / `localhost`) WebSocket validation, optional `OMNIDESK_MCP_TOKEN` handshake, `readonly` vs `readwrite` enforcement, and automatic blocking while the Workspace Lock Screen is active.
+
+### 🔌 Tutorial: How to Connect Any Desktop AI to OmniDesk
+
+You can also view this interactive tutorial (with one-click config copying) directly inside **OmniDesk → Settings → MCP Bridge**.
+
+#### Option A — WebSocket Bridge + Node.js MCP Server *(Recommended)*
+
+1. **Install the MCP bridge dependencies (one time):**
+   ```bash
+   cd docs/mcp-server-template
+   npm install
+   ```
+2. **Add OmniDesk to your desktop AI client’s MCP config:**
+   - **Claude Desktop**: `claude_desktop_config.json` (Settings → Developer → Edit Config)
+   - **Cursor**: `~/.cursor/mcp.json`
+   - **Windsurf**: `~/.codeium/windsurf/mcp_config.json`
+   - **VS Code**: `.vscode/mcp.json` *(use `"servers"` instead of `"mcpServers"` as the top-level JSON key)*
+
+   ```json
+   {
+     "mcpServers": {
+       "omnidesk": {
+         "command": "node",
+         "args": ["/ABS/PATH/TO/OmniDesk/docs/mcp-server-template/server.mjs"],
+         "env": {
+           "OMNIDESK_MCP_PORT": "3847",
+           "OMNIDESK_MCP_TOKEN": "your-local-secret",
+           "OMNIDESK_WORKSPACE_DIR": "/ABS/PATH/TO/ALLOWED_FOLDER"
+         }
+       }
+     }
+   }
+   ```
+   *(Replace `/ABS/PATH/TO/OmniDesk` with your actual OmniDesk path; `OMNIDESK_MCP_TOKEN` and `OMNIDESK_WORKSPACE_DIR` are optional.)*
+3. **Enable the bridge in OmniDesk:**
+   - Open **OmniDesk → Settings → MCP Bridge** and turn **Enable MCP Bridge** **ON**.
+   - Keep **Transport Mode** on **WebSocket (Localhost)** (`ws://127.0.0.1:3847/bridge`) and match **Optional Bridge Auth Token** if you set `OMNIDESK_MCP_TOKEN`.
+   - Choose **Permission Level**: **Read-Only** or **Read & Write**.
+4. **Reload your AI client and verify:**
+   - Restart/reload MCP in your AI app. OmniDesk connects automatically with **Connection Status: Connected**, updates **Connected Tools**, and records traffic in **MCP Log** (or ask your AI to run `omnidesk_bridge_status`).
+
+#### Option B — Direct Native Tauri `stdio` (`--mcp-stdio`)
+
+1. In **OmniDesk → Settings → MCP Bridge**, turn **Enable MCP Bridge** **ON** and set **Transport Mode** to **Stdio (Tauri Desktop IPC)**.
+2. Register the compiled OmniDesk executable directly in your AI client:
+   ```json
+   {
+     "mcpServers": {
+       "omnidesk-native": {
+         "command": "/ABS/PATH/TO/OmniDesk",
+         "args": ["--mcp-stdio"]
+       }
+     }
+   }
+   ```
+3. Reload your AI client so it launches OmniDesk over `stdin`/`stdout` (debug stdout logs are automatically suppressed in `--mcp-stdio` mode).
+
+> **Notes:** While the OmniDesk **Lock Screen** is active, MCP calls return error `-32001` until unlocked. If port `3847` is busy, update both `OMNIDESK_MCP_PORT` and the WebSocket URL port in Settings.
+
+See **[docs/MCP_SERVER_GUIDE.md](docs/MCP_SERVER_GUIDE.md)** for full architecture details, security boundaries, and E2E test commands (`npm --prefix docs/mcp-server-template test`).
+
+---
+
 ## 🚀 Quick Start
 
 ### Option 1 — Live Web App (Browser / Offline PWA)
@@ -383,16 +458,19 @@ npm run tauri dev
 ## 📁 Project Structure
 
 ```text
-├── docs/screenshots/          # High-resolution README showcase screenshots
+├── docs/
+│   ├── MCP_SERVER_GUIDE.md    # Model Context Protocol architecture & setup guide
+│   ├── mcp-server-template/   # Standalone Node.js stdio <-> WebSocket MCP server
+│   └── screenshots/           # High-resolution README showcase screenshots
 ├── public/                    # Static icons, logos, PWA manifest & assets
 ├── src-tauri/                 # Tauri v2 Rust backend, capabilities & desktop icons
 ├── src/
 │   ├── components/
 │   │   ├── layout/            # Header, Sidebar, SidebarWidgets, ToolGrid, CommandPalette
-│   │   └── ui/                # ConfigModal, ErrorBoundary, PWAInstallButton
+│   │   └── ui/                # ConfigModal, McpLogPanel, LockScreen, ErrorBoundary, PWAInstallButton
 │   ├── i18n/                  # Translation context & multi-language tool catalog
 │   ├── locales/               # Locale dictionaries (en, cs, de, es, ru)
-│   ├── services/              # Local storage, currency service, themes & Tauri FS bridge
+│   ├── services/              # Local storage, MCP client bridge, security, currency & Tauri FS bridge
 │   ├── tools/
 │   │   ├── files/             # PDF Studio, Audio Editor, Photo Compressor, Screen/Webcam Recorder...
 │   │   ├── programming/       # Hash Suite, AES Studio, CIDR, Cron, Encoding, UUID, JSONPath...

@@ -56,6 +56,17 @@ export interface SecurityConfig {
   securityHint?: string;
 }
 
+export type McpTransportMode = 'websocket' | 'stdio';
+export type McpAccessMode = 'readonly' | 'readwrite';
+
+export interface McpBridgeConfig {
+  enabled: boolean;
+  transport: McpTransportMode;
+  wsUrl: string;
+  accessMode: McpAccessMode;
+  authToken?: string;
+}
+
 export interface UserConfig {
   version?: number;
   exportedAt?: string;
@@ -69,4 +80,5 @@ export interface UserConfig {
   enabledWidgets?: string[];
   language?: string;
   security?: SecurityConfig;
+  mcp?: McpBridgeConfig;
 }

@@ -1,0 +1,14 @@
+{
+  "name": "omnidesk-mcp-server-template",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Standalone Node.js MCP Server template bridging AI clients (stdio) to the OmniDesk Tauri desktop app (WebSocket bridge) and scoped local workspace files.",
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test e2e.test.mjs"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}
