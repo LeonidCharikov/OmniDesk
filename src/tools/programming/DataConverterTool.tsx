@@ -1,6 +1,7 @@
-import React, { useState, useMemo, useId } from 'react';
+import React, { useState, useMemo, useId, useEffect } from 'react';
 import { Braces, Copy, Check, AlertCircle, ArrowRight } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
+import { consumePendingToolPipe } from '../../services/toolPipeService';
 
 type InputFormat = 'json' | 'yaml' | 'toml' | 'csv';
 type OutputFormat = 'json' | 'yaml' | 'toml' | 'csv' | 'typescript' | 'json-schema';
@@ -323,6 +324,21 @@ export const DataConverterTool: React.FC = () => {
   );
   const [copied, setCopied] = useState(false);
   const inputId = useId();
+
+  useEffect(() => {
+    const piped = consumePendingToolPipe('data-converter');
+    if (!piped) return;
+    if (piped.kind === 'text' && typeof piped.text === 'string') {
+      setInput(piped.text);
+    } else if (piped.kind === 'file' && piped.file) {
+      const lower = piped.file.name.toLowerCase();
+      if (lower.endsWith('.csv') || lower.endsWith('.tsv')) setInFormat('csv');
+      else if (lower.endsWith('.yaml') || lower.endsWith('.yml')) setInFormat('yaml');
+      else if (lower.endsWith('.toml')) setInFormat('toml');
+      else setInFormat('json');
+      piped.file.text().then(txt => setInput(txt));
+    }
+  }, []);
 
   const { output, error } = useMemo(() => {
     try {

@@ -1,6 +1,7 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { ImageDown, Upload, Download, ShieldCheck, Trash2 } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
+import { consumePendingToolPipe } from '../../services/toolPipeService';
 
 interface CompressedItem {
   id: string;
@@ -70,7 +71,7 @@ export const PhotoCompressorTool: React.FC = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [items, setItems] = useState<CompressedItem[]>([]);
 
-  const processFiles = async (fileList: FileList | null) => {
+  const processFiles = async (fileList: FileList | File[] | null) => {
     if (!fileList || fileList.length === 0) return;
     setIsProcessing(true);
     const maxDimension = Math.max(100, Number(maxDim) || 1920);
@@ -148,6 +149,13 @@ export const PhotoCompressorTool: React.FC = () => {
     setItems(prev => [...newItems, ...prev]);
     setIsProcessing(false);
   };
+
+  useEffect(() => {
+    const piped = consumePendingToolPipe('photo-compressor');
+    if (piped?.kind === 'file' && piped.file) {
+      void processFiles([piped.file]);
+    }
+  }, []);
 
   const downloadItem = (item: CompressedItem) => {
     const baseName = item.name.replace(/\.[^.]+$/, '');

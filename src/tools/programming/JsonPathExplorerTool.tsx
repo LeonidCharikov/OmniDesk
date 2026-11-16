@@ -1,6 +1,7 @@
-import React, { useState, useMemo, useId } from 'react';
-import { Search, Copy, Check, AlertCircle } from 'lucide-react';
+import React, { useState, useMemo, useId, useEffect } from 'react';
+import { Search, Copy, Check, AlertCircle, RotateCcw } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
+import { consumePendingToolPipe } from '../../services/toolPipeService';
 
 function evaluateFilter(item: unknown, expr: string): boolean {
   if (typeof item !== 'object' || item === null) return false;
@@ -148,6 +149,16 @@ export const JsonPathExplorerTool: React.FC = () => {
   const pathId = useId();
   const jsonId = useId();
 
+  useEffect(() => {
+    const piped = consumePendingToolPipe('jsonpath-explorer');
+    if (!piped) return;
+    if (piped.kind === 'text' && typeof piped.text === 'string') {
+      setJsonText(piped.text);
+    } else if (piped.kind === 'file' && piped.file) {
+      piped.file.text().then(txt => setJsonText(txt));
+    }
+  }, []);
+
   const { matches, error } = useMemo(() => {
     try {
       const parsed = JSON.parse(jsonText);
@@ -171,14 +182,27 @@ export const JsonPathExplorerTool: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800">
-        <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-          <Search className="w-5 h-5 text-indigo-400" />
-          {t('tool_jsonpath_explorer_title', 'JSONPath Query Explorer')}
-        </h2>
-        <p className="text-sm text-slate-400 mt-1">
-          {t('tool_jsonpath_explorer_desc', 'Filter and extract nested values from JSON using JSONPath (wildcards, slices, recursive descent, filters).')}
-        </p>
+      <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+            <Search className="w-5 h-5 text-indigo-400" />
+            {t('tool_jsonpath_explorer_title', 'JSONPath Query Explorer')}
+          </h2>
+          <p className="text-sm text-slate-400 mt-1">
+            {t('tool_jsonpath_explorer_desc', 'Filter and extract nested values from JSON using JSONPath (wildcards, slices, recursive descent, filters).')}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            setJsonText(SAMPLE_JSON);
+            setPathExpr('$.store.items[?(@.price < 150)].name');
+          }}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-medium text-slate-200 transition-colors whitespace-nowrap"
+        >
+          <RotateCcw className="w-3.5 h-3.5 text-indigo-400" />
+          <span>{t('load_sample_btn', 'Load Sample')}</span>
+        </button>
       </div>
 
       <div className="p-5 rounded-2xl bg-slate-900/40 border border-slate-800 space-y-3">

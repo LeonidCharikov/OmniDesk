@@ -34,6 +34,7 @@ import {
 } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
 import { saveBinaryWithDialog, registerTauriDropListener } from '../../services/fileSystemService';
+import { consumePendingToolPipe } from '../../services/toolPipeService';
 
 interface TextOverlayState {
   enabled: boolean;
@@ -459,6 +460,13 @@ export const ImageEditorTool: React.FC = () => {
       }
     });
     return unregister;
+  }, [loadImageFromFile]);
+
+  useEffect(() => {
+    const piped = consumePendingToolPipe('image-editor');
+    if (piped?.kind === 'file' && piped.file) {
+      loadImageFromFile(piped.file);
+    }
   }, [loadImageFromFile]);
 
   // Global Drag and Drop event handlers

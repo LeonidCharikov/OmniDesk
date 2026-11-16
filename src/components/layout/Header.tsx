@@ -1,9 +1,10 @@
-import React, { useId } from 'react';
-import { Search, Star, ArrowLeft, ShieldCheck, Sliders, Menu, Minus, Square, X, WifiOff, Lock } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Search, Star, ArrowLeft, ShieldCheck, Sliders, Menu, Minus, Square, X, WifiOff, Lock, Keyboard, ChevronDown, Check } from 'lucide-react';
 import { ToolDefinition } from '../../types/tool';
 import { useI18n, SUPPORTED_LANGUAGES, SupportedLanguage } from '../../i18n/context';
 import { getToolCatalogText } from '../../i18n/toolCatalog';
 import { PWAInstallButton } from '../ui/PWAInstallButton';
+import { LanguageFlagIcon } from '../ui/LanguageFlagIcon';
 import { isTauri } from '../../services/fileSystemService';
 
 interface HeaderProps {
@@ -14,6 +15,8 @@ interface HeaderProps {
   onToggleFavorite: () => void;
   onOpenSearch: () => void;
   onOpenSettings?: () => void;
+  onOpenShortcutsHelp?: () => void;
+  searchShortcutLabel?: string;
   onToggleSidebar?: () => void;
   isSidebarOpen?: boolean;
   isOffline?: boolean;
@@ -29,6 +32,8 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleFavorite,
   onOpenSearch,
   onOpenSettings,
+  onOpenShortcutsHelp,
+  searchShortcutLabel = 'Ctrl+K',
   onToggleSidebar,
   isSidebarOpen,
   isOffline = false,
@@ -36,8 +41,29 @@ export const Header: React.FC<HeaderProps> = ({
   onLockNow,
 }) => {
   const { language, setLanguage, t } = useI18n();
-  const langSelectId = useId();
+  const [langMenuOpen, setLangMenuOpen] = useState(false);
+  const langMenuRef = useRef<HTMLDivElement>(null);
   const runningInTauri = isTauri();
+
+  useEffect(() => {
+    if (!langMenuOpen) return;
+    const handleOutside = (event: MouseEvent) => {
+      if (langMenuRef.current && !langMenuRef.current.contains(event.target as Node)) {
+        setLangMenuOpen(false);
+      }
+    };
+    const handleEsc = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setLangMenuOpen(false);
+      }
+    };
+    window.addEventListener('mousedown', handleOutside);
+    window.addEventListener('keydown', handleEsc);
+    return () => {
+      window.removeEventListener('mousedown', handleOutside);
+      window.removeEventListener('keydown', handleEsc);
+    };
+  }, [langMenuOpen]);
 
   const handleHeaderMouseDown = async (event: React.MouseEvent<HTMLElement>) => {
     if (event.button !== 0 || (event.target instanceof Element && event.target.closest('button, select, input, a'))) {
@@ -162,7 +188,7 @@ export const Header: React.FC<HeaderProps> = ({
             <span className="truncate">{t('search_placeholder', 'Quick search tools... Ctrl+K')}</span>
           </div>
           <kbd className="shrink-0 ml-2 font-mono text-[10px] bg-slate-800/90 text-slate-400 px-1.5 py-0.5 rounded border border-slate-700">
-            Ctrl+K
+            {searchShortcutLabel}
           </kbd>
         </button>
       </div>
@@ -231,26 +257,67 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         )}
 
-        <div className="relative flex items-center rounded-lg bg-slate-900/80 border border-slate-800 hover:border-slate-700 transition-colors shrink-0">
-          <label htmlFor={langSelectId} className="sr-only">{t('interface_language', 'Interface Language')}</label>
-          <div className="pointer-events-none flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-slate-200 font-medium">
-            <span className="text-sm leading-none" aria-hidden="true">{currentLang.flag}</span>
-            <span className="text-xs uppercase font-semibold text-slate-300">{currentLang.code}</span>
-          </div>
-          <select
-            id={langSelectId}
-            value={language}
-            onChange={e => setLanguage(e.target.value as SupportedLanguage)}
+        <div ref={langMenuRef} className="relative shrink-0">
+          <button
+            type="button"
+            onClick={() => setLangMenuOpen(prev => !prev)}
+            aria-haspopup="listbox"
+            aria-expanded={langMenuOpen}
             aria-label={t('interface_language', 'Interface Language')}
-            className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+            title={t('interface_language', 'Interface Language')}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-900/80 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-xs text-slate-200 font-medium transition-colors"
           >
-            {SUPPORTED_LANGUAGES.map(lang => (
-              <option key={lang.code} value={lang.code} className="bg-slate-900 text-slate-200 text-xs py-1">
-                {lang.flag} {lang.name} ({lang.code.toUpperCase()})
-              </option>
-            ))}
-          </select>
+            <LanguageFlagIcon code={currentLang.code} className="w-4 h-3 rounded-[2px] shrink-0" />
+            <span className="text-xs uppercase font-semibold text-slate-300">{currentLang.code}</span>
+            <ChevronDown className="w-3 h-3 text-slate-400" />
+          </button>
+
+          {langMenuOpen && (
+            <div
+              role="listbox"
+              aria-label={t('interface_language', 'Interface Language')}
+              className="absolute right-0 mt-1.5 w-44 rounded-xl bg-slate-900 border border-slate-700 shadow-2xl py-1 z-50"
+            >
+              {SUPPORTED_LANGUAGES.map(lang => {
+                const isSelected = lang.code === language;
+                return (
+                  <button
+                    key={lang.code}
+                    type="button"
+                    role="option"
+                    aria-selected={isSelected}
+                    onClick={() => {
+                      setLanguage(lang.code as SupportedLanguage);
+                      setLangMenuOpen(false);
+                    }}
+                    className={`w-full px-3 py-2 text-left text-xs flex items-center justify-between gap-2 transition-colors ${
+                      isSelected
+                        ? 'bg-indigo-600/20 text-white font-semibold'
+                        : 'text-slate-200 hover:bg-slate-800'
+                    }`}
+                  >
+                    <span className="flex items-center gap-2 min-w-0">
+                      <LanguageFlagIcon code={lang.code} className="w-4 h-3 rounded-[2px] shrink-0" />
+                      <span className="truncate">{lang.name}</span>
+                    </span>
+                    {isSelected && <Check className="w-3.5 h-3.5 text-indigo-400 shrink-0" />}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
+
+        {onOpenShortcutsHelp && (
+          <button
+            onClick={onOpenShortcutsHelp}
+            className="p-1.5 sm:p-2 rounded-lg bg-slate-900/80 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition-colors shrink-0"
+            title={t('shortcuts_help_title', 'Keyboard Shortcuts')}
+            aria-label={t('shortcuts_help_title', 'Keyboard Shortcuts')}
+          >
+            <Keyboard className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-300" />
+          </button>
+        )}
 
         {onOpenSettings && (
           <button
@@ -263,32 +330,34 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         )}
 
-        <div className="hidden sm:flex items-center ml-0.5 pl-1.5 sm:pl-2 border-l border-slate-800/80 gap-0.5 shrink-0">
-          <button
-            onClick={handleMinimize}
-            className="p-1.5 rounded text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 transition-colors"
-            title={t('window_minimize', 'Minimize')}
-            aria-label={t('window_minimize', 'Minimize')}
-          >
-            <Minus className="w-3.5 h-3.5" />
-          </button>
-          <button
-            onClick={handleMaximize}
-            className="p-1.5 rounded text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 transition-colors"
-            title={t('window_maximize', 'Maximize')}
-            aria-label={t('window_maximize', 'Maximize')}
-          >
-            <Square className="w-3 h-3" />
-          </button>
-          <button
-            onClick={handleClose}
-            className="p-1.5 rounded text-slate-400 hover:text-rose-100 hover:bg-rose-600/80 transition-colors"
-            title={t('window_close', 'Close')}
-            aria-label={t('window_close', 'Close')}
-          >
-            <X className="w-3.5 h-3.5" />
-          </button>
-        </div>
+        {runningInTauri && (
+          <div className="hidden sm:flex items-center ml-0.5 pl-1.5 sm:pl-2 border-l border-slate-800/80 gap-0.5 shrink-0">
+            <button
+              onClick={handleMinimize}
+              className="p-1.5 rounded text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 transition-colors"
+              title={t('window_minimize', 'Minimize')}
+              aria-label={t('window_minimize', 'Minimize')}
+            >
+              <Minus className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={handleMaximize}
+              className="p-1.5 rounded text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 transition-colors"
+              title={t('window_maximize', 'Maximize')}
+              aria-label={t('window_maximize', 'Maximize')}
+            >
+              <Square className="w-3 h-3" />
+            </button>
+            <button
+              onClick={handleClose}
+              className="p-1.5 rounded text-slate-400 hover:text-rose-100 hover:bg-rose-600/80 transition-colors"
+              title={t('window_close', 'Close')}
+              aria-label={t('window_close', 'Close')}
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
       </div>
     </header>
   );

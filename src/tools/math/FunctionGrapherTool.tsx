@@ -362,6 +362,21 @@ export const FunctionGrapherTool: React.FC = () => {
               {t(p.key, p.name)}
             </button>
           ))}
+          <button
+            type="button"
+            onClick={() => {
+              setFunctions([
+                { id: '1', name: 'f(x)', expr: 'sin(x) * 2', color: '#6366f1', visible: true },
+                { id: '2', name: 'g(x)', expr: '0.2 * x^2 - 2', color: '#f43f5e', visible: true },
+                { id: '3', name: 'h(x)', expr: 'cos(2*x)', color: '#10b981', visible: true },
+              ]);
+              resetView();
+            }}
+            className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-indigo-600/20 hover:bg-indigo-600/35 border border-indigo-500/30 text-indigo-300 font-medium transition-colors"
+          >
+            <RotateCcw className="w-3 h-3" />
+            <span>{t('load_sample_btn', 'Load Sample')}</span>
+          </button>
         </div>
       </div>
 

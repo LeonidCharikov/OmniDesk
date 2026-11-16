@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import jsQR from 'jsqr';
 import { ScanLine, Upload, Camera, StopCircle, Copy, Check, ExternalLink } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
+import { consumePendingToolPipe } from '../../services/toolPipeService';
 
 interface ScanRecord {
   id: string;
@@ -52,6 +53,10 @@ export const QrBarcodeReaderTool: React.FC = () => {
   };
 
   useEffect(() => {
+    const piped = consumePendingToolPipe('qr-barcode-reader');
+    if (piped?.kind === 'file' && piped.file) {
+      void handleImageFile(piped.file);
+    }
     return () => {
       stopCamera();
     };

@@ -1,6 +1,7 @@
-import React, { useState, useMemo, useId } from 'react';
+import React, { useState, useMemo, useId, useEffect } from 'react';
 import { ArrowLeftRight, Check, Copy, AlertCircle, Upload, Link2 } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
+import { consumePendingToolPipe } from '../../services/toolPipeService';
 import {
   BASE32_RFC4648,
   BASE32_HEX,
@@ -56,6 +57,18 @@ export const EncodingSuiteTool: React.FC = () => {
   const [escOutput, setEscOutput] = useState('');
 
   const inputId = useId();
+
+  useEffect(() => {
+    const piped = consumePendingToolPipe('encoding-suite');
+    if (piped?.kind === 'text' && typeof piped.text === 'string') {
+      setActiveTab('base64');
+      setB64Input(piped.text);
+      setB64Output(bytesToBase64(new TextEncoder().encode(piped.text)));
+      setB32Input(piped.text);
+      setB58Input(piped.text);
+      setEscInput(piped.text);
+    }
+  }, []);
 
   const copyText = (key: string, val: string) => {
     navigator.clipboard.writeText(val);

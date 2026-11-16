@@ -21,6 +21,8 @@ import {
 import DOMPurify from 'dompurify';
 import { useI18n } from '../../i18n/context';
 import { saveTextWithDialog, openFileWithPicker } from '../../services/fileSystemService';
+import { consumePendingToolPipe } from '../../services/toolPipeService';
+import { SendToToolButton } from '../../components/ui/SendToToolButton';
 
 const DRAFT_STORAGE_KEY = 'omnidesk_text_editor_draft_v1';
 const FILENAME_STORAGE_KEY = 'omnidesk_text_editor_filename_v1';
@@ -68,6 +70,17 @@ export const TextEditorTool: React.FC = () => {
   useEffect(() => {
     localStorage.setItem(FILENAME_STORAGE_KEY, fileName);
   }, [fileName]);
+
+  useEffect(() => {
+    const piped = consumePendingToolPipe('text-editor');
+    if (!piped) return;
+    if (piped.kind === 'text' && typeof piped.text === 'string') {
+      setContent(piped.text);
+    } else if (piped.kind === 'file' && piped.file) {
+      setFileName(piped.file.name);
+      piped.file.text().then(txt => setContent(txt || ''));
+    }
+  }, []);
 
   // Sync scroll between textarea and line numbers
   const handleScroll = () => {
@@ -391,6 +404,8 @@ export const TextEditorTool: React.FC = () => {
             onChange={handleFileUpload}
             className="hidden"
           />
+
+          <SendToToolButton sourceToolId="text-editor" kind="text" getText={() => content} />
 
           <button
             onClick={copyContent}

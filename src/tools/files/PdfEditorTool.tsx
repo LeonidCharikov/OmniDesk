@@ -41,6 +41,7 @@ import {
 } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
 import { saveBinaryWithDialog } from '../../services/fileSystemService';
+import { consumePendingToolPipe } from '../../services/toolPipeService';
 import {
   DetectedImageObject,
   IDENTITY_MATRIX,
@@ -1182,8 +1183,15 @@ export const PdfEditorTool: React.FC = () => {
   useEffect(() => {
     if (initialLoadRef.current) return;
     initialLoadRef.current = true;
+    const piped = consumePendingToolPipe('pdf-editor');
+    if (piped?.kind === 'file' && piped.file) {
+      piped.file.arrayBuffer().then(buf => {
+        void handleLoadPdf(new Uint8Array(buf), piped.file!.name);
+      });
+      return;
+    }
     handleLoadSamplePdf();
-  }, [handleLoadSamplePdf]);
+  }, [handleLoadSamplePdf, handleLoadPdf]);
 
   useEffect(() => {
     return () => {

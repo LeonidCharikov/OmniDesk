@@ -1,7 +1,9 @@
-import React, { useState, useId } from 'react';
+import React, { useState, useId, useEffect } from 'react';
 import { Check, Copy, Download, AlertCircle, Minimize2 } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
 import { saveTextWithDialog } from '../../services/fileSystemService';
+import { consumePendingToolPipe } from '../../services/toolPipeService';
+import { SendToToolButton } from '../../components/ui/SendToToolButton';
 
 export const JsonFormatterTool: React.FC = () => {
   const { t } = useI18n();
@@ -31,6 +33,20 @@ export const JsonFormatterTool: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const jsonInputId = useId();
+
+  useEffect(() => {
+    const piped = consumePendingToolPipe('json-formatter');
+    if (!piped) return;
+    if (piped.kind === 'text' && typeof piped.text === 'string') {
+      setInput(piped.text);
+      setError(null);
+    } else if (piped.kind === 'file' && piped.file) {
+      piped.file.text().then(txt => {
+        setInput(txt);
+        setError(null);
+      });
+    }
+  }, []);
 
   const formatJson = (spaces: number = 2) => {
     try {
@@ -114,7 +130,8 @@ export const JsonFormatterTool: React.FC = () => {
           </button>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <SendToToolButton sourceToolId="json-formatter" kind="text" getText={() => input} />
           <button
             onClick={copyToClipboard}
             className="px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors flex items-center gap-1.5"

@@ -42,6 +42,8 @@ import {
   TAILWIND_SHADES,
 } from '../../utils/colorMath';
 import { saveBinaryWithDialog, saveTextWithDialog } from '../../services/fileSystemService';
+import { consumePendingToolPipe } from '../../services/toolPipeService';
+import { SendToToolButton } from '../../components/ui/SendToToolButton';
 
 type StudioTab = 'picker' | 'wheel' | 'charts' | 'converter';
 type ChartKind = 'tailwind' | 'material' | 'flat' | 'websafe';
@@ -216,6 +218,13 @@ export const ColorStudioTool: React.FC = () => {
   const addCurrentToPalette = () => {
     setSavedPalette(prev => (prev.includes(hex) ? prev : [...prev, hex].slice(-24)));
   };
+
+  useEffect(() => {
+    const piped = consumePendingToolPipe('color-studio');
+    if (piped?.kind === 'color' && piped.colorHex) {
+      setColorFromHex(piped.colorHex, 1);
+    }
+  }, []);
 
   const removeFromPalette = (targetHex: string) => {
     setSavedPalette(prev => prev.filter(c => c !== targetHex));
@@ -508,31 +517,34 @@ export const ColorStudioTool: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800">
-          {([
-            { id: 'picker', label: t('color_tab_picker', 'Color Picker'), icon: Palette },
-            { id: 'wheel', label: t('color_tab_wheel', 'Color Wheel'), icon: Disc },
-            { id: 'charts', label: t('color_tab_charts', 'Color Charts'), icon: Grid3X3 },
-            { id: 'converter', label: t('color_tab_converter', 'RGB ↔ Hex'), icon: ArrowLeftRight },
-          ] as const).map(tab => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors ${
-                  isActive
-                    ? 'bg-indigo-600 text-white shadow-sm'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-900'
-                }`}
-              >
-                <Icon className="w-3.5 h-3.5" />
-                <span>{tab.label}</span>
-              </button>
-            );
-          })}
+        <div className="flex flex-wrap items-center gap-2">
+          <SendToToolButton sourceToolId="color-studio" kind="color" getColorHex={() => hex} />
+          <div className="flex flex-wrap items-center gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800">
+            {([
+              { id: 'picker', label: t('color_tab_picker', 'Color Picker'), icon: Palette },
+              { id: 'wheel', label: t('color_tab_wheel', 'Color Wheel'), icon: Disc },
+              { id: 'charts', label: t('color_tab_charts', 'Color Charts'), icon: Grid3X3 },
+              { id: 'converter', label: t('color_tab_converter', 'RGB ↔ Hex'), icon: ArrowLeftRight },
+            ] as const).map(tab => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors ${
+                    isActive
+                      ? 'bg-indigo-600 text-white shadow-sm'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                  }`}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 

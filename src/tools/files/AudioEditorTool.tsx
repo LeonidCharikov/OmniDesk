@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
 import { saveBinaryWithDialog, openFileWithPicker } from '../../services/fileSystemService';
+import { consumePendingToolPipe } from '../../services/toolPipeService';
 
 // Helper: Format seconds to MM:SS.mmm
 function formatSeconds(sec: number): string {
@@ -256,6 +257,15 @@ export const AudioEditorTool: React.FC = () => {
       await loadAudioFromBuffer(ab, file.name);
     }
   };
+
+  useEffect(() => {
+    const piped = consumePendingToolPipe('audio-editor');
+    if (piped?.kind === 'file' && piped.file) {
+      piped.file.arrayBuffer().then(ab => {
+        void loadAudioFromBuffer(ab, piped.file!.name);
+      });
+    }
+  }, [loadAudioFromBuffer]);
 
   // Generate synthetic sample melody/speech demo
   const generateSampleAudio = async () => {

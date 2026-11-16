@@ -37,6 +37,49 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
+    "fileAssociations": [
+      {
+        "ext": ["pdf"],
+        "name": "PDF Document",
+        "description": "Portable Document Format",
+        "mimeType": "application/pdf",
+        "role": "Editor"
+      },
+      {
+        "ext": ["json"],
+        "name": "JSON Data",
+        "description": "JSON File",
+        "mimeType": "application/json",
+        "role": "Editor"
+      },
+      {
+        "ext": ["md", "markdown"],
+        "name": "Markdown Document",
+        "description": "Markdown File",
+        "mimeType": "text/markdown",
+        "role": "Editor"
+      },
+      {
+        "ext": ["txt"],
+        "name": "Text Document",
+        "description": "Plain Text File",
+        "mimeType": "text/plain",
+        "role": "Editor"
+      },
+      {
+        "ext": ["csv"],
+        "name": "CSV Data",
+        "description": "Comma-Separated Values",
+        "mimeType": "text/csv",
+        "role": "Editor"
+      },
+      {
+        "ext": ["png", "jpg", "jpeg", "webp"],
+        "name": "Image File",
+        "description": "Raster Image",
+        "role": "Editor"
+      }
+    ],
     "android": {
       "debugApplicationIdSuffix": ".debug"
     }

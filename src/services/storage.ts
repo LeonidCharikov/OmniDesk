@@ -1,4 +1,15 @@
-import { UserConfig, WidgetCustomization, ThemeId, DailyTask, SecurityConfig, McpBridgeConfig } from '../types/tool';
+import {
+  UserConfig,
+  WidgetCustomization,
+  ThemeId,
+  DailyTask,
+  SecurityConfig,
+  McpBridgeConfig,
+  ShortcutBindings,
+  CustomToolShortcut,
+  DesktopBehaviorConfig,
+} from '../types/tool';
+import { DEFAULT_SHORTCUTS, normalizeComboString } from './shortcutsService';
 
 const CONFIG_KEY = 'omnidesk_user_config_v2';
 const LEGACY_KEY = 'omnidesk_user_config_v1';
@@ -36,6 +47,10 @@ export const DEFAULT_MCP: McpBridgeConfig = {
   accessMode: 'readonly',
 };
 
+export const DEFAULT_DESKTOP: DesktopBehaviorConfig = {
+  closeToTray: false,
+};
+
 export const DEFAULT_CONFIG: UserConfig = {
   version: 2,
   favorites: ['text-editor', 'docx-to-pdf', 'unit-converter', 'currency-crypto', 'pomodoro-timer'],
@@ -49,7 +64,40 @@ export const DEFAULT_CONFIG: UserConfig = {
   language: 'en',
   security: DEFAULT_SECURITY,
   mcp: DEFAULT_MCP,
+  shortcuts: { ...DEFAULT_SHORTCUTS },
+  customToolShortcuts: [],
+  desktop: { ...DEFAULT_DESKTOP },
 };
+
+function normalizeShortcuts(raw: unknown): ShortcutBindings {
+  const input = typeof raw === 'object' && raw !== null ? (raw as Record<string, unknown>) : {};
+  return {
+    openSearch: typeof input.openSearch === 'string' && normalizeComboString(input.openSearch) ? normalizeComboString(input.openSearch) : DEFAULT_SHORTCUTS.openSearch,
+    openSettings: typeof input.openSettings === 'string' && normalizeComboString(input.openSettings) ? normalizeComboString(input.openSettings) : DEFAULT_SHORTCUTS.openSettings,
+    toggleSidebar: typeof input.toggleSidebar === 'string' && normalizeComboString(input.toggleSidebar) ? normalizeComboString(input.toggleSidebar) : DEFAULT_SHORTCUTS.toggleSidebar,
+    goBack: typeof input.goBack === 'string' && normalizeComboString(input.goBack) ? normalizeComboString(input.goBack) : DEFAULT_SHORTCUTS.goBack,
+    lockWorkspace: typeof input.lockWorkspace === 'string' && normalizeComboString(input.lockWorkspace) ? normalizeComboString(input.lockWorkspace) : DEFAULT_SHORTCUTS.lockWorkspace,
+    openShortcutsHelp: typeof input.openShortcutsHelp === 'string' && normalizeComboString(input.openShortcutsHelp) ? normalizeComboString(input.openShortcutsHelp) : DEFAULT_SHORTCUTS.openShortcutsHelp,
+  };
+}
+
+function normalizeCustomToolShortcuts(raw: unknown): CustomToolShortcut[] {
+  if (!Array.isArray(raw)) return [];
+  const valid: CustomToolShortcut[] = [];
+  for (const item of raw) {
+    if (typeof item !== 'object' || item === null) continue;
+    const candidate = item as Partial<CustomToolShortcut>;
+    const combo = typeof candidate.combo === 'string' ? normalizeComboString(candidate.combo) : '';
+    if (typeof candidate.toolId === 'string' && candidate.toolId.trim() && combo) {
+      valid.push({
+        id: typeof candidate.id === 'string' && candidate.id.trim() ? candidate.id : `custom-${candidate.toolId}-${valid.length + 1}`,
+        toolId: candidate.toolId.trim(),
+        combo,
+      });
+    }
+  }
+  return valid;
+}
 
 export function loadUserConfig(): UserConfig {
   try {
@@ -110,6 +158,12 @@ export function loadUserConfig(): UserConfig {
         : undefined,
     };
 
+    const shortcuts = normalizeShortcuts(parsed.shortcuts);
+    const customToolShortcuts = normalizeCustomToolShortcuts(parsed.customToolShortcuts);
+    const desktop: DesktopBehaviorConfig = {
+      closeToTray: Boolean(parsed.desktop?.closeToTray),
+    };
+
     return {
       ...DEFAULT_CONFIG,
       ...parsed,
@@ -119,6 +173,9 @@ export function loadUserConfig(): UserConfig {
       enabledWidgets: widgets.enabledWidgets,
       security,
       mcp,
+      shortcuts,
+      customToolShortcuts,
+      desktop,
     };
   } catch {
     return DEFAULT_CONFIG;
@@ -198,6 +255,11 @@ export function validateConfigJson(jsonString: string): { valid: boolean; config
         authToken: typeof parsed.mcp?.authToken === 'string' && parsed.mcp.authToken.trim()
           ? parsed.mcp.authToken.trim()
           : undefined,
+      },
+      shortcuts: normalizeShortcuts(parsed.shortcuts),
+      customToolShortcuts: normalizeCustomToolShortcuts(parsed.customToolShortcuts),
+      desktop: {
+        closeToTray: Boolean(parsed.desktop?.closeToTray),
       },
     };
 

@@ -25,12 +25,15 @@ import {
   Trash2,
   KeyRound,
   Plug,
+  Keyboard,
+  Sparkles,
+  Archive,
 } from 'lucide-react';
 import { UserConfig, ThemeId, McpBridgeConfig } from '../../types/tool';
 import { useI18n, SupportedLanguage } from '../../i18n/context';
 import { THEMES } from '../../services/themes';
 import { DEFAULT_MCP, validateConfigJson } from '../../services/storage';
-import { saveTextWithDialog } from '../../services/fileSystemService';
+import { invokeRustCommand, isTauri, saveTextWithDialog } from '../../services/fileSystemService';
 import {
   isValidMcpWebSocketUrl,
   McpConnectedToolCapability,
@@ -41,6 +44,16 @@ import {
 import { McpLogPanel } from './McpLogPanel';
 import { McpConnectedToolsPanel } from './McpConnectedToolsPanel';
 import { McpSetupTutorialPanel } from './McpSetupTutorialPanel';
+import { ShortcutsSettingsPanel } from './ShortcutsSettingsPanel';
+import { LanguageFlagIcon } from './LanguageFlagIcon';
+import { DEFAULT_SHORTCUTS } from '../../services/shortcutsService';
+import { toastService } from '../../services/toastService';
+import {
+  buildFullWorkspaceBackup,
+  isFullWorkspaceBackup,
+  restoreFullWorkspaceBackup,
+} from '../../services/workspaceBackupService';
+import { WORKSPACE_PRESETS, applyWorkspacePreset } from '../../services/workspacePresetsService';
 import {
   hashMasterKey,
   encryptJsonPayload,
@@ -50,6 +63,8 @@ import {
   StorageAuditItem,
 } from '../../services/securityService';
 
+export type ConfigTabType = 'themes' | 'currency' | 'widgets' | 'security' | 'mcp' | 'shortcuts' | 'backup' | 'language';
+
 interface ConfigModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -57,6 +72,7 @@ interface ConfigModalProps {
   onUpdateConfig: (newConfig: UserConfig) => void;
   onResetDefaults: () => void;
   onLockNow?: () => void;
+  initialTab?: ConfigTabType;
   mcpStatus?: McpConnectionStatus;
   mcpError?: string;
   mcpLogs?: McpLogEntry[];
@@ -65,7 +81,7 @@ interface ConfigModalProps {
   onReconnectMcp?: () => void;
 }
 
-type TabType = 'themes' | 'currency' | 'widgets' | 'security' | 'mcp' | 'backup' | 'language';
+type TabType = ConfigTabType;
 
 const ALL_CURRENCIES = [
   { code: 'CZK', name: 'Česká koruna', flag: '🇨🇿', symbol: 'Kč' },
@@ -158,6 +174,7 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
   onUpdateConfig,
   onResetDefaults,
   onLockNow,
+  initialTab,
   mcpStatus = 'disconnected',
   mcpError,
   mcpLogs = [],
@@ -166,7 +183,7 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
   onReconnectMcp,
 }) => {
   const { t, language, setLanguage } = useI18n();
-  const [activeTab, setActiveTab] = useState<TabType>('themes');
+  const [activeTab, setActiveTab] = useState<TabType>(initialTab || 'themes');
   const [downloaded, setDownloaded] = useState(false);
   const [copied, setCopied] = useState(false);
   const [importStatus, setImportStatus] = useState<{ success: boolean; message: string } | null>(null);
@@ -179,6 +196,15 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
   const [confirmPurge, setConfirmPurge] = useState(false);
   const [auditItems, setAuditItems] = useState<StorageAuditItem[]>(() => getStorageAudit());
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  React.useEffect(() => {
+    if (isOpen && initialTab) {
+      setActiveTab(initialTab);
+      if (initialTab === 'security') {
+        setAuditItems(getStorageAudit());
+      }
+    }
+  }, [isOpen, initialTab]);
 
   if (!isOpen) return null;
 
@@ -230,6 +256,50 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const restoreFromCandidateJson = (candidateText: string): { success: boolean; message: string } => {
+    try {
+      const parsed = JSON.parse(candidateText);
+      if (isFullWorkspaceBackup(parsed)) {
+        const res = restoreFullWorkspaceBackup(parsed);
+        if (res.valid && res.config) {
+          if (res.config.language && ['cs', 'en', 'de', 'es', 'ru'].includes(res.config.language)) {
+            setLanguage(res.config.language as SupportedLanguage);
+          }
+          onUpdateConfig(res.config);
+          return {
+            success: true,
+            message: t('full_workspace_restored_msg', 'Full workspace and tool data restored ({count} stores).', {
+              count: res.restoredKeys,
+            }),
+          };
+        }
+        return {
+          success: false,
+          message: res.error || t('import_parse_error', 'Failed to read JSON file.'),
+        };
+      }
+    } catch {
+      // Fall through to standard config validation
+    }
+
+    const res = validateConfigJson(candidateText);
+    if (res.valid && res.config) {
+      if (res.config.language && ['cs', 'en', 'de', 'es', 'ru'].includes(res.config.language)) {
+        setLanguage(res.config.language as SupportedLanguage);
+      }
+      onUpdateConfig(res.config);
+      return {
+        success: true,
+        message: t('config_imported_success', 'Configuration loaded from file successfully!'),
+      };
+    }
+
+    return {
+      success: false,
+      message: res.error || t('import_parse_error', 'Failed to read JSON file.'),
+    };
+  };
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -263,29 +333,39 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
         }
       }
 
-      const res = validateConfigJson(candidateText);
-      if (res.valid && res.config) {
-        if (res.config.language && ['cs', 'en', 'de', 'es', 'ru'].includes(res.config.language)) {
-          setLanguage(res.config.language as SupportedLanguage);
-        }
-        onUpdateConfig(res.config);
-        setImportStatus({
-          success: true,
-          message: t('config_imported_success', 'Configuration loaded from file successfully!'),
-        });
-      } else {
-        setImportStatus({
-          success: false,
-          message: res.error || t('import_parse_error', 'Failed to read JSON file.'),
-        });
-      }
+      const outcome = restoreFromCandidateJson(candidateText);
+      setImportStatus(outcome);
+      toastService.show({
+        type: outcome.success ? 'success' : 'error',
+        title: outcome.message,
+      });
       setTimeout(() => setImportStatus(null), 4000);
     };
     reader.readAsText(file);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const downloadEncryptedBackup = async () => {
+  const downloadFullWorkspaceFile = async () => {
+    const fullPayload = buildFullWorkspaceBackup(config);
+    const defaultName = `omnidesk-workspace-${new Date().toISOString().slice(0, 10)}.json`;
+    const res = await saveTextWithDialog(
+      defaultName,
+      JSON.stringify(fullPayload, null, 2),
+      [
+        { name: `${t('json_file_label', 'JSON File')} (*.json)`, extensions: ['json'] },
+        { name: `${t('all_files', 'All Files')} (*.*)`, extensions: ['*'] },
+      ],
+      t('save_full_workspace_title', 'Export Full Workspace Backup')
+    );
+    if (res.success) {
+      const msg = t('full_workspace_exported_msg', 'Full workspace backup saved ({count} local stores).', {
+        count: Object.keys(fullPayload.storageData).length,
+      });
+      toastService.show({ type: 'success', title: msg });
+    }
+  };
+
+  const downloadEncryptedBackup = async (fullWorkspace = false) => {
     if (!backupPassword.trim()) {
       setImportStatus({
         success: false,
@@ -294,8 +374,11 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
       setTimeout(() => setImportStatus(null), 4000);
       return;
     }
-    const encrypted = await encryptJsonPayload(jsonExportPayload, backupPassword);
-    const defaultName = `omnidesk-profile-${new Date().toISOString().slice(0, 10)}.enc.json`;
+    const payload = fullWorkspace ? buildFullWorkspaceBackup(config) : jsonExportPayload;
+    const encrypted = await encryptJsonPayload(payload, backupPassword);
+    const defaultName = fullWorkspace
+      ? `omnidesk-workspace-${new Date().toISOString().slice(0, 10)}.enc.json`
+      : `omnidesk-profile-${new Date().toISOString().slice(0, 10)}.enc.json`;
     const res = await saveTextWithDialog(
       defaultName,
       encrypted,
@@ -306,10 +389,12 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
       t('save_encrypted_profile_title', 'Save Encrypted Configuration Profile')
     );
     if (res.success) {
+      const msg = t('encrypted_backup_saved', 'AES-256-GCM encrypted profile backup saved.');
       setImportStatus({
         success: true,
-        message: t('encrypted_backup_saved', 'AES-256-GCM encrypted profile backup saved.'),
+        message: msg,
       });
+      toastService.show({ type: 'success', title: msg });
       setTimeout(() => setImportStatus(null), 4000);
     }
   };
@@ -384,24 +469,16 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
   };
 
   const handleApplyPastedJson = () => {
-    const res = validateConfigJson(pastedJson);
-    if (res.valid && res.config) {
-      if (res.config.language && ['cs', 'en', 'de', 'es', 'ru'].includes(res.config.language)) {
-        setLanguage(res.config.language as SupportedLanguage);
-      }
-      onUpdateConfig(res.config);
+    const outcome = restoreFromCandidateJson(pastedJson);
+    if (outcome.success) {
       setPastedJson('');
       setShowPasteArea(false);
-      setImportStatus({
-        success: true,
-        message: t('config_imported_success', 'Configuration applied successfully!'),
-      });
-    } else {
-      setImportStatus({
-        success: false,
-        message: res.error || t('invalid_pasted_json', 'Invalid JSON syntax.'),
-      });
     }
+    setImportStatus(outcome);
+    toastService.show({
+      type: outcome.success ? 'success' : 'error',
+      title: outcome.message,
+    });
     setTimeout(() => setImportStatus(null), 4000);
   };
 
@@ -445,9 +522,14 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-md animate-fade-in">
-      <div className="relative w-full max-w-3xl rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl flex flex-col max-h-[96vh] sm:max-h-[90vh] overflow-hidden text-slate-100">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={t('settings_modal_title', 'OmniDesk Settings & Configurator')}
+        className="relative w-full max-w-4xl rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl flex flex-col max-h-[96vh] sm:max-h-[90vh] overflow-hidden text-slate-100"
+      >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-950/60">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-950/60 shrink-0 relative z-10">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-indigo-600/20 text-indigo-400 flex items-center justify-center border border-indigo-500/30">
               <Sliders className="w-4 h-4" />
@@ -463,6 +545,7 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
           </div>
           <button
             onClick={onClose}
+            aria-label={t('close', 'Close')}
             className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
           >
             <X className="w-5 h-5" />
@@ -470,13 +553,18 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex items-center gap-1 px-3 sm:px-6 pt-3 border-b border-slate-800 bg-slate-950/30 overflow-x-auto">
+        <div role="tablist" className="shrink-0 relative z-10 flex items-center gap-1.5 px-4 sm:px-6 pt-3 pb-3.5 border-b border-slate-800 bg-slate-950/30 overflow-x-auto">
           <button
-            onClick={() => setActiveTab('themes')}
-            className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-t-lg transition-colors border-b-2 ${
+            role="tab"
+            aria-selected={activeTab === 'themes'}
+            onClick={(e) => {
+              setActiveTab('themes');
+              e.currentTarget.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' });
+            }}
+            className={`flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg border transition-colors whitespace-nowrap shrink-0 ${
               activeTab === 'themes'
-                ? 'text-indigo-400 border-indigo-500 bg-slate-800/40'
-                : 'text-slate-400 border-transparent hover:text-slate-200'
+                ? 'text-indigo-300 border-indigo-500/50 bg-indigo-600/20 shadow-xs'
+                : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-slate-800/40'
             }`}
           >
             <Palette className="w-3.5 h-3.5" />
@@ -484,11 +572,16 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
           </button>
 
           <button
-            onClick={() => setActiveTab('currency')}
-            className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-t-lg transition-colors border-b-2 ${
+            role="tab"
+            aria-selected={activeTab === 'currency'}
+            onClick={(e) => {
+              setActiveTab('currency');
+              e.currentTarget.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' });
+            }}
+            className={`flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg border transition-colors whitespace-nowrap shrink-0 ${
               activeTab === 'currency'
-                ? 'text-indigo-400 border-indigo-500 bg-slate-800/40'
-                : 'text-slate-400 border-transparent hover:text-slate-200'
+                ? 'text-indigo-300 border-indigo-500/50 bg-indigo-600/20 shadow-xs'
+                : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-slate-800/40'
             }`}
           >
             <Coins className="w-3.5 h-3.5" />
@@ -496,11 +589,16 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
           </button>
 
           <button
-            onClick={() => setActiveTab('widgets')}
-            className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-t-lg transition-colors border-b-2 ${
+            role="tab"
+            aria-selected={activeTab === 'widgets'}
+            onClick={(e) => {
+              setActiveTab('widgets');
+              e.currentTarget.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' });
+            }}
+            className={`flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg border transition-colors whitespace-nowrap shrink-0 ${
               activeTab === 'widgets'
-                ? 'text-indigo-400 border-indigo-500 bg-slate-800/40'
-                : 'text-slate-400 border-transparent hover:text-slate-200'
+                ? 'text-indigo-300 border-indigo-500/50 bg-indigo-600/20 shadow-xs'
+                : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-slate-800/40'
             }`}
           >
             <Clock className="w-3.5 h-3.5" />
@@ -508,14 +606,17 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
           </button>
 
           <button
-            onClick={() => {
+            role="tab"
+            aria-selected={activeTab === 'security'}
+            onClick={(e) => {
               setActiveTab('security');
               setAuditItems(getStorageAudit());
+              e.currentTarget.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' });
             }}
-            className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-t-lg transition-colors border-b-2 whitespace-nowrap shrink-0 ${
+            className={`flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg border transition-colors whitespace-nowrap shrink-0 ${
               activeTab === 'security'
-                ? 'text-indigo-400 border-indigo-500 bg-slate-800/40'
-                : 'text-slate-400 border-transparent hover:text-slate-200'
+                ? 'text-indigo-300 border-indigo-500/50 bg-indigo-600/20 shadow-xs'
+                : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-slate-800/40'
             }`}
           >
             <ShieldCheck className="w-3.5 h-3.5" />
@@ -523,11 +624,16 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
           </button>
 
           <button
-            onClick={() => setActiveTab('mcp')}
-            className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-t-lg transition-colors border-b-2 whitespace-nowrap shrink-0 ${
+            role="tab"
+            aria-selected={activeTab === 'mcp'}
+            onClick={(e) => {
+              setActiveTab('mcp');
+              e.currentTarget.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' });
+            }}
+            className={`flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg border transition-colors whitespace-nowrap shrink-0 ${
               activeTab === 'mcp'
-                ? 'text-indigo-400 border-indigo-500 bg-slate-800/40'
-                : 'text-slate-400 border-transparent hover:text-slate-200'
+                ? 'text-indigo-300 border-indigo-500/50 bg-indigo-600/20 shadow-xs'
+                : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-slate-800/40'
             }`}
           >
             <Plug className="w-3.5 h-3.5" />
@@ -535,11 +641,33 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
           </button>
 
           <button
-            onClick={() => setActiveTab('backup')}
-            className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-t-lg transition-colors border-b-2 whitespace-nowrap shrink-0 ${
+            role="tab"
+            aria-selected={activeTab === 'shortcuts'}
+            onClick={(e) => {
+              setActiveTab('shortcuts');
+              e.currentTarget.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' });
+            }}
+            className={`flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg border transition-colors whitespace-nowrap shrink-0 ${
+              activeTab === 'shortcuts'
+                ? 'text-indigo-300 border-indigo-500/50 bg-indigo-600/20 shadow-xs'
+                : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-slate-800/40'
+            }`}
+          >
+            <Keyboard className="w-3.5 h-3.5" />
+            <span>{t('tab_shortcuts', 'Shortcuts')}</span>
+          </button>
+
+          <button
+            role="tab"
+            aria-selected={activeTab === 'backup'}
+            onClick={(e) => {
+              setActiveTab('backup');
+              e.currentTarget.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' });
+            }}
+            className={`flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg border transition-colors whitespace-nowrap shrink-0 ${
               activeTab === 'backup'
-                ? 'text-indigo-400 border-indigo-500 bg-slate-800/40'
-                : 'text-slate-400 border-transparent hover:text-slate-200'
+                ? 'text-indigo-300 border-indigo-500/50 bg-indigo-600/20 shadow-xs'
+                : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-slate-800/40'
             }`}
           >
             <HardDrive className="w-3.5 h-3.5" />
@@ -547,11 +675,16 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
           </button>
 
           <button
-            onClick={() => setActiveTab('language')}
-            className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-t-lg transition-colors border-b-2 whitespace-nowrap shrink-0 ${
+            role="tab"
+            aria-selected={activeTab === 'language'}
+            onClick={(e) => {
+              setActiveTab('language');
+              e.currentTarget.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' });
+            }}
+            className={`flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg border transition-colors whitespace-nowrap shrink-0 ${
               activeTab === 'language'
-                ? 'text-indigo-400 border-indigo-500 bg-slate-800/40'
-                : 'text-slate-400 border-transparent hover:text-slate-200'
+                ? 'text-indigo-300 border-indigo-500/50 bg-indigo-600/20 shadow-xs'
+                : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-slate-800/40'
             }`}
           >
             <Globe className="w-3.5 h-3.5" />
@@ -560,7 +693,7 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
         </div>
 
         {/* Content Body */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-6">
           {importStatus && (
             <div
               className={`p-3.5 rounded-xl border flex items-center gap-3 text-xs animate-fade-in ${
@@ -642,6 +775,47 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
                     </div>
                   );
                 })}
+              </div>
+
+              {/* Workspace Starter Presets */}
+              <div className="pt-4 border-t border-slate-800 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-indigo-400" />
+                  <div>
+                    <h4 className="text-xs font-semibold text-white">
+                      {t('workspace_presets_title', 'Workspace Starter Presets')}
+                    </h4>
+                    <p className="text-[11px] text-slate-400">
+                      {t('workspace_presets_desc', 'Configure pinned favorites and sidebar widgets for your workflow in one click.')}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                  {WORKSPACE_PRESETS.map(preset => (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      onClick={() => {
+                        onUpdateConfig(applyWorkspacePreset(config, preset.id));
+                        toastService.show({
+                          type: 'success',
+                          title: t('workspace_preset_applied', 'Applied "{name}" preset', {
+                            name: t(preset.nameKey, preset.defaultName),
+                          }),
+                        });
+                      }}
+                      className="p-3 rounded-xl bg-slate-950/60 hover:bg-slate-800/80 border border-slate-800 hover:border-indigo-500/50 text-left transition-colors"
+                    >
+                      <span className="text-xs font-semibold text-white block">
+                        {t(preset.nameKey, preset.defaultName)}
+                      </span>
+                      <span className="text-[11px] text-slate-400 block mt-1 leading-relaxed">
+                        {t(preset.descKey, preset.defaultDesc)}
+                      </span>
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           )}
@@ -1209,6 +1383,42 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
                 </div>
               )}
 
+              {/* Full Workspace Backup (All Tools + Settings) */}
+              <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Archive className="w-4 h-4 text-indigo-400" />
+                  <div>
+                    <h4 className="text-xs font-semibold text-white">
+                      {t('full_workspace_backup_title', 'Full Workspace Backup (Settings + Calendar + Notes + Tools)')}
+                    </h4>
+                    <p className="text-[11px] text-slate-400">
+                      {t(
+                        'full_workspace_backup_desc',
+                        'Includes all local tool data (Calendar, Kanban, Notes, Expenses, Habits, Shopping List, Flashcards) alongside your profile settings. Import above restores both formats automatically.'
+                      )}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={downloadFullWorkspaceFile}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-colors"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>{t('export_full_workspace_btn', 'Export Full Workspace (.json)')}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void downloadEncryptedBackup(true)}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition-colors"
+                  >
+                    <Lock className="w-3.5 h-3.5" />
+                    <span>{t('export_encrypted_workspace_btn', 'Export Encrypted Workspace')}</span>
+                  </button>
+                </div>
+              </div>
+
               {/* Encrypted Backup (AES-256-GCM) */}
               <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-3">
                 <div className="flex items-center gap-2">
@@ -1230,7 +1440,7 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
                   />
                   <button
                     type="button"
-                    onClick={downloadEncryptedBackup}
+                    onClick={() => void downloadEncryptedBackup(false)}
                     className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition-colors shrink-0"
                   >
                     <Download className="w-3.5 h-3.5" />
@@ -1330,7 +1540,7 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
                 : 'bg-slate-900 border-slate-800 text-slate-400';
 
             return (
-              <div className="space-y-4">
+              <div className="space-y-4 min-w-0">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <h3 className="text-sm font-semibold text-white">
@@ -1392,6 +1602,46 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
                     />
                   </button>
                 </div>
+
+                {isTauri() && (
+                  <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 flex items-center justify-between gap-4">
+                    <div>
+                      <span className="text-xs font-semibold text-white block">
+                        {t('desktop_close_to_tray_label', 'Keep Running in System Tray on Close')}
+                      </span>
+                      <span className="text-[11px] text-slate-400 block mt-0.5">
+                        {t(
+                          'desktop_close_to_tray_desc',
+                          'Hide the OmniDesk window to the OS tray when closing so the MCP Bridge remains active in the background.'
+                        )}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = !Boolean(config.desktop?.closeToTray);
+                        onUpdateConfig({
+                          ...config,
+                          desktop: {
+                            ...config.desktop,
+                            closeToTray: next,
+                          },
+                        });
+                        void invokeRustCommand('set_close_to_tray', { enabled: next }).catch(() => {});
+                      }}
+                      aria-pressed={Boolean(config.desktop?.closeToTray)}
+                      className={`w-12 h-6 rounded-full transition-colors p-0.5 shrink-0 ${
+                        config.desktop?.closeToTray ? 'bg-indigo-600' : 'bg-slate-800'
+                      }`}
+                    >
+                      <span
+                        className={`block w-5 h-5 rounded-full bg-white transition-transform ${
+                          config.desktop?.closeToTray ? 'translate-x-6' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
@@ -1493,6 +1743,26 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
             );
           })()}
 
+          {/* TAB: SHORTCUTS */}
+          {activeTab === 'shortcuts' && (
+            <ShortcutsSettingsPanel
+              shortcuts={config.shortcuts || DEFAULT_SHORTCUTS}
+              customToolShortcuts={config.customToolShortcuts || []}
+              onChangeShortcuts={next =>
+                onUpdateConfig({
+                  ...config,
+                  shortcuts: next,
+                })
+              }
+              onChangeCustomToolShortcuts={next =>
+                onUpdateConfig({
+                  ...config,
+                  customToolShortcuts: next,
+                })
+              }
+            />
+          )}
+
           {/* TAB 4: LANGUAGE */}
           {activeTab === 'language' && (
             <div className="space-y-4">
@@ -1531,7 +1801,7 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
                       }`}
                     >
                       <div className="flex items-center gap-3">
-                        <span className="text-2xl">{lang.flag}</span>
+                        <LanguageFlagIcon code={lang.code} className="w-7 h-5 rounded-sm shrink-0 shadow-sm" />
                         <div>
                           <span className="text-xs font-semibold text-white block">
                             {lang.label}
@@ -1555,7 +1825,7 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end px-6 py-3.5 border-t border-slate-800 bg-slate-950/60">
+        <div className="flex items-center justify-end px-6 py-3.5 border-t border-slate-800 bg-slate-950/60 shrink-0 relative z-10">
           <button
             onClick={onClose}
             className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md transition-colors"

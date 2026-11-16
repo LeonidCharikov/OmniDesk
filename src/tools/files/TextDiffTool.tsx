@@ -1,6 +1,7 @@
-import React, { useState, useId } from 'react';
-import { Plus, Minus, Equal } from 'lucide-react';
+import React, { useState, useId, useEffect } from 'react';
+import { Plus, Minus, Equal, RotateCcw } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
+import { consumePendingToolPipe } from '../../services/toolPipeService';
 
 interface DiffLine {
   type: 'added' | 'removed' | 'unchanged';
@@ -32,6 +33,25 @@ export const TextDiffTool: React.FC = () => {
 
   const textAId = useId();
   const textBId = useId();
+
+  useEffect(() => {
+    const piped = consumePendingToolPipe('text-diff');
+    if (!piped) return;
+    if (piped.kind === 'text' && typeof piped.text === 'string') {
+      setTextA(piped.text);
+    } else if (piped.kind === 'file' && piped.file) {
+      piped.file.text().then(txt => setTextA(txt));
+    }
+  }, []);
+
+  const handleLoadSample = () => {
+    setTextA(
+      `${t('original_config_version', '// Original configuration')}\n{\n  "appName": "OmniDesk",\n  "version": "1.0.0",\n  "offlineOnly": true,\n  "theme": "dark"\n}`
+    );
+    setTextB(
+      `${t('updated_config_version', '// Updated configuration')}\n{\n  "appName": "OmniDesk Tauri Platform",\n  "version": "2.0.0",\n  "offlineOnly": false,\n  "theme": "dark",\n  "language": "en"\n}`
+    );
+  };
 
   // Simple line-by-line diff algorithm
   const computeDiff = (): { lines: DiffLine[]; added: number; removed: number; unchanged: number } => {
@@ -84,13 +104,23 @@ export const TextDiffTool: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800">
-        <h2 className="text-lg font-semibold text-white">
-          {t('tool_text_diff_title', 'Text & File Diff Checker')}
-        </h2>
-        <p className="text-sm text-slate-400 mt-1">
-          {t('text_diff_desc', 'Visual line-by-line comparison of two texts or configuration files with change detection.')}
-        </p>
+      <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-semibold text-white">
+            {t('tool_text_diff_title', 'Text & File Diff Checker')}
+          </h2>
+          <p className="text-sm text-slate-400 mt-1">
+            {t('text_diff_desc', 'Visual line-by-line comparison of two texts or configuration files with change detection.')}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={handleLoadSample}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-medium text-slate-200 transition-colors whitespace-nowrap"
+        >
+          <RotateCcw className="w-3.5 h-3.5 text-indigo-400" />
+          <span>{t('load_sample_btn', 'Load Sample')}</span>
+        </button>
       </div>
 
       {/* Inputs */}

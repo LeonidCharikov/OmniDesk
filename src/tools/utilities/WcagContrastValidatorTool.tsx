@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useId } from 'react';
+import React, { useState, useMemo, useId, useEffect } from 'react';
 import { 
   CheckCircle2, 
   XCircle, 
@@ -11,6 +11,7 @@ import {
   ShieldCheck
 } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
+import { consumePendingToolPipe } from '../../services/toolPipeService';
 
 interface RGB {
   r: number;
@@ -180,6 +181,13 @@ export const WcagContrastValidatorTool: React.FC = () => {
 
   const fgInputId = useId();
   const bgInputId = useId();
+
+  useEffect(() => {
+    const piped = consumePendingToolPipe('wcag-validator');
+    if (piped?.kind === 'color' && piped.colorHex) {
+      setForeground(piped.colorHex);
+    }
+  }, []);
 
   const fgRgb = useMemo(() => hexToRgb(foreground), [foreground]);
   const bgRgb = useMemo(() => hexToRgb(background), [background]);

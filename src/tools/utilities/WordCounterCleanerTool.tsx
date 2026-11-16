@@ -1,6 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { FileText, Copy, Check, Eraser, Link2 } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
+import { consumePendingToolPipe } from '../../services/toolPipeService';
+import { SendToToolButton } from '../../components/ui/SendToToolButton';
 
 const TRACKING_PARAMS = [
   'utm_source',
@@ -36,6 +38,16 @@ export const WordCounterCleanerTool: React.FC = () => {
     )
   );
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    const piped = consumePendingToolPipe('word-counter-cleaner');
+    if (!piped) return;
+    if (piped.kind === 'text' && typeof piped.text === 'string') {
+      setText(piped.text);
+    } else if (piped.kind === 'file' && piped.file) {
+      piped.file.text().then(txt => setText(txt));
+    }
+  }, []);
 
   const stats = useMemo(() => {
     const trimmed = text.trim();
@@ -88,7 +100,8 @@ export const WordCounterCleanerTool: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <SendToToolButton sourceToolId="word-counter-cleaner" kind="text" getText={() => text} />
             <button
               type="button"
               onClick={handleCopy}

@@ -1,6 +1,7 @@
-import React, { useState, useMemo, useId } from 'react';
+import React, { useState, useMemo, useId, useEffect } from 'react';
 import { Type, Check, Copy, ArrowDownUp, Trash2, Sparkles } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
+import { consumePendingToolPipe } from '../../services/toolPipeService';
 
 function tokenizeWords(line: string): string[] {
   const spaced = line
@@ -26,6 +27,13 @@ export const CaseConverterTool: React.FC = () => {
   const [input, setInput] = useState('omniDesk_onlineTools Example-Text 2026');
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const inputId = useId();
+
+  useEffect(() => {
+    const piped = consumePendingToolPipe('case-converter');
+    if (piped?.kind === 'text' && typeof piped.text === 'string') {
+      setInput(piped.text);
+    }
+  }, []);
 
   const stats = useMemo(() => {
     const chars = input.length;

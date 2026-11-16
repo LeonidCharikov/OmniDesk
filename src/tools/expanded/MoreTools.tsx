@@ -21,6 +21,7 @@ import {
 import { saveBinaryWithDialog, saveTextWithDialog } from '../../services/fileSystemService';
 import { useI18n } from '../../i18n/context';
 import { findToolCatalogIdByTitle, getToolCatalogText } from '../../i18n/toolCatalog';
+import { consumePendingToolPipe } from '../../services/toolPipeService';
 import {
   useAppCurrency,
   getCurrencySymbol,
@@ -659,6 +660,16 @@ export const FileCryptoTool: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    const piped = consumePendingToolPipe('file-crypto');
+    if (!piped) return;
+    if (piped.kind === 'file' && piped.file) {
+      void handleFileChange(piped.file);
+    } else if (piped.kind === 'text' && typeof piped.text === 'string') {
+      setText(piped.text);
+    }
+  }, []);
+
   const calculateHash = async () => {
     setCryptoError('');
     try {
@@ -1079,6 +1090,16 @@ export const XmlFormatterTool: React.FC = () => {
   const [result, setResult] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
+  useEffect(() => {
+    const piped = consumePendingToolPipe('xml-formatter');
+    if (!piped) return;
+    if (piped.kind === 'text' && typeof piped.text === 'string') {
+      setValue(piped.text);
+    } else if (piped.kind === 'file' && piped.file) {
+      piped.file.text().then(txt => setValue(txt));
+    }
+  }, []);
+
   const formatXml = () => {
     setErrorMsg('');
     try {
@@ -1245,6 +1266,16 @@ export const YamlFormatterTool: React.FC = () => {
   );
   const [result, setResult] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+
+  useEffect(() => {
+    const piped = consumePendingToolPipe('yaml-formatter');
+    if (!piped) return;
+    if (piped.kind === 'text' && typeof piped.text === 'string') {
+      setValue(piped.text);
+    } else if (piped.kind === 'file' && piped.file) {
+      piped.file.text().then(txt => setValue(txt));
+    }
+  }, []);
 
   const formatYaml = () => {
     setErrorMsg('');
@@ -1852,6 +1883,10 @@ export const ColorPickerTool: React.FC = () => {
   const objectUrlRef = useRef<string | null>(null);
 
   useEffect(() => {
+    const piped = consumePendingToolPipe('color-picker');
+    if (piped?.kind === 'file' && piped.file) {
+      load(piped.file);
+    }
     return () => {
       if (objectUrlRef.current) {
         URL.revokeObjectURL(objectUrlRef.current);

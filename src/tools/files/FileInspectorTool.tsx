@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Binary, Hash, Copy, Check } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
+import { consumePendingToolPipe } from '../../services/toolPipeService';
 
 export const FileInspectorTool: React.FC = () => {
   const { t } = useI18n();
@@ -9,9 +10,7 @@ export const FileInspectorTool: React.FC = () => {
   const [hexDump, setHexDump] = useState<string[]>([]);
   const [copied, setCopied] = useState(false);
 
-  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0];
-    if (!f) return;
+  const inspectFile = useCallback(async (f: File) => {
     setFile(f);
 
     const buffer = await f.arrayBuffer();
@@ -31,6 +30,19 @@ export const FileInspectorTool: React.FC = () => {
       lines.push(`${i.toString(16).padStart(4, '0')}  ${hex.padEnd(48, ' ')}  |${ascii}|`);
     }
     setHexDump(lines);
+  }, []);
+
+  useEffect(() => {
+    const piped = consumePendingToolPipe('file-inspector');
+    if (piped?.kind === 'file' && piped.file) {
+      void inspectFile(piped.file);
+    }
+  }, [inspectFile]);
+
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    await inspectFile(f);
   };
 
   const copyHash = () => {

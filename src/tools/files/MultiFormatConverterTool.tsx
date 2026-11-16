@@ -1,4 +1,4 @@
-import React, { useState, useRef, useId } from 'react';
+import React, { useState, useRef, useId, useEffect } from 'react';
 import { 
   Upload, 
   Download, 
@@ -13,6 +13,7 @@ import mammoth from 'mammoth';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import { useI18n } from '../../i18n/context';
 import { saveBinaryWithDialog } from '../../services/fileSystemService';
+import { consumePendingToolPipe } from '../../services/toolPipeService';
 
 type ConversionCategory = 'docs' | 'data' | 'images';
 
@@ -318,6 +319,24 @@ export const MultiFormatConverterTool: React.FC = () => {
       handleImageConversion(file);
     }
   };
+
+  useEffect(() => {
+    const piped = consumePendingToolPipe('multi-converter');
+    if (piped?.kind === 'file' && piped.file) {
+      const f = piped.file;
+      const lower = f.name.toLowerCase();
+      if (f.type.startsWith('image/') || /\.(png|jpe?g|webp|bmp|gif)$/i.test(lower)) {
+        setActiveCategory('images');
+        void handleImageConversion(f);
+      } else if (/\.(csv|tsv|json)$/i.test(lower)) {
+        setActiveCategory('data');
+        void handleDataConversion(f);
+      } else {
+        setActiveCategory('docs');
+        void handleDocConversion(f);
+      }
+    }
+  }, []);
 
   const loadPresetDemo = () => {
     if (activeCategory === 'docs') {

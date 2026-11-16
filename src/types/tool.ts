@@ -67,6 +67,26 @@ export interface McpBridgeConfig {
   authToken?: string;
 }
 
+export type BuiltinShortcutActionId =
+  | 'openSearch'
+  | 'openSettings'
+  | 'toggleSidebar'
+  | 'goBack'
+  | 'lockWorkspace'
+  | 'openShortcutsHelp';
+
+export type ShortcutBindings = Record<BuiltinShortcutActionId, string>;
+
+export interface CustomToolShortcut {
+  id: string;
+  toolId: string;
+  combo: string;
+}
+
+export interface DesktopBehaviorConfig {
+  closeToTray: boolean;
+}
+
 export interface UserConfig {
   version?: number;
   exportedAt?: string;
@@ -81,4 +101,7 @@ export interface UserConfig {
   language?: string;
   security?: SecurityConfig;
   mcp?: McpBridgeConfig;
+  shortcuts?: ShortcutBindings;
+  customToolShortcuts?: CustomToolShortcut[];
+  desktop?: DesktopBehaviorConfig;
 }

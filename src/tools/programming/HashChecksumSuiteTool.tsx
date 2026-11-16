@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useId, useCallback } from 'react';
 import { Hash, Check, Copy, Upload, ShieldCheck, AlertCircle, KeyRound, FileText, Trash2 } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
+import { consumePendingToolPipe } from '../../services/toolPipeService';
 import {
   md5,
   sha224,
@@ -48,6 +49,21 @@ export const HashChecksumSuiteTool: React.FC = () => {
   const inputId = useId();
   const hmacKeyId = useId();
   const verifyId = useId();
+
+  useEffect(() => {
+    const piped = consumePendingToolPipe('hash-checksum-suite');
+    if (!piped) return;
+    if (piped.kind === 'text' && typeof piped.text === 'string') {
+      setSourceMode('text');
+      setInputEncoding('utf8');
+      setTextInput(piped.text);
+    } else if (piped.kind === 'file' && piped.file) {
+      piped.file.arrayBuffer().then(buf => {
+        setSourceMode('file');
+        setFileInfo({ name: piped.file!.name, size: piped.file!.size, bytes: new Uint8Array(buf) });
+      });
+    }
+  }, []);
 
   const decodeInput = useCallback((raw: string, encoding: InputEncoding): Uint8Array => {
     if (encoding === 'utf8') return new TextEncoder().encode(raw);

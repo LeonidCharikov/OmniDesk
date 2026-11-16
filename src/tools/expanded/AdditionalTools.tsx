@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { PDFDocument, degrees } from 'pdf-lib';
 import {
   Download,
   FileUp,
@@ -9,7 +8,6 @@ import {
   Send,
   Copy,
   Search,
-  RotateCw,
   AlertCircle,
   Clock,
   X,
@@ -24,6 +22,8 @@ import DOMPurify from 'dompurify';
 import { saveBinaryWithDialog, saveTextWithDialog } from '../../services/fileSystemService';
 import { useI18n } from '../../i18n/context';
 import { findToolCatalogIdByTitle, getToolCatalogText } from '../../i18n/toolCatalog';
+import { consumePendingToolPipe } from '../../services/toolPipeService';
+import { SendToToolButton } from '../../components/ui/SendToToolButton';
 
 const button = 'px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed';
 const secondary = 'px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed';
@@ -102,197 +102,7 @@ function ToolHeader({ title, description }: { title: string; description: string
 }
 
 /* ─────────────────────────────────────────────────────────────
-   1. PDF TOOLKIT (Merge, Rotate with customizable angle, remove files)
-   ───────────────────────────────────────────────────────────── */
-export const PdfToolkitTool: React.FC = () => {
-  const { t } = useI18n();
-  const [mode, setMode] = useState<'merge' | 'rotate'>('merge');
-  const [files, setFiles] = useState<File[]>([]);
-  const [rotationAngle, setRotationAngle] = useState<90 | 180 | 270>(90);
-  const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState('');
-  const [isError, setIsError] = useState(false);
-
-  const removeFile = (index: number) => {
-    setFiles(files.filter((_, i) => i !== index));
-  };
-
-  const merge = async () => {
-    if (!files.length) return;
-    setBusy(true);
-    setMessage('');
-    setIsError(false);
-    try {
-      const output = await PDFDocument.create();
-      for (const file of files) {
-        const buffer = await file.arrayBuffer();
-        if (buffer.byteLength === 0) continue;
-        const source = await PDFDocument.load(buffer, { ignoreEncryption: true });
-        const pages = await output.copyPages(source, source.getPageIndices());
-        pages.forEach(page => output.addPage(page));
-      }
-      const bytes = await output.save();
-      const result = await saveBinaryWithDialog(
-        'merged.pdf',
-        new Blob([bytes as unknown as BlobPart], { type: 'application/pdf' }),
-        'application/pdf',
-        [{ name: 'PDF (*.pdf)', extensions: ['pdf'] }],
-        t('save_merged_pdf', 'Uložit sloučené PDF')
-      );
-      setIsError(!result.success);
-      setMessage(
-        result.success
-          ? t('pdf_merged', 'Successfully merged {count} PDF files.', { count: files.length })
-          : result.canceled
-          ? t('save_canceled', 'Saving canceled.')
-          : result.error || t('pdf_merge_failed', 'PDF merge failed.')
-      );
-    } catch (error) {
-      setIsError(true);
-      setMessage(error instanceof Error ? error.message : t('pdf_processing_failed', 'PDF se nepodařilo zpracovat.'));
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const rotate = async () => {
-    if (!files.length) return;
-    setBusy(true);
-    setMessage('');
-    setIsError(false);
-    try {
-      const targetFile = files[0];
-      const buffer = await targetFile.arrayBuffer();
-      if (buffer.byteLength === 0) {
-        throw new Error(t('err_empty_pdf', 'Vybraný soubor PDF je prázdný.'));
-      }
-      const pdf = await PDFDocument.load(buffer, { ignoreEncryption: true });
-      pdf.getPages().forEach(page => page.setRotation(degrees(rotationAngle)));
-      const bytes = await pdf.save();
-      const result = await saveBinaryWithDialog(
-        `${targetFile.name.replace(/\.pdf$/i, '')}-rotated-${rotationAngle}deg.pdf`,
-        new Blob([bytes as unknown as BlobPart], { type: 'application/pdf' }),
-        'application/pdf',
-        [{ name: 'PDF (*.pdf)', extensions: ['pdf'] }],
-        t('save_rotated_pdf', 'Uložit otočené PDF')
-      );
-      setIsError(!result.success);
-      setMessage(
-        result.success
-          ? t('pdf_rotated', 'Rotated by {angle}°: {name}.', { angle: rotationAngle, name: targetFile.name })
-          : result.canceled
-          ? t('save_canceled', 'Saving canceled.')
-          : result.error || t('pdf_rotate_failed', 'PDF rotation failed.')
-      );
-    } catch (error) {
-      setIsError(true);
-      setMessage(error instanceof Error ? error.message : t('pdf_processing_failed', 'Otočení PDF se nezdařilo.'));
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <div className="space-y-5">
-      <ToolHeader title="PDF Toolkit" description={t('pdf_toolkit_desc', 'Merge selected PDF files or rotate pages of a PDF locally.')} />
-      <div className={panel + ' space-y-4'}>
-        <div className="flex flex-wrap gap-2">
-          <button className={mode === 'merge' ? button : secondary} onClick={() => setMode('merge')}>
-            {t('merge_selected_pdfs', 'Sloučit více PDF')}
-          </button>
-          <button className={mode === 'rotate' ? button : secondary} onClick={() => setMode('rotate')}>
-            {t('rotate_selected_pdf_pages', 'Otočit stránky PDF')}
-          </button>
-        </div>
-
-        <FilePicker
-          id="pdf-toolkit-files"
-          label={mode === 'merge' ? t('choose_pdf_files', 'Vybrat soubory PDF k sloučení') : t('choose_pdf_rotate', 'Vybrat soubor PDF k otočení')}
-          fileName={files.length ? t('files_selected_count', `${files.length} soubor(y) vybráno`, { count: files.length }) : undefined}
-          accept=".pdf,application/pdf"
-          multiple={mode === 'merge'}
-          onChange={e => {
-            const chosen = Array.from(e.target.files || []);
-            setFiles(mode === 'merge' ? [...files, ...chosen] : chosen.slice(0, 1));
-          }}
-        />
-
-        {mode === 'rotate' && (
-          <div className="flex items-center gap-3">
-            <label className="text-xs text-slate-300 font-medium">{t('rotation_angle', 'Úhel otočení:')}</label>
-            <div className="flex gap-2">
-              {([90, 180, 270] as const).map(deg => (
-                <button
-                  key={deg}
-                  type="button"
-                  className={rotationAngle === deg ? button : secondary}
-                  onClick={() => setRotationAngle(deg)}
-                >
-                  <RotateCw className="w-3.5 h-3.5 inline mr-1" />
-                  {deg}°
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {files.length > 0 && (
-          <div className="space-y-2 border-t border-slate-800/80 pt-3">
-            <div className="flex items-center justify-between text-xs text-slate-400">
-              <span>{t('selected_files_list', 'Seznam vybraných souborů:')}</span>
-              <button type="button" className="text-rose-400 hover:text-rose-300 text-xs" onClick={() => setFiles([])}>
-                {t('clear_all', 'Vymazat vše')}
-              </button>
-            </div>
-            <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
-              {files.map((file, i) => (
-                <div
-                  key={`${file.name}-${i}`}
-                  className="flex items-center justify-between p-2 rounded-lg bg-slate-950/60 border border-slate-800 text-xs text-slate-300"
-                >
-                  <div className="flex items-center gap-2 truncate">
-                    <span className="font-mono text-slate-500 w-5">{i + 1}.</span>
-                    <span className="truncate">{file.name}</span>
-                    <span className="text-slate-500 shrink-0">({(file.size / 1024).toFixed(1)} KB)</span>
-                  </div>
-                  <button type="button" className="text-slate-500 hover:text-rose-400 p-1" onClick={() => removeFile(i)} title={t('remove', 'Odebrat')}>
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div className="pt-2 flex items-center gap-3">
-          <button className={button} disabled={busy || !files.length} onClick={() => (mode === 'merge' ? merge() : rotate())}>
-            {busy
-              ? t('processing', 'Processing…')
-              : mode === 'merge'
-              ? t('merge_pdfs', 'Merge ({count}) PDF files', { count: files.length })
-              : t('rotate_pdf', 'Rotate PDF by {angle}°', { angle: rotationAngle })}
-          </button>
-        </div>
-
-        {message && (
-          <p
-            className={`text-xs p-2 rounded-lg flex items-center gap-2 ${
-              isError
-                ? 'bg-amber-950/30 text-amber-300 border border-amber-800/40'
-                : 'bg-emerald-950/30 text-emerald-400 border border-emerald-800/40'
-            }`}
-          >
-            <AlertCircle className="w-4 h-4 shrink-0" />
-            {message}
-          </p>
-        )}
-      </div>
-    </div>
-  );
-};
-
-/* ─────────────────────────────────────────────────────────────
-   2. OCR SCANNER (Multilingual, Image Preview, Export, Stats)
+   1. OCR SCANNER (Multilingual, Image Preview, Export, Stats)
    ───────────────────────────────────────────────────────────── */
 export const OcrScannerTool: React.FC = () => {
   const { t } = useI18n();
@@ -303,6 +113,13 @@ export const OcrScannerTool: React.FC = () => {
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState(0);
   const [statusMsg, setStatusMsg] = useState('');
+
+  useEffect(() => {
+    const piped = consumePendingToolPipe('ocr-scanner');
+    if (piped?.kind === 'file' && piped.file) {
+      setImage(piped.file);
+    }
+  }, []);
 
   useEffect(() => {
     if (!image) {
@@ -413,7 +230,13 @@ export const OcrScannerTool: React.FC = () => {
               {t('ocr_result', 'Text recognition result:')}{' '}
               {text && <span className="text-slate-500 font-normal">({wordCount} {t('words', 'words')}, {text.length} {t('chars', 'chars')})</span>}
             </span>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
+              <SendToToolButton
+                sourceToolId="ocr-scanner"
+                kind="text"
+                getText={() => text}
+                disabled={!text.trim()}
+              />
               <button className={secondary} disabled={!text} onClick={() => navigator.clipboard.writeText(text)}>
                 <Copy className="inline w-3.5 h-3.5 mr-1" />
                 {t('copy_text', 'Copy text')}
@@ -538,6 +361,16 @@ export const MarkdownPreviewTool: React.FC = () => {
   const [markdown, setMarkdown] = useState(() =>
     `# ${t('md_sample_heading', 'OmniDesk Toolkit')}\n\n${t('md_sample_desc', 'Kompletní sada lokálních vývojářských a kancelářských utilit.')}\n\n## ${t('md_sample_features', 'Hlavní funkce')}\n\n- ${t('md_sample_f1', 'Rychlé spouštění bez závislosti na cloudu')}\n- ${t('md_sample_f2', 'Podpora offline režimu')}\n- ${t('md_sample_f3', 'Šifrování a zpracování dat v paměti')}\n\n### ${t('md_sample_table_title', 'Přehled podporovaných formátů')}\n\n| Format | Input | Output |\n| :--- | :--- | :--- |\n| PDF | Yes | Yes |\n| JSON | Yes | Yes |\n| SVG | Yes | Yes |\n\n> "${t('md_sample_quote', 'Jednoduchost je základem spolehlivého softwaru.')}"\n\n\`\`\`typescript\nconst message = "${t('md_sample_code_msg', 'Vítejte v OmniDesk!')}";\nconsole.log(message);\n\`\`\`\n`
   );
+
+  useEffect(() => {
+    const piped = consumePendingToolPipe('markdown-preview');
+    if (!piped) return;
+    if (piped.kind === 'text' && typeof piped.text === 'string') {
+      setMarkdown(piped.text);
+    } else if (piped.kind === 'file' && piped.file) {
+      piped.file.text().then(txt => setMarkdown(txt));
+    }
+  }, []);
 
   const html = useMemo(() => fullMarkdownToHtml(markdown), [markdown]);
 
@@ -837,6 +670,33 @@ export const NotesTool: React.FC = () => {
   };
 
   useEffect(() => {
+    const piped = consumePendingToolPipe('notes');
+    if (piped) {
+      const applyPipedText = (bodyText: string, titleHint?: string) => {
+        const note: Note = {
+          id: Date.now(),
+          title: titleHint || t('new_note_title', 'New Note'),
+          body: bodyText,
+          updatedAt: Date.now(),
+        };
+        setNotes(prev => {
+          const next = [note, ...prev];
+          try {
+            localStorage.setItem('omnidesk-notes', JSON.stringify(next));
+          } catch {
+            // ignore
+          }
+          return next;
+        });
+        setSelected(note.id);
+      };
+      if (piped.kind === 'text' && typeof piped.text === 'string') {
+        applyPipedText(piped.text);
+      } else if (piped.kind === 'file' && piped.file) {
+        piped.file.text().then(txt => applyPipedText(txt, piped.file?.name));
+      }
+    }
+
     const handleExternalNotes = () => {
       try {
         const saved = localStorage.getItem('omnidesk-notes');
@@ -949,14 +809,20 @@ export const NotesTool: React.FC = () => {
         <div className={panel + ' space-y-3 flex flex-col h-[520px]'}>
           {current ? (
             <>
-              <div className="flex items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <input
-                  className={input + ' font-semibold text-base'}
+                  className={input + ' font-semibold text-base flex-1 min-w-[160px]'}
                   value={current.title}
                   onChange={e => update({ title: e.target.value })}
-                  placeholder={t('note_title_placeholder', 'Název poznámky')}
+                  placeholder={t('note_title_placeholder', 'Note title')}
                 />
-                <button className={secondary} onClick={exportCurrent} title={t('export_note', 'Exportovat poznámku')}>
+                <SendToToolButton
+                  sourceToolId="notes"
+                  kind="text"
+                  getText={() => current.body}
+                  disabled={!current.body.trim()}
+                />
+                <button className={secondary} onClick={exportCurrent} title={t('export_note', 'Export note')}>
                   <Download className="w-4 h-4 inline mr-1" /> {t('export', 'Export')}
                 </button>
               </div>
@@ -1101,6 +967,18 @@ export const SqlPlaygroundTool: React.FC = () => {
   };
 
   useEffect(() => {
+    const piped = consumePendingToolPipe('sql-playground');
+    if (piped) {
+      if (piped.kind === 'text' && typeof piped.text === 'string') {
+        setData(piped.text);
+        setQuery('SELECT * FROM data LIMIT 20');
+      } else if (piped.kind === 'file' && piped.file) {
+        piped.file.text().then(txt => {
+          setData(txt);
+          setQuery('SELECT * FROM data LIMIT 20');
+        });
+      }
+    }
     executeSql();
   }, []);
 
@@ -1123,7 +1001,17 @@ export const SqlPlaygroundTool: React.FC = () => {
             <label className="text-xs text-slate-300 font-medium block">
               {t('json_data_source', 'Input JSON Table (data):')}
             </label>
-            <div className="flex gap-1.5">
+            <div className="flex flex-wrap gap-1.5">
+              <button
+                type="button"
+                className="text-[11px] px-2 py-0.5 rounded bg-indigo-600/20 hover:bg-indigo-600/35 border border-indigo-500/30 text-indigo-300 font-medium"
+                onClick={() => {
+                  setData(JSON.stringify(SQL_DATASETS.employees, null, 2));
+                  setQuery("SELECT name, role, salary FROM data WHERE city = 'Prague' ORDER BY salary DESC");
+                }}
+              >
+                {t('load_sample_btn', 'Load Sample')}
+              </button>
               <button
                 type="button"
                 className="text-[11px] px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-indigo-400"

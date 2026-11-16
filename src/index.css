@@ -213,10 +213,90 @@
   color: #1e293b !important;
 }
 [data-theme="light"] .text-slate-400 {
-  color: #64748b !important;
+  color: #475569 !important;
 }
 [data-theme="light"] .text-slate-500 {
-  color: #94a3b8 !important;
+  color: #64748b !important;
+}
+[data-theme="light"] .text-indigo-300,
+[data-theme="light"] .text-indigo-200 {
+  color: #4338ca !important;
+}
+[data-theme="light"] .text-emerald-300,
+[data-theme="light"] .text-emerald-200 {
+  color: #047857 !important;
+}
+[data-theme="light"] .text-amber-300,
+[data-theme="light"] .text-amber-200 {
+  color: #b45309 !important;
+}
+[data-theme="light"] .text-rose-300,
+[data-theme="light"] .text-rose-200 {
+  color: #be123c !important;
+}
+[data-theme="light"] .text-sky-300,
+[data-theme="light"] .text-sky-200 {
+  color: #0369a1 !important;
+}
+[data-theme="light"] .bg-slate-950\/30,
+[data-theme="light"] .bg-slate-950\/50,
+[data-theme="light"] .bg-slate-950\/70,
+[data-theme="light"] .bg-slate-950\/90,
+[data-theme="light"] .bg-slate-900\/50,
+[data-theme="light"] .bg-slate-900\/70,
+[data-theme="light"] .bg-slate-900\/90 {
+  background-color: #f1f5f9 !important;
+}
+[data-theme="light"] .bg-slate-800,
+[data-theme="light"] .bg-slate-800\/40,
+[data-theme="light"] .bg-slate-800\/60,
+[data-theme="light"] .bg-slate-800\/80 {
+  background-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+[data-theme="light"] .bg-indigo-950\/20,
+[data-theme="light"] .bg-indigo-950\/60,
+[data-theme="light"] .bg-indigo-600\/20 {
+  background-color: #eef2ff !important;
+}
+[data-theme="light"] .bg-emerald-950\/40,
+[data-theme="light"] .bg-emerald-950\/50,
+[data-theme="light"] .bg-emerald-950\/60,
+[data-theme="light"] .bg-emerald-950\/70 {
+  background-color: #ecfdf5 !important;
+}
+[data-theme="light"] .bg-amber-950\/50,
+[data-theme="light"] .bg-amber-950\/60 {
+  background-color: #fffbeb !important;
+}
+[data-theme="light"] .bg-rose-950\/30,
+[data-theme="light"] .bg-rose-950\/40,
+[data-theme="light"] .bg-rose-950\/50,
+[data-theme="light"] .bg-rose-950\/80 {
+  background-color: #fff1f2 !important;
+}
+[data-theme="light"] .bg-sky-950\/50,
+[data-theme="light"] .bg-sky-950\/70 {
+  background-color: #f0f9ff !important;
+}
+[data-theme="light"] .bg-indigo-600 {
+  color: #ffffff !important;
+}
+[data-theme="light"] .bg-indigo-600 .text-white,
+[data-theme="light"] .bg-emerald-600,
+[data-theme="light"] .bg-rose-600 {
+  color: #ffffff !important;
+}
+
+/* Keyboard accessibility focus ring */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
 }
 
 /* Custom scrollbars for native desktop feel across main workspace and Settings modal */

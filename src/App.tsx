@@ -2,17 +2,24 @@ import React, { useState, useEffect, useCallback, useRef, Suspense } from 'react
 import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
 import { ToolGrid } from './components/layout/ToolGrid';
-import { CommandPalette } from './components/layout/CommandPalette';
-import { ConfigModal } from './components/ui/ConfigModal';
+import { CommandPalette, ConfigTabId } from './components/layout/CommandPalette';
+import { ConfigModal, ConfigTabType } from './components/ui/ConfigModal';
 import { LockScreen } from './components/ui/LockScreen';
+import { ToastContainer } from './components/ui/ToastContainer';
+import { ShortcutsHelpModal } from './components/ui/ShortcutsHelpModal';
+import { SmartDropModal } from './components/ui/SmartDropModal';
 import { TOOLS_REGISTRY } from './tools/registry';
-import { ToolCategory, UserConfig, WidgetCustomization } from './types/tool';
+import { ThemeId, ToolCategory, UserConfig, WidgetCustomization } from './types/tool';
 import { loadUserConfig, saveUserConfig, DEFAULT_CONFIG } from './services/storage';
 import { applyTheme } from './services/themes';
 import { useI18n } from './i18n/context';
-import { Info } from 'lucide-react';
+import { Info, FileUp } from 'lucide-react';
 import { getToolCatalogText } from './i18n/toolCatalog';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
+import { DEFAULT_SHORTCUTS, isTypingTarget, matchesShortcutCombo } from './services/shortcutsService';
+import { setPendingToolPipe } from './services/toolPipeService';
+import { toastService } from './services/toastService';
+import { invokeRustCommand, isTauri, registerTauriDropListener } from './services/fileSystemService';
 import {
   createTransportFromConfig,
   McpConnectedToolCapability,
@@ -71,6 +78,11 @@ export default function App() {
   const [selectedToolId, setSelectedToolId] = useState<string | null>(initialNav.toolId);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isConfigOpen, setIsConfigOpen] = useState(false);
+  const [configInitialTab, setConfigInitialTab] = useState<ConfigTabType | undefined>(undefined);
+  const [isShortcutsHelpOpen, setIsShortcutsHelpOpen] = useState(false);
+  const [droppedFile, setDroppedFile] = useState<File | null>(null);
+  const [isDraggingFile, setIsDraggingFile] = useState(false);
+  const dragCounterRef = useRef(0);
   const [isBrowserOnline, setIsBrowserOnline] = useState(
     typeof navigator !== 'undefined' ? navigator.onLine : true
   );
@@ -85,6 +97,8 @@ export default function App() {
   const [mcpLogs, setMcpLogs] = useState<McpLogEntry[]>([]);
   const isLockedRef = useRef(isLocked);
   isLockedRef.current = isLocked;
+  const selectedToolIdRef = useRef(selectedToolId);
+  selectedToolIdRef.current = selectedToolId;
 
   const toggleSidebar = useCallback(() => setIsSidebarOpen(prev => !prev), []);
 
@@ -95,6 +109,7 @@ export default function App() {
   }, []);
 
   const { t, language } = useI18n();
+  const canLock = Boolean(config.security?.lockEnabled && config.security?.pinHash && config.security?.pinSalt);
 
   // Apply theme dynamically to document root
   useEffect(() => {
@@ -105,19 +120,103 @@ export default function App() {
     setIsToolInfoOpen(false);
   }, [selectedToolId]);
 
-  // Global Ctrl+K / Cmd+K shortcut to toggle Command Palette
+  // Global customizable keyboard shortcuts (built-ins + custom user tool shortcuts)
   useEffect(() => {
+    const shortcuts = { ...DEFAULT_SHORTCUTS, ...(config.shortcuts || {}) };
+    const customBindings = config.customToolShortcuts || [];
+
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+      if (isLocked || e.defaultPrevented) return;
+
+      if (matchesShortcutCombo(e, shortcuts.openSearch)) {
         e.preventDefault();
-        if (!isLocked) {
-          setIsSearchOpen(prev => !prev);
+        setIsSearchOpen(prev => !prev);
+        return;
+      }
+
+      if (matchesShortcutCombo(e, shortcuts.openSettings)) {
+        e.preventDefault();
+        setConfigInitialTab(undefined);
+        setIsConfigOpen(prev => !prev);
+        return;
+      }
+
+      if (matchesShortcutCombo(e, shortcuts.toggleSidebar)) {
+        e.preventDefault();
+        toggleSidebar();
+        return;
+      }
+
+      if (matchesShortcutCombo(e, shortcuts.lockWorkspace)) {
+        if (canLock) {
+          e.preventDefault();
+          setIsLocked(true);
+          toastService.show({ type: 'info', title: t('workspace_locked_toast', 'Workspace locked') });
+        }
+        return;
+      }
+
+      if (matchesShortcutCombo(e, shortcuts.goBack)) {
+        e.preventDefault();
+        if (droppedFile) {
+          setDroppedFile(null);
+        } else if (isShortcutsHelpOpen) {
+          setIsShortcutsHelpOpen(false);
+        } else if (isSearchOpen) {
+          setIsSearchOpen(false);
+        } else if (isConfigOpen) {
+          setIsConfigOpen(false);
+        } else {
+          setSelectedToolId(null);
+        }
+        return;
+      }
+
+      if (matchesShortcutCombo(e, shortcuts.openShortcutsHelp)) {
+        if (isTypingTarget(e.target) || isConfigOpen) return;
+        e.preventDefault();
+        setIsShortcutsHelpOpen(prev => !prev);
+        return;
+      }
+
+      // Skip custom tool shortcuts while a modal is open
+      if (isConfigOpen || isSearchOpen || isShortcutsHelpOpen || droppedFile) return;
+
+      for (const binding of customBindings) {
+        if (!matchesShortcutCombo(e, binding.combo)) continue;
+        const hasModifier = e.ctrlKey || e.metaKey || e.altKey;
+        if (!hasModifier && isTypingTarget(e.target)) continue;
+
+        const targetTool = TOOLS_REGISTRY.find(tool => tool.id === binding.toolId);
+        if (targetTool) {
+          e.preventDefault();
+          setActiveCategory(targetTool.category);
+          setSelectedToolId(targetTool.id);
+          setConfig(prev => {
+            const nextRecent = [targetTool.id, ...(prev.recentToolIds || []).filter(id => id !== targetTool.id)].slice(0, 8);
+            const updated = { ...prev, recentToolIds: nextRecent };
+            saveUserConfig(updated);
+            return updated;
+          });
+          return;
         }
       }
     };
+
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, [isLocked]);
+  }, [
+    isLocked,
+    canLock,
+    config.shortcuts,
+    config.customToolShortcuts,
+    isConfigOpen,
+    isSearchOpen,
+    isShortcutsHelpOpen,
+    droppedFile,
+    toggleSidebar,
+    t,
+  ]);
 
   // Sync URL hash with current category / active tool
   useEffect(() => {
@@ -167,7 +266,6 @@ export default function App() {
   }, []);
 
   // Lock on blur & inactivity auto-lock enforcement
-  const canLock = Boolean(config.security?.lockEnabled && config.security?.pinHash && config.security?.pinSalt);
 
   useEffect(() => {
     if (!canLock || isLocked) return;
@@ -233,8 +331,99 @@ export default function App() {
         setConfig(detail);
       }
     };
+    const handleOpenToolEvent = (event: Event) => {
+      const toolId = (event as CustomEvent<{ toolId?: string }>).detail?.toolId;
+      if (!toolId) return;
+      const target = TOOLS_REGISTRY.find(tool => tool.id === toolId);
+      if (target) {
+        setActiveCategory(target.category);
+        handleSelectTool(target.id);
+      }
+    };
     window.addEventListener('omnidesk-config-updated', handleConfigUpdated);
-    return () => window.removeEventListener('omnidesk-config-updated', handleConfigUpdated);
+    window.addEventListener('omnidesk-open-tool', handleOpenToolEvent);
+    return () => {
+      window.removeEventListener('omnidesk-config-updated', handleConfigUpdated);
+      window.removeEventListener('omnidesk-open-tool', handleOpenToolEvent);
+    };
+  }, [handleSelectTool]);
+
+  // Global drag-and-drop file router (ignores events already handled by an active tool)
+  useEffect(() => {
+    const hasFiles = (e: DragEvent): boolean =>
+      Boolean(e.dataTransfer?.types && Array.from(e.dataTransfer.types).includes('Files'));
+
+    const handleDragEnter = (e: DragEvent) => {
+      if (isLockedRef.current || !hasFiles(e)) return;
+      dragCounterRef.current += 1;
+      setIsDraggingFile(true);
+    };
+
+    const handleDragOver = (e: DragEvent) => {
+      if (isLockedRef.current || e.defaultPrevented || !hasFiles(e)) return;
+      e.preventDefault();
+    };
+
+    const handleDragLeave = (e: DragEvent) => {
+      if (!hasFiles(e)) return;
+      dragCounterRef.current = Math.max(0, dragCounterRef.current - 1);
+      if (dragCounterRef.current === 0) {
+        setIsDraggingFile(false);
+      }
+    };
+
+    const handleDrop = (e: DragEvent) => {
+      dragCounterRef.current = 0;
+      setIsDraggingFile(false);
+      if (isLockedRef.current || e.defaultPrevented) return;
+      const files = e.dataTransfer?.files;
+      if (files && files.length > 0) {
+        e.preventDefault();
+        setDroppedFile(files[0]);
+      }
+    };
+
+    window.addEventListener('dragenter', handleDragEnter);
+    window.addEventListener('dragover', handleDragOver);
+    window.addEventListener('dragleave', handleDragLeave);
+    window.addEventListener('drop', handleDrop);
+
+    const unregisterTauriDrop = registerTauriDropListener(files => {
+      if (isLockedRef.current || files.length === 0) return;
+      const activeId = selectedToolIdRef.current;
+      if (activeId && (activeId === 'docx-to-pdf' || activeId === 'image-editor')) {
+        return;
+      }
+      setDroppedFile(files[0]);
+    });
+
+    return () => {
+      window.removeEventListener('dragenter', handleDragEnter);
+      window.removeEventListener('dragover', handleDragOver);
+      window.removeEventListener('dragleave', handleDragLeave);
+      window.removeEventListener('drop', handleDrop);
+      unregisterTauriDrop();
+    };
+  }, []);
+
+  // Tauri Desktop Integration: close-to-tray preference + CLI file association startup handoff
+  useEffect(() => {
+    if (!isTauri()) return;
+    invokeRustCommand('set_close_to_tray', {
+      enabled: Boolean(config.desktop?.closeToTray),
+    }).catch(() => {});
+  }, [config.desktop?.closeToTray]);
+
+  useEffect(() => {
+    if (!isTauri()) return;
+    invokeRustCommand<{ name: string; bytes: number[] } | null>('take_opened_cli_file')
+      .then(result => {
+        if (result && Array.isArray(result.bytes) && result.bytes.length > 0) {
+          const u8 = new Uint8Array(result.bytes);
+          setDroppedFile(new File([u8], result.name));
+        }
+      })
+      .catch(() => {});
   }, []);
 
   // Manage MCP Bridge client lifecycle
@@ -512,15 +701,23 @@ export default function App() {
           isFavorite={selectedToolId ? config.favorites.includes(selectedToolId) : false}
           onToggleFavorite={() => selectedToolId && handleToggleFavorite(selectedToolId)}
           onOpenSearch={() => setIsSearchOpen(true)}
-          onOpenSettings={() => setIsConfigOpen(true)}
+          onOpenSettings={() => {
+            setConfigInitialTab(undefined);
+            setIsConfigOpen(true);
+          }}
+          onOpenShortcutsHelp={() => setIsShortcutsHelpOpen(true)}
+          searchShortcutLabel={config.shortcuts?.openSearch || DEFAULT_SHORTCUTS.openSearch}
           onToggleSidebar={toggleSidebar}
           isSidebarOpen={isSidebarOpen}
           isOffline={isEffectiveOffline}
           canLock={canLock}
-          onLockNow={() => setIsLocked(true)}
+          onLockNow={() => {
+            setIsLocked(true);
+            toastService.show({ type: 'info', title: t('workspace_locked_toast', 'Workspace locked') });
+          }}
         />
 
-        <main className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-6 md:p-8 bg-slate-950/40">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-6 md:p-8 bg-slate-950/40 relative">
           <div className="max-w-7xl mx-auto">
             {activeCategory === 'architecture' ? (
               <ErrorBoundary key="architecture">
@@ -573,27 +770,57 @@ export default function App() {
         </main>
       </div>
 
+      {isDraggingFile && (
+        <div className="fixed inset-0 z-40 pointer-events-none flex items-center justify-center bg-slate-950/70 backdrop-blur-xs border-2 border-dashed border-indigo-400/70 m-3 rounded-2xl">
+          <div className="px-6 py-4 rounded-2xl bg-slate-900 border border-indigo-500/50 shadow-2xl flex items-center gap-3 text-slate-100">
+            <FileUp className="w-5 h-5 text-indigo-400 shrink-0" />
+            <span className="text-sm font-semibold">
+              {t('smart_drop_overlay', 'Drop file anywhere to open in OmniDesk')}
+            </span>
+          </div>
+        </div>
+      )}
+
       <CommandPalette
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
         tools={TOOLS_REGISTRY}
         favorites={config.favorites}
         recentToolIds={config.recentToolIds || []}
+        customToolShortcuts={config.customToolShortcuts || []}
         onSelectTool={id => {
           handleSelectTool(id);
           const tool = TOOLS_REGISTRY.find(t => t.id === id);
           if (tool) setActiveCategory(tool.category);
+        }}
+        onOpenSettingsTab={(tab: ConfigTabId) => {
+          setConfigInitialTab(tab);
+          setIsConfigOpen(true);
+        }}
+        onSelectTheme={(themeId: ThemeId) => {
+          updateConfig({ ...config, themeId });
+          toastService.show({
+            type: 'success',
+            title: t('toast_theme_switched', 'Theme updated'),
+          });
         }}
         isOffline={isEffectiveOffline}
       />
 
       <ConfigModal
         isOpen={isConfigOpen}
-        onClose={() => setIsConfigOpen(false)}
+        onClose={() => {
+          setIsConfigOpen(false);
+          setConfigInitialTab(undefined);
+        }}
         config={config}
+        initialTab={configInitialTab}
         onResetDefaults={handleResetDefaults}
         onUpdateConfig={handleUpdateConfig}
-        onLockNow={() => setIsLocked(true)}
+        onLockNow={() => {
+          setIsLocked(true);
+          toastService.show({ type: 'info', title: t('workspace_locked_toast', 'Workspace locked') });
+        }}
         mcpStatus={mcpStatus}
         mcpError={mcpError}
         mcpLogs={mcpLogs}
@@ -601,6 +828,37 @@ export default function App() {
         onClearMcpLogs={handleClearMcpLogs}
         onReconnectMcp={handleReconnectMcp}
       />
+
+      <ShortcutsHelpModal
+        isOpen={isShortcutsHelpOpen}
+        onClose={() => setIsShortcutsHelpOpen(false)}
+        shortcuts={config.shortcuts || DEFAULT_SHORTCUTS}
+        customToolShortcuts={config.customToolShortcuts || []}
+        onCustomize={() => {
+          setConfigInitialTab('shortcuts');
+          setIsConfigOpen(true);
+        }}
+      />
+
+      <SmartDropModal
+        file={droppedFile}
+        onClose={() => setDroppedFile(null)}
+        onLaunchWithFile={(toolId, file) => {
+          setPendingToolPipe(toolId, { kind: 'file', file });
+          setDroppedFile(null);
+          const target = TOOLS_REGISTRY.find(item => item.id === toolId);
+          if (target) {
+            setActiveCategory(target.category);
+            handleSelectTool(target.id);
+          }
+          toastService.show({
+            type: 'success',
+            title: t('smart_drop_opened_toast', 'Opened {file}', { file: file.name }),
+          });
+        }}
+      />
+
+      <ToastContainer />
     </div>
   );
 }

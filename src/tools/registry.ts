@@ -46,7 +46,7 @@ const SketchpadTool = lazyTool(() => import('./files/SketchpadTool'), 'Sketchpad
 const SizeConverterTool = lazyTool(() => import('./utilities/SizeConverterTool'), 'SizeConverterTool');
 const ImageEditorTool = lazyTool(() => import('./files/ImageEditorTool'), 'ImageEditorTool');
 
-const PdfToolkitTool = lazyTool(() => import('./expanded/AdditionalTools'), 'PdfToolkitTool');
+const PdfToolkitTool = lazyTool(() => import('./files/PdfToolkitTool'), 'PdfToolkitTool');
 const OcrScannerTool = lazyTool(() => import('./expanded/AdditionalTools'), 'OcrScannerTool');
 const MarkdownPreviewTool = lazyTool(() => import('./expanded/AdditionalTools'), 'MarkdownPreviewTool');
 const KanbanTool = lazyTool(() => import('./expanded/AdditionalTools'), 'KanbanTool');

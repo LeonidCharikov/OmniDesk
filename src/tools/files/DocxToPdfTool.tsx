@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
 import { saveBinaryWithDialog, registerTauriDropListener } from '../../services/fileSystemService';
+import { consumePendingToolPipe } from '../../services/toolPipeService';
 
 export const DocxToPdfTool: React.FC = () => {
   const { t } = useI18n();
@@ -97,6 +98,13 @@ ${t('sample_confidentiality_body', 'Všechna data podléhají nejpřísnějším
       }
     });
     return unregister;
+  }, [processFile]);
+
+  useEffect(() => {
+    const piped = consumePendingToolPipe('docx-to-pdf');
+    if (piped?.kind === 'file' && piped.file) {
+      void processFile(piped.file);
+    }
   }, [processFile]);
 
   const generatePdfFromText = async (text: string, outputName: string, startTime: number = performance.now()) => {

@@ -1,19 +1,33 @@
 use serde::Serialize;
 use std::collections::VecDeque;
 use std::io::{BufRead, BufReader, Write};
-use std::path::Path;
+use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
 use sysinfo::{CpuRefreshKind, Disks, MemoryRefreshKind, RefreshKind, System};
-use tauri::{AppHandle, Emitter, Manager, State};
+use tauri::menu::{Menu, MenuItem};
+use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
+use tauri::{AppHandle, Emitter, Manager, State, WindowEvent};
 use tauri_plugin_clipboard_manager::ClipboardExt;
 
 const MAX_CLIPBOARD_CHARS: usize = 100_000;
 const MAX_PENDING_STDIO_LINES: usize = 128;
+const MAX_CLI_OPEN_FILE_BYTES: u64 = 25 * 1024 * 1024;
 
 #[derive(Default)]
 struct McpStdioState {
     ready: bool,
     pending: VecDeque<String>,
+}
+
+struct CloseToTrayState(AtomicBool);
+
+struct OpenedCliFileState(Mutex<Option<String>>);
+
+#[derive(Serialize)]
+struct CliOpenedFilePayload {
+    name: String,
+    bytes: Vec<u8>,
 }
 
 #[derive(Serialize)]
@@ -106,6 +120,44 @@ fn mcp_stdio_tx(message: String) -> Result<(), String> {
     handle.flush().map_err(|e| e.to_string())
 }
 
+#[tauri::command]
+fn set_close_to_tray(enabled: bool, state: State<'_, CloseToTrayState>) {
+    state.0.store(enabled, Ordering::Relaxed);
+}
+
+#[tauri::command]
+fn take_opened_cli_file(
+    state: State<'_, OpenedCliFileState>,
+) -> Result<Option<CliOpenedFilePayload>, String> {
+    let path_opt = {
+        let mut guard = state.0.lock().map_err(|e| e.to_string())?;
+        guard.take()
+    };
+
+    let Some(path_str) = path_opt else {
+        return Ok(None);
+    };
+
+    let path = PathBuf::from(&path_str);
+    if !path.is_file() {
+        return Ok(None);
+    }
+
+    let meta = std::fs::metadata(&path).map_err(|e| e.to_string())?;
+    if meta.len() > MAX_CLI_OPEN_FILE_BYTES {
+        return Err("Opened file exceeds 25 MB startup preload limit.".to_string());
+    }
+
+    let bytes = std::fs::read(&path).map_err(|e| e.to_string())?;
+    let name = path
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or("opened-file")
+        .to_string();
+
+    Ok(Some(CliOpenedFilePayload { name, bytes }))
+}
+
 fn spawn_mcp_stdio_reader(app_handle: AppHandle) {
     std::thread::spawn(move || {
         let stdin = std::io::stdin();
@@ -158,12 +210,16 @@ pub fn run() {
                 .with_memory(MemoryRefreshKind::everything()),
         )))
         .manage(Mutex::new(McpStdioState::default()))
+        .manage(CloseToTrayState(AtomicBool::new(false)))
+        .manage(OpenedCliFileState(Mutex::new(None)))
         .invoke_handler(tauri::generate_handler![
             get_system_telemetry,
             mcp_read_clipboard,
             mcp_write_clipboard,
             mcp_stdio_ready,
-            mcp_stdio_tx
+            mcp_stdio_tx,
+            set_close_to_tray,
+            take_opened_cli_file
         ])
         .setup(|app| {
             let is_mcp_stdio = std::env::args().any(|arg| arg == "--mcp-stdio");
@@ -174,8 +230,85 @@ pub fn run() {
                         .build(),
                 )?;
             }
+
+            if !is_mcp_stdio {
+                if let Some(arg_path) = std::env::args().skip(1).find(|arg| !arg.starts_with('-')) {
+                    let path_buf = PathBuf::from(&arg_path);
+                    if path_buf.is_file() {
+                        let cli_state = app.state::<OpenedCliFileState>();
+                        if let Ok(mut guard) = cli_state.0.lock() {
+                            *guard = Some(arg_path);
+                        }
+                    }
+                }
+
+                let show_item =
+                    MenuItem::with_id(app, "show", "Show OmniDesk", true, None::<&str>)?;
+                let hide_item =
+                    MenuItem::with_id(app, "hide", "Hide to Tray", true, None::<&str>)?;
+                let quit_item = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
+                let tray_menu = Menu::with_items(app, &[&show_item, &hide_item, &quit_item])?;
+
+                let mut tray_builder = TrayIconBuilder::new()
+                    .menu(&tray_menu)
+                    .tooltip("OmniDesk")
+                    .show_menu_on_left_click(false)
+                    .on_menu_event(|app, event| match event.id.as_ref() {
+                        "show" => {
+                            if let Some(win) = app.get_webview_window("main") {
+                                let _ = win.show();
+                                let _ = win.unminimize();
+                                let _ = win.set_focus();
+                            }
+                        }
+                        "hide" => {
+                            if let Some(win) = app.get_webview_window("main") {
+                                let _ = win.hide();
+                            }
+                        }
+                        "quit" => {
+                            app.exit(0);
+                        }
+                        _ => {}
+                    })
+                    .on_tray_icon_event(|tray, event| {
+                        if let TrayIconEvent::Click {
+                            button: MouseButton::Left,
+                            button_state: MouseButtonState::Up,
+                            ..
+                        } = event
+                        {
+                            let app = tray.app_handle();
+                            if let Some(win) = app.get_webview_window("main") {
+                                let _ = win.show();
+                                let _ = win.unminimize();
+                                let _ = win.set_focus();
+                            }
+                        }
+                    });
+
+                if let Some(icon) = app.default_window_icon().cloned() {
+                    tray_builder = tray_builder.icon(icon);
+                }
+
+                tray_builder.build(app)?;
+            }
+
             spawn_mcp_stdio_reader(app.handle().clone());
             Ok(())
+        })
+        .on_window_event(|window, event| {
+            if let WindowEvent::CloseRequested { api, .. } = event {
+                let close_to_tray = window
+                    .app_handle()
+                    .state::<CloseToTrayState>()
+                    .0
+                    .load(Ordering::Relaxed);
+                if close_to_tray {
+                    api.prevent_close();
+                    let _ = window.hide();
+                }
+            }
         })
         .run(tauri::generate_context!())
         .expect("error while building tauri application");
