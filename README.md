@@ -24,12 +24,14 @@
 
   <p>
     <strong>🚀 Live Web App (Run in Browser):</strong> <a href="https://leonidcharikov.github.io/OmniDesk/">https://leonidcharikov.github.io/OmniDesk/</a><br />
-    <strong>🌐 Project Presentation:</strong> <a href="https://leonidcharikov.github.io/omnidesk.html">https://leonidcharikov.github.io/omnidesk.html</a>
+    <strong>🌐 Project Presentation:</strong> <a href="https://leonidcharikov.github.io/omnidesk.html">https://leonidcharikov.github.io/omnidesk.html</a><br />
+    <strong>💻 Source &amp; Desktop Releases:</strong> <a href="https://github.com/LeonidCharikov/OmniDesk">https://github.com/LeonidCharikov/OmniDesk</a>
   </p>
 
   <p>
     <a href="https://leonidcharikov.github.io/OmniDesk/">Live Web App</a> •
     <a href="https://leonidcharikov.github.io/omnidesk.html">Presentation Website</a> •
+    <a href="https://github.com/LeonidCharikov/OmniDesk">GitHub Repo</a> •
     <a href="#-visual-showcase">Visual Showcase</a> •
     <a href="#-key-highlights">Key Highlights</a> •
     <a href="#-complete-tool-catalog-99-tools">Tool Catalog (99)</a> •
@@ -55,13 +57,14 @@
 
 | Capability | Details |
 | :--- | :--- |
-| 🔒 **Privacy, Workspace Lock & Offline PWA** | Every file edit, hash, PDF transformation, QR scan, image compression, and color conversion runs 100% locally — installable as an offline-first PWA, with optional **PBKDF2 PIN Lock Screen** and **AES-256-GCM encrypted backups**. |
-| ⚡ **Dual Runtime (Tauri v2 + Web/PWA)** | Run as a lightweight native desktop app powered by Rust/Tauri (`sysinfo` hardware telemetry & native filesystem dialogs) or install directly from your browser as an offline Progressive Web App. |
-| 🧭 **Command Palette & Everyday Basics** | Press `Ctrl+K` (`⌘K`) anywhere to jump to any of the **99 tools**, pin favorites, or switch to **Everyday Basics** for instant access to 38 high-frequency daily utilities. |
-| 💱 **Universal Multi-Currency Engine** | Configure a global default currency across 13+ world currencies (`CZK`, `EUR`, `USD`, `GBP`, `CHF`, `PLN`, `JPY`, etc.) — automatically synced across finance, loan, fuel, and shopping tools. |
-| 🎨 **6 Themes & Adaptive Mini-Widgets** | Switch seamlessly between 5 curated dark palettes and Clean Light mode, while toggling 7 sidebar mini-widgets with automatic **compact tabbed mode** on smaller screens so categories stay accessible. |
-| 🤖 **Model Context Protocol (MCP) Bridge** | Connect external AI assistants (Claude Desktop, Cursor, VS Code, Windsurf, etc.) via local WebSocket or Tauri IPC to read/update Calendar, Tasks, Notes, System Telemetry, Tool Navigation, and **Clipboard Synchronization**, complete with live **Connected Tools** status, **MCP Log** debugger, and an interactive in-app setup tutorial in Settings. |
-| 🌍 **5 Built-In Languages (i18n)** | Instant localization across **English** (`en`, default), **Čeština** (`cs`), **Deutsch** (`de`), **Español** (`es`), and **Русский** (`ru`), verified via automated i18n checks. |
+| 🔒 **Privacy, Lock Screen & Full Workspace Backup** | Every file edit, hash, PDF edit, QR scan, image compression, and color conversion runs 100% locally — installable as an offline-first PWA, with optional **PBKDF2 PIN Lock Screen**, **Full Workspace Backup** (settings + Calendar, Kanban, Notes, Expenses, Habits, Shopping List, Flashcards), and **AES-256-GCM encrypted bundles**. |
+| ⚡ **Dual Runtime (Tauri v2 + Web/PWA)** | Native **Tauri v2** desktop app (`sysinfo` hardware telemetry, OS system tray close-to-tray mode, OS file associations & quick Web/GitHub links) or lightweight offline browser PWA. Heavy dependencies (`pdf-lib`, `tesseract.js`, MCP client) are code-split and lazy-loaded strictly on demand to minimize RAM usage. |
+| 🧭 **Extended Command Palette & Customizable Shortcuts** | Press `Ctrl+K` (`⌘K`) to search across **99 tools**, saved **Notes**, **Calendar events**, **Settings tabs**, and **Themes**. Rebind built-in actions or assign custom keyboard shortcuts to any tool in **Settings → Shortcuts** (press `Shift+?` for cheat sheet). |
+| 🔗 **Cross-Tool Piping & Smart Drag-and-Drop** | Pipe outputs directly between compatible tools with **Send to...** (`toolPipeService`), or drag & drop any file anywhere on the window to launch the **Smart Drop Router** with matching tools and 1-click **Load Sample** demos. |
+| 💱 **Universal Multi-Currency Engine & Starter Presets** | Configure a global default currency across 13+ world currencies (`CZK`, `EUR`, `USD`, `GBP`, `CHF`, `PLN`, `JPY`, etc.) synced across finance tools, plus 1-click **Workspace Starter Presets** (*Developer*, *Student & Science*, *Finance & Daily*). |
+| 🎨 **6 Themes & Adaptive Mini-Widgets** | Switch seamlessly between 5 curated dark palettes and Clean Light mode, while toggling 7 sidebar mini-widgets with automatic **compact tabbed mode** on smaller screens and subtle non-blocking **Toast notifications**. |
+| 🤖 **MCP Bridge *(Desktop App Only)*** | Exclusive to the **Tauri Desktop** build (stripped from the Web/PWA version): connect AI assistants (Claude Desktop, Cursor, VS Code, Windsurf) via WebSocket or Tauri `stdio` IPC to Calendar, Tasks, Notes, System Telemetry, Tool Navigation, and Clipboard Sync with **Connected Tools**, **MCP Log**, and interactive setup tutorial. |
+| 🌍 **5 Built-In Languages with Crisp SVG Flags** | Instant localization across **English** (`en`, default), **Čeština** (`cs`), **Deutsch** (`de`), **Español** (`es`), and **Русский** (`ru`) with cross-platform inline SVG flag icons (rendered identically on Windows, macOS, Linux, and web) and automated i18n checks. |
 
 ---
 
@@ -324,18 +327,22 @@ On smaller viewports (`< 1024px` wide or `< 880px` tall), mini-widgets automatic
 6. **Scratchpad Note** — Auto-saved sticky note for quick snippets
 7. **System Gauge** — CPU & RAM utilization overview
 
-### 5 Languages, Workspace Lock & Encrypted Backup
-- **Supported Locales**: English (`en`), Čeština (`cs`), Deutsch (`de`), Español (`es`), Русский (`ru`)
+### 5 Languages, Shortcuts, Starter Presets & Encrypted Backup
+- **Supported Locales**: English (`en`), Čeština (`cs`), Deutsch (`de`), Español (`es`), Русский (`ru`) — paired with custom inline SVG flag icons in both the header switcher and Settings.
+- **Custom Keyboard Shortcuts**: Rebind core shortcuts (`Ctrl+K` Command Palette, `Ctrl+,` Settings, `Ctrl+B` Sidebar, `Shift+?` Cheat Sheet, `Ctrl+L` Lock) or assign direct hotkeys to any tool under **Settings → Shortcuts**.
+- **Workspace Starter Presets**: Apply curated favorite-tool & widget sets (*Developer Workstation*, *Student & Science Lab*, *Finance & Daily Planner*) in one click.
 - **Workspace PIN Lock & Storage Audit**: Optional local PBKDF2-SHA256 PIN/passphrase lock screen with inactivity timeout and local-storage inspection/purge.
-- **Backup & Portability**: Export or restore your configuration as plain JSON (`omnidesk-profile.json`) or **AES-256-GCM passphrase-encrypted** bundles across devices.
+- **Full Workspace Backup & Portability**: Export or restore settings alone (`omnidesk-profile.json`), a **Full Workspace Backup** including Calendar, Kanban, Notes, Expenses, Habits, Shopping List, and Flashcards (`omnidesk-workspace.json`), or **AES-256-GCM passphrase-encrypted** `.enc.json` bundles.
 
 </details>
 
 ---
 
-## 🤖 Model Context Protocol (MCP) Bridge & Live Debugger
+## 🤖 Model Context Protocol (MCP) Bridge & Live Debugger *(Desktop Only)*
 
-OmniDesk includes full end-to-end MCP support across the React/WebView client (`src/services/mcpClient.ts`), the **Tauri v2 Rust backend** (`src-tauri/src/lib.rs`), and the standalone **Node.js MCP server template** (`docs/mcp-server-template/server.mjs`):
+> **Note:** MCP Bridge, transport connections, and the **Settings → MCP Bridge** tab run exclusively in the **Tauri v2 Desktop** application and are automatically excluded from the **Web / PWA** build to keep browser memory usage and bundle size minimal. In the desktop app, convenient **Web Version** and **GitHub** links are included directly in the sidebar and Settings footer.
+
+OmniDesk includes full end-to-end MCP support across the lazy-loaded desktop React client (`src/services/mcpClient.ts`), the **Tauri v2 Rust backend** (`src-tauri/src/lib.rs`), and the standalone **Node.js MCP server template** (`docs/mcp-server-template/server.mjs`):
 
 - **13 Exposed MCP Tools (`readonly` & `readwrite` modes)**: Calendar (`calendar_list_events`, `calendar_create_event`, `calendar_delete_event`), Tasks (`tasks_list`, `tasks_create`, `tasks_update_status`), Notes (`notes_search`, `notes_create`), System Telemetry (`system_get_info`), App Navigation (`app_list_tools`, `app_open_tool`), and **Clipboard Synchronization** (`clipboard_read`, `clipboard_write`).
 - **3 MCP Resources**: `omnidesk://calendar/events`, `omnidesk://tasks/summary`, and `omnidesk://system/telemetry`.
@@ -467,12 +474,12 @@ npm run tauri dev
 ├── src/
 │   ├── components/
 │   │   ├── layout/            # Header, Sidebar, SidebarWidgets, ToolGrid, CommandPalette
-│   │   └── ui/                # ConfigModal, McpLogPanel, LockScreen, ErrorBoundary, PWAInstallButton
+│   │   └── ui/                # ConfigModal, McpSettingsTab, LanguageFlagIcon, ShortcutsSettingsPanel, SmartDropModal, SendToToolButton, ToastContainer, LockScreen
 │   ├── i18n/                  # Translation context & multi-language tool catalog
 │   ├── locales/               # Locale dictionaries (en, cs, de, es, ru)
-│   ├── services/              # Local storage, MCP client bridge, security, currency & Tauri FS bridge
+│   ├── services/              # storage, mcpClient (desktop), shortcutsService, toolPipeService, workspaceBackupService, workspacePresetsService, toastService, securityService, currencyService, fileSystemService
 │   ├── tools/
-│   │   ├── files/             # PDF Studio, Audio Editor, Photo Compressor, Screen/Webcam Recorder...
+│   │   ├── files/             # PDF Studio, PdfToolkitTool, Audio Editor, Photo Compressor, Screen/Webcam Recorder...
 │   │   ├── programming/       # Hash Suite, AES Studio, CIDR, Cron, Encoding, UUID, JSONPath...
 │   │   ├── planning/          # Calendar, Habits, Packing Checklists, Flashcards, Shopping List...
 │   │   ├── math/              # Calculator, 2D Grapher, Matrix, LaTeX, Statistics, Grades, % & Ratio

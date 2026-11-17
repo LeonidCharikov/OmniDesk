@@ -3209,5 +3209,7 @@
   "pipe_target_wcag_contrast": "WCAG Contrast Validator",
   "smart_drop_title": "Open Dropped File",
   "smart_drop_desc": "Choose a matching tool to open and load this file immediately:",
-  "load_sample_btn": "Load Sample"
+  "load_sample_btn": "Load Sample",
+  "desktop_link_web": "Web Version",
+  "desktop_link_github": "GitHub"
 }

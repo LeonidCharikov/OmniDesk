@@ -3209,5 +3209,7 @@
   "pipe_target_wcag_contrast": "Validátor kontrastu WCAG",
   "smart_drop_title": "Otevřít přetažený soubor",
   "smart_drop_desc": "Vyberte vhodný nástroj pro okamžité otevření a načtení tohoto souboru:",
-  "load_sample_btn": "Načíst ukázku"
+  "load_sample_btn": "Načíst ukázku",
+  "desktop_link_web": "Webová verze",
+  "desktop_link_github": "GitHub"
 }

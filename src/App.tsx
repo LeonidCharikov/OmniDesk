@@ -20,8 +20,7 @@ import { DEFAULT_SHORTCUTS, isTypingTarget, matchesShortcutCombo } from './servi
 import { setPendingToolPipe } from './services/toolPipeService';
 import { toastService } from './services/toastService';
 import { invokeRustCommand, isTauri, registerTauriDropListener } from './services/fileSystemService';
-import {
-  createTransportFromConfig,
+import type {
   McpConnectedToolCapability,
   McpConnectionStatus,
   McpLogEntry,
@@ -99,6 +98,7 @@ export default function App() {
   isLockedRef.current = isLocked;
   const selectedToolIdRef = useRef(selectedToolId);
   selectedToolIdRef.current = selectedToolId;
+  const runningInTauri = isTauri();
 
   const toggleSidebar = useCallback(() => setIsSidebarOpen(prev => !prev), []);
 
@@ -426,58 +426,76 @@ export default function App() {
       .catch(() => {});
   }, []);
 
-  // Manage MCP Bridge client lifecycle
+  // Manage MCP Bridge client lifecycle (Desktop / Tauri only — never initialized in web version)
   const mcpClientRef = useRef<OmniDeskMcpClient | null>(null);
-  if (!mcpClientRef.current) {
-    mcpClientRef.current = new OmniDeskMcpClient({
-      accessMode: config.mcp?.accessMode ?? 'readonly',
-      isLocked: () => isLockedRef.current,
-      getAvailableTools: () =>
-        TOOLS_REGISTRY.map(tool => ({
-          id: tool.id,
-          title: tool.title,
-          category: tool.category,
-          shortDesc: tool.shortDesc,
-        })),
-      onOpenTool: (toolId: string) => {
-        const target = TOOLS_REGISTRY.find(tool => tool.id === toolId);
-        if (target) {
-          setActiveCategory(target.category);
-          handleSelectTool(target.id);
-        }
-      },
-    });
-  }
+  const [mcpClientReady, setMcpClientReady] = useState(false);
 
   useEffect(() => {
-    const client = mcpClientRef.current;
-    if (!client) return;
-    const unbindStatus = client.onStatusChange((status, err) => {
-      setMcpStatus(status);
-      setMcpError(err);
+    if (!runningInTauri) return;
+    let disposed = false;
+    let unbindStatus: (() => void) | undefined;
+    let unbindLog: (() => void) | undefined;
+
+    void import('./services/mcpClient').then(({ OmniDeskMcpClient: ClientClass }) => {
+      if (disposed) return;
+      const client = new ClientClass({
+        accessMode: config.mcp?.accessMode ?? 'readonly',
+        isLocked: () => isLockedRef.current,
+        getAvailableTools: () =>
+          TOOLS_REGISTRY.map(tool => ({
+            id: tool.id,
+            title: tool.title,
+            category: tool.category,
+            shortDesc: tool.shortDesc,
+          })),
+        onOpenTool: (toolId: string) => {
+          const target = TOOLS_REGISTRY.find(tool => tool.id === toolId);
+          if (target) {
+            setActiveCategory(target.category);
+            handleSelectTool(target.id);
+          }
+        },
+      });
+      mcpClientRef.current = client;
+      unbindStatus = client.onStatusChange((status, err) => {
+        setMcpStatus(status);
+        setMcpError(err);
+      });
+      unbindLog = client.onLog(setMcpLogs);
+      setMcpClientReady(true);
     });
-    const unbindLog = client.onLog(setMcpLogs);
+
     return () => {
-      unbindStatus();
-      unbindLog();
+      disposed = true;
+      unbindStatus?.();
+      unbindLog?.();
+      if (mcpClientRef.current) {
+        void mcpClientRef.current.disconnect();
+        mcpClientRef.current = null;
+      }
+      setMcpClientReady(false);
     };
-  }, []);
+  }, [runningInTauri, handleSelectTool]);
 
   const handleClearMcpLogs = useCallback(() => {
     mcpClientRef.current?.clearLogs();
   }, []);
 
   const handleReconnectMcp = useCallback(() => {
+    if (!runningInTauri) return;
     const client = mcpClientRef.current;
     const mcpCfg = config.mcp;
     if (!client || !mcpCfg?.enabled || isLockedRef.current) return;
-    const transport = createTransportFromConfig(mcpCfg);
-    void client.connect(transport, { autoReconnect: mcpCfg.transport === 'websocket' }).catch(() => {
-      // Status listener already receives connection error
+    void import('./services/mcpClient').then(({ createTransportFromConfig }) => {
+      const transport = createTransportFromConfig(mcpCfg);
+      void client.connect(transport, { autoReconnect: mcpCfg.transport === 'websocket' }).catch(() => {
+        // Status listener already receives connection error
+      });
     });
-  }, [config.mcp]);
+  }, [runningInTauri, config.mcp]);
 
   useEffect(() => {
+    if (!runningInTauri || !mcpClientReady) return;
     const client = mcpClientRef.current;
     if (!client) return;
     const mcpCfg = config.mcp;
@@ -488,15 +506,22 @@ export default function App() {
       return;
     }
 
-    const transport = createTransportFromConfig(mcpCfg);
-    void client.connect(transport, { autoReconnect: mcpCfg.transport === 'websocket' }).catch(() => {
-      // Status listener already receives connection error
+    let cancelled = false;
+    void import('./services/mcpClient').then(({ createTransportFromConfig }) => {
+      if (cancelled || mcpClientRef.current !== client) return;
+      const transport = createTransportFromConfig(mcpCfg);
+      void client.connect(transport, { autoReconnect: mcpCfg.transport === 'websocket' }).catch(() => {
+        // Status listener already receives connection error
+      });
     });
 
     return () => {
+      cancelled = true;
       void client.disconnect();
     };
   }, [
+    runningInTauri,
+    mcpClientReady,
     config.mcp?.enabled,
     config.mcp?.transport,
     config.mcp?.wsUrl,
@@ -524,12 +549,13 @@ export default function App() {
   };
 
   const mcpConnectedCapabilities: McpConnectedToolCapability[] = React.useMemo(() => {
+    if (!runningInTauri || !mcpClientReady) return [];
     const client = mcpClientRef.current;
     if (!client) return [];
     client.setAccessMode(config.mcp?.accessMode ?? 'readonly');
     return client.getConnectedToolCapabilities();
     // Recompute whenever connection status, permission level, or lock state changes
-  }, [mcpStatus, config.mcp?.accessMode, config.mcp?.enabled, isLocked]);
+  }, [runningInTauri, mcpClientReady, mcpStatus, config.mcp?.accessMode, config.mcp?.enabled, isLocked]);
 
   const isEffectiveOffline = !isBrowserOnline || Boolean(config.simulatedOffline);
 

@@ -15,7 +15,10 @@ import { CustomToolShortcut, ThemeId, ToolDefinition } from '../../types/tool';
 import { useI18n } from '../../i18n/context';
 import { getToolCatalogText } from '../../i18n/toolCatalog';
 import { THEMES } from '../../services/themes';
-import { CALENDAR_STORAGE_KEY, NOTES_STORAGE_KEY } from '../../services/mcpClient';
+import { isTauri } from '../../services/fileSystemService';
+
+const CALENDAR_STORAGE_KEY = 'omnidesk_calendar_events';
+const NOTES_STORAGE_KEY = 'omnidesk-notes';
 
 export type ConfigTabId =
   | 'themes'
@@ -89,6 +92,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   isOffline,
 }) => {
   const { t, language } = useI18n();
+  const runningInTauri = isTauri();
   const [query, setQuery] = useState('');
   const [activeIndex, setActiveIndex] = useState(0);
   const commandSearchId = useId();
@@ -172,7 +176,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       { tab: 'currency', title: t('tab_currency', 'Default Currency'), keywords: 'currency fiat czk eur usd' },
       { tab: 'widgets', title: t('tab_widgets', 'Sidebar Widgets'), keywords: 'widgets clock timer crypto tasks calc' },
       { tab: 'security', title: t('tab_security', 'Security & Privacy'), keywords: 'security pin lock privacy purge' },
-      { tab: 'mcp', title: t('tab_mcp', 'MCP Bridge'), keywords: 'mcp ai claude cursor websocket stdio log' },
+      ...(runningInTauri
+        ? [{ tab: 'mcp' as ConfigTabId, title: t('tab_mcp', 'MCP Bridge'), keywords: 'mcp ai claude cursor websocket stdio log' }]
+        : []),
       { tab: 'shortcuts', title: t('tab_shortcuts', 'Shortcuts'), keywords: 'shortcuts hotkeys keybindings custom' },
       { tab: 'backup', title: t('tab_backup', 'Backup & JSON Export/Import'), keywords: 'backup export import json workspace' },
       { tab: 'language', title: t('tab_language', 'Language'), keywords: 'language i18n locale english czech german spanish russian' },
@@ -248,6 +254,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     savedEvents,
     onOpenSettingsTab,
     onSelectTheme,
+    runningInTauri,
     t,
   ]);
 

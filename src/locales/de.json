@@ -3209,5 +3209,7 @@
   "pipe_target_wcag_contrast": "WCAG-Kontrastprüfer",
   "smart_drop_title": "Abgelegte Datei öffnen",
   "smart_drop_desc": "Wählen Sie ein passendes Tool aus, um diese Datei sofort zu öffnen:",
-  "load_sample_btn": "Beispiel laden"
+  "load_sample_btn": "Beispiel laden",
+  "desktop_link_web": "Web-Version",
+  "desktop_link_github": "GitHub"
 }

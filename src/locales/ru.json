@@ -3209,5 +3209,7 @@
   "pipe_target_wcag_contrast": "Проверка контраста WCAG",
   "smart_drop_title": "Открыть файл",
   "smart_drop_desc": "Выберите подходящий инструмент для мгновенного открытия этого файла:",
-  "load_sample_btn": "Загрузить пример"
+  "load_sample_btn": "Загрузить пример",
+  "desktop_link_web": "Веб-версия",
+  "desktop_link_github": "GitHub"
 }

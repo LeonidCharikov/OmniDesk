@@ -3209,5 +3209,7 @@
   "pipe_target_wcag_contrast": "Validador de contraste WCAG",
   "smart_drop_title": "Abrir archivo soltado",
   "smart_drop_desc": "Elige una herramienta compatible para abrir y cargar este archivo al instante:",
-  "load_sample_btn": "Cargar ejemplo"
+  "load_sample_btn": "Cargar ejemplo",
+  "desktop_link_web": "Versión Web",
+  "desktop_link_github": "GitHub"
 }
