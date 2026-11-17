@@ -3211,5 +3211,11 @@
   "smart_drop_desc": "Wählen Sie ein passendes Tool aus, um diese Datei sofort zu öffnen:",
   "load_sample_btn": "Beispiel laden",
   "desktop_link_web": "Web-Version",
-  "desktop_link_github": "GitHub"
+  "desktop_link_github": "GitHub",
+  "print_btn": "Drucken",
+  "settings_only": "Einstellungen",
+  "settings_modal_subtitle_web": "Farbthemen, Standardwährung, Tastenkürzel und Einstellungen",
+  "workspace_presets_desc_web": "Heften Sie empfohlene Lieblingstools für Ihren Workflow mit einem Klick an.",
+  "security_privacy_title_web": "Offline-Simulation & Prüfung des lokalen Speichers",
+  "security_privacy_desc_web": "Simulieren Sie den Offline-Modus und prüfen oder bereinigen Sie den lokalen Browser-Speicher."
 }

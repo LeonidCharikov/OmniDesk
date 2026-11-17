@@ -31,10 +31,12 @@ import {
   Sun,
   Contrast,
   CheckSquare,
+  Printer,
 } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
 import { saveBinaryWithDialog, registerTauriDropListener } from '../../services/fileSystemService';
 import { consumePendingToolPipe } from '../../services/toolPipeService';
+import { printImageDataUrl } from '../../services/printService';
 
 interface TextOverlayState {
   enabled: boolean;
@@ -154,6 +156,8 @@ export const ImageEditorTool: React.FC = () => {
 
   // Viewport & Zoom
   const [zoom, setZoom] = useState<number>(1);
+  const [fitToScreen, setFitToScreen] = useState<boolean>(true);
+  const [containerSize, setContainerSize] = useState<{ width: number; height: number }>({ width: 900, height: 500 });
   const [isComparingOriginal, setIsComparingOriginal] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<'resize' | 'crop' | 'adjust' | 'annotate' | 'export'>('resize');
 
@@ -324,6 +328,8 @@ export const ImageEditorTool: React.FC = () => {
       setHistory([]);
       setRedoStack([]);
       setStatusMessage('');
+      setFitToScreen(true);
+      setZoom(1);
       URL.revokeObjectURL(url);
     };
     img.src = url;
@@ -749,6 +755,8 @@ export const ImageEditorTool: React.FC = () => {
     setHistory([]);
     setRedoStack([]);
     setStatusMessage('');
+    setFitToScreen(true);
+    setZoom(1);
   };
 
   // Add Censor Box
@@ -1030,6 +1038,32 @@ export const ImageEditorTool: React.FC = () => {
     return () => clearTimeout(timer);
   }, [renderMainCanvas, sourceImage, exportFormat, exportQuality]);
 
+  // Measure viewport container dynamically so large photos scale cleanly to fit completely
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el || !sourceImage) return;
+
+    const updateSize = () => {
+      if (!containerRef.current) return;
+      const nextW = containerRef.current.clientWidth;
+      const nextH = containerRef.current.clientHeight;
+      if (nextW > 0 && nextH > 0) {
+        setContainerSize({ width: nextW, height: nextH });
+      }
+    };
+
+    updateSize();
+
+    if (typeof ResizeObserver !== 'undefined') {
+      const observer = new ResizeObserver(updateSize);
+      observer.observe(el);
+      return () => observer.disconnect();
+    }
+
+    window.addEventListener('resize', updateSize);
+    return () => window.removeEventListener('resize', updateSize);
+  }, [sourceImage]);
+
   // Pointer handlers for Drawing (smooth incremental rendering without canvas reset)
   const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
     if (!previewCanvasRef.current || !isDrawingMode) return;
@@ -1263,6 +1297,17 @@ export const ImageEditorTool: React.FC = () => {
     }, 'image/png');
   };
 
+  // Print current edited image
+  const handlePrintImage = async () => {
+    if (!sourceImage) return;
+    const canvas = document.createElement('canvas');
+    renderMainCanvas(canvas);
+    const dataUrl = canvas.toDataURL('image/png');
+    await printImageDataUrl(dataUrl, {
+      title: fileName || t('image_editor_title', 'Editor obrázků'),
+    });
+  };
+
   // Compute aspect ratio text
   const aspectRatioDisplay = useMemo(() => {
     if (width <= 0 || height <= 0) return '1:1';
@@ -1273,6 +1318,26 @@ export const ImageEditorTool: React.FC = () => {
     if (simpW <= 16 && simpH <= 16) return `${simpW}:${simpH}`;
     return (width / height).toFixed(2) + ':1';
   }, [width, height]);
+
+  const isRotatedQuarter = (rotation / 90) % 2 !== 0;
+  const logicalCanvasWidth = Math.max(1, Math.round(isRotatedQuarter ? height : width));
+  const logicalCanvasHeight = Math.max(1, Math.round(isRotatedQuarter ? width : height));
+
+  const fitScale = useMemo(() => {
+    const availW = Math.max(120, containerSize.width - 48);
+    const availH = Math.max(120, containerSize.height - 48);
+    const ratio = Math.min(1, availW / logicalCanvasWidth, availH / logicalCanvasHeight);
+    return Math.max(0.05, Number(ratio.toFixed(4)));
+  }, [containerSize.width, containerSize.height, logicalCanvasWidth, logicalCanvasHeight]);
+
+  const effectiveScale = fitToScreen ? fitScale : zoom;
+  const displayCanvasWidth = Math.max(1, Math.round(logicalCanvasWidth * effectiveScale));
+  const displayCanvasHeight = Math.max(1, Math.round(logicalCanvasHeight * effectiveScale));
+
+  const cropLeftPct = (cropRect.x / logicalCanvasWidth) * 100;
+  const cropTopPct = (cropRect.y / logicalCanvasHeight) * 100;
+  const cropWidthPct = (cropRect.width / logicalCanvasWidth) * 100;
+  const cropHeightPct = (cropRect.height / logicalCanvasHeight) * 100;
 
   // Common UI styles
   const btnPrimary =
@@ -1453,29 +1518,58 @@ export const ImageEditorTool: React.FC = () => {
               <button
                 type="button"
                 className={btnSecondary}
-                onClick={() => setZoom(z => Math.max(0.15, Number((z - 0.15).toFixed(2))))}
+                onClick={() => {
+                  setFitToScreen(false);
+                  setZoom(Math.max(0.1, Number((effectiveScale - 0.15).toFixed(2))));
+                }}
                 title={t('image_editor_zoom_out', 'Oddálit')}
               >
                 <ZoomOut className="w-3.5 h-3.5" />
               </button>
               <button
                 type="button"
-                className={btnSecondary + ' font-mono text-[11px] min-w-12'}
-                onClick={() => setZoom(1)}
+                className={(!fitToScreen && Math.abs(zoom - 1) < 0.01 ? btnPrimary : btnSecondary) + ' font-mono text-[11px] min-w-12'}
+                onClick={() => {
+                  setFitToScreen(false);
+                  setZoom(1);
+                }}
                 title={t('image_editor_zoom_100', '100% velikost')}
               >
-                {Math.round(zoom * 100)}%
+                {Math.round(effectiveScale * 100)}%
               </button>
               <button
                 type="button"
                 className={btnSecondary}
-                onClick={() => setZoom(z => Math.min(3, Number((z + 0.15).toFixed(2))))}
+                onClick={() => {
+                  setFitToScreen(false);
+                  setZoom(Math.min(3, Number((effectiveScale + 0.15).toFixed(2))));
+                }}
                 title={t('image_editor_zoom_in', 'Přiblížit')}
               >
                 <ZoomIn className="w-3.5 h-3.5" />
               </button>
+              <button
+                type="button"
+                className={fitToScreen ? btnPrimary : btnSecondary}
+                onClick={() => setFitToScreen(true)}
+                title={t('image_editor_zoom_fit', 'Fit View')}
+              >
+                <Maximize2 className="w-3.5 h-3.5" />
+                <span>{t('image_editor_zoom_fit', 'Fit View')}</span>
+              </button>
 
               <div className="h-4 w-px bg-slate-800 mx-1" />
+
+              {/* Print button */}
+              <button
+                type="button"
+                className={btnSecondary}
+                onClick={() => void handlePrintImage()}
+                title={t('print_btn', 'Print')}
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">{t('print_btn', 'Print')}</span>
+              </button>
 
               {/* Compare with original button */}
               <button
@@ -1496,7 +1590,7 @@ export const ImageEditorTool: React.FC = () => {
           {/* Interactive Workspace Canvas Display */}
           <div
             ref={containerRef}
-            className="relative w-full min-h-[420px] max-h-[580px] rounded-2xl border border-slate-800 overflow-auto flex items-center justify-center p-6 bg-slate-950 select-none shadow-2xl"
+            className="relative w-full h-[540px] min-h-[380px] max-h-[65vh] rounded-2xl border border-slate-800 overflow-auto flex p-6 bg-slate-950 select-none shadow-2xl"
             style={{
               backgroundImage:
                 'linear-gradient(45deg, #0f172a 25%, transparent 25%), linear-gradient(-45deg, #0f172a 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #0f172a 75%), linear-gradient(-45deg, transparent 75%, #0f172a 75%)',
@@ -1504,15 +1598,20 @@ export const ImageEditorTool: React.FC = () => {
               backgroundPosition: '0 0, 0 12px, 12px -12px, -12px 0px',
             }}
           >
-            {/* Canvas Container with smooth scaling */}
+            {/* Canvas Container scaled to fit cleanly without clipping any edge */}
             <div
-              className="relative transition-transform duration-75 origin-center shadow-2xl"
+              className="relative m-auto shrink-0 shadow-2xl"
               style={{
-                transform: `scale(${zoom})`,
+                width: `${displayCanvasWidth}px`,
+                height: `${displayCanvasHeight}px`,
               }}
             >
               <canvas
                 ref={previewCanvasRef}
+                style={{
+                  width: `${displayCanvasWidth}px`,
+                  height: `${displayCanvasHeight}px`,
+                }}
                 className="rounded-lg shadow-2xl cursor-crosshair block touch-none"
                 onPointerDown={handlePointerDown}
                 onPointerMove={handlePointerMove}
@@ -1522,14 +1621,8 @@ export const ImageEditorTool: React.FC = () => {
               />
 
               {/* Interactive Crop Box Overlay */}
-              {isCropping && previewCanvasRef.current && (
-                <div
-                  className="absolute inset-0 pointer-events-auto"
-                  style={{
-                    width: `${previewCanvasRef.current.width}px`,
-                    height: `${previewCanvasRef.current.height}px`,
-                  }}
-                >
+              {isCropping && (
+                <div className="absolute inset-0 pointer-events-auto">
                   {/* Surrounding Dim Backdrop */}
                   <div
                     className="absolute bg-black/65 border border-white/20"
@@ -1537,34 +1630,34 @@ export const ImageEditorTool: React.FC = () => {
                       left: 0,
                       top: 0,
                       width: '100%',
-                      height: `${cropRect.y}px`,
+                      height: `${cropTopPct}%`,
                     }}
                   />
                   <div
                     className="absolute bg-black/65 border border-white/20"
                     style={{
                       left: 0,
-                      top: `${cropRect.y + cropRect.height}px`,
+                      top: `${cropTopPct + cropHeightPct}%`,
                       width: '100%',
-                      height: `${previewCanvasRef.current.height - (cropRect.y + cropRect.height)}px`,
+                      height: `${Math.max(0, 100 - (cropTopPct + cropHeightPct))}%`,
                     }}
                   />
                   <div
                     className="absolute bg-black/65 border border-white/20"
                     style={{
                       left: 0,
-                      top: `${cropRect.y}px`,
-                      width: `${cropRect.x}px`,
-                      height: `${cropRect.height}px`,
+                      top: `${cropTopPct}%`,
+                      width: `${cropLeftPct}%`,
+                      height: `${cropHeightPct}%`,
                     }}
                   />
                   <div
                     className="absolute bg-black/65 border border-white/20"
                     style={{
-                      left: `${cropRect.x + cropRect.width}px`,
-                      top: `${cropRect.y}px`,
-                      width: `${previewCanvasRef.current.width - (cropRect.x + cropRect.width)}px`,
-                      height: `${cropRect.height}px`,
+                      left: `${cropLeftPct + cropWidthPct}%`,
+                      top: `${cropTopPct}%`,
+                      width: `${Math.max(0, 100 - (cropLeftPct + cropWidthPct))}%`,
+                      height: `${cropHeightPct}%`,
                     }}
                   />
 
@@ -1572,10 +1665,10 @@ export const ImageEditorTool: React.FC = () => {
                   <div
                     className="absolute border-2 border-white shadow-2xl cursor-move"
                     style={{
-                      left: `${cropRect.x}px`,
-                      top: `${cropRect.y}px`,
-                      width: `${cropRect.width}px`,
-                      height: `${cropRect.height}px`,
+                      left: `${cropLeftPct}%`,
+                      top: `${cropTopPct}%`,
+                      width: `${cropWidthPct}%`,
+                      height: `${cropHeightPct}%`,
                     }}
                     onMouseDown={e => handleCropHandleMouseDown('move', e)}
                   >
@@ -2448,6 +2541,11 @@ export const ImageEditorTool: React.FC = () => {
                   <button type="button" className={btnSecondary + ' py-2'} onClick={handleCopyToClipboard}>
                     {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                     <span>{copied ? t('image_editor_copied', 'Zkopírováno!') : t('image_editor_copy_clipboard', 'Kopírovat do schránky')}</span>
+                  </button>
+
+                  <button type="button" className={btnSecondary + ' py-2'} onClick={() => void handlePrintImage()}>
+                    <Printer className="w-3.5 h-3.5" />
+                    <span>{t('print_btn', 'Print')}</span>
                   </button>
                 </div>
               </div>

@@ -17,10 +17,12 @@ import {
   WrapText,
   Eye,
   Edit3,
+  Printer,
 } from 'lucide-react';
 import DOMPurify from 'dompurify';
 import { useI18n } from '../../i18n/context';
 import { saveTextWithDialog, openFileWithPicker } from '../../services/fileSystemService';
+import { printHtmlDocument, printPlainText } from '../../services/printService';
 import { consumePendingToolPipe } from '../../services/toolPipeService';
 import { SendToToolButton } from '../../components/ui/SendToToolButton';
 
@@ -164,6 +166,50 @@ export const TextEditorTool: React.FC = () => {
     navigator.clipboard.writeText(content);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  // Print document (formatted preview blocks or plain text)
+  const handlePrintDocument = async () => {
+    const title = fileName || t('default_document_filename', 'document.txt');
+    if (viewMode === 'preview') {
+      const escapeText = (val: string) =>
+        val.replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[ch] || ch));
+      const blocksHtml = content
+        .split('\n\n')
+        .map(block => {
+          if (block.startsWith('### ')) {
+            return `<h3>${escapeText(block.replace(/^###\s*/, ''))}</h3>`;
+          }
+          if (block.startsWith('## ')) {
+            return `<h2>${escapeText(block.replace(/^##\s*/, ''))}</h2>`;
+          }
+          if (block.startsWith('# ')) {
+            return `<h1>${escapeText(block.replace(/^#\s*/, ''))}</h1>`;
+          }
+          const formatted = escapeText(block)
+            .replace(/&lt;span style=&quot;font-size: (\d+)px&quot;&gt;([\s\S]*?)&lt;\/span&gt;/g, '<span style="font-size: $1px; font-weight: 600;">$2</span>')
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>');
+          return `<div style="white-space: pre-wrap; margin: 0.75em 0;">${formatted}</div>`;
+        })
+        .join('');
+
+      const fontFamily = isMonospace
+        ? 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace'
+        : '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif';
+      await printHtmlDocument(blocksHtml, {
+        title,
+        extraCss: `body { font-family: ${fontFamily}; font-size: ${baseFontSize}px; text-align: ${textAlign}; }`,
+      });
+      return;
+    }
+
+    await printPlainText(content, {
+      title,
+      monospace: isMonospace,
+      fontSizePx: baseFontSize,
+      align: textAlign,
+    });
   };
 
   // Open existing text file from host
@@ -413,6 +459,15 @@ export const TextEditorTool: React.FC = () => {
           >
             {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
             <span>{copied ? t('copied', 'Copied') : t('copy_all', 'Copy all')}</span>
+          </button>
+
+          <button
+            onClick={() => void handlePrintDocument()}
+            className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-medium text-slate-300 hover:text-white transition-colors flex items-center gap-1.5"
+            title={t('print_btn', 'Print')}
+          >
+            <Printer className="w-3.5 h-3.5 text-indigo-400" />
+            <span>{t('print_btn', 'Print')}</span>
           </button>
 
           <button

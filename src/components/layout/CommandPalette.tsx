@@ -174,13 +174,17 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     const settingsItems: Array<{ tab: ConfigTabId; title: string; keywords: string }> = [
       { tab: 'themes', title: t('tab_themes', 'Themes & Colors'), keywords: 'theme colors dark light preset' },
       { tab: 'currency', title: t('tab_currency', 'Default Currency'), keywords: 'currency fiat czk eur usd' },
-      { tab: 'widgets', title: t('tab_widgets', 'Sidebar Widgets'), keywords: 'widgets clock timer crypto tasks calc' },
+      ...(runningInTauri
+        ? [{ tab: 'widgets' as ConfigTabId, title: t('tab_widgets', 'Sidebar Widgets'), keywords: 'widgets clock timer crypto tasks calc' }]
+        : []),
       { tab: 'security', title: t('tab_security', 'Security & Privacy'), keywords: 'security pin lock privacy purge' },
       ...(runningInTauri
         ? [{ tab: 'mcp' as ConfigTabId, title: t('tab_mcp', 'MCP Bridge'), keywords: 'mcp ai claude cursor websocket stdio log' }]
         : []),
       { tab: 'shortcuts', title: t('tab_shortcuts', 'Shortcuts'), keywords: 'shortcuts hotkeys keybindings custom' },
-      { tab: 'backup', title: t('tab_backup', 'Backup & JSON Export/Import'), keywords: 'backup export import json workspace' },
+      ...(runningInTauri
+        ? [{ tab: 'backup' as ConfigTabId, title: t('tab_backup', 'Backup & JSON Export/Import'), keywords: 'backup export import json workspace' }]
+        : []),
       { tab: 'language', title: t('tab_language', 'Language'), keywords: 'language i18n locale english czech german spanish russian' },
     ];
 

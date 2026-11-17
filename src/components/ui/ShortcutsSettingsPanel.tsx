@@ -15,6 +15,7 @@ import { TOOLS_REGISTRY } from '../../tools/registry';
 import { useI18n } from '../../i18n/context';
 import { getToolCatalogText } from '../../i18n/toolCatalog';
 import { toastService } from '../../services/toastService';
+import { isTauri } from '../../services/fileSystemService';
 
 interface ShortcutsSettingsPanelProps {
   shortcuts: ShortcutBindings;
@@ -30,6 +31,11 @@ export const ShortcutsSettingsPanel: React.FC<ShortcutsSettingsPanelProps> = ({
   onChangeCustomToolShortcuts,
 }) => {
   const { t, language } = useI18n();
+  const runningInTauri = isTauri();
+  const visibleBuiltinActions = useMemo(
+    () => BUILTIN_SHORTCUT_ACTIONS.filter(action => runningInTauri || action.id !== 'lockWorkspace'),
+    [runningInTauri]
+  );
   const [recordingId, setRecordingId] = useState<string | null>(null);
   const [newToolId, setNewToolId] = useState<string>(TOOLS_REGISTRY[0]?.id || 'calendar');
   const [newToolCombo, setNewToolCombo] = useState<string>('');
@@ -194,7 +200,7 @@ export const ShortcutsSettingsPanel: React.FC<ShortcutsSettingsPanelProps> = ({
           {t('shortcuts_builtin_heading', 'Workspace Navigation')}
         </span>
         <div className="divide-y divide-slate-800 rounded-xl border border-slate-800 bg-slate-950/50">
-          {BUILTIN_SHORTCUT_ACTIONS.map(action => {
+          {visibleBuiltinActions.map(action => {
             const currentCombo = shortcuts[action.id] || action.defaultCombo;
             const isRecording = recordingId === action.id;
             const isModified = currentCombo !== action.defaultCombo;

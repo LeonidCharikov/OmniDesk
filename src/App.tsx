@@ -87,7 +87,9 @@ export default function App() {
   );
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isToolInfoOpen, setIsToolInfoOpen] = useState(false);
+  const runningInTauri = isTauri();
   const [isLocked, setIsLocked] = useState<boolean>(() => {
+    if (!isTauri()) return false;
     const initial = loadUserConfig();
     return Boolean(initial.security?.lockEnabled && initial.security?.pinHash && initial.security?.pinSalt);
   });
@@ -98,7 +100,6 @@ export default function App() {
   isLockedRef.current = isLocked;
   const selectedToolIdRef = useRef(selectedToolId);
   selectedToolIdRef.current = selectedToolId;
-  const runningInTauri = isTauri();
 
   const toggleSidebar = useCallback(() => setIsSidebarOpen(prev => !prev), []);
 
@@ -109,7 +110,7 @@ export default function App() {
   }, []);
 
   const { t, language } = useI18n();
-  const canLock = Boolean(config.security?.lockEnabled && config.security?.pinHash && config.security?.pinSalt);
+  const canLock = runningInTauri && Boolean(config.security?.lockEnabled && config.security?.pinHash && config.security?.pinSalt);
 
   // Apply theme dynamically to document root
   useEffect(() => {
@@ -675,7 +676,7 @@ export default function App() {
     </div>
   );
 
-  if (isLocked && config.security) {
+  if (runningInTauri && isLocked && config.security) {
     return (
       <div className={`theme-${config.themeId || 'midnight'}`}>
         <LockScreen
@@ -738,6 +739,7 @@ export default function App() {
           isOffline={isEffectiveOffline}
           canLock={canLock}
           onLockNow={() => {
+            if (!runningInTauri) return;
             setIsLocked(true);
             toastService.show({ type: 'info', title: t('workspace_locked_toast', 'Workspace locked') });
           }}
@@ -844,6 +846,7 @@ export default function App() {
         onResetDefaults={handleResetDefaults}
         onUpdateConfig={handleUpdateConfig}
         onLockNow={() => {
+          if (!runningInTauri) return;
           setIsLocked(true);
           toastService.show({ type: 'info', title: t('workspace_locked_toast', 'Workspace locked') });
         }}

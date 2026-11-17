@@ -9,9 +9,11 @@ import {
   Check,
   Grid,
   FileCheck2,
+  Printer,
 } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
 import { saveBinaryWithDialog } from '../../services/fileSystemService';
+import { printImageDataUrl } from '../../services/printService';
 
 export const SketchpadTool: React.FC = () => {
   const { t } = useI18n();
@@ -180,6 +182,14 @@ export const SketchpadTool: React.FC = () => {
     }, 'image/png');
   };
 
+  const printCanvas = async () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    await printImageDataUrl(canvas.toDataURL('image/png'), {
+      title: t('tool_sketchpad_title', 'Sketchpad & Signature Pad'),
+    });
+  };
+
   // Copy to clipboard
   const copyToClipboard = async () => {
     const canvas = canvasRef.current;
@@ -244,6 +254,15 @@ export const SketchpadTool: React.FC = () => {
           >
             {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
             <span>{copied ? t('copied_image', 'Zkopírováno!') : t('copy_image_btn', 'Kopírovat obrázek')}</span>
+          </button>
+
+          <button
+            onClick={() => void printCanvas()}
+            className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-medium text-slate-300 hover:text-white transition-colors flex items-center gap-1.5"
+            title={t('print_btn', 'Print')}
+          >
+            <Printer className="w-3.5 h-3.5 text-indigo-400" />
+            <span>{t('print_btn', 'Print')}</span>
           </button>
 
           <button

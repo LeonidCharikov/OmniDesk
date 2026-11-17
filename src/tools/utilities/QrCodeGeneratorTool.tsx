@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useId } from 'react';
 import QRCode from 'qrcode';
-import { Download, Wifi, Link, AlignLeft, Copy, Check } from 'lucide-react';
+import { Download, Wifi, Link, AlignLeft, Copy, Check, Printer } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
 import { saveBinaryWithDialog } from '../../services/fileSystemService';
+import { printImageDataUrl } from '../../services/printService';
 
 export const QrCodeGeneratorTool: React.FC = () => {
   const { t } = useI18n();
@@ -76,6 +77,14 @@ export const QrCodeGeneratorTool: React.FC = () => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
+  };
+
+  const printQrCode = async () => {
+    if (!dataUrl) return;
+    await printImageDataUrl(dataUrl, {
+      title: t('tool_qr_code_title', 'QR Code'),
+      caption: qrType === 'wifi' ? `Wi-Fi: ${ssid}` : getPayload(),
+    });
   };
 
   return (
@@ -210,13 +219,22 @@ export const QrCodeGeneratorTool: React.FC = () => {
             )}
           </div>
 
-          <div className="w-full flex items-center gap-2">
+          <div className="w-full flex flex-wrap items-center gap-2">
             <button
               onClick={copyQrImage}
               className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-medium text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-xl transition-colors"
             >
               {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
               {copied ? t('copied', 'Zkopírováno') : t('copy', 'Kopírovat')}
+            </button>
+            <button
+              onClick={() => void printQrCode()}
+              disabled={!dataUrl}
+              className="inline-flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-medium text-slate-200 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-xl transition-colors disabled:opacity-50"
+              title={t('print_btn', 'Print')}
+            >
+              <Printer className="w-3.5 h-3.5 text-indigo-400" />
+              {t('print_btn', 'Print')}
             </button>
             <button
               onClick={downloadQrPng}

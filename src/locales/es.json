@@ -3211,5 +3211,11 @@
   "smart_drop_desc": "Elige una herramienta compatible para abrir y cargar este archivo al instante:",
   "load_sample_btn": "Cargar ejemplo",
   "desktop_link_web": "Versión Web",
-  "desktop_link_github": "GitHub"
+  "desktop_link_github": "GitHub",
+  "print_btn": "Imprimir",
+  "settings_only": "Ajustes",
+  "settings_modal_subtitle_web": "Temas de color, moneda predeterminada, atajos y preferencias",
+  "workspace_presets_desc_web": "Fija herramientas favoritas recomendadas para tu flujo de trabajo con un clic.",
+  "security_privacy_title_web": "Simulación sin conexión y auditoría de almacenamiento local",
+  "security_privacy_desc_web": "Simula el modo sin conexión e inspecciona o limpia el almacenamiento local del navegador."
 }

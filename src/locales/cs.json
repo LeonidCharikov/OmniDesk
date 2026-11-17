@@ -3211,5 +3211,11 @@
   "smart_drop_desc": "Vyberte vhodný nástroj pro okamžité otevření a načtení tohoto souboru:",
   "load_sample_btn": "Načíst ukázku",
   "desktop_link_web": "Webová verze",
-  "desktop_link_github": "GitHub"
+  "desktop_link_github": "GitHub",
+  "print_btn": "Tisk",
+  "settings_only": "Nastavení",
+  "settings_modal_subtitle_web": "Barevné motivy, výchozí měna, zkratky a předvolby",
+  "workspace_presets_desc_web": "Připněte doporučené oblíbené nástroje pro svůj pracovní styl jedním kliknutím.",
+  "security_privacy_title_web": "Simulace offline režimu a audit místního úložiště",
+  "security_privacy_desc_web": "Simulujte offline režim a zkontrolujte nebo vymažte místní úložiště prohlížeče."
 }

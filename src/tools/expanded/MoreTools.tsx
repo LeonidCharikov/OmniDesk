@@ -17,8 +17,10 @@ import {
   Pencil,
   Table as TableIcon,
   Coins,
+  Printer,
 } from 'lucide-react';
 import { saveBinaryWithDialog, saveTextWithDialog } from '../../services/fileSystemService';
+import { printHtmlDocument, printImageDataUrl } from '../../services/printService';
 import { useI18n } from '../../i18n/context';
 import { findToolCatalogIdByTitle, getToolCatalogText } from '../../i18n/toolCatalog';
 import { consumePendingToolPipe } from '../../services/toolPipeService';
@@ -418,108 +420,126 @@ export const InvoiceGeneratorTool: React.FC = () => {
     </label>
   );
 
-  const exportInvoice = () => {
+  const buildInvoiceParts = () => {
     const esc = (value: string) =>
       value.replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[char] || char));
+
+    const styles = `
+      body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; max-width: 850px; margin: 40px auto; color: #1e293b; padding: 20px; line-height: 1.5; }
+      .header { display: flex; justify-content: space-between; border-bottom: 2px solid #0f172a; padding-bottom: 20px; }
+      .badge { font-size: 24px; font-weight: 800; color: #0f172a; }
+      .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin: 30px 0; }
+      .box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; }
+      .box h3 { margin-top: 0; font-size: 14px; text-transform: uppercase; color: #64748b; border-bottom: 1px solid #cbd5e1; padding-bottom: 6px; }
+      table { width: 100%; border-collapse: collapse; margin: 30px 0; }
+      th, td { border-bottom: 1px solid #e2e8f0; padding: 10px 8px; text-align: left; font-size: 13px; }
+      th { background: #f1f5f9; font-weight: 600; }
+      .text-right { text-align: right; }
+      .total-box { margin-top: 20px; text-align: right; }
+      .total-amount { font-size: 26px; font-weight: 800; color: #0f172a; }
+      @media print { body { margin: 0; padding: 0; } }
+    `;
+
+    const bodyHtml = `
+      <div class="header">
+        <div>
+          <div class="badge">${t('invoice_title_doc', 'FAKTURA - DAŇOVÝ DOKLAD')}</div>
+          <div style="font-size: 16px; color: #475569; margin-top: 4px;">${t('invoice_number_label', 'Číslo:')} <strong>${esc(invoice.number)}</strong></div>
+          <div style="font-size: 12px; color: #64748b; margin-top: 6px;">
+            ${t('variable_symbol_label', 'Variabilní symbol:')} <strong>${esc(invoice.variableSymbol)}</strong> &bull; ${t('constant_symbol_label', 'Konstantní symbol:')} ${esc(invoice.constantSymbol)}
+          </div>
+        </div>
+        <div class="text-right" style="font-size: 13px;">
+          <div>${t('issue_date_label', 'Datum vystavení:')} <strong>${esc(invoice.issueDate)}</strong></div>
+          <div>${t('due_date_label', 'Datum splatnosti:')} <strong>${esc(invoice.dueDate)}</strong></div>
+          <div style="margin-top: 10px;">${t('bank_account_label', 'Bankovní účet:')}</div>
+          <div style="font-weight: 700; color: #1e3a8a;">${esc(seller.account)}</div>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="box">
+          <h3>${t('supplier', 'Dodavatel')}</h3>
+          <strong style="font-size: 15px;">${esc(seller.name)}</strong><br>
+          ${esc(seller.street)}<br>
+          ${esc(seller.city)}<br><br>
+          ${seller.ico ? `${t('business_id', 'IČO')}: <strong>${esc(seller.ico)}</strong><br>` : ''}
+          ${seller.dic ? `${t('tax_id', 'DIČ')}: <strong>${esc(seller.dic)}</strong><br>` : ''}
+          ${seller.email ? `Email: ${esc(seller.email)}<br>` : ''}
+          ${seller.phone ? `Tel: ${esc(seller.phone)}` : ''}
+        </div>
+        <div class="box">
+          <h3>${t('customer', 'Odběratel')}</h3>
+          <strong style="font-size: 15px;">${esc(customer.name)}</strong><br>
+          ${esc(customer.street)}<br>
+          ${esc(customer.city)}<br><br>
+          ${customer.ico ? `${t('business_id', 'IČO')}: <strong>${esc(customer.ico)}</strong><br>` : ''}
+          ${customer.dic ? `${t('tax_id', 'DIČ')}: <strong>${esc(customer.dic)}</strong><br>` : ''}
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>${t('item_header', 'Položka')}</th>
+            <th class="text-right">${t('quantity_header', 'Množství')}</th>
+            <th class="text-right">${t('unit_price_header', 'Cena za jedn.')}</th>
+            <th class="text-right">${t('vat_header', 'DPH')}</th>
+            <th class="text-right">${t('total_with_vat_header', 'Celkem s DPH')}</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${lines
+            .map(
+              l => `<tr>
+              <td>${esc(l.description)}</td>
+              <td class="text-right">${l.quantity}</td>
+              <td class="text-right">${l.unitPrice.toLocaleString('cs-CZ', { minimumFractionDigits: 2 })} ${esc(invoice.currency)}</td>
+              <td class="text-right">${l.vat}%</td>
+              <td class="text-right"><strong>${((l.quantity * l.unitPrice * (100 + l.vat)) / 100).toLocaleString('cs-CZ', { minimumFractionDigits: 2 })} ${esc(invoice.currency)}</strong></td>
+            </tr>`
+            )
+            .join('')}
+        </tbody>
+      </table>
+
+      <div class="total-box">
+        <div style="font-size: 14px; color: #64748b;">
+          ${t('subtotal_without_vat', 'Základ bez DPH:')} ${subtotal.toLocaleString('cs-CZ', { minimumFractionDigits: 2 })} ${esc(invoice.currency)} &bull; ${t('vat_total_label', 'DPH celkem:')} ${vatTotal.toLocaleString('cs-CZ', { minimumFractionDigits: 2 })} ${esc(invoice.currency)}
+        </div>
+        <div style="margin-top: 8px;">
+          <span style="font-size: 16px; font-weight: 600;">${t('total_to_pay', 'Celkem k úhradě:')} </span>
+          <span class="total-amount">${total.toLocaleString('cs-CZ', { minimumFractionDigits: 2 })} ${esc(invoice.currency)}</span>
+        </div>
+      </div>
+
+      ${invoice.note ? `<div style="margin-top: 30px; padding: 12px; background: #f8fafc; border-left: 3px solid #6366f1; font-size: 12px;">${esc(invoice.note)}</div>` : ''}
+    `;
+
+    return { styles, bodyHtml, safeNumber: esc(invoice.number) };
+  };
+
+  const exportInvoice = () => {
+    const { styles, bodyHtml, safeNumber } = buildInvoiceParts();
     const html = `<!doctype html>
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Faktura ${esc(invoice.number)}</title>
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; max-width: 850px; margin: 40px auto; color: #1e293b; padding: 20px; line-height: 1.5; }
-    .header { display: flex; justify-content: space-between; border-bottom: 2px solid #0f172a; padding-bottom: 20px; }
-    .badge { font-size: 24px; font-weight: 800; color: #0f172a; }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin: 30px 0; }
-    .box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; }
-    .box h3 { margin-top: 0; font-size: 14px; text-transform: uppercase; color: #64748b; border-bottom: 1px solid #cbd5e1; padding-bottom: 6px; }
-    table { width: 100%; border-collapse: collapse; margin: 30px 0; }
-    th, td { border-bottom: 1px solid #e2e8f0; padding: 10px 8px; text-align: left; font-size: 13px; }
-    th { background: #f1f5f9; font-weight: 600; }
-    .text-right { text-align: right; }
-    .total-box { margin-top: 20px; text-align: right; }
-    .total-amount { font-size: 26px; font-weight: 800; color: #0f172a; }
-    @media print { body { margin: 0; padding: 0; } }
-  </style>
+  <title>Faktura ${safeNumber}</title>
+  <style>${styles}</style>
 </head>
-<body>
-  <div class="header">
-    <div>
-      <div class="badge">${t('invoice_title_doc', 'FAKTURA - DAŇOVÝ DOKLAD')}</div>
-      <div style="font-size: 16px; color: #475569; margin-top: 4px;">${t('invoice_number_label', 'Číslo:')} <strong>${esc(invoice.number)}</strong></div>
-      <div style="font-size: 12px; color: #64748b; margin-top: 6px;">
-        ${t('variable_symbol_label', 'Variabilní symbol:')} <strong>${esc(invoice.variableSymbol)}</strong> &bull; ${t('constant_symbol_label', 'Konstantní symbol:')} ${esc(invoice.constantSymbol)}
-      </div>
-    </div>
-    <div class="text-right" style="font-size: 13px;">
-      <div>${t('issue_date_label', 'Datum vystavení:')} <strong>${esc(invoice.issueDate)}</strong></div>
-      <div>${t('due_date_label', 'Datum splatnosti:')} <strong>${esc(invoice.dueDate)}</strong></div>
-      <div style="margin-top: 10px;">${t('bank_account_label', 'Bankovní účet:')}</div>
-      <div style="font-weight: 700; color: #1e3a8a;">${esc(seller.account)}</div>
-    </div>
-  </div>
-
-  <div class="grid">
-    <div class="box">
-      <h3>${t('supplier', 'Dodavatel')}</h3>
-      <strong style="font-size: 15px;">${esc(seller.name)}</strong><br>
-      ${esc(seller.street)}<br>
-      ${esc(seller.city)}<br><br>
-      ${seller.ico ? `${t('business_id', 'IČO')}: <strong>${esc(seller.ico)}</strong><br>` : ''}
-      ${seller.dic ? `${t('tax_id', 'DIČ')}: <strong>${esc(seller.dic)}</strong><br>` : ''}
-      ${seller.email ? `Email: ${esc(seller.email)}<br>` : ''}
-      ${seller.phone ? `Tel: ${esc(seller.phone)}` : ''}
-    </div>
-    <div class="box">
-      <h3>${t('customer', 'Odběratel')}</h3>
-      <strong style="font-size: 15px;">${esc(customer.name)}</strong><br>
-      ${esc(customer.street)}<br>
-      ${esc(customer.city)}<br><br>
-      ${customer.ico ? `${t('business_id', 'IČO')}: <strong>${esc(customer.ico)}</strong><br>` : ''}
-      ${customer.dic ? `${t('tax_id', 'DIČ')}: <strong>${esc(customer.dic)}</strong><br>` : ''}
-    </div>
-  </div>
-
-  <table>
-    <thead>
-      <tr>
-        <th>${t('item_header', 'Položka')}</th>
-        <th class="text-right">${t('quantity_header', 'Množství')}</th>
-        <th class="text-right">${t('unit_price_header', 'Cena za jedn.')}</th>
-        <th class="text-right">${t('vat_header', 'DPH')}</th>
-        <th class="text-right">${t('total_with_vat_header', 'Celkem s DPH')}</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${lines
-        .map(
-          l => `<tr>
-          <td>${esc(l.description)}</td>
-          <td class="text-right">${l.quantity}</td>
-          <td class="text-right">${l.unitPrice.toLocaleString('cs-CZ', { minimumFractionDigits: 2 })} ${esc(invoice.currency)}</td>
-          <td class="text-right">${l.vat}%</td>
-          <td class="text-right"><strong>${((l.quantity * l.unitPrice * (100 + l.vat)) / 100).toLocaleString('cs-CZ', { minimumFractionDigits: 2 })} ${esc(invoice.currency)}</strong></td>
-        </tr>`
-        )
-        .join('')}
-    </tbody>
-  </table>
-
-  <div class="total-box">
-    <div style="font-size: 14px; color: #64748b;">
-      ${t('subtotal_without_vat', 'Základ bez DPH:')} ${subtotal.toLocaleString('cs-CZ', { minimumFractionDigits: 2 })} ${esc(invoice.currency)} &bull; ${t('vat_total_label', 'DPH celkem:')} ${vatTotal.toLocaleString('cs-CZ', { minimumFractionDigits: 2 })} ${esc(invoice.currency)}
-    </div>
-    <div style="margin-top: 8px;">
-      <span style="font-size: 16px; font-weight: 600;">${t('total_to_pay', 'Celkem k úhradě:')} </span>
-      <span class="total-amount">${total.toLocaleString('cs-CZ', { minimumFractionDigits: 2 })} ${esc(invoice.currency)}</span>
-    </div>
-  </div>
-
-  ${invoice.note ? `<div style="margin-top: 30px; padding: 12px; background: #f8fafc; border-left: 3px solid #6366f1; font-size: 12px;">${esc(invoice.note)}</div>` : ''}
-</body>
+<body>${bodyHtml}</body>
 </html>`;
 
     void downloadText(`faktura-${invoice.number || 'doklad'}.html`, html, 'html', t('save_invoice', 'Uložit fakturu'));
+  };
+
+  const printInvoice = () => {
+    const { styles, bodyHtml } = buildInvoiceParts();
+    void printHtmlDocument(bodyHtml, {
+      title: `${t('invoice_title_doc', 'INVOICE')} ${invoice.number}`.trim(),
+      extraCss: styles,
+    });
   };
 
   return (
@@ -619,10 +639,16 @@ export const InvoiceGeneratorTool: React.FC = () => {
           </span>
         </div>
 
-        <button className={btn} onClick={exportInvoice}>
-          <Download className="inline w-4 h-4 mr-1" />
-          {t('export_invoice', 'Stáhnout fakturu jako tiskové HTML')}
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button className={btn} onClick={exportInvoice}>
+            <Download className="inline w-4 h-4 mr-1" />
+            {t('export_invoice', 'Stáhnout fakturu jako tiskové HTML')}
+          </button>
+          <button className={secondary} onClick={printInvoice} title={t('print_btn', 'Print')}>
+            <Printer className="inline w-4 h-4 mr-1 text-indigo-400" />
+            {t('print_btn', 'Print')}
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -2289,6 +2315,13 @@ export const ScreenshotAnnotatorTool: React.FC = () => {
       )
     );
 
+  const printScreenshot = () => {
+    if (!canvasRef.current) return;
+    void printImageDataUrl(canvasRef.current.toDataURL('image/png'), {
+      title: fileName || 'Screenshot',
+    });
+  };
+
   return (
     <div className="space-y-5">
       <Header
@@ -2365,6 +2398,9 @@ export const ScreenshotAnnotatorTool: React.FC = () => {
                 </button>
                 <button className={secondary} onClick={() => setShapes([])} disabled={!shapes.length}>
                   {t('clear_all', 'Vymazat vše')}
+                </button>
+                <button className={secondary} onClick={printScreenshot} title={t('print_btn', 'Print')}>
+                  <Printer className="w-3.5 h-3.5 inline mr-1 text-indigo-400" /> {t('print_btn', 'Print')}
                 </button>
                 <button className={btn} onClick={save}>
                   <Download className="w-3.5 h-3.5 inline mr-1" /> {t('save_png', 'Uložit PNG')}

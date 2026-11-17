@@ -3211,5 +3211,11 @@
   "smart_drop_desc": "Выберите подходящий инструмент для мгновенного открытия этого файла:",
   "load_sample_btn": "Загрузить пример",
   "desktop_link_web": "Веб-версия",
-  "desktop_link_github": "GitHub"
+  "desktop_link_github": "GitHub",
+  "print_btn": "Печать",
+  "settings_only": "Настройки",
+  "settings_modal_subtitle_web": "Цветовые темы, валюта по умолчанию, горячие клавиши и предпочтения",
+  "workspace_presets_desc_web": "Закрепите рекомендуемые избранные инструменты для вашей работы в один клик.",
+  "security_privacy_title_web": "Симуляция офлайн-режима и аудит локального хранилища",
+  "security_privacy_desc_web": "Имитируйте офлайн-режим, проверяйте или очищайте локальное хранилище браузера."
 }

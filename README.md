@@ -57,12 +57,13 @@
 
 | Capability | Details |
 | :--- | :--- |
-| 🔒 **Privacy, Lock Screen & Full Workspace Backup** | Every file edit, hash, PDF edit, QR scan, image compression, and color conversion runs 100% locally — installable as an offline-first PWA, with optional **PBKDF2 PIN Lock Screen**, **Full Workspace Backup** (settings + Calendar, Kanban, Notes, Expenses, Habits, Shopping List, Flashcards), and **AES-256-GCM encrypted bundles**. |
-| ⚡ **Dual Runtime (Tauri v2 + Web/PWA)** | Native **Tauri v2** desktop app (`sysinfo` hardware telemetry, OS system tray close-to-tray mode, OS file associations & quick Web/GitHub links) or lightweight offline browser PWA. Heavy dependencies (`pdf-lib`, `tesseract.js`, MCP client) are code-split and lazy-loaded strictly on demand to minimize RAM usage. |
+| 🔒 **Privacy, Lock Screen & Full Workspace Backup** | Every file edit, hash, PDF edit, QR scan, image compression, and color conversion runs 100% locally — installable as an offline-first PWA. On the **Tauri Desktop** build, also includes optional **PBKDF2 PIN Lock Screen**, **Full Workspace Backup** (settings + Calendar, Kanban, Notes, Expenses, Habits, Shopping List, Flashcards), and **AES-256-GCM encrypted bundles** (stripped on Web so browser users stay focused on individual tools). |
+| ⚡ **Dual Runtime (Tauri v2 + Web/PWA)** | Native **Tauri v2** desktop app (`sysinfo` hardware telemetry, OS system tray close-to-tray mode, OS file associations & quick Web/GitHub links) or streamlined offline browser PWA. Heavy dependencies (`pdf-lib`, `tesseract.js`, MCP client) are code-split and lazy-loaded strictly on demand to minimize RAM usage. |
+| 🖨️ **Built-In Document & Media Printing** | Print directly via native OS print dialogs without popup blockers from **PDF Studio**, **Image Editor**, **Text & Markdown Editor**, **Markdown Preview**, **Notes**, **Diagram Editor**, **Invoice Generator**, **Screenshot Annotator**, **Sketchpad**, and **QR Code Generator**. |
 | 🧭 **Extended Command Palette & Customizable Shortcuts** | Press `Ctrl+K` (`⌘K`) to search across **99 tools**, saved **Notes**, **Calendar events**, **Settings tabs**, and **Themes**. Rebind built-in actions or assign custom keyboard shortcuts to any tool in **Settings → Shortcuts** (press `Shift+?` for cheat sheet). |
 | 🔗 **Cross-Tool Piping & Smart Drag-and-Drop** | Pipe outputs directly between compatible tools with **Send to...** (`toolPipeService`), or drag & drop any file anywhere on the window to launch the **Smart Drop Router** with matching tools and 1-click **Load Sample** demos. |
 | 💱 **Universal Multi-Currency Engine & Starter Presets** | Configure a global default currency across 13+ world currencies (`CZK`, `EUR`, `USD`, `GBP`, `CHF`, `PLN`, `JPY`, etc.) synced across finance tools, plus 1-click **Workspace Starter Presets** (*Developer*, *Student & Science*, *Finance & Daily*). |
-| 🎨 **6 Themes & Adaptive Mini-Widgets** | Switch seamlessly between 5 curated dark palettes and Clean Light mode, while toggling 7 sidebar mini-widgets with automatic **compact tabbed mode** on smaller screens and subtle non-blocking **Toast notifications**. |
+| 🎨 **6 Themes & Adaptive Mini-Widgets *(Desktop)*** | Switch seamlessly between 5 curated dark palettes and Clean Light mode across both Desktop and Web, while the **Tauri Desktop** app adds 7 sidebar mini-widgets with automatic **compact tabbed mode** on smaller screens and subtle non-blocking **Toast notifications**. |
 | 🤖 **MCP Bridge *(Desktop App Only)*** | Exclusive to the **Tauri Desktop** build (stripped from the Web/PWA version): connect AI assistants (Claude Desktop, Cursor, VS Code, Windsurf) via WebSocket or Tauri `stdio` IPC to Calendar, Tasks, Notes, System Telemetry, Tool Navigation, and Clipboard Sync with **Connected Tools**, **MCP Log**, and interactive setup tutorial. |
 | 🌍 **5 Built-In Languages with Crisp SVG Flags** | Instant localization across **English** (`en`, default), **Čeština** (`cs`), **Deutsch** (`de`), **Español** (`es`), and **Русский** (`ru`) with cross-platform inline SVG flag icons (rendered identically on Windows, macOS, Linux, and web) and automated i18n checks. |
 
@@ -164,20 +165,20 @@ OmniDesk organizes **99 specialized tools** into **7 primary categories**, plus 
 <details open>
 <summary><strong>📁 1. Files, Media &amp; Documents (14 Tools)</strong></summary>
 
-1. **Text & Markdown Editor (`.txt` / `.md`)** — Selective font sizing, headings, alignment, regex search & replace, and local file saving.
-2. **PDF Studio & Visual Editor** — Direct PDF text editing, image embedding, whiteout, redaction, highlighters, freehand pen, signatures, watermarks & page tools.
+1. **Text & Markdown Editor (`.txt` / `.md`)** — Selective font sizing, headings, alignment, regex search & replace, direct printing, and local file saving.
+2. **PDF Studio & Visual Editor** — Direct PDF text editing, image embedding, whiteout, redaction, highlighters, freehand pen, signatures, watermarks, multi-page printing & page tools.
 3. **PDF Toolkit** — Merge multiple PDFs or rotate pages locally.
 4. **DOCX to PDF Converter** — Convert Word `.docx` files to PDF completely in memory.
 5. **Multi-Format Converter** — Convert documents (`DOCX`/`MD`/`TXT` → `PDF`), structured data (`CSV` ↔ `JSON`), and images (`WebP`/`PNG`/`JPEG`).
 6. **OCR Scanner** — Extract editable text from images locally using Tesseract.js.
-7. **Image Editor** — Crop, resize, rotate, apply brightness/contrast filters, watermarks & export.
+7. **Image Editor** — Automatic full-image **Fit View** canvas scaling (no viewport clipping), crop, resize, rotate, brightness/contrast filters, watermarks, printing & export.
 8. **Photo Compressor & EXIF Stripper** — Batch compress photos by quality or target KB while stripping GPS/camera EXIF metadata.
-9. **Screenshot Annotator** — Add text callouts and annotations to screenshots with PNG export.
-10. **Quick Sketchpad & Signature Pad** — HTML5 canvas drawing, brush controls, baseline guide & transparent PNG export.
+9. **Screenshot Annotator** — Add text callouts and annotations to screenshots with PNG export and direct printing.
+10. **Quick Sketchpad & Signature Pad** — HTML5 canvas drawing, brush controls, baseline guide, transparent PNG export & printing.
 11. **Audio Editor & Trimmer** — Interactive waveform trimming, cutting, silence insertion, fade in/out, normalization, speed & reverse.
 12. **Offline Voice Recorder & Audio Memos** — Record microphone audio with live visualizer and WebM export.
 13. **Screen & Webcam Recorder** — Local screen or webcam capture with optional microphone audio and WebM download.
-14. **Markdown Preview & Export** — Live Markdown rendering with one-click HTML export.
+14. **Markdown Preview & Export** — Live Markdown rendering with one-click HTML export and clean paper printing.
 
 </details>
 
@@ -317,8 +318,8 @@ OmniDesk organizes **99 specialized tools** into **7 primary categories**, plus 
 - **Royal Twilight** — Deep amethyst & violet tones
 - **Light** — Clean daylight theme with crisp white surfaces
 
-### 7 Adaptive Sidebar Mini-Widgets (Compact Tabbed & Collapsible)
-On smaller viewports (`< 1024px` wide or `< 880px` tall), mini-widgets automatically switch into a **collapsible compact tabbed bar** inside the shared scrollable sidebar so tool categories always stay visible and reachable, with a one-click toggle between compact and stacked views:
+### 7 Adaptive Sidebar Mini-Widgets *(Desktop Only)*
+In the **Tauri Desktop** build, on smaller viewports (`< 1024px` wide or `< 880px` tall), mini-widgets automatically switch into a **collapsible compact tabbed bar** inside the shared scrollable sidebar so tool categories always stay visible and reachable, with a one-click toggle between compact and stacked views *(hidden in the Web/PWA build so browser users can focus purely on individual tools)*:
 1. **World Clock & Date** — Live local time for selected global cities
 2. **Quick Focus / Pomodoro Timer** — Customizable timer with circular progress ring
 3. **Currency & Crypto Ticker** — Live cross-rates and crypto selector right in the sidebar
@@ -327,12 +328,12 @@ On smaller viewports (`< 1024px` wide or `< 880px` tall), mini-widgets automatic
 6. **Scratchpad Note** — Auto-saved sticky note for quick snippets
 7. **System Gauge** — CPU & RAM utilization overview
 
-### 5 Languages, Shortcuts, Starter Presets & Encrypted Backup
+### 5 Languages, Shortcuts, Starter Presets & Desktop Security/Backup
 - **Supported Locales**: English (`en`), Čeština (`cs`), Deutsch (`de`), Español (`es`), Русский (`ru`) — paired with custom inline SVG flag icons in both the header switcher and Settings.
-- **Custom Keyboard Shortcuts**: Rebind core shortcuts (`Ctrl+K` Command Palette, `Ctrl+,` Settings, `Ctrl+B` Sidebar, `Shift+?` Cheat Sheet, `Ctrl+L` Lock) or assign direct hotkeys to any tool under **Settings → Shortcuts**.
-- **Workspace Starter Presets**: Apply curated favorite-tool & widget sets (*Developer Workstation*, *Student & Science Lab*, *Finance & Daily Planner*) in one click.
-- **Workspace PIN Lock & Storage Audit**: Optional local PBKDF2-SHA256 PIN/passphrase lock screen with inactivity timeout and local-storage inspection/purge.
-- **Full Workspace Backup & Portability**: Export or restore settings alone (`omnidesk-profile.json`), a **Full Workspace Backup** including Calendar, Kanban, Notes, Expenses, Habits, Shopping List, and Flashcards (`omnidesk-workspace.json`), or **AES-256-GCM passphrase-encrypted** `.enc.json` bundles.
+- **Custom Keyboard Shortcuts**: Rebind core shortcuts (`Ctrl+K` Command Palette, `Ctrl+,` Settings, `Ctrl+B` Sidebar, `Shift+?` Cheat Sheet, plus `Ctrl+L` Lock on Desktop) or assign direct hotkeys to any tool under **Settings → Shortcuts**.
+- **Workspace Starter Presets**: Apply curated favorite-tool presets (*Developer Workstation*, *Student & Science Lab*, *Finance & Daily Planner*) in one click.
+- **Workspace PIN Lock *(Desktop Only)*** & **Storage Audit**: Optional local PBKDF2-SHA256 PIN/passphrase lock screen with inactivity timeout in the Desktop app, plus local-storage inspection/purge across both Desktop and Web.
+- **Full Workspace Backup & Portability *(Desktop Only)***: Export or restore settings alone (`omnidesk-profile.json`), a **Full Workspace Backup** including Calendar, Kanban, Notes, Expenses, Habits, Shopping List, and Flashcards (`omnidesk-workspace.json`), or **AES-256-GCM passphrase-encrypted** `.enc.json` bundles on Desktop.
 
 </details>
 
@@ -477,7 +478,7 @@ npm run tauri dev
 │   │   └── ui/                # ConfigModal, McpSettingsTab, LanguageFlagIcon, ShortcutsSettingsPanel, SmartDropModal, SendToToolButton, ToastContainer, LockScreen
 │   ├── i18n/                  # Translation context & multi-language tool catalog
 │   ├── locales/               # Locale dictionaries (en, cs, de, es, ru)
-│   ├── services/              # storage, mcpClient (desktop), shortcutsService, toolPipeService, workspaceBackupService, workspacePresetsService, toastService, securityService, currencyService, fileSystemService
+│   ├── services/              # storage, printService, mcpClient (desktop), shortcutsService, toolPipeService, workspaceBackupService, workspacePresetsService, toastService, securityService, currencyService, fileSystemService
 │   ├── tools/
 │   │   ├── files/             # PDF Studio, PdfToolkitTool, Audio Editor, Photo Compressor, Screen/Webcam Recorder...
 │   │   ├── programming/       # Hash Suite, AES Studio, CIDR, Cron, Encoding, UUID, JSONPath...

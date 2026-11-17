@@ -162,19 +162,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
           })}
         </div>
 
-        {/* Mini-Widgets Area – adaptive compact tabbed mode on smaller screens */}
-        <SidebarWidgets
-          widgets={widgets}
-          onToggleWidget={onToggleWidget}
-          onUpdateQuickNote={onUpdateQuickNote}
-          onToggleTask={onToggleTask}
-          onAddTask={onAddTask}
-          onDeleteTask={onDeleteTask}
-          onOpenWidgetSettings={onOpenConfig}
-          onUpdateWidgetCustomization={onUpdateWidgetCustomization}
-          defaultCurrency={defaultCurrency}
-          isCollapsed={isCollapsed}
-        />
+        {/* Mini-Widgets Area – Desktop (Tauri) only */}
+        {runningInTauri && (
+          <SidebarWidgets
+            widgets={widgets}
+            onToggleWidget={onToggleWidget}
+            onUpdateQuickNote={onUpdateQuickNote}
+            onToggleTask={onToggleTask}
+            onAddTask={onAddTask}
+            onDeleteTask={onDeleteTask}
+            onOpenWidgetSettings={onOpenConfig}
+            onUpdateWidgetCustomization={onUpdateWidgetCustomization}
+            defaultCurrency={defaultCurrency}
+            isCollapsed={isCollapsed}
+          />
+        )}
       </div>
 
       {/* Footer / System Settings (pinned) */}
@@ -184,7 +186,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
           className="w-full flex items-center justify-center gap-2 py-2 px-3 text-xs font-medium text-slate-300 hover:text-white bg-slate-900/60 hover:bg-slate-800 rounded-lg border border-slate-800 transition-colors"
         >
           <Settings className="w-3.5 h-3.5 text-indigo-400" />
-          {isOpen && <span>{t('settings_and_backup', 'Settings & Backup')}</span>}
+          {isOpen && (
+            <span>
+              {runningInTauri
+                ? t('settings_and_backup', 'Settings & Backup')
+                : t('settings_only', 'Settings')}
+            </span>
+          )}
         </button>
         {runningInTauri && isOpen && (
           <div className="grid grid-cols-2 gap-1.5">

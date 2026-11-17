@@ -17,9 +17,11 @@ import {
   GitBranch,
   GitCommit,
   GitPullRequest,
+  Printer,
 } from 'lucide-react';
 import DOMPurify from 'dompurify';
 import { saveBinaryWithDialog, saveTextWithDialog } from '../../services/fileSystemService';
+import { printHtmlDocument, printPlainText } from '../../services/printService';
 import { useI18n } from '../../i18n/context';
 import { findToolCatalogIdByTitle, getToolCatalogText } from '../../i18n/toolCatalog';
 import { consumePendingToolPipe } from '../../services/toolPipeService';
@@ -431,7 +433,7 @@ export const MarkdownPreviewTool: React.FC = () => {
         />
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <button
           className={button}
           onClick={() =>
@@ -445,6 +447,20 @@ export const MarkdownPreviewTool: React.FC = () => {
         >
           <Download className="inline w-3.5 h-3.5 mr-1" />
           {t('export_html', 'Exportovat HTML')}
+        </button>
+        <button
+          className={secondary}
+          onClick={() =>
+            void printHtmlDocument(html, {
+              title: t('md_sample_heading', 'Markdown Document'),
+              extraCss:
+                'h1,h2,h3,h4,h5,p,li,div,strong,em{color:#0f172a!important}blockquote{background:#f8fafc!important;color:#334155!important;border-left:4px solid #6366f1!important;padding:8px 12px!important}pre{background:#f8fafc!important;color:#0f172a!important;border:1px solid #cbd5e1!important;padding:12px!important;border-radius:6px!important}code{background:#f1f5f9!important;color:#1e293b!important}th{background:#f1f5f9!important;color:#0f172a!important;border-color:#cbd5e1!important}td{color:#0f172a!important;border-color:#cbd5e1!important}li{margin-left:18px!important}',
+            })
+          }
+          title={t('print_btn', 'Print')}
+        >
+          <Printer className="inline w-3.5 h-3.5 mr-1 text-indigo-400" />
+          {t('print_btn', 'Print')}
         </button>
         <button className={secondary} onClick={() => navigator.clipboard.writeText(html)}>
           <Copy className="inline w-3.5 h-3.5 mr-1" />
@@ -822,6 +838,18 @@ export const NotesTool: React.FC = () => {
                   getText={() => current.body}
                   disabled={!current.body.trim()}
                 />
+                <button
+                  className={secondary}
+                  onClick={() =>
+                    void printPlainText(current.body, {
+                      title: current.title || t('new_note_title', 'Note'),
+                    })
+                  }
+                  disabled={!current.body.trim()}
+                  title={t('print_btn', 'Print')}
+                >
+                  <Printer className="w-4 h-4 inline mr-1 text-indigo-400" /> {t('print_btn', 'Print')}
+                </button>
                 <button className={secondary} onClick={exportCurrent} title={t('export_note', 'Export note')}>
                   <Download className="w-4 h-4 inline mr-1" /> {t('export', 'Export')}
                 </button>
@@ -1627,6 +1655,16 @@ export const DiagramEditorTool: React.FC = () => {
     await saveTextWithDialog('uml-diagram.svg', source, [{ name: 'SVG (*.svg)', extensions: ['svg'] }], t('save_diagram', 'Uložit diagram'));
   };
 
+  const printDiagram = () => {
+    if (!svgRef.current) return;
+    const source = new XMLSerializer().serializeToString(svgRef.current);
+    void printHtmlDocument(source, {
+      title: 'UML Diagram',
+      isSvg: true,
+      extraCss: 'svg{background:#0f172a;border-radius:12px;width:100%;height:auto;max-height:90vh;display:block;margin:0 auto;}',
+    });
+  };
+
   const handlePointerDown = (nodeId: number, e: React.PointerEvent<SVGGElement>) => {
     e.stopPropagation();
     setSelected(nodeId);
@@ -1676,6 +1714,9 @@ export const DiagramEditorTool: React.FC = () => {
         ))}
         <button className={secondary} onClick={exportSvg}>
           <Download className="inline w-3.5 h-3.5 mr-1" /> {t('export_svg', 'Exportovat SVG')}
+        </button>
+        <button className={secondary} onClick={printDiagram} title={t('print_btn', 'Print')}>
+          <Printer className="inline w-3.5 h-3.5 mr-1 text-indigo-400" /> {t('print_btn', 'Print')}
         </button>
         <button
           className={danger}

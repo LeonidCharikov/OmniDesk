@@ -185,7 +185,9 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
   const { t, language, setLanguage } = useI18n();
   const runningInTauri = isTauri();
   const [activeTab, setActiveTab] = useState<TabType>(() =>
-    initialTab === 'mcp' && !isTauri() ? 'themes' : initialTab || 'themes'
+    !isTauri() && (initialTab === 'mcp' || initialTab === 'widgets' || initialTab === 'backup')
+      ? 'themes'
+      : initialTab || 'themes'
   );
   const [downloaded, setDownloaded] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -202,13 +204,14 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
 
   React.useEffect(() => {
     if (!isOpen) return;
+    const isDesktopOnlyTab = (tab: TabType) => tab === 'mcp' || tab === 'widgets' || tab === 'backup';
     if (initialTab) {
-      const resolvedTab = initialTab === 'mcp' && !runningInTauri ? 'themes' : initialTab;
+      const resolvedTab = !runningInTauri && isDesktopOnlyTab(initialTab) ? 'themes' : initialTab;
       setActiveTab(resolvedTab);
       if (resolvedTab === 'security') {
         setAuditItems(getStorageAudit());
       }
-    } else if (!runningInTauri && activeTab === 'mcp') {
+    } else if (!runningInTauri && isDesktopOnlyTab(activeTab)) {
       setActiveTab('themes');
     }
   }, [isOpen, initialTab, runningInTauri, activeTab]);
@@ -546,7 +549,9 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
                 {t('settings_modal_title', 'OmniDesk Settings & Configurator')}
               </h2>
               <p className="text-xs text-slate-400">
-                {t('settings_modal_subtitle', 'Color themes, sidebar widgets, and portable JSON profiles')}
+                {runningInTauri
+                  ? t('settings_modal_subtitle', 'Color themes, sidebar widgets, and portable JSON profiles')
+                  : t('settings_modal_subtitle_web', 'Color themes, default currency, shortcuts, and preferences')}
               </p>
             </div>
           </div>
@@ -595,22 +600,24 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
             <span>{t('tab_currency', 'Default Currency')}</span>
           </button>
 
-          <button
-            role="tab"
-            aria-selected={activeTab === 'widgets'}
-            onClick={(e) => {
-              setActiveTab('widgets');
-              e.currentTarget.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' });
-            }}
-            className={`flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg border transition-colors whitespace-nowrap shrink-0 ${
-              activeTab === 'widgets'
-                ? 'text-indigo-300 border-indigo-500/50 bg-indigo-600/20 shadow-xs'
-                : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-slate-800/40'
-            }`}
-          >
-            <Clock className="w-3.5 h-3.5" />
-            <span>{t('tab_widgets', 'Sidebar Widgets')}</span>
-          </button>
+          {runningInTauri && (
+            <button
+              role="tab"
+              aria-selected={activeTab === 'widgets'}
+              onClick={(e) => {
+                setActiveTab('widgets');
+                e.currentTarget.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' });
+              }}
+              className={`flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg border transition-colors whitespace-nowrap shrink-0 ${
+                activeTab === 'widgets'
+                  ? 'text-indigo-300 border-indigo-500/50 bg-indigo-600/20 shadow-xs'
+                  : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-slate-800/40'
+              }`}
+            >
+              <Clock className="w-3.5 h-3.5" />
+              <span>{t('tab_widgets', 'Sidebar Widgets')}</span>
+            </button>
+          )}
 
           <button
             role="tab"
@@ -666,22 +673,24 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
             <span>{t('tab_shortcuts', 'Shortcuts')}</span>
           </button>
 
-          <button
-            role="tab"
-            aria-selected={activeTab === 'backup'}
-            onClick={(e) => {
-              setActiveTab('backup');
-              e.currentTarget.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' });
-            }}
-            className={`flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg border transition-colors whitespace-nowrap shrink-0 ${
-              activeTab === 'backup'
-                ? 'text-indigo-300 border-indigo-500/50 bg-indigo-600/20 shadow-xs'
-                : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-slate-800/40'
-            }`}
-          >
-            <HardDrive className="w-3.5 h-3.5" />
-            <span>{t('tab_backup', 'Backup & JSON Export/Import')}</span>
-          </button>
+          {runningInTauri && (
+            <button
+              role="tab"
+              aria-selected={activeTab === 'backup'}
+              onClick={(e) => {
+                setActiveTab('backup');
+                e.currentTarget.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' });
+              }}
+              className={`flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg border transition-colors whitespace-nowrap shrink-0 ${
+                activeTab === 'backup'
+                  ? 'text-indigo-300 border-indigo-500/50 bg-indigo-600/20 shadow-xs'
+                  : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-slate-800/40'
+              }`}
+            >
+              <HardDrive className="w-3.5 h-3.5" />
+              <span>{t('tab_backup', 'Backup & JSON Export/Import')}</span>
+            </button>
+          )}
 
           <button
             role="tab"
@@ -795,7 +804,9 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
                       {t('workspace_presets_title', 'Workspace Starter Presets')}
                     </h4>
                     <p className="text-[11px] text-slate-400">
-                      {t('workspace_presets_desc', 'Configure pinned favorites and sidebar widgets for your workflow in one click.')}
+                      {runningInTauri
+                        ? t('workspace_presets_desc', 'Configure pinned favorites and sidebar widgets for your workflow in one click.')
+                        : t('workspace_presets_desc_web', 'Pin recommended favorite tools for your workflow in one click.')}
                     </p>
                   </div>
                 </div>
@@ -894,8 +905,8 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
             </div>
           )}
 
-          {/* TAB 2: SIDEBAR WIDGETS */}
-          {activeTab === 'widgets' && (
+          {/* TAB 2: SIDEBAR WIDGETS (Desktop / Tauri Only) */}
+          {runningInTauri && activeTab === 'widgets' && (
             <div className="space-y-6">
               {/* Widget Toggles */}
               <div className="space-y-3">
@@ -1059,14 +1070,19 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
             <div className="space-y-6">
               <div>
                 <h3 className="text-sm font-semibold text-white">
-                  {t('security_privacy_title', 'Workspace Lock, Offline Simulation & Storage Audit')}
+                  {runningInTauri
+                    ? t('security_privacy_title', 'Workspace Lock, Offline Simulation & Storage Audit')
+                    : t('security_privacy_title_web', 'Offline Simulation & Local Storage Audit')}
                 </h3>
                 <p className="text-xs text-slate-400">
-                  {t('security_privacy_desc', 'Protect your local workspace with PBKDF2-SHA256 PIN verification and inspect local browser storage.')}
+                  {runningInTauri
+                    ? t('security_privacy_desc', 'Protect your local workspace with PBKDF2-SHA256 PIN verification and inspect local browser storage.')
+                    : t('security_privacy_desc_web', 'Simulate offline mode and inspect or purge local browser storage.')}
                 </p>
               </div>
 
-              {/* Workspace PIN Lock */}
+              {/* Workspace PIN Lock (Desktop / Tauri Only) */}
+              {runningInTauri && (
               <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
@@ -1203,6 +1219,7 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
                   )}
                 </div>
               </div>
+              )}
 
               {/* Simulated Offline Mode */}
               <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 flex items-center justify-between gap-4">
@@ -1313,8 +1330,8 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
             </div>
           )}
 
-          {/* TAB 3: BACKUP & JSON MIGRATION */}
-          {activeTab === 'backup' && (
+          {/* TAB 3: BACKUP & JSON MIGRATION (Desktop / Tauri Only) */}
+          {runningInTauri && activeTab === 'backup' && (
             <div className="space-y-5">
               <div>
                 <h3 className="text-sm font-semibold text-white">

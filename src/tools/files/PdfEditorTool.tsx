@@ -38,9 +38,11 @@ import {
   GripHorizontal,
   ImagePlus,
   Layers,
+  Printer,
 } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
 import { saveBinaryWithDialog } from '../../services/fileSystemService';
+import { printImagePages } from '../../services/printService';
 import { consumePendingToolPipe } from '../../services/toolPipeService';
 import {
   DetectedImageObject,
@@ -2088,6 +2090,60 @@ export const PdfEditorTool: React.FC = () => {
     showNotification('success', t('pdf_editor_export_png', 'Export Page PNG'));
   };
 
+  const handlePrintPdf = async () => {
+    if (!currentPdfBytes || currentPdfBytes.byteLength === 0) return;
+    let pdfJsDoc: pdfjsLib.PDFDocumentProxy | null = null;
+    try {
+      setIsProcessing(true);
+      const hasEdits = elements.length > 0 || drawingStrokes.length > 0;
+      const pdfBytesToPrint = hasEdits
+        ? await compileEditsIntoPdfBytes(currentPdfBytes)
+        : currentPdfBytes;
+
+      pdfJsDoc = await pdfjsLib.getDocument({ data: clonePdfBytes(pdfBytesToPrint) }).promise;
+      const pageUrls: string[] = [];
+      const renderCanvas = document.createElement('canvas');
+      const renderCtx = renderCanvas.getContext('2d');
+
+      if (!renderCtx) {
+        throw new Error('Canvas context unavailable');
+      }
+
+      for (let pageNum = 1; pageNum <= pdfJsDoc.numPages; pageNum++) {
+        const page = await pdfJsDoc.getPage(pageNum);
+        const viewport = page.getViewport({ scale: 2.0 });
+        renderCanvas.width = Math.max(1, Math.floor(viewport.width));
+        renderCanvas.height = Math.max(1, Math.floor(viewport.height));
+        renderCtx.fillStyle = '#ffffff';
+        renderCtx.fillRect(0, 0, renderCanvas.width, renderCanvas.height);
+
+        await page.render({
+          canvasContext: renderCtx,
+          viewport,
+        }).promise;
+
+        pageUrls.push(renderCanvas.toDataURL('image/png'));
+        page.cleanup?.();
+      }
+
+      await pdfJsDoc.destroy?.();
+      pdfJsDoc = null;
+
+      await printImagePages(pageUrls, { title: fileName });
+    } catch (err) {
+      console.error('Print failed:', err);
+      showNotification(
+        'error',
+        `${t('pdf_editor_error_processing', 'Error processing document: ')} ${err instanceof Error ? err.message : String(err)}`
+      );
+    } finally {
+      if (pdfJsDoc) {
+        await pdfJsDoc.destroy?.().catch(() => {});
+      }
+      setIsProcessing(false);
+    }
+  };
+
   const confirmResetDocument = () => {
     if (!originalPdfBytes) return;
     setShowResetConfirm(false);
@@ -2210,6 +2266,16 @@ export const PdfEditorTool: React.FC = () => {
           >
             <Maximize2 className="w-3.5 h-3.5 text-slate-400" />
             <span className="hidden md:inline">{t('pdf_editor_export_png', 'Export Page PNG')}</span>
+          </button>
+
+          <button
+            onClick={handlePrintPdf}
+            disabled={isProcessing || !currentPdfBytes}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-200 hover:text-white bg-slate-800/70 hover:bg-slate-800 border border-slate-700/60 rounded-xl transition-all disabled:opacity-50"
+            title={t('print_btn', 'Print')}
+          >
+            <Printer className="w-3.5 h-3.5 text-emerald-400" />
+            <span className="hidden md:inline">{t('print_btn', 'Print')}</span>
           </button>
 
           <button
