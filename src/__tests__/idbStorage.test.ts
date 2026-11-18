@@ -4,7 +4,7 @@ import {
   loadToolData,
   saveToolData,
 } from '../services/idbStorage';
-import { checkForDesktopUpdate, isDesktopUpdaterConfigured } from '../services/updaterService';
+import { checkForDesktopUpdate, compareSemver, isDesktopUpdaterConfigured } from '../services/updaterService';
 
 describe('idbStorage service', () => {
   beforeEach(() => {
@@ -28,11 +28,18 @@ describe('idbStorage service', () => {
   });
 });
 
-describe('updaterService web safety guards', () => {
+describe('updaterService web safety guards & semver', () => {
   it('returns web-unsupported when running outside Tauri', async () => {
     expect(await isDesktopUpdaterConfigured()).toBe(false);
     const status = await checkForDesktopUpdate();
     expect(status.status).toBe('web-unsupported');
     expect(status.currentVersion).toBe('web');
+  });
+
+  it('compares semantic versions accurately', () => {
+    expect(compareSemver('v0.1.17', '0.1.16')).toBe(1);
+    expect(compareSemver('0.2.0', '0.1.99')).toBe(1);
+    expect(compareSemver('v0.1.16', '0.1.16')).toBe(0);
+    expect(compareSemver('0.1.15', '0.1.16')).toBe(-1);
   });
 });

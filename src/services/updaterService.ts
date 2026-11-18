@@ -1,12 +1,16 @@
 import type { Update } from '@tauri-apps/plugin-updater';
 import { invokeRustCommand, isTauri } from './fileSystemService';
 
+export const GITHUB_RELEASES_LATEST_URL = 'https://github.com/LeonidCharikov/OmniDesk/releases/latest';
+const GITHUB_RELEASES_API_URL = 'https://api.github.com/repos/LeonidCharikov/OmniDesk/releases/latest';
+
 export type DesktopUpdateStatus =
   | 'web-unsupported'
-  | 'unconfigured'
   | 'up-to-date'
   | 'available'
   | 'error';
+
+export type DesktopUpdateInstallMode = 'native' | 'release-page';
 
 export interface DesktopUpdateCheckResult {
   status: DesktopUpdateStatus;
@@ -14,6 +18,8 @@ export interface DesktopUpdateCheckResult {
   availableVersion?: string;
   date?: string;
   body?: string;
+  releaseUrl?: string;
+  installMode?: DesktopUpdateInstallMode;
   updateHandle?: Update;
   error?: string;
 }
@@ -22,6 +28,30 @@ export interface DesktopUpdateProgress {
   downloadedBytes: number;
   totalBytes?: number;
   percent?: number;
+}
+
+function normalizeSemver(version: string): number[] {
+  const cleaned = version.trim().replace(/^v/i, '').split('-')[0].split('+')[0];
+  return cleaned
+    .split('.')
+    .slice(0, 3)
+    .map(part => {
+      const n = Number.parseInt(part, 10);
+      return Number.isFinite(n) && n >= 0 ? n : 0;
+    });
+}
+
+export function compareSemver(a: string, b: string): number {
+  const pa = normalizeSemver(a);
+  const pb = normalizeSemver(b);
+  const len = Math.max(pa.length, pb.length, 3);
+  for (let i = 0; i < len; i++) {
+    const va = pa[i] ?? 0;
+    const vb = pb[i] ?? 0;
+    if (va > vb) return 1;
+    if (va < vb) return -1;
+  }
+  return 0;
 }
 
 export async function getDesktopAppVersion(): Promise<string> {
@@ -43,6 +73,67 @@ export async function isDesktopUpdaterConfigured(): Promise<boolean> {
   }
 }
 
+async function checkGitHubLatestRelease(currentVersion: string): Promise<DesktopUpdateCheckResult> {
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), 10000);
+  try {
+    const response = await fetch(GITHUB_RELEASES_API_URL, {
+      headers: { Accept: 'application/vnd.github+json' },
+      signal: controller.signal,
+    });
+
+    if (response.status === 404) {
+      return {
+        status: 'up-to-date',
+        currentVersion,
+      };
+    }
+
+    if (!response.ok) {
+      return {
+        status: 'error',
+        currentVersion,
+        error: `HTTP ${response.status}`,
+      };
+    }
+
+    const data = (await response.json()) as {
+      tag_name?: string;
+      name?: string;
+      body?: string;
+      published_at?: string;
+      html_url?: string;
+    };
+
+    const rawTag = (data.tag_name || data.name || '').trim();
+    const cleanVersion = rawTag.replace(/^v/i, '');
+    if (cleanVersion && compareSemver(cleanVersion, currentVersion) > 0) {
+      return {
+        status: 'available',
+        currentVersion,
+        availableVersion: cleanVersion,
+        date: data.published_at ? data.published_at.slice(0, 10) : undefined,
+        body: data.body?.trim() || undefined,
+        releaseUrl: data.html_url || GITHUB_RELEASES_LATEST_URL,
+        installMode: 'release-page',
+      };
+    }
+
+    return {
+      status: 'up-to-date',
+      currentVersion,
+    };
+  } catch (err) {
+    return {
+      status: 'error',
+      currentVersion,
+      error: err instanceof Error ? err.message : String(err),
+    };
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
+}
+
 export async function checkForDesktopUpdate(): Promise<DesktopUpdateCheckResult> {
   if (!isTauri()) {
     return {
@@ -54,10 +145,7 @@ export async function checkForDesktopUpdate(): Promise<DesktopUpdateCheckResult>
   const currentVersion = await getDesktopAppVersion();
   const configured = await isDesktopUpdaterConfigured();
   if (!configured) {
-    return {
-      status: 'unconfigured',
-      currentVersion,
-    };
+    return checkGitHubLatestRelease(currentVersion);
   }
 
   try {
@@ -76,15 +164,14 @@ export async function checkForDesktopUpdate(): Promise<DesktopUpdateCheckResult>
       availableVersion: update.version,
       date: update.date,
       body: update.body,
+      installMode: 'native',
       updateHandle: update,
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    if (message.toLowerCase().includes('plugin updater not found') || message.toLowerCase().includes('pubkey')) {
-      return {
-        status: 'unconfigured',
-        currentVersion,
-      };
+    const lower = message.toLowerCase();
+    if (lower.includes('plugin updater not found') || lower.includes('pubkey')) {
+      return checkGitHubLatestRelease(currentVersion);
     }
     return {
       status: 'error',

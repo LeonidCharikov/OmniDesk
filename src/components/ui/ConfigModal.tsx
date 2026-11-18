@@ -69,6 +69,7 @@ import {
   DesktopUpdateProgress,
   disposeDesktopUpdateHandle,
   getDesktopAppVersion,
+  GITHUB_RELEASES_LATEST_URL,
   installDesktopUpdate,
 } from '../../services/updaterService';
 
@@ -1738,7 +1739,7 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
                     {t('updates_title', 'Desktop Application Updates')}
                   </h3>
                   <p className="text-xs text-slate-400">
-                    {t('updates_desc', 'Check GitHub Releases for cryptographically signed OmniDesk desktop updates.')}
+                    {t('updates_desc', 'Check for new OmniDesk desktop versions and install updates cleanly.')}
                   </p>
                 </div>
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-950/70 border border-slate-800 text-xs font-mono">
@@ -1753,10 +1754,10 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
                     <ArrowUpCircle className="w-5 h-5 text-indigo-400 shrink-0" />
                     <div>
                       <span className="text-xs font-semibold text-white block">
-                        {t('updates_channel_label', 'Signed GitHub Releases Auto-Updater')}
+                        {t('updates_channel_label', 'OmniDesk Desktop Releases')}
                       </span>
                       <span className="text-[11px] text-slate-400 block">
-                        {t('updates_channel_desc', 'Downloads verified installers directly from official releases and restarts automatically.')}
+                        {t('updates_channel_desc', 'Checks official releases and preserves all saved notes, settings, and tool data.')}
                       </span>
                     </div>
                   </div>
@@ -1775,6 +1776,13 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
                   </button>
                 </div>
 
+                <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-800/80 text-[11px] text-slate-300 flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span>
+                    {t('updates_data_preserved', 'All your settings, notes, calendar events, and tool data remain safely stored across updates.')}
+                  </span>
+                </div>
+
                 {updateResult?.status === 'up-to-date' && (
                   <div className="p-3 rounded-lg bg-emerald-950/40 border border-emerald-500/40 text-emerald-300 text-xs flex items-center gap-2">
                     <Check className="w-4 h-4 shrink-0" />
@@ -1783,20 +1791,6 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
                         version: updateResult.currentVersion,
                       })}
                     </span>
-                  </div>
-                )}
-
-                {updateResult?.status === 'unconfigured' && (
-                  <div className="p-3 rounded-lg bg-amber-950/40 border border-amber-500/40 text-amber-200 text-xs flex items-start gap-2.5">
-                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-amber-400" />
-                    <div className="space-y-1">
-                      <span className="font-semibold block">
-                        {t('updates_unconfigured_title', 'Auto-updater signing key not configured in this build')}
-                      </span>
-                      <span className="text-amber-200/80 block leading-relaxed">
-                        {t('updates_unconfigured_desc', 'To enable one-click signed updates, set the TAURI_SIGNING_PUBLIC_KEY repository variable/secret in GitHub CI or configure plugins.updater.pubkey in tauri.conf.json.')}
-                      </span>
-                    </div>
                   </div>
                 )}
 
@@ -1827,19 +1821,32 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
                           </span>
                         )}
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => void handleInstallDesktopUpdate()}
-                        disabled={isInstallingUpdate}
-                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-semibold transition-colors"
-                      >
-                        <Download className="w-3.5 h-3.5" />
-                        <span>
-                          {isInstallingUpdate
-                            ? t('updates_installing_btn', 'Downloading & Installing...')
-                            : t('updates_install_btn', 'Download & Install')}
-                        </span>
-                      </button>
+                      {updateResult.updateHandle ? (
+                        <button
+                          type="button"
+                          onClick={() => void handleInstallDesktopUpdate()}
+                          disabled={isInstallingUpdate}
+                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-semibold transition-colors"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                          <span>
+                            {isInstallingUpdate
+                              ? t('updates_installing_btn', 'Downloading & Installing...')
+                              : t('updates_install_btn', 'Download & Install')}
+                          </span>
+                        </button>
+                      ) : (
+                        <a
+                          href={updateResult.releaseUrl || GITHUB_RELEASES_LATEST_URL}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition-colors"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                          <span>{t('updates_download_release_btn', 'Download Update')}</span>
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </a>
+                      )}
                     </div>
 
                     {updateResult.body && (
