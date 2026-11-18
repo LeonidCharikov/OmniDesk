@@ -465,6 +465,9 @@ export async function writeHostBinaryFile(
   await saveBinaryWithDialog(pathOrFilename, data, mimeType);
 }
 
+export const OMNIDESK_PROJECT_WEB_URL = 'https://leonidcharikov.github.io/omnidesk.html';
+export const OMNIDESK_GITHUB_URL = 'https://github.com/LeonidCharikov/OmniDesk';
+
 /**
  * Zavolá vlastní Rust příkaz přes bezpečný Tauri IPC bridge.
  */
@@ -473,6 +476,34 @@ export async function invokeRustCommand<T>(cmd: string, args?: Record<string, un
     return await invoke<T>(cmd, args);
   }
   throw new Error(`Rust command "${cmd}" is not available in the browser sandbox.`);
+}
+
+/**
+ * Otevře externí HTTP/HTTPS odkaz ve výchozím systémovém prohlížeči (v Tauri přes Rust příkaz, ve webu přes novou kartu).
+ */
+export async function openExternalUrl(url: string): Promise<void> {
+  const trimmed = url.trim();
+  if (!trimmed || !/^https?:\/\//i.test(trimmed)) return;
+
+  if (isTauri()) {
+    try {
+      await invokeRustCommand<void>('open_external_url', { url: trimmed });
+      return;
+    } catch (err) {
+      console.warn('open_external_url command failed, falling back:', err);
+    }
+  }
+
+  if (typeof document !== 'undefined') {
+    const a = document.createElement('a');
+    a.href = trimmed;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
 }
 
 /**

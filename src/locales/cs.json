@@ -3210,7 +3210,7 @@
   "smart_drop_title": "Otevřít přetažený soubor",
   "smart_drop_desc": "Vyberte vhodný nástroj pro okamžité otevření a načtení tohoto souboru:",
   "load_sample_btn": "Načíst ukázku",
-  "desktop_link_web": "Webová verze",
+  "desktop_link_web": "Web projektu",
   "desktop_link_github": "GitHub",
   "print_btn": "Tisk",
   "settings_only": "Nastavení",
@@ -3220,7 +3220,7 @@
   "security_privacy_desc_web": "Simulujte offline režim a zkontrolujte nebo vymažte místní úložiště prohlížeče.",
   "tab_updates": "Aktualizace",
   "update_available_toast": "Dostupná aktualizace v{version}",
-  "update_available_toast_desc": "Otevřete Nastavení -> Aktualizace pro instalaci a restart.",
+  "update_available_toast_desc": "Klikněte na ikonu stažení v horní liště nebo otevřete Nastavení -> Aktualizace.",
   "updates_title": "Aktualizace desktopové aplikace",
   "updates_desc": "Zkontrolujte nové verze desktopové aplikace OmniDesk a snadno je nainstalujte.",
   "updates_current_version": "Aktuální verze",
@@ -3235,5 +3235,8 @@
   "updates_install_btn": "Stáhnout a nainstalovat",
   "updates_download_release_btn": "Stáhnout aktualizaci",
   "updates_installing_btn": "Stahování a instalace...",
-  "updates_downloading_label": "Stahování aktualizačního balíčku..."
+  "updates_downloading_label": "Stahování aktualizačního balíčku...",
+  "header_update_btn": "Aktualizovat v{version}",
+  "header_update_available_tooltip": "Dostupná aktualizace v{version} — kliknutím stáhnete a aktualizujete",
+  "header_update_installing_tooltip": "Stahování a instalace aktualizace v{version}..."
 }

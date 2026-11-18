@@ -3210,7 +3210,7 @@
   "smart_drop_title": "Open Dropped File",
   "smart_drop_desc": "Choose a matching tool to open and load this file immediately:",
   "load_sample_btn": "Load Sample",
-  "desktop_link_web": "Web Version",
+  "desktop_link_web": "Project Website",
   "desktop_link_github": "GitHub",
   "print_btn": "Print",
   "settings_only": "Settings",
@@ -3220,7 +3220,7 @@
   "security_privacy_desc_web": "Simulate offline mode and inspect or purge local browser storage.",
   "tab_updates": "Updates",
   "update_available_toast": "Update v{version} available",
-  "update_available_toast_desc": "Open Settings -> Updates to install and restart.",
+  "update_available_toast_desc": "Click the download icon in the top bar or open Settings -> Updates to update.",
   "updates_title": "Desktop Application Updates",
   "updates_desc": "Check for new OmniDesk desktop versions and install updates cleanly.",
   "updates_current_version": "Current Version",
@@ -3235,5 +3235,8 @@
   "updates_install_btn": "Download & Install",
   "updates_download_release_btn": "Download Update",
   "updates_installing_btn": "Downloading & Installing...",
-  "updates_downloading_label": "Downloading update package..."
+  "updates_downloading_label": "Downloading update package...",
+  "header_update_btn": "Update v{version}",
+  "header_update_available_tooltip": "Update v{version} available — click to download and update",
+  "header_update_installing_tooltip": "Downloading and installing update v{version}..."
 }

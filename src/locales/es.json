@@ -3210,7 +3210,7 @@
   "smart_drop_title": "Abrir archivo soltado",
   "smart_drop_desc": "Elige una herramienta compatible para abrir y cargar este archivo al instante:",
   "load_sample_btn": "Cargar ejemplo",
-  "desktop_link_web": "Versión Web",
+  "desktop_link_web": "Web del proyecto",
   "desktop_link_github": "GitHub",
   "print_btn": "Imprimir",
   "settings_only": "Ajustes",
@@ -3220,7 +3220,7 @@
   "security_privacy_desc_web": "Simula el modo sin conexión e inspecciona o limpia el almacenamiento local del navegador.",
   "tab_updates": "Actualizaciones",
   "update_available_toast": "Actualización v{version} disponible",
-  "update_available_toast_desc": "Abre Ajustes -> Actualizaciones para instalar y reiniciar.",
+  "update_available_toast_desc": "Haz clic en el icono de descarga en la barra superior o abre Ajustes -> Actualizaciones.",
   "updates_title": "Actualizaciones de la aplicación de escritorio",
   "updates_desc": "Busca nuevas versiones de OmniDesk para escritorio e instala actualizaciones fácilmente.",
   "updates_current_version": "Versión actual",
@@ -3235,5 +3235,8 @@
   "updates_install_btn": "Descargar e instalar",
   "updates_download_release_btn": "Descargar actualización",
   "updates_installing_btn": "Descargando e instalando...",
-  "updates_downloading_label": "Descargando paquete de actualización..."
+  "updates_downloading_label": "Descargando paquete de actualización...",
+  "header_update_btn": "Actualizar v{version}",
+  "header_update_available_tooltip": "Actualización v{version} disponible — haz clic para descargar y actualizar",
+  "header_update_installing_tooltip": "Descargando e instalando actualización v{version}..."
 }

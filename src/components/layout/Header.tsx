@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Search, Star, ArrowLeft, ShieldCheck, Sliders, Menu, Minus, Square, X, WifiOff, Lock, Keyboard, ChevronDown, Check } from 'lucide-react';
+import { Search, Star, ArrowLeft, ShieldCheck, Sliders, Menu, Minus, Square, X, WifiOff, Lock, Keyboard, ChevronDown, Check, Download } from 'lucide-react';
 import { ToolDefinition } from '../../types/tool';
 import { useI18n, SUPPORTED_LANGUAGES, SupportedLanguage } from '../../i18n/context';
 import { getToolCatalogText } from '../../i18n/toolCatalog';
@@ -22,6 +22,10 @@ interface HeaderProps {
   isOffline?: boolean;
   canLock?: boolean;
   onLockNow?: () => void;
+  availableUpdateVersion?: string;
+  isInstallingUpdate?: boolean;
+  updateProgressPercent?: number;
+  onTriggerUpdate?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -39,6 +43,10 @@ export const Header: React.FC<HeaderProps> = ({
   isOffline = false,
   canLock = false,
   onLockNow,
+  availableUpdateVersion,
+  isInstallingUpdate = false,
+  updateProgressPercent,
+  onTriggerUpdate,
 }) => {
   const { language, setLanguage, t } = useI18n();
   const [langMenuOpen, setLangMenuOpen] = useState(false);
@@ -193,7 +201,7 @@ export const Header: React.FC<HeaderProps> = ({
         </button>
       </div>
 
-      {/* Zone 3: PWA Install, Connectivity/Lock, Language, Settings & Window Controls */}
+      {/* Zone 3: PWA Install / Desktop Update Download, Connectivity/Lock, Language, Settings & Window Controls */}
       <div className="flex items-center justify-end gap-1.5 sm:gap-2 shrink-0">
         <button
           onClick={onOpenSearch}
@@ -205,6 +213,36 @@ export const Header: React.FC<HeaderProps> = ({
         </button>
 
         {!runningInTauri && <PWAInstallButton />}
+
+        {runningInTauri && availableUpdateVersion && onTriggerUpdate && (
+          <button
+            type="button"
+            onClick={onTriggerUpdate}
+            disabled={isInstallingUpdate}
+            className="inline-flex items-center gap-1.5 p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-300 hover:text-emerald-100 text-xs font-semibold transition-colors shrink-0 shadow-sm disabled:opacity-60"
+            title={
+              isInstallingUpdate
+                ? t('header_update_installing_tooltip', 'Downloading and installing update v{version}...', {
+                    version: availableUpdateVersion,
+                  })
+                : t('header_update_available_tooltip', 'Update v{version} available — click to download and update', {
+                    version: availableUpdateVersion,
+                  })
+            }
+            aria-label={t('header_update_available_tooltip', 'Update v{version} available — click to download and update', {
+              version: availableUpdateVersion,
+            })}
+          >
+            <Download className={`w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400 shrink-0 ${isInstallingUpdate ? 'animate-bounce' : ''}`} />
+            <span className="hidden sm:inline whitespace-nowrap">
+              {isInstallingUpdate
+                ? typeof updateProgressPercent === 'number'
+                  ? `${updateProgressPercent}%`
+                  : t('updates_installing_btn', 'Downloading & Installing...')
+                : t('header_update_btn', 'Update v{version}', { version: availableUpdateVersion })}
+            </span>
+          </button>
+        )}
 
         {isOffline && (
           <div

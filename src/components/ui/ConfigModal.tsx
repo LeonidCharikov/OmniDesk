@@ -35,7 +35,13 @@ import { UserConfig, ThemeId } from '../../types/tool';
 import { useI18n, SupportedLanguage } from '../../i18n/context';
 import { THEMES } from '../../services/themes';
 import { validateConfigJson } from '../../services/storage';
-import { isTauri, saveTextWithDialog } from '../../services/fileSystemService';
+import {
+  isTauri,
+  OMNIDESK_GITHUB_URL,
+  OMNIDESK_PROJECT_WEB_URL,
+  openExternalUrl,
+  saveTextWithDialog,
+} from '../../services/fileSystemService';
 import type {
   McpConnectedToolCapability,
   McpConnectionStatus,
@@ -89,6 +95,8 @@ interface ConfigModalProps {
   mcpConnectedCapabilities?: McpConnectedToolCapability[];
   onClearMcpLogs?: () => void;
   onReconnectMcp?: () => void;
+  externalUpdateResult?: DesktopUpdateCheckResult | null;
+  onExternalUpdateResultChange?: (res: DesktopUpdateCheckResult | null) => void;
 }
 
 type TabType = ConfigTabType;
@@ -191,6 +199,8 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
   mcpConnectedCapabilities = [],
   onClearMcpLogs,
   onReconnectMcp,
+  externalUpdateResult,
+  onExternalUpdateResultChange,
 }) => {
   const { t, language, setLanguage } = useI18n();
   const runningInTauri = isTauri();
@@ -213,9 +223,15 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
   const [appVersion, setAppVersion] = useState<string>('');
   const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
   const [isInstallingUpdate, setIsInstallingUpdate] = useState(false);
-  const [updateResult, setUpdateResult] = useState<DesktopUpdateCheckResult | null>(null);
+  const [updateResult, setUpdateResult] = useState<DesktopUpdateCheckResult | null>(externalUpdateResult ?? null);
   const [updateProgress, setUpdateProgress] = useState<DesktopUpdateProgress | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  React.useEffect(() => {
+    if (externalUpdateResult) {
+      setUpdateResult(externalUpdateResult);
+    }
+  }, [externalUpdateResult]);
 
   const refreshAudit = React.useCallback(async () => {
     const items = await getStorageAuditAsync();
@@ -249,20 +265,6 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
       cancelled = true;
     };
   }, [isOpen, runningInTauri, activeTab]);
-
-  React.useEffect(() => {
-    const handleToDispose = updateResult?.updateHandle;
-    if (!isOpen && handleToDispose) {
-      void disposeDesktopUpdateHandle(handleToDispose);
-      setUpdateResult(null);
-      setUpdateProgress(null);
-    }
-    return () => {
-      if (handleToDispose) {
-        void disposeDesktopUpdateHandle(handleToDispose);
-      }
-    };
-  }, [isOpen, updateResult]);
 
   if (!isOpen) return null;
 
@@ -546,12 +548,13 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
     if (!runningInTauri || isCheckingUpdate || isInstallingUpdate) return;
     setIsCheckingUpdate(true);
     setUpdateProgress(null);
-    if (updateResult?.updateHandle) {
+    if (updateResult?.updateHandle && updateResult.updateHandle !== externalUpdateResult?.updateHandle) {
       await disposeDesktopUpdateHandle(updateResult.updateHandle);
     }
     try {
       const res = await checkForDesktopUpdate();
       setUpdateResult(res);
+      onExternalUpdateResultChange?.(res);
     } finally {
       setIsCheckingUpdate(false);
     }
@@ -1837,9 +1840,15 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
                         </button>
                       ) : (
                         <a
-                          href={updateResult.releaseUrl || GITHUB_RELEASES_LATEST_URL}
+                          href={updateResult.installerUrl || updateResult.releaseUrl || GITHUB_RELEASES_LATEST_URL}
                           target="_blank"
                           rel="noopener noreferrer"
+                          onClick={e => {
+                            e.preventDefault();
+                            void openExternalUrl(
+                              updateResult.installerUrl || updateResult.releaseUrl || GITHUB_RELEASES_LATEST_URL
+                            );
+                          }}
                           className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition-colors"
                         >
                           <Download className="w-3.5 h-3.5" />
@@ -1889,20 +1898,30 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
           {runningInTauri && (
             <div className="flex flex-wrap items-center gap-2">
               <a
-                href="https://leonidcharikov.github.io/omnidesk.html"
+                href={OMNIDESK_PROJECT_WEB_URL}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={e => {
+                  e.preventDefault();
+                  void openExternalUrl(OMNIDESK_PROJECT_WEB_URL);
+                }}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-medium text-slate-300 hover:text-white transition-colors"
+                title={`${t('desktop_link_web', 'Project Website')} (${OMNIDESK_PROJECT_WEB_URL})`}
               >
                 <Globe className="w-3.5 h-3.5 text-indigo-400" />
-                <span>{t('desktop_link_web', 'Web Version')}</span>
+                <span>{t('desktop_link_web', 'Project Website')}</span>
                 <ExternalLink className="w-3 h-3 text-slate-500" />
               </a>
               <a
-                href="https://github.com/LeonidCharikov/OmniDesk"
+                href={OMNIDESK_GITHUB_URL}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={e => {
+                  e.preventDefault();
+                  void openExternalUrl(OMNIDESK_GITHUB_URL);
+                }}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-medium text-slate-300 hover:text-white transition-colors"
+                title={`${t('desktop_link_github', 'GitHub')} (${OMNIDESK_GITHUB_URL})`}
               >
                 <span>{t('desktop_link_github', 'GitHub')}</span>
                 <ExternalLink className="w-3 h-3 text-slate-500" />

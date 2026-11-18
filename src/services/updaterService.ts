@@ -19,6 +19,7 @@ export interface DesktopUpdateCheckResult {
   date?: string;
   body?: string;
   releaseUrl?: string;
+  installerUrl?: string;
   installMode?: DesktopUpdateInstallMode;
   updateHandle?: Update;
   error?: string;
@@ -73,6 +74,57 @@ export async function isDesktopUpdaterConfigured(): Promise<boolean> {
   }
 }
 
+async function findMatchingAssetUrl(
+  assets: Array<{ name?: string; browser_download_url?: string }> | undefined
+): Promise<string | undefined> {
+  if (!Array.isArray(assets) || assets.length === 0) return undefined;
+  let osPlatform = '';
+  let osArch = '';
+  try {
+    const osPlugin = await import('@tauri-apps/plugin-os');
+    osPlatform = (await osPlugin.platform()).toLowerCase();
+    osArch = (await osPlugin.arch()).toLowerCase();
+  } catch {
+    const ua = typeof navigator !== 'undefined' ? navigator.userAgent.toLowerCase() : '';
+    if (ua.includes('win')) osPlatform = 'windows';
+    else if (ua.includes('mac')) osPlatform = 'macos';
+    else if (ua.includes('linux')) osPlatform = 'linux';
+  }
+
+  const validAssets = assets.filter(
+    (a): a is { name: string; browser_download_url: string } =>
+      Boolean(a.name && a.browser_download_url && !a.name.endsWith('.sig'))
+  );
+
+  if (osPlatform === 'windows') {
+    const exe = validAssets.find(
+      a => a.name.toLowerCase().endsWith('-setup.exe') || a.name.toLowerCase().endsWith('.exe')
+    );
+    if (exe) return exe.browser_download_url;
+    const msi = validAssets.find(a => a.name.toLowerCase().endsWith('.msi'));
+    if (msi) return msi.browser_download_url;
+  } else if (osPlatform === 'macos' || osPlatform === 'darwin') {
+    const isArm = osArch.includes('aarch64') || osArch.includes('arm');
+    const archDmg = validAssets.find(
+      a =>
+        a.name.toLowerCase().endsWith('.dmg') &&
+        (isArm
+          ? a.name.toLowerCase().includes('aarch64') || a.name.toLowerCase().includes('arm64')
+          : a.name.toLowerCase().includes('x64') || a.name.toLowerCase().includes('x86_64'))
+    );
+    if (archDmg) return archDmg.browser_download_url;
+    const anyDmg = validAssets.find(a => a.name.toLowerCase().endsWith('.dmg'));
+    if (anyDmg) return anyDmg.browser_download_url;
+  } else if (osPlatform === 'linux') {
+    const appImage = validAssets.find(a => a.name.toLowerCase().endsWith('.appimage'));
+    if (appImage) return appImage.browser_download_url;
+    const deb = validAssets.find(a => a.name.toLowerCase().endsWith('.deb'));
+    if (deb) return deb.browser_download_url;
+  }
+
+  return undefined;
+}
+
 async function checkGitHubLatestRelease(currentVersion: string): Promise<DesktopUpdateCheckResult> {
   const controller = new AbortController();
   const timeoutId = window.setTimeout(() => controller.abort(), 10000);
@@ -103,11 +155,16 @@ async function checkGitHubLatestRelease(currentVersion: string): Promise<Desktop
       body?: string;
       published_at?: string;
       html_url?: string;
+      assets?: Array<{
+        name?: string;
+        browser_download_url?: string;
+      }>;
     };
 
     const rawTag = (data.tag_name || data.name || '').trim();
     const cleanVersion = rawTag.replace(/^v/i, '');
     if (cleanVersion && compareSemver(cleanVersion, currentVersion) > 0) {
+      const installerUrl = await findMatchingAssetUrl(data.assets);
       return {
         status: 'available',
         currentVersion,
@@ -115,6 +172,7 @@ async function checkGitHubLatestRelease(currentVersion: string): Promise<Desktop
         date: data.published_at ? data.published_at.slice(0, 10) : undefined,
         body: data.body?.trim() || undefined,
         releaseUrl: data.html_url || GITHUB_RELEASES_LATEST_URL,
+        installerUrl,
         installMode: 'release-page',
       };
     }
@@ -168,11 +226,11 @@ export async function checkForDesktopUpdate(): Promise<DesktopUpdateCheckResult>
       updateHandle: update,
     };
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    const lower = message.toLowerCase();
-    if (lower.includes('plugin updater not found') || lower.includes('pubkey')) {
-      return checkGitHubLatestRelease(currentVersion);
+    const fallbackResult = await checkGitHubLatestRelease(currentVersion);
+    if (fallbackResult.status === 'available' || fallbackResult.status === 'up-to-date') {
+      return fallbackResult;
     }
+    const message = err instanceof Error ? err.message : String(err);
     return {
       status: 'error',
       currentVersion,

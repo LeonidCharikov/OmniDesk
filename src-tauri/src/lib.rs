@@ -181,6 +181,45 @@ fn is_updater_configured(app: AppHandle) -> bool {
     }
 }
 
+#[tauri::command]
+fn open_external_url(url: String) -> Result<(), String> {
+    let trimmed = url.trim();
+    if !(trimmed.starts_with("https://") || trimmed.starts_with("http://")) {
+        return Err("Only http:// and https:// URLs are allowed.".to_string());
+    }
+    if trimmed.chars().any(|c| c.is_control()) {
+        return Err("URL contains invalid control characters.".to_string());
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        std::process::Command::new("rundll32")
+            .arg("url.dll,FileProtocolHandler")
+            .arg(trimmed)
+            .spawn()
+            .or_else(|_| std::process::Command::new("explorer").arg(trimmed).spawn())
+            .map_err(|e| e.to_string())?;
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        std::process::Command::new("open")
+            .arg(trimmed)
+            .spawn()
+            .map_err(|e| e.to_string())?;
+    }
+
+    #[cfg(all(unix, not(target_os = "macos")))]
+    {
+        std::process::Command::new("xdg-open")
+            .arg(trimmed)
+            .spawn()
+            .map_err(|e| e.to_string())?;
+    }
+
+    Ok(())
+}
+
 fn spawn_mcp_stdio_reader(app_handle: AppHandle) {
     std::thread::spawn(move || {
         let stdin = std::io::stdin();
@@ -244,7 +283,8 @@ pub fn run() {
             mcp_stdio_tx,
             set_close_to_tray,
             take_opened_cli_file,
-            is_updater_configured
+            is_updater_configured,
+            open_external_url
         ])
         .setup(|app| {
             #[cfg(desktop)]

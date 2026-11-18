@@ -19,8 +19,20 @@ import { ErrorBoundary } from './components/ui/ErrorBoundary';
 import { DEFAULT_SHORTCUTS, isTypingTarget, matchesShortcutCombo } from './services/shortcutsService';
 import { setPendingToolPipe } from './services/toolPipeService';
 import { toastService } from './services/toastService';
-import { invokeRustCommand, isTauri, registerTauriDropListener } from './services/fileSystemService';
-import { checkForDesktopUpdate, disposeDesktopUpdateHandle } from './services/updaterService';
+import {
+  invokeRustCommand,
+  isTauri,
+  openExternalUrl,
+  registerTauriDropListener,
+} from './services/fileSystemService';
+import {
+  checkForDesktopUpdate,
+  DesktopUpdateCheckResult,
+  DesktopUpdateProgress,
+  disposeDesktopUpdateHandle,
+  GITHUB_RELEASES_LATEST_URL,
+  installDesktopUpdate,
+} from './services/updaterService';
 import type {
   McpConnectedToolCapability,
   McpConnectionStatus,
@@ -97,6 +109,9 @@ export default function App() {
   const [mcpStatus, setMcpStatus] = useState<McpConnectionStatus>('disconnected');
   const [mcpError, setMcpError] = useState<string | undefined>(undefined);
   const [mcpLogs, setMcpLogs] = useState<McpLogEntry[]>([]);
+  const [desktopUpdateResult, setDesktopUpdateResult] = useState<DesktopUpdateCheckResult | null>(null);
+  const [isInstallingDesktopUpdate, setIsInstallingDesktopUpdate] = useState(false);
+  const [desktopUpdateProgress, setDesktopUpdateProgress] = useState<DesktopUpdateProgress | null>(null);
   const isLockedRef = useRef(isLocked);
   isLockedRef.current = isLocked;
   const selectedToolIdRef = useRef(selectedToolId);
@@ -429,30 +444,94 @@ export default function App() {
       .catch(() => {});
   }, []);
 
-  // Silent once-per-session desktop auto-update check (Desktop / Tauri only)
+  // Ensure any external <a href="http..." target="_blank"> opens in the OS default browser when running in Tauri
+  useEffect(() => {
+    if (!runningInTauri) return;
+    const handleDocumentLinkClick = (event: MouseEvent) => {
+      if (event.defaultPrevented || event.button !== 0) return;
+      const target = event.target instanceof Element ? event.target.closest('a[href]') : null;
+      if (!target) return;
+      const href = target.getAttribute('href')?.trim() || '';
+      if (!/^https?:\/\//i.test(href)) return;
+      const isBlankTarget = target.getAttribute('target') === '_blank';
+      let isExternalOrigin = false;
+      try {
+        isExternalOrigin = new URL(href, window.location.href).origin !== window.location.origin;
+      } catch {
+        isExternalOrigin = true;
+      }
+      if (isBlankTarget || isExternalOrigin) {
+        event.preventDefault();
+        void openExternalUrl(href);
+      }
+    };
+    document.addEventListener('click', handleDocumentLinkClick);
+    return () => document.removeEventListener('click', handleDocumentLinkClick);
+  }, [runningInTauri]);
+
+  // Once-per-session desktop auto-update check on app open (Desktop / Tauri only)
   useEffect(() => {
     if (!runningInTauri || didCheckUpdateRef.current) return;
     didCheckUpdateRef.current = true;
     let cancelled = false;
     const timerId = window.setTimeout(() => {
       void checkForDesktopUpdate().then(res => {
-        if (!cancelled && res.status === 'available' && res.availableVersion) {
+        if (cancelled) {
+          void disposeDesktopUpdateHandle(res.updateHandle);
+          return;
+        }
+        setDesktopUpdateResult(res);
+        if (res.status === 'available' && res.availableVersion) {
           toastService.show({
             type: 'info',
             title: t('update_available_toast', 'Update v{version} available', { version: res.availableVersion }),
-            message: t('update_available_toast_desc', 'Open Settings -> Updates to install and restart.'),
-            durationMs: 6500,
+            message: t(
+              'update_available_toast_desc',
+              'Click the download icon in the top bar or open Settings -> Updates to update.'
+            ),
+            durationMs: 7500,
           });
         }
-        void disposeDesktopUpdateHandle(res.updateHandle);
       });
-    }, 2500);
+    }, 1000);
 
     return () => {
       cancelled = true;
       window.clearTimeout(timerId);
     };
   }, [runningInTauri, t]);
+
+  const handleTriggerMainScreenUpdate = useCallback(async () => {
+    if (!runningInTauri || !desktopUpdateResult || desktopUpdateResult.status !== 'available' || isInstallingDesktopUpdate) {
+      return;
+    }
+
+    if (desktopUpdateResult.updateHandle) {
+      setIsInstallingDesktopUpdate(true);
+      setDesktopUpdateProgress({ downloadedBytes: 0, percent: 0 });
+      try {
+        await installDesktopUpdate(desktopUpdateResult.updateHandle, progress => {
+          setDesktopUpdateProgress(progress);
+        });
+      } catch (err) {
+        setIsInstallingDesktopUpdate(false);
+        setDesktopUpdateProgress(null);
+        const fallbackUrl =
+          desktopUpdateResult.installerUrl || desktopUpdateResult.releaseUrl || GITHUB_RELEASES_LATEST_URL;
+        void openExternalUrl(fallbackUrl);
+        toastService.show({
+          type: 'error',
+          title: t('updates_error_title', 'Unable to check for updates'),
+          message: err instanceof Error ? err.message : String(err),
+        });
+      }
+      return;
+    }
+
+    const downloadUrl =
+      desktopUpdateResult.installerUrl || desktopUpdateResult.releaseUrl || GITHUB_RELEASES_LATEST_URL;
+    await openExternalUrl(downloadUrl);
+  }, [runningInTauri, desktopUpdateResult, isInstallingDesktopUpdate, t]);
 
   // Manage MCP Bridge client lifecycle (Desktop / Tauri only — never initialized in web version)
   const mcpClientRef = useRef<OmniDeskMcpClient | null>(null);
@@ -745,6 +824,12 @@ export default function App() {
         defaultCurrency={config.defaultCurrency || config.widgets?.selectedFiat || 'CZK'}
         isOpen={isSidebarOpen}
         onToggle={toggleSidebar}
+        availableUpdateVersion={
+          desktopUpdateResult?.status === 'available' ? desktopUpdateResult.availableVersion : undefined
+        }
+        isInstallingUpdate={isInstallingDesktopUpdate}
+        updateProgressPercent={desktopUpdateProgress?.percent}
+        onTriggerUpdate={() => void handleTriggerMainScreenUpdate()}
       />
 
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
@@ -770,6 +855,12 @@ export default function App() {
             setIsLocked(true);
             toastService.show({ type: 'info', title: t('workspace_locked_toast', 'Workspace locked') });
           }}
+          availableUpdateVersion={
+            desktopUpdateResult?.status === 'available' ? desktopUpdateResult.availableVersion : undefined
+          }
+          isInstallingUpdate={isInstallingDesktopUpdate}
+          updateProgressPercent={desktopUpdateProgress?.percent}
+          onTriggerUpdate={() => void handleTriggerMainScreenUpdate()}
         />
 
         <main className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-6 md:p-8 bg-slate-950/40 relative">
@@ -883,6 +974,8 @@ export default function App() {
         mcpConnectedCapabilities={mcpConnectedCapabilities}
         onClearMcpLogs={handleClearMcpLogs}
         onReconnectMcp={handleReconnectMcp}
+        externalUpdateResult={desktopUpdateResult}
+        onExternalUpdateResultChange={setDesktopUpdateResult}
       />
 
       <ShortcutsHelpModal

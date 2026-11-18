@@ -3210,7 +3210,7 @@
   "smart_drop_title": "Открыть файл",
   "smart_drop_desc": "Выберите подходящий инструмент для мгновенного открытия этого файла:",
   "load_sample_btn": "Загрузить пример",
-  "desktop_link_web": "Веб-версия",
+  "desktop_link_web": "Сайт проекта",
   "desktop_link_github": "GitHub",
   "print_btn": "Печать",
   "settings_only": "Настройки",
@@ -3220,7 +3220,7 @@
   "security_privacy_desc_web": "Имитируйте офлайн-режим, проверяйте или очищайте локальное хранилище браузера.",
   "tab_updates": "Обновления",
   "update_available_toast": "Доступно обновление v{version}",
-  "update_available_toast_desc": "Откройте Настройки -> Обновления для установки и перезапуска.",
+  "update_available_toast_desc": "Нажмите на значок загрузки в верхней панели или откройте Настройки -> Обновления.",
   "updates_title": "Обновления настольного приложения",
   "updates_desc": "Проверяйте наличие новых версий OmniDesk и устанавливайте обновления в один клик.",
   "updates_current_version": "Текущая версия",
@@ -3235,5 +3235,8 @@
   "updates_install_btn": "Скачать и установить",
   "updates_download_release_btn": "Скачать обновление",
   "updates_installing_btn": "Скачивание и установка...",
-  "updates_downloading_label": "Загрузка пакета обновления..."
+  "updates_downloading_label": "Загрузка пакета обновления...",
+  "header_update_btn": "Обновить v{version}",
+  "header_update_available_tooltip": "Доступно обновление v{version} — нажмите, чтобы скачать и обновить",
+  "header_update_installing_tooltip": "Скачивание и установка обновления v{version}..."
 }
