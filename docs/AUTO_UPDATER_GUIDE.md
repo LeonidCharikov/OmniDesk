@@ -6,7 +6,7 @@ OmniDesk's native **Tauri v2 Desktop** application supports cryptographically si
 
 ## 1. How the Automated Update Flow Works
 
-1. **Tag & CI Build (`vX.Y.Z`)**: When you push a release tag (e.g., `git tag v0.1.16 && git push origin v0.1.16`), `.github/workflows/release.yml` runs tests, i18n validation, Playwright E2E checks, and builds native Desktop installers across Windows, macOS, and Linux.
+1. **Tag & CI Build (`vX.Y.Z`)**: When you push a release tag (e.g., `git tag v0.1.17 && git push origin v0.1.17`), `.github/workflows/release.yml` runs tests, i18n validation, Playwright E2E checks, and builds native Desktop installers across Windows, macOS, and Linux.
 2. **Cryptographic Signing**: Each installer package is signed using your Ed25519 private signing key (`TAURI_SIGNING_PRIVATE_KEY`), producing `.sig` signature files and a unified **`latest.json`** updater manifest attached directly to the GitHub Release.
 3. **Startup Check & Toast Notification**: When a user opens OmniDesk Desktop, `App.tsx` waits briefly after launch and calls `checkForDesktopUpdate()` against:
    `https://github.com/LeonidCharikov/OmniDesk/releases/latest/download/latest.json`
@@ -48,19 +48,19 @@ In your GitHub repository go to **Settings → Secrets and variables → Actions
 ## 4. Publishing a New Auto-Update Release
 
 1. Bump the version consistently in:
-   - `package.json` (`"version": "0.1.16"`)
-   - `src-tauri/tauri.conf.json` (`"version": "0.1.16"`)
-   - `src-tauri/Cargo.toml` (`version = "0.1.16"`)
+   - `package.json` (`"version": "0.1.17"`)
+   - `src-tauri/tauri.conf.json` (`"version": "0.1.17"`)
+   - `src-tauri/Cargo.toml` (`version = "0.1.17"`)
 2. Commit and push to `main`:
    ```bash
    git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml
-   git commit -m "chore(release): bump version to v0.1.16"
+   git commit -m "chore(release): bump version to v0.1.17"
    git push origin main
    ```
 3. Create and push the matching `v*` tag:
    ```bash
-   git tag v0.1.16
-   git push origin v0.1.16
+   git tag v0.1.17
+   git push origin v0.1.17
    ```
 4. `.github/workflows/release.yml` automatically compiles Windows/macOS/Linux bundles, signs them, uploads `.sig` + installer artifacts + `latest.json`, and publishes the GitHub Release.
-5. Verify that `https://github.com/LeonidCharikov/OmniDesk/releases/latest/download/latest.json` downloads valid JSON with `"version": "0.1.16"` and signed `platforms` entries.
+5. Verify that `https://github.com/LeonidCharikov/OmniDesk/releases/latest/download/latest.json` downloads valid JSON with `"version": "0.1.17"` and signed `platforms` entries.

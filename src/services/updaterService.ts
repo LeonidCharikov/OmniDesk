@@ -60,7 +60,7 @@ export async function getDesktopAppVersion(): Promise<string> {
     const { getVersion } = await import('@tauri-apps/api/app');
     return await getVersion();
   } catch {
-    return '0.1.16';
+    return '0.1.17';
   }
 }
 
