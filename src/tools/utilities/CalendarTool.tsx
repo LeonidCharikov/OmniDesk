@@ -448,7 +448,7 @@ export const CalendarTool: React.FC = () => {
       )}
 
       {/* ── Navigation Bar ───────────────────────────────────── */}
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3">
         <div className="flex items-center gap-2">
           <button onClick={() => navigate(-1)} className="p-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition-colors">
             <ChevronLeft className="w-4 h-4" />
@@ -461,23 +461,26 @@ export const CalendarTool: React.FC = () => {
           </button>
         </div>
 
-        <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800">
-          <h3 className="text-sm font-semibold text-white mb-2">{t('working_days_planning', 'Plánování pracovních dnů a dovolené')}</h3>
-          <div className="flex flex-wrap items-end gap-2">
-            <label className="text-xs text-slate-400">{t('start_date', 'Počáteční datum')}<input className="block mt-1 px-2 py-1.5 rounded bg-slate-950 border border-slate-800 text-white" type="date" value={workdayStart} onChange={event => setWorkdayStart(event.target.value)} /></label>
-            <label className="text-xs text-slate-400">{t('working_days', 'Pracovní dny')}<input className="block mt-1 w-24 px-2 py-1.5 rounded bg-slate-950 border border-slate-800 text-white" type="number" min="0" value={workdayCount} onChange={event => setWorkdayCount(Number(event.target.value))} /></label>
-            <button onClick={calculateWorkday} className="px-3 py-1.5 rounded bg-indigo-600 hover:bg-indigo-500 text-white text-xs">{t('calculate_date', 'Vypočítat datum')}</button>
-            {workdayResult && <span className="text-xs text-emerald-400">{t('result', 'Výsledek')}: {workdayResult}</span>}
-          </div>
-        </div>
         <h3 className="text-sm font-bold text-white tracking-tight">{getTitle()}</h3>
+
         <button
           onClick={() => openNewEvent(dateToStr(selectedDate), new Date().getHours())}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition-colors shrink-0"
         >
           <Plus className="w-3.5 h-3.5" />
           <span>{t('cal_new_event', 'Nová událost')}</span>
         </button>
+      </div>
+
+      {/* ── Working Days Planning Card ───────────────────────── */}
+      <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800">
+        <h3 className="text-sm font-semibold text-white mb-2">{t('working_days_planning', 'Plánování pracovních dnů a dovolené')}</h3>
+        <div className="flex flex-wrap items-end gap-2">
+          <label className="text-xs text-slate-400">{t('start_date', 'Počáteční datum')}<input className="block mt-1 px-2 py-1.5 rounded bg-slate-950 border border-slate-800 text-white" type="date" value={workdayStart} onChange={event => setWorkdayStart(event.target.value)} /></label>
+          <label className="text-xs text-slate-400">{t('working_days', 'Pracovní dny')}<input className="block mt-1 w-24 px-2 py-1.5 rounded bg-slate-950 border border-slate-800 text-white" type="number" min="0" value={workdayCount} onChange={event => setWorkdayCount(Number(event.target.value))} /></label>
+          <button onClick={calculateWorkday} className="px-3 py-1.5 rounded bg-indigo-600 hover:bg-indigo-500 text-white text-xs">{t('calculate_date', 'Vypočítat datum')}</button>
+          {workdayResult && <span className="text-xs text-emerald-400">{t('result', 'Výsledek')}: {workdayResult}</span>}
+        </div>
       </div>
 
       {/* ── Calendar Views ───────────────────────────────────── */}

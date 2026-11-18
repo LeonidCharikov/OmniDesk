@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { TrendingUp, Plus, Trash2 } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
-import { useAppCurrency, formatCurrency, getCurrencySymbol, SUPPORTED_FIAT_CURRENCIES } from '../../services/currencyService';
+import { useAppCurrency, formatCurrency, getCurrencySymbol } from '../../services/currencyService';
+import { AppCurrencyBadge } from '../../components/ui/AppCurrencyBadge';
 
 function computeNpv(cashflows: number[], ratePct: number): number {
   const r = ratePct / 100;
@@ -58,7 +59,7 @@ function computeIrr(cashflows: number[]): number | null {
 
 export const NpvIrrCalcTool: React.FC = () => {
   const { t } = useI18n();
-  const [currency, setCurrency] = useAppCurrency();
+  const [currency] = useAppCurrency();
   const currSymbol = getCurrencySymbol(currency);
 
   const [discountRate, setDiscountRate] = useState('8');
@@ -130,17 +131,7 @@ export const NpvIrrCalcTool: React.FC = () => {
             </div>
           </div>
 
-          <select
-            value={currency}
-            onChange={e => setCurrency(e.target.value)}
-            className="px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-xs font-medium text-slate-200"
-          >
-            {SUPPORTED_FIAT_CURRENCIES.map(c => (
-              <option key={c.code} value={c.code}>
-                {c.code} ({c.symbol})
-              </option>
-            ))}
-          </select>
+          <AppCurrencyBadge currency={currency} />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

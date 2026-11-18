@@ -226,7 +226,7 @@ export const PomodoroTimerTool: React.FC = () => {
         </div>
 
         {/* Tab switch */}
-        <div className="flex items-center gap-1 p-1 bg-slate-900 border border-slate-800 rounded-xl">
+        <div className="flex flex-wrap items-center gap-1 p-1 bg-slate-900 border border-slate-800 rounded-xl">
           <button
             onClick={() => setActiveTab('pomodoro')}
             className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 ${
@@ -268,9 +268,9 @@ export const PomodoroTimerTool: React.FC = () => {
 
       {/* 1. Pomodoro Focus View */}
       {activeTab === 'pomodoro' && (
-        <div className="p-8 rounded-2xl bg-indigo-950/20 border border-indigo-500/30 flex flex-col items-center justify-center space-y-6 text-center">
+        <div className="p-4 sm:p-8 rounded-2xl bg-indigo-950/20 border border-indigo-500/30 flex flex-col items-center justify-center space-y-6 text-center">
           {/* Mode switch */}
-          <div className="flex items-center gap-2 p-1 bg-slate-900/80 border border-slate-800 rounded-xl">
+          <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 p-1 bg-slate-900/80 border border-slate-800 rounded-xl">
             <button
               onClick={() => setPomoMode('work')}
               className={`px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors ${

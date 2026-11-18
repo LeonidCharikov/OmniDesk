@@ -122,7 +122,7 @@ export const OnlineTranslatorTool: React.FC<Props> = ({ isOffline }) => {
   return (
     <div className="space-y-6">
       <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <h2 className="text-lg font-semibold text-white">
             {t('tool_online_translator_title', 'Hybridní Online Překladač')}
           </h2>
@@ -136,8 +136,8 @@ export const OnlineTranslatorTool: React.FC<Props> = ({ isOffline }) => {
         </p>
       </div>
 
-      <div className="flex items-center justify-between p-3 bg-slate-900/60 rounded-xl border border-slate-800">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 p-3 bg-slate-900/60 rounded-xl border border-slate-800">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <label htmlFor={sourceLangId} className="sr-only">{t('source_language', 'Výchozí jazyk')}</label>
           <select
             id={sourceLangId}

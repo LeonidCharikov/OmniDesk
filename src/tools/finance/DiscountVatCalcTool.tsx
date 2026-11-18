@@ -5,13 +5,10 @@ import {
   Copy,
   Check,
   Tag,
-  Coins,
 } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
-import {
-  useAppCurrency,
-  SUPPORTED_FIAT_CURRENCIES,
-} from '../../services/currencyService';
+import { useAppCurrency } from '../../services/currencyService';
+import { AppCurrencyBadge } from '../../components/ui/AppCurrencyBadge';
 
 export const DiscountVatCalcTool: React.FC = () => {
   const { t } = useI18n();
@@ -20,7 +17,7 @@ export const DiscountVatCalcTool: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'discount' | 'vat' | 'tip'>('discount');
 
   // Reactive currency from user config
-  const [currency, setCurrency] = useAppCurrency();
+  const [currency] = useAppCurrency();
 
   const [copied, setCopied] = useState(false);
 
@@ -107,25 +104,11 @@ export const DiscountVatCalcTool: React.FC = () => {
       {/* Header */}
       <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <h2 className="text-lg font-semibold text-white">
               {t('tool_discount_vat_calc_title', 'Kalkulačka slev, DPH a spropitného')}
             </h2>
-            <div className="flex items-center gap-1.5 bg-slate-950 border border-slate-700/80 rounded-lg px-2 py-0.5">
-              <Coins className="w-3.5 h-3.5 text-indigo-400" />
-              <select
-                value={currency}
-                onChange={e => setCurrency(e.target.value)}
-                className="bg-transparent text-xs font-semibold text-indigo-300 focus:outline-none cursor-pointer"
-                title={t('select_currency', 'Zvolit měnu')}
-              >
-                {SUPPORTED_FIAT_CURRENCIES.map(c => (
-                  <option key={c.code} value={c.code} className="bg-slate-900 text-slate-200">
-                    {c.flag} {c.code} ({c.symbol})
-                  </option>
-                ))}
-              </select>
-            </div>
+            <AppCurrencyBadge currency={currency} compact />
           </div>
           <p className="text-sm text-slate-400 mt-1">
             {t(
@@ -136,7 +119,7 @@ export const DiscountVatCalcTool: React.FC = () => {
         </div>
 
         {/* Tab switcher */}
-        <div className="flex items-center gap-1 p-1 bg-slate-900 border border-slate-800 rounded-xl">
+        <div className="flex flex-wrap items-center gap-1 p-1 bg-slate-900 border border-slate-800 rounded-xl">
           <button
             onClick={() => setActiveTab('discount')}
             className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 ${

@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { PiggyBank } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
-import { useAppCurrency, formatCurrency, getCurrencySymbol, SUPPORTED_FIAT_CURRENCIES } from '../../services/currencyService';
+import { useAppCurrency, formatCurrency, getCurrencySymbol } from '../../services/currencyService';
+import { AppCurrencyBadge } from '../../components/ui/AppCurrencyBadge';
 
 interface ProjectionYear {
   year: number;
@@ -13,7 +14,7 @@ interface ProjectionYear {
 
 export const FireSimulatorTool: React.FC = () => {
   const { t } = useI18n();
-  const [currency, setCurrency] = useAppCurrency();
+  const [currency] = useAppCurrency();
   const currSymbol = getCurrencySymbol(currency);
 
   const [currentAge, setCurrentAge] = useState('30');
@@ -126,17 +127,7 @@ export const FireSimulatorTool: React.FC = () => {
             </div>
           </div>
 
-          <select
-            value={currency}
-            onChange={e => setCurrency(e.target.value)}
-            className="px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-xs font-medium text-slate-200"
-          >
-            {SUPPORTED_FIAT_CURRENCIES.map(c => (
-              <option key={c.code} value={c.code}>
-                {c.code} ({c.symbol})
-              </option>
-            ))}
-          </select>
+          <AppCurrencyBadge currency={currency} />
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">

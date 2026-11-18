@@ -360,11 +360,18 @@ export default function App() {
         handleSelectTool(target.id);
       }
     };
+    const handleOpenSettingsEvent = (event: Event) => {
+      const tab = (event as CustomEvent<{ tab?: ConfigTabType }>).detail?.tab;
+      setConfigInitialTab(tab);
+      setIsConfigOpen(true);
+    };
     window.addEventListener('omnidesk-config-updated', handleConfigUpdated);
     window.addEventListener('omnidesk-open-tool', handleOpenToolEvent);
+    window.addEventListener('omnidesk-open-settings', handleOpenSettingsEvent);
     return () => {
       window.removeEventListener('omnidesk-config-updated', handleConfigUpdated);
       window.removeEventListener('omnidesk-open-tool', handleOpenToolEvent);
+      window.removeEventListener('omnidesk-open-settings', handleOpenSettingsEvent);
     };
   }, [handleSelectTool]);
 
@@ -797,7 +804,7 @@ export default function App() {
   }
 
   return (
-    <div className={`flex h-screen w-screen overflow-hidden font-sans text-slate-100 theme-${config.themeId || 'midnight'} bg-slate-950`}>
+    <div className={`flex h-[100dvh] w-screen overflow-hidden font-sans text-slate-100 theme-${config.themeId || 'midnight'} bg-slate-950`}>
       {isSidebarOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-30 sm:hidden"
@@ -834,7 +841,7 @@ export default function App() {
         onTriggerUpdate={() => void handleTriggerMainScreenUpdate()}
       />
 
-      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 h-[100dvh] overflow-hidden">
         <Header
           currentCategoryName={getCategoryDisplayName(activeCategory)}
           activeTool={activeTool}
@@ -886,7 +893,7 @@ export default function App() {
                   </button>
                 </div>
                 {isToolInfoOpen && (
-                  <div role="dialog" aria-modal="true" className="absolute z-30 right-0 top-10 w-80 p-4 rounded-xl border border-indigo-500/40 bg-slate-900 shadow-2xl">
+                  <div role="dialog" aria-modal="true" className="absolute z-30 right-0 top-10 w-80 max-w-[calc(100vw-2rem)] p-4 rounded-xl border border-indigo-500/40 bg-slate-900 shadow-2xl">
                     <div className="flex items-start justify-between gap-3">
                       <h3 className="font-semibold text-white">{getToolCatalogText(activeTool.id, 'title', language, t(`tool_${activeTool.id.replace(/-/g, '_')}_title`, activeTool.title))}</h3>
                       <button type="button" onClick={() => setIsToolInfoOpen(false)} className="text-slate-400 hover:text-white" aria-label={t('close', 'Close')}>×</button>

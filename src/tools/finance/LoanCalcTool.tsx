@@ -1,17 +1,17 @@
 import React, { useState, useId } from 'react';
-import { Download, Calendar, Coins } from 'lucide-react';
+import { Download, Calendar } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
 import { saveTextWithDialog } from '../../services/fileSystemService';
 import {
   useAppCurrency,
   getCurrencySymbol,
   formatCurrency,
-  SUPPORTED_FIAT_CURRENCIES,
 } from '../../services/currencyService';
+import { AppCurrencyBadge } from '../../components/ui/AppCurrencyBadge';
 
 export const LoanCalcTool: React.FC = () => {
   const { t, language } = useI18n();
-  const [currency, setCurrency] = useAppCurrency();
+  const [currency] = useAppCurrency();
   const currSymbol = getCurrencySymbol(currency);
   const [principal, setPrincipal] = useState<number>(3000000);
   const [interestRate, setInterestRate] = useState<number>(4.9);
@@ -93,21 +93,8 @@ export const LoanCalcTool: React.FC = () => {
           </p>
         </div>
 
-        {/* Currency Switcher */}
-        <div className="flex items-center gap-2 self-start sm:self-auto bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 shrink-0">
-          <Coins className="w-4 h-4 text-indigo-400" />
-          <span className="text-xs text-slate-400 font-medium">{t('currency', 'Měna')}:</span>
-          <select
-            value={currency}
-            onChange={e => setCurrency(e.target.value)}
-            className="bg-slate-950 border border-slate-700/80 rounded px-2 py-0.5 text-xs font-semibold text-white focus:outline-none focus:border-indigo-500 cursor-pointer"
-          >
-            {SUPPORTED_FIAT_CURRENCIES.map(c => (
-              <option key={c.code} value={c.code} className="bg-slate-900 text-slate-200">
-                {c.flag} {c.code} ({c.symbol})
-              </option>
-            ))}
-          </select>
+        <div className="self-start sm:self-auto">
+          <AppCurrencyBadge currency={currency} />
         </div>
       </div>
 

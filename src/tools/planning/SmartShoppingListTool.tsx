@@ -14,8 +14,8 @@ import { useI18n } from '../../i18n/context';
 import {
   useAppCurrency,
   formatCurrency,
-  SUPPORTED_FIAT_CURRENCIES,
 } from '../../services/currencyService';
+import { AppCurrencyBadge } from '../../components/ui/AppCurrencyBadge';
 
 export interface ShoppingItem {
   id: string;
@@ -33,7 +33,7 @@ export const SmartShoppingListTool: React.FC = () => {
   const { t } = useI18n();
 
   // Reactive currency from user config
-  const [currency, setCurrency] = useAppCurrency();
+  const [currency] = useAppCurrency();
 
   const [items, setItems] = useState<ShoppingItem[]>(() => {
     try {
@@ -183,24 +183,14 @@ export const SmartShoppingListTool: React.FC = () => {
       {/* Header Bar */}
       <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-lg font-semibold text-white">
               {t('tool_shopping_list_title', 'Chytrý nákupní lístek & Checklist')}
             </h2>
             <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-950/60 border border-emerald-800/60 text-emerald-400">
               {pendingCount} {t('items_remaining', 'zbývá')}
             </span>
-            <select
-              value={currency}
-              onChange={e => setCurrency(e.target.value)}
-              className="bg-slate-950 border border-slate-700/80 rounded px-1.5 py-0.5 text-[11px] font-semibold text-indigo-300 focus:outline-none cursor-pointer"
-            >
-              {SUPPORTED_FIAT_CURRENCIES.map(c => (
-                <option key={c.code} value={c.code} className="bg-slate-900 text-slate-200">
-                  {c.flag} {c.code}
-                </option>
-              ))}
-            </select>
+            <AppCurrencyBadge currency={currency} compact />
           </div>
           <p className="text-sm text-slate-400 mt-1">
             {t(

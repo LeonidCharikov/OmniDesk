@@ -449,11 +449,11 @@ export const FunctionGrapherTool: React.FC = () => {
             {functions.map(fnObj => (
               <div
                 key={fnObj.id}
-                className="flex items-center gap-3 p-2.5 rounded-xl bg-slate-950 border border-slate-800/80"
+                className="flex items-center gap-2 sm:gap-3 p-2.5 rounded-xl bg-slate-950 border border-slate-800/80 min-w-0"
               >
                 <button
                   onClick={() => toggleFunctionVisibility(fnObj.id)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-white transition-colors"
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-white transition-colors shrink-0"
                   title={fnObj.visible ? t('hide_function', 'Skrýt funkci') : t('show_function', 'Zobrazit funkci')}
                 >
                   {fnObj.visible ? <Eye className="w-4 h-4 text-emerald-400" /> : <EyeOff className="w-4 h-4" />}
@@ -473,7 +473,7 @@ export const FunctionGrapherTool: React.FC = () => {
                   value={fnObj.expr}
                   onChange={e => updateFunctionExpr(fnObj.id, e.target.value)}
                   placeholder={t('function_placeholder', 'např. sin(x), x^2 - 3, 2*x')}
-                  className="flex-1 px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-white font-mono text-sm focus:border-indigo-500 focus:outline-none"
+                  className="flex-1 min-w-0 w-full px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-white font-mono text-sm focus:border-indigo-500 focus:outline-none"
                 />
               </div>
             ))}

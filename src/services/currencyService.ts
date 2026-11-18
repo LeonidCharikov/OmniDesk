@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { loadUserConfig } from './storage';
+import { loadUserConfig, saveUserConfig } from './storage';
 import { UserConfig } from '../types/tool';
 
 export interface FiatRateInfo {
@@ -91,37 +91,66 @@ export function convertCryptoToFiat(
   return (cryptoUsdPrice * usdRateInCzk) / toRateInCzk;
 }
 
+function readConfiguredCurrency(): string {
+  try {
+    const config = loadUserConfig();
+    return config.defaultCurrency || config.widgets?.selectedFiat || 'CZK';
+  } catch {
+    return 'CZK';
+  }
+}
+
 /**
  * Hook providing reactive access to the user-configured default currency.
  */
 export function useAppCurrency(initialOverride?: string): [string, (newCurrency: string) => void] {
-  const [currency, setCurrency] = useState<string>(() => {
-    if (initialOverride) return initialOverride;
-    try {
-      const config = loadUserConfig();
-      return config.defaultCurrency || config.widgets?.selectedFiat || 'CZK';
-    } catch {
-      return 'CZK';
-    }
-  });
+  const [currency, setCurrency] = useState<string>(() => initialOverride || readConfiguredCurrency());
 
   useEffect(() => {
     if (initialOverride) {
       setCurrency(initialOverride);
       return;
     }
-    const handler = (e: Event) => {
-      const customEvent = e as CustomEvent<UserConfig>;
-      if (customEvent.detail?.defaultCurrency) {
-        setCurrency(customEvent.detail.defaultCurrency);
-      }
+
+    const syncFromConfig = (cfg?: Partial<UserConfig>) => {
+      const next = cfg?.defaultCurrency || cfg?.widgets?.selectedFiat || readConfiguredCurrency();
+      setCurrency(next);
     };
-    window.addEventListener('omnidesk-config-updated', handler);
-    return () => window.removeEventListener('omnidesk-config-updated', handler);
+
+    const handleConfigUpdated = (e: Event) => {
+      const customEvent = e as CustomEvent<UserConfig>;
+      syncFromConfig(customEvent.detail);
+    };
+
+    const handleStorage = () => {
+      syncFromConfig();
+    };
+
+    window.addEventListener('omnidesk-config-updated', handleConfigUpdated);
+    window.addEventListener('storage', handleStorage);
+    return () => {
+      window.removeEventListener('omnidesk-config-updated', handleConfigUpdated);
+      window.removeEventListener('storage', handleStorage);
+    };
   }, [initialOverride]);
 
   const updateCurrency = useCallback((newCurr: string) => {
     setCurrency(newCurr);
+    try {
+      const current = loadUserConfig();
+      if (current.defaultCurrency !== newCurr) {
+        saveUserConfig({
+          ...current,
+          defaultCurrency: newCurr,
+          widgets: {
+            ...current.widgets,
+            selectedFiat: newCurr,
+          },
+        });
+      }
+    } catch {
+      // ignore storage errors
+    }
   }, []);
 
   return [currency, updateCurrency];
