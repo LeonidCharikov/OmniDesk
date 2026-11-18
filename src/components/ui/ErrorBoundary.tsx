@@ -1,6 +1,7 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
+import { forceHardReloadApp, isChunkLoadError } from '../../utils/chunkRecovery';
 
 interface Props {
   children: ReactNode;
@@ -27,7 +28,12 @@ class ErrorBoundaryInner extends Component<Props & { t: (key: string, fallback?:
     console.error('ErrorBoundary caught an error:', error, errorInfo);
   }
 
-  handleReset = () => {
+  handleReset = async () => {
+    if (isChunkLoadError(this.state.error)) {
+      const reloaded = await forceHardReloadApp();
+      if (reloaded) return;
+    }
+
     this.setState({ hasError: false, error: null });
     if (this.props.onReset) {
       this.props.onReset();

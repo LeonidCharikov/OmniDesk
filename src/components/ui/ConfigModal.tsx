@@ -48,9 +48,11 @@ import type {
   McpLogEntry,
 } from '../../services/mcpClient';
 import { ShortcutsSettingsPanel } from './ShortcutsSettingsPanel';
+import { lazyWithRetry } from '../../utils/chunkRecovery';
 
-const McpSettingsTab = React.lazy(() =>
-  import('./McpSettingsTab').then(m => ({ default: m.McpSettingsTab }))
+const McpSettingsTab = lazyWithRetry(
+  () => import('./McpSettingsTab'),
+  'McpSettingsTab'
 );
 import { LanguageFlagIcon } from './LanguageFlagIcon';
 import { DEFAULT_SHORTCUTS } from '../../services/shortcutsService';

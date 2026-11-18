@@ -33,6 +33,7 @@ import {
   GITHUB_RELEASES_LATEST_URL,
   installDesktopUpdate,
 } from './services/updaterService';
+import { lazyWithRetry } from './utils/chunkRecovery';
 import type {
   McpConnectedToolCapability,
   McpConnectionStatus,
@@ -40,8 +41,9 @@ import type {
   OmniDeskMcpClient,
 } from './services/mcpClient';
 
-const ArchitectureTool = React.lazy(() =>
-  import('./tools/architecture/ArchitectureTool').then(m => ({ default: m.ArchitectureTool }))
+const ArchitectureTool = lazyWithRetry(
+  () => import('./tools/architecture/ArchitectureTool'),
+  'ArchitectureTool'
 );
 
 const VALID_CATEGORIES = new Set<ToolCategory>([

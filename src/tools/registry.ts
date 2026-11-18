@@ -1,14 +1,12 @@
 import React from 'react';
 import { ToolDefinition } from '../types/tool';
+import { lazyWithRetry } from '../utils/chunkRecovery';
 
-function lazyTool(
-  loader: () => Promise<Record<string, unknown>>,
-  exportName: string
+function lazyTool<TModule extends Record<string, unknown>>(
+  loader: () => Promise<TModule>,
+  exportName: keyof TModule & string
 ): React.LazyExoticComponent<React.ComponentType> {
-  return React.lazy(async () => {
-    const mod = await loader();
-    return { default: mod[exportName] as React.ComponentType };
-  });
+  return lazyWithRetry(loader, exportName) as unknown as React.LazyExoticComponent<React.ComponentType>;
 }
 
 const TextEditorTool = lazyTool(() => import('./files/TextEditorTool'), 'TextEditorTool');
