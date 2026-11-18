@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { BookOpen, Plus, RotateCw, Trash2, Check, RefreshCw } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
+import { loadToolJson, saveToolJson } from '../../services/idbStorage';
 
 interface Flashcard {
   id: string;
@@ -48,13 +49,27 @@ export const FlashcardsStudyTool: React.FC = () => {
   const [newDeckTitle, setNewDeckTitle] = useState('');
   const [newFront, setNewFront] = useState('');
   const [newBack, setNewBack] = useState('');
+  const hydratedRef = useRef(false);
+  const modifiedRef = useRef(false);
 
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(decks));
-    } catch {
-      // ignore
-    }
+    let active = true;
+    void loadToolJson<Deck[]>(STORAGE_KEY).then(stored => {
+      if (!active) return;
+      if (!modifiedRef.current && Array.isArray(stored) && stored.length > 0) {
+        setDecks(stored);
+        setActiveDeckId(stored[0].id);
+      }
+      hydratedRef.current = true;
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!hydratedRef.current && !modifiedRef.current) return;
+    void saveToolJson(STORAGE_KEY, decks);
   }, [decks]);
 
   const activeDeck = decks.find(d => d.id === activeDeckId) || decks[0];
@@ -65,6 +80,7 @@ export const FlashcardsStudyTool: React.FC = () => {
   const createDeck = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newDeckTitle.trim()) return;
+    modifiedRef.current = true;
     const deck: Deck = { id: Date.now().toString(), title: newDeckTitle.trim(), cards: [] };
     setDecks(prev => [...prev, deck]);
     setActiveDeckId(deck.id);
@@ -75,6 +91,7 @@ export const FlashcardsStudyTool: React.FC = () => {
   const addCard = (e: React.FormEvent) => {
     e.preventDefault();
     if (!activeDeck || !newFront.trim() || !newBack.trim()) return;
+    modifiedRef.current = true;
     const card: Flashcard = {
       id: Date.now().toString(),
       front: newFront.trim(),
@@ -88,6 +105,7 @@ export const FlashcardsStudyTool: React.FC = () => {
 
   const markCard = (known: boolean) => {
     if (!activeDeck || !activeCard) return;
+    modifiedRef.current = true;
     setDecks(prev =>
       prev.map(d =>
         d.id === activeDeck.id
@@ -103,6 +121,7 @@ export const FlashcardsStudyTool: React.FC = () => {
 
   const resetProgress = () => {
     if (!activeDeck) return;
+    modifiedRef.current = true;
     setDecks(prev =>
       prev.map(d =>
         d.id === activeDeck.id ? { ...d, cards: d.cards.map(c => ({ ...c, known: false })) } : d
@@ -114,6 +133,7 @@ export const FlashcardsStudyTool: React.FC = () => {
 
   const deleteCard = (cardId: string) => {
     if (!activeDeck) return;
+    modifiedRef.current = true;
     setDecks(prev =>
       prev.map(d =>
         d.id === activeDeck.id ? { ...d, cards: d.cards.filter(c => c.id !== cardId) } : d

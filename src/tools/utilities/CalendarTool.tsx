@@ -12,6 +12,7 @@ import {
   Search,
 } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
+import { loadToolJson, saveToolJson } from '../../services/idbStorage';
 
 /* ── Types ─────────────────────────────────────────────────── */
 interface CalendarEvent {
@@ -69,7 +70,7 @@ function loadEvents(): CalendarEvent[] {
 }
 
 function saveEvents(events: CalendarEvent[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
+  void saveToolJson(STORAGE_KEY, events);
 }
 
 function dateToStr(d: Date): string {
@@ -133,12 +134,40 @@ export const CalendarTool: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  const hydratedRef = useRef(false);
+  const mutatedBeforeHydrateRef = useRef(false);
+
+  // Hydrate oversized calendars from IndexedDB on mount
+  useEffect(() => {
+    let active = true;
+    void loadToolJson<CalendarEvent[]>(STORAGE_KEY).then(stored => {
+      if (!active) return;
+      if (!mutatedBeforeHydrateRef.current && Array.isArray(stored) && stored.length > 0) {
+        setEvents(stored);
+      }
+      hydratedRef.current = true;
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
   // Persist events and sync external MCP updates
-  useEffect(() => { saveEvents(events); }, [events]);
+  useEffect(() => {
+    if (!hydratedRef.current && !mutatedBeforeHydrateRef.current && events.length === 0) return;
+    saveEvents(events);
+  }, [events]);
 
   useEffect(() => {
     const handleExternalUpdate = () => {
-      setEvents(loadEvents());
+      const localEvents = loadEvents();
+      if (localEvents.length > 0) {
+        setEvents(localEvents);
+      } else {
+        void loadToolJson<CalendarEvent[]>(STORAGE_KEY).then(stored => {
+          if (Array.isArray(stored)) setEvents(stored);
+        });
+      }
     };
     window.addEventListener('omnidesk-calendar-updated', handleExternalUpdate);
     return () => window.removeEventListener('omnidesk-calendar-updated', handleExternalUpdate);
@@ -219,6 +248,7 @@ export const CalendarTool: React.FC = () => {
 
   /* ── Event CRUD ──────────────────────────────────────────── */
   const addEvent = (ev: Omit<CalendarEvent, 'id'>) => {
+    mutatedBeforeHydrateRef.current = true;
     const count = ev.recurrence === 'daily' ? 30 : ev.recurrence === 'weekly' ? 12 : 1;
     const generated = Array.from({ length: count }, (_, index) => {
       const eventDate = new Date(`${ev.date}T12:00:00`);
@@ -230,10 +260,12 @@ export const CalendarTool: React.FC = () => {
   };
 
   const updateEvent = (ev: CalendarEvent) => {
+    mutatedBeforeHydrateRef.current = true;
     setEvents(prev => prev.map(e => e.id === ev.id ? ev : e));
   };
 
   const deleteEvent = (id: string) => {
+    mutatedBeforeHydrateRef.current = true;
     setEvents(prev => prev.filter(e => e.id !== id));
   };
 

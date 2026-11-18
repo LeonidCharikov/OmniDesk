@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useId, useCallback } from 'react';
+import React, { useState, useEffect, useId, useCallback, useRef } from 'react';
 import { Hash, Check, Copy, Upload, ShieldCheck, AlertCircle, KeyRound, FileText, Trash2 } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
 import { consumePendingToolPipe } from '../../services/toolPipeService';
@@ -15,6 +15,7 @@ import {
   hexToBytes,
   base64ToBytes,
 } from '../../utils/cryptoAlgorithms';
+import type { HashWorkerRequest, HashWorkerResponse } from '../../workers/hashSuite.worker';
 
 type InputEncoding = 'utf8' | 'hex' | 'base64';
 type OutputEncoding = 'hex-lower' | 'hex-upper' | 'base64';
@@ -46,9 +47,19 @@ export const HashChecksumSuiteTool: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
+  const workerRef = useRef<Worker | null>(null);
+  const workerReqIdRef = useRef(0);
+
   const inputId = useId();
   const hmacKeyId = useId();
   const verifyId = useId();
+
+  useEffect(() => {
+    return () => {
+      workerRef.current?.terminate();
+      workerRef.current = null;
+    };
+  }, []);
 
   useEffect(() => {
     const piped = consumePendingToolPipe('hash-checksum-suite');
@@ -97,6 +108,62 @@ export const HashChecksumSuiteTool: React.FC = () => {
         let keyBytes: Uint8Array | null = null;
         if (hmacEnabled) {
           keyBytes = decodeInput(hmacKey, hmacKeyEncoding);
+        }
+
+        const shouldOffloadToWorker =
+          typeof Worker !== 'undefined' && (sourceMode === 'file' || data.byteLength >= 4096);
+
+        if (shouldOffloadToWorker) {
+          try {
+            if (!workerRef.current) {
+              workerRef.current = new Worker(new URL('../../workers/hashSuite.worker.ts', import.meta.url), {
+                type: 'module',
+              });
+            }
+            const worker = workerRef.current;
+            const requestId = ++workerReqIdRef.current;
+            const workerRes = await new Promise<HashWorkerResponse>((resolve, reject) => {
+              const handleMessage = (event: MessageEvent<HashWorkerResponse>) => {
+                if (event.data.requestId !== requestId) return;
+                cleanup();
+                resolve(event.data);
+              };
+              const handleError = (err: ErrorEvent) => {
+                cleanup();
+                reject(new Error(err.message || 'Hash worker failed'));
+              };
+              const cleanup = () => {
+                worker.removeEventListener('message', handleMessage);
+                worker.removeEventListener('error', handleError);
+              };
+              worker.addEventListener('message', handleMessage);
+              worker.addEventListener('error', handleError);
+              const payload: HashWorkerRequest = {
+                requestId,
+                data,
+                hmacEnabled,
+                hmacKeyBytes: keyBytes,
+              };
+              worker.postMessage(payload);
+            });
+
+            if (cancelled) return;
+            if (workerRes.ok && workerRes.items) {
+              const formattedRows: HashResultRow[] = workerRes.items.map(item => ({
+                id: item.id,
+                label: `${item.labelPrefix}${item.baseLabel}`,
+                group: item.group,
+                bits: item.bits,
+                value: formatDigest(item.digest, outputEncoding),
+              }));
+              setResults(formattedRows);
+              return;
+            }
+          } catch {
+            // Fall through to direct synchronous computation if Worker isn't supported in runtime
+            workerRef.current?.terminate();
+            workerRef.current = null;
+          }
         }
 
         const runAlgo = async (

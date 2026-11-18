@@ -53,6 +53,11 @@ export const SketchpadTool: React.FC = () => {
       const initial = ctx.getImageData(0, 0, canvas.width, canvas.height);
       setHistory([initial]);
     }
+
+    return () => {
+      canvas.width = 0;
+      canvas.height = 0;
+    };
   }, [isTransparent]);
 
   const saveState = () => {

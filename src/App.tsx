@@ -20,6 +20,7 @@ import { DEFAULT_SHORTCUTS, isTypingTarget, matchesShortcutCombo } from './servi
 import { setPendingToolPipe } from './services/toolPipeService';
 import { toastService } from './services/toastService';
 import { invokeRustCommand, isTauri, registerTauriDropListener } from './services/fileSystemService';
+import { checkForDesktopUpdate, disposeDesktopUpdateHandle } from './services/updaterService';
 import type {
   McpConnectedToolCapability,
   McpConnectionStatus,
@@ -100,6 +101,7 @@ export default function App() {
   isLockedRef.current = isLocked;
   const selectedToolIdRef = useRef(selectedToolId);
   selectedToolIdRef.current = selectedToolId;
+  const didCheckUpdateRef = useRef(false);
 
   const toggleSidebar = useCallback(() => setIsSidebarOpen(prev => !prev), []);
 
@@ -426,6 +428,31 @@ export default function App() {
       })
       .catch(() => {});
   }, []);
+
+  // Silent once-per-session desktop auto-update check (Desktop / Tauri only)
+  useEffect(() => {
+    if (!runningInTauri || didCheckUpdateRef.current) return;
+    didCheckUpdateRef.current = true;
+    let cancelled = false;
+    const timerId = window.setTimeout(() => {
+      void checkForDesktopUpdate().then(res => {
+        if (!cancelled && res.status === 'available' && res.availableVersion) {
+          toastService.show({
+            type: 'info',
+            title: t('update_available_toast', 'Update v{version} available', { version: res.availableVersion }),
+            message: t('update_available_toast_desc', 'Open Settings -> Updates to install and restart.'),
+            durationMs: 6500,
+          });
+        }
+        void disposeDesktopUpdateHandle(res.updateHandle);
+      });
+    }, 2500);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timerId);
+    };
+  }, [runningInTauri, t]);
 
   // Manage MCP Bridge client lifecycle (Desktop / Tauri only — never initialized in web version)
   const mcpClientRef = useRef<OmniDeskMcpClient | null>(null);

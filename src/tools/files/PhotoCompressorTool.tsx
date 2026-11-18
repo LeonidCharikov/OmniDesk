@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { ImageDown, Upload, Download, ShieldCheck, Trash2 } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
 import { consumePendingToolPipe } from '../../services/toolPipeService';
+import type { PhotoCompressRequest, PhotoCompressResponse } from '../../workers/photoCompress.worker';
 
 interface CompressedItem {
   id: string;
@@ -71,6 +72,101 @@ export const PhotoCompressorTool: React.FC = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [items, setItems] = useState<CompressedItem[]>([]);
 
+  const itemsRef = useRef<CompressedItem[]>([]);
+  itemsRef.current = items;
+  const activeWorkerRef = useRef<Worker | null>(null);
+
+  useEffect(() => {
+    return () => {
+      activeWorkerRef.current?.terminate();
+      activeWorkerRef.current = null;
+      itemsRef.current.forEach(item => URL.revokeObjectURL(item.outputUrl));
+    };
+  }, []);
+
+  const compressViaWorker = (worker: Worker, req: PhotoCompressRequest): Promise<PhotoCompressResponse> =>
+    new Promise((resolve, reject) => {
+      const handleMessage = (event: MessageEvent<PhotoCompressResponse>) => {
+        if (event.data.id !== req.id) return;
+        cleanup();
+        resolve(event.data);
+      };
+      const handleError = (err: ErrorEvent) => {
+        cleanup();
+        reject(new Error(err.message || 'Worker compression error'));
+      };
+      const cleanup = () => {
+        worker.removeEventListener('message', handleMessage);
+        worker.removeEventListener('error', handleError);
+      };
+      worker.addEventListener('message', handleMessage);
+      worker.addEventListener('error', handleError);
+      worker.postMessage(req);
+    });
+
+  const compressOnMainThread = async (
+    file: File,
+    maxDimension: number,
+    fixedQuality: number,
+    targetBytes: number
+  ): Promise<{ blob: Blob; width: number; height: number; hadExif: boolean } | null> => {
+    const objUrl = URL.createObjectURL(file);
+    let canvas: HTMLCanvasElement | null = null;
+    try {
+      const buffer = await file.arrayBuffer();
+      const hadExif = detectJpegExif(buffer);
+      const img = await loadImage(objUrl);
+
+      let w = img.naturalWidth;
+      let h = img.naturalHeight;
+      if (w > maxDimension || h > maxDimension) {
+        const ratio = Math.min(maxDimension / w, maxDimension / h);
+        w = Math.max(1, Math.round(w * ratio));
+        h = Math.max(1, Math.round(h * ratio));
+      }
+
+      canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return null;
+
+      if (format === 'image/jpeg') {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, w, h);
+      }
+      ctx.drawImage(img, 0, 0, w, h);
+
+      let finalBlob: Blob;
+      if (mode === 'quality') {
+        finalBlob = await canvasToBlob(canvas, format, fixedQuality);
+      } else {
+        let lo = 0.1;
+        let hi = 0.95;
+        let best = await canvasToBlob(canvas, format, lo);
+        for (let step = 0; step < 6; step++) {
+          const mid = (lo + hi) / 2;
+          const candidate = await canvasToBlob(canvas, format, mid);
+          if (candidate.size <= targetBytes) {
+            best = candidate;
+            lo = mid;
+          } else {
+            hi = mid;
+          }
+        }
+        finalBlob = best;
+      }
+
+      return { blob: finalBlob, width: w, height: h, hadExif };
+    } finally {
+      URL.revokeObjectURL(objUrl);
+      if (canvas) {
+        canvas.width = 0;
+        canvas.height = 0;
+      }
+    }
+  };
+
   const processFiles = async (fileList: FileList | File[] | null) => {
     if (!fileList || fileList.length === 0) return;
     setIsProcessing(true);
@@ -79,75 +175,83 @@ export const PhotoCompressorTool: React.FC = () => {
     const fixedQuality = Math.max(0.1, Math.min(1, (Number(qualityPct) || 80) / 100));
 
     const newItems: CompressedItem[] = [];
+    const canUseWorker =
+      typeof Worker !== 'undefined' &&
+      typeof OffscreenCanvas !== 'undefined' &&
+      typeof createImageBitmap === 'function';
 
-    for (const file of Array.from(fileList)) {
-      if (!file.type.startsWith('image/')) continue;
-      const objUrl = URL.createObjectURL(file);
+    let worker: Worker | null = null;
+    if (canUseWorker) {
       try {
-        const buffer = await file.arrayBuffer();
-        const hadExif = detectJpegExif(buffer);
-        const img = await loadImage(objUrl);
-
-        let w = img.naturalWidth;
-        let h = img.naturalHeight;
-        if (w > maxDimension || h > maxDimension) {
-          const ratio = Math.min(maxDimension / w, maxDimension / h);
-          w = Math.round(w * ratio);
-          h = Math.round(h * ratio);
-        }
-
-        const canvas = document.createElement('canvas');
-        canvas.width = w;
-        canvas.height = h;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) continue;
-
-        if (format === 'image/jpeg') {
-          ctx.fillStyle = '#ffffff';
-          ctx.fillRect(0, 0, w, h);
-        }
-        ctx.drawImage(img, 0, 0, w, h);
-
-        let finalBlob: Blob;
-        if (mode === 'quality') {
-          finalBlob = await canvasToBlob(canvas, format, fixedQuality);
-        } else {
-          // Binary search quality to fit targetBytes
-          let lo = 0.1;
-          let hi = 0.95;
-          let best = await canvasToBlob(canvas, format, lo);
-          for (let step = 0; step < 6; step++) {
-            const mid = (lo + hi) / 2;
-            const candidate = await canvasToBlob(canvas, format, mid);
-            if (candidate.size <= targetBytes) {
-              best = candidate;
-              lo = mid;
-            } else {
-              hi = mid;
-            }
-          }
-          finalBlob = best;
-        }
-
-        const outUrl = URL.createObjectURL(finalBlob);
-        newItems.push({
-          id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-          name: file.name,
-          originalSize: file.size,
-          compressedSize: finalBlob.size,
-          width: w,
-          height: h,
-          hadExif,
-          outputUrl: outUrl,
-          outputExt: format === 'image/webp' ? 'webp' : 'jpg',
+        worker = new Worker(new URL('../../workers/photoCompress.worker.ts', import.meta.url), {
+          type: 'module',
         });
-      } finally {
-        URL.revokeObjectURL(objUrl);
+        activeWorkerRef.current = worker;
+      } catch {
+        worker = null;
       }
     }
 
-    setItems(prev => [...newItems, ...prev]);
-    setIsProcessing(false);
+    try {
+      for (const file of Array.from(fileList)) {
+        if (!file.type.startsWith('image/')) continue;
+        const jobId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+        let result: { blob: Blob; width: number; height: number; hadExif: boolean } | null = null;
+
+        if (worker) {
+          try {
+            const workerRes = await compressViaWorker(worker, {
+              id: jobId,
+              file,
+              format,
+              maxDimension,
+              mode,
+              fixedQuality,
+              targetBytes,
+            });
+            if (workerRes.ok && workerRes.blob && workerRes.width && workerRes.height) {
+              result = {
+                blob: workerRes.blob,
+                width: workerRes.width,
+                height: workerRes.height,
+                hadExif: Boolean(workerRes.hadExif),
+              };
+            }
+          } catch {
+            result = null;
+          }
+        }
+
+        if (!result) {
+          result = await compressOnMainThread(file, maxDimension, fixedQuality, targetBytes);
+        }
+
+        if (result) {
+          const outUrl = URL.createObjectURL(result.blob);
+          newItems.push({
+            id: jobId,
+            name: file.name,
+            originalSize: file.size,
+            compressedSize: result.blob.size,
+            width: result.width,
+            height: result.height,
+            hadExif: result.hadExif,
+            outputUrl: outUrl,
+            outputExt: format === 'image/webp' ? 'webp' : 'jpg',
+          });
+        }
+      }
+    } finally {
+      if (worker) {
+        worker.terminate();
+        if (activeWorkerRef.current === worker) {
+          activeWorkerRef.current = null;
+        }
+      }
+      setItems(prev => [...newItems, ...prev]);
+      setIsProcessing(false);
+    }
   };
 
   useEffect(() => {

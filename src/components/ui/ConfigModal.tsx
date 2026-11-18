@@ -29,6 +29,7 @@ import {
   Sparkles,
   Archive,
   ExternalLink,
+  ArrowUpCircle,
 } from 'lucide-react';
 import { UserConfig, ThemeId } from '../../types/tool';
 import { useI18n, SupportedLanguage } from '../../i18n/context';
@@ -49,21 +50,29 @@ import { LanguageFlagIcon } from './LanguageFlagIcon';
 import { DEFAULT_SHORTCUTS } from '../../services/shortcutsService';
 import { toastService } from '../../services/toastService';
 import {
-  buildFullWorkspaceBackup,
+  buildFullWorkspaceBackupAsync,
   isFullWorkspaceBackup,
-  restoreFullWorkspaceBackup,
+  restoreFullWorkspaceBackupAsync,
 } from '../../services/workspaceBackupService';
 import { WORKSPACE_PRESETS, applyWorkspacePreset } from '../../services/workspacePresetsService';
 import {
   hashMasterKey,
   encryptJsonPayload,
   decryptJsonPayload,
-  getStorageAudit,
-  purgeSensitiveData,
+  getStorageAuditAsync,
+  purgeSensitiveDataAsync,
   StorageAuditItem,
 } from '../../services/securityService';
+import {
+  checkForDesktopUpdate,
+  DesktopUpdateCheckResult,
+  DesktopUpdateProgress,
+  disposeDesktopUpdateHandle,
+  getDesktopAppVersion,
+  installDesktopUpdate,
+} from '../../services/updaterService';
 
-export type ConfigTabType = 'themes' | 'currency' | 'widgets' | 'security' | 'mcp' | 'shortcuts' | 'backup' | 'language';
+export type ConfigTabType = 'themes' | 'currency' | 'widgets' | 'security' | 'mcp' | 'shortcuts' | 'backup' | 'language' | 'updates';
 
 interface ConfigModalProps {
   isOpen: boolean;
@@ -185,7 +194,7 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
   const { t, language, setLanguage } = useI18n();
   const runningInTauri = isTauri();
   const [activeTab, setActiveTab] = useState<TabType>(() =>
-    !isTauri() && (initialTab === 'mcp' || initialTab === 'widgets' || initialTab === 'backup')
+    !isTauri() && (initialTab === 'mcp' || initialTab === 'widgets' || initialTab === 'backup' || initialTab === 'updates')
       ? 'themes'
       : initialTab || 'themes'
   );
@@ -199,22 +208,60 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
   const [backupPassword, setBackupPassword] = useState('');
   const [confirmReset, setConfirmReset] = useState(false);
   const [confirmPurge, setConfirmPurge] = useState(false);
-  const [auditItems, setAuditItems] = useState<StorageAuditItem[]>(() => getStorageAudit());
+  const [auditItems, setAuditItems] = useState<StorageAuditItem[]>([]);
+  const [appVersion, setAppVersion] = useState<string>('');
+  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
+  const [isInstallingUpdate, setIsInstallingUpdate] = useState(false);
+  const [updateResult, setUpdateResult] = useState<DesktopUpdateCheckResult | null>(null);
+  const [updateProgress, setUpdateProgress] = useState<DesktopUpdateProgress | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const refreshAudit = React.useCallback(async () => {
+    const items = await getStorageAuditAsync();
+    setAuditItems(items);
+  }, []);
 
   React.useEffect(() => {
     if (!isOpen) return;
-    const isDesktopOnlyTab = (tab: TabType) => tab === 'mcp' || tab === 'widgets' || tab === 'backup';
+    const isDesktopOnlyTab = (tab: TabType) =>
+      tab === 'mcp' || tab === 'widgets' || tab === 'backup' || tab === 'updates';
     if (initialTab) {
       const resolvedTab = !runningInTauri && isDesktopOnlyTab(initialTab) ? 'themes' : initialTab;
       setActiveTab(resolvedTab);
       if (resolvedTab === 'security') {
-        setAuditItems(getStorageAudit());
+        void refreshAudit();
       }
     } else if (!runningInTauri && isDesktopOnlyTab(activeTab)) {
       setActiveTab('themes');
+    } else if (activeTab === 'security') {
+      void refreshAudit();
     }
-  }, [isOpen, initialTab, runningInTauri, activeTab]);
+  }, [isOpen, initialTab, runningInTauri, activeTab, refreshAudit]);
+
+  React.useEffect(() => {
+    if (!isOpen || !runningInTauri || activeTab !== 'updates') return;
+    let cancelled = false;
+    void getDesktopAppVersion().then(version => {
+      if (!cancelled) setAppVersion(version);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, runningInTauri, activeTab]);
+
+  React.useEffect(() => {
+    const handleToDispose = updateResult?.updateHandle;
+    if (!isOpen && handleToDispose) {
+      void disposeDesktopUpdateHandle(handleToDispose);
+      setUpdateResult(null);
+      setUpdateProgress(null);
+    }
+    return () => {
+      if (handleToDispose) {
+        void disposeDesktopUpdateHandle(handleToDispose);
+      }
+    };
+  }, [isOpen, updateResult]);
 
   if (!isOpen) return null;
 
@@ -266,11 +313,13 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const restoreFromCandidateJson = (candidateText: string): { success: boolean; message: string } => {
+  const restoreFromCandidateJson = async (
+    candidateText: string
+  ): Promise<{ success: boolean; message: string }> => {
     try {
       const parsed = JSON.parse(candidateText);
       if (isFullWorkspaceBackup(parsed)) {
-        const res = restoreFullWorkspaceBackup(parsed);
+        const res = await restoreFullWorkspaceBackupAsync(parsed);
         if (res.valid && res.config) {
           if (res.config.language && ['cs', 'en', 'de', 'es', 'ru'].includes(res.config.language)) {
             setLanguage(res.config.language as SupportedLanguage);
@@ -343,7 +392,7 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
         }
       }
 
-      const outcome = restoreFromCandidateJson(candidateText);
+      const outcome = await restoreFromCandidateJson(candidateText);
       setImportStatus(outcome);
       toastService.show({
         type: outcome.success ? 'success' : 'error',
@@ -356,7 +405,7 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
   };
 
   const downloadFullWorkspaceFile = async () => {
-    const fullPayload = buildFullWorkspaceBackup(config);
+    const fullPayload = await buildFullWorkspaceBackupAsync(config);
     const defaultName = `omnidesk-workspace-${new Date().toISOString().slice(0, 10)}.json`;
     const res = await saveTextWithDialog(
       defaultName,
@@ -384,7 +433,7 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
       setTimeout(() => setImportStatus(null), 4000);
       return;
     }
-    const payload = fullWorkspace ? buildFullWorkspaceBackup(config) : jsonExportPayload;
+    const payload = fullWorkspace ? await buildFullWorkspaceBackupAsync(config) : jsonExportPayload;
     const encrypted = await encryptJsonPayload(payload, backupPassword);
     const defaultName = fullWorkspace
       ? `omnidesk-workspace-${new Date().toISOString().slice(0, 10)}.enc.json`
@@ -459,8 +508,8 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
     setTimeout(() => setImportStatus(null), 4000);
   };
 
-  const handlePurgeSensitive = () => {
-    purgeSensitiveData();
+  const handlePurgeSensitive = async () => {
+    await purgeSensitiveDataAsync();
     onUpdateConfig({
       ...config,
       widgets: {
@@ -470,7 +519,7 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
       },
     });
     setConfirmPurge(false);
-    setAuditItems(getStorageAudit());
+    await refreshAudit();
     setImportStatus({
       success: true,
       message: t('privacy_purge_done', 'Local notes, scratchpads, and daily tasks purged.'),
@@ -478,8 +527,8 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
     setTimeout(() => setImportStatus(null), 4000);
   };
 
-  const handleApplyPastedJson = () => {
-    const outcome = restoreFromCandidateJson(pastedJson);
+  const handleApplyPastedJson = async () => {
+    const outcome = await restoreFromCandidateJson(pastedJson);
     if (outcome.success) {
       setPastedJson('');
       setShowPasteArea(false);
@@ -490,6 +539,40 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
       title: outcome.message,
     });
     setTimeout(() => setImportStatus(null), 4000);
+  };
+
+  const handleCheckForUpdates = async () => {
+    if (!runningInTauri || isCheckingUpdate || isInstallingUpdate) return;
+    setIsCheckingUpdate(true);
+    setUpdateProgress(null);
+    if (updateResult?.updateHandle) {
+      await disposeDesktopUpdateHandle(updateResult.updateHandle);
+    }
+    try {
+      const res = await checkForDesktopUpdate();
+      setUpdateResult(res);
+    } finally {
+      setIsCheckingUpdate(false);
+    }
+  };
+
+  const handleInstallDesktopUpdate = async () => {
+    if (!updateResult?.updateHandle || isInstallingUpdate) return;
+    setIsInstallingUpdate(true);
+    setUpdateProgress({ downloadedBytes: 0, percent: 0 });
+    try {
+      await installDesktopUpdate(updateResult.updateHandle, progress => {
+        setUpdateProgress(progress);
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setUpdateResult({
+        status: 'error',
+        currentVersion: appVersion || updateResult.currentVersion,
+        error: msg,
+      });
+      setIsInstallingUpdate(false);
+    }
   };
 
   const handleSelectTheme = (themeId: ThemeId) => {
@@ -624,7 +707,7 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
             aria-selected={activeTab === 'security'}
             onClick={(e) => {
               setActiveTab('security');
-              setAuditItems(getStorageAudit());
+              void refreshAudit();
               e.currentTarget.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' });
             }}
             className={`flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg border transition-colors whitespace-nowrap shrink-0 ${
@@ -708,6 +791,25 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
             <Globe className="w-3.5 h-3.5" />
             <span>{t('tab_language', 'Language')}</span>
           </button>
+
+          {runningInTauri && (
+            <button
+              role="tab"
+              aria-selected={activeTab === 'updates'}
+              onClick={(e) => {
+                setActiveTab('updates');
+                e.currentTarget.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' });
+              }}
+              className={`flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg border transition-colors whitespace-nowrap shrink-0 ${
+                activeTab === 'updates'
+                  ? 'text-indigo-300 border-indigo-500/50 bg-indigo-600/20 shadow-xs'
+                  : 'text-slate-400 border-transparent hover:text-slate-200 hover:bg-slate-800/40'
+              }`}
+            >
+              <ArrowUpCircle className="w-3.5 h-3.5" />
+              <span>{t('tab_updates', 'Updates')}</span>
+            </button>
+          )}
         </div>
 
         {/* Content Body */}
@@ -1267,7 +1369,7 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
                   </div>
                   <button
                     type="button"
-                    onClick={() => setAuditItems(getStorageAudit())}
+                    onClick={() => void refreshAudit()}
                     className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs transition-colors"
                   >
                     {t('refresh', 'Refresh')}
@@ -1284,7 +1386,9 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
                       <div key={item.key} className="px-3 py-2 flex items-center justify-between gap-3 text-xs">
                         <div className="min-w-0">
                           <span className="font-mono text-slate-200 block truncate">{item.key}</span>
-                          <span className="text-[10px] text-slate-500 uppercase">{item.category}</span>
+                          <span className="text-[10px] text-slate-500 uppercase">
+                            {item.category} · {item.source === 'indexedDB' ? 'IndexedDB' : 'localStorage'}
+                          </span>
                         </div>
                         <span className="font-mono text-slate-400 tabular-nums shrink-0">
                           {item.bytes < 1024 ? `${item.bytes} B` : `${(item.bytes / 1024).toFixed(1)} KB`}
@@ -1621,6 +1725,149 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
                     </div>
                   );
                 })}
+              </div>
+            </div>
+          )}
+
+          {/* TAB: DESKTOP UPDATES (Desktop / Tauri Only) */}
+          {runningInTauri && activeTab === 'updates' && (
+            <div className="space-y-5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-sm font-semibold text-white">
+                    {t('updates_title', 'Desktop Application Updates')}
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    {t('updates_desc', 'Check GitHub Releases for cryptographically signed OmniDesk desktop updates.')}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-950/70 border border-slate-800 text-xs font-mono">
+                  <span className="text-slate-400">{t('updates_current_version', 'Current Version')}:</span>
+                  <strong className="text-indigo-300">v{appVersion || updateResult?.currentVersion || '...'}</strong>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <ArrowUpCircle className="w-5 h-5 text-indigo-400 shrink-0" />
+                    <div>
+                      <span className="text-xs font-semibold text-white block">
+                        {t('updates_channel_label', 'Signed GitHub Releases Auto-Updater')}
+                      </span>
+                      <span className="text-[11px] text-slate-400 block">
+                        {t('updates_channel_desc', 'Downloads verified installers directly from official releases and restarts automatically.')}
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void handleCheckForUpdates()}
+                    disabled={isCheckingUpdate || isInstallingUpdate}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-semibold transition-colors"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${isCheckingUpdate ? 'animate-spin' : ''}`} />
+                    <span>
+                      {isCheckingUpdate
+                        ? t('updates_checking_btn', 'Checking...')
+                        : t('updates_check_btn', 'Check for Updates')}
+                    </span>
+                  </button>
+                </div>
+
+                {updateResult?.status === 'up-to-date' && (
+                  <div className="p-3 rounded-lg bg-emerald-950/40 border border-emerald-500/40 text-emerald-300 text-xs flex items-center gap-2">
+                    <Check className="w-4 h-4 shrink-0" />
+                    <span>
+                      {t('updates_up_to_date', 'OmniDesk v{version} is up to date.', {
+                        version: updateResult.currentVersion,
+                      })}
+                    </span>
+                  </div>
+                )}
+
+                {updateResult?.status === 'unconfigured' && (
+                  <div className="p-3 rounded-lg bg-amber-950/40 border border-amber-500/40 text-amber-200 text-xs flex items-start gap-2.5">
+                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-amber-400" />
+                    <div className="space-y-1">
+                      <span className="font-semibold block">
+                        {t('updates_unconfigured_title', 'Auto-updater signing key not configured in this build')}
+                      </span>
+                      <span className="text-amber-200/80 block leading-relaxed">
+                        {t('updates_unconfigured_desc', 'To enable one-click signed updates, set the TAURI_SIGNING_PUBLIC_KEY repository variable/secret in GitHub CI or configure plugins.updater.pubkey in tauri.conf.json.')}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {updateResult?.status === 'error' && (
+                  <div className="p-3 rounded-lg bg-rose-950/40 border border-rose-500/40 text-rose-300 text-xs flex items-start gap-2.5">
+                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-semibold block">
+                        {t('updates_error_title', 'Unable to check for updates')}
+                      </span>
+                      <span className="text-rose-300/80 block mt-0.5">{updateResult.error}</span>
+                    </div>
+                  </div>
+                )}
+
+                {updateResult?.status === 'available' && (
+                  <div className="p-4 rounded-xl bg-indigo-950/30 border border-indigo-500/40 space-y-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <span className="text-xs font-bold text-white block">
+                          {t('updates_available_heading', 'New Version Available: v{version}', {
+                            version: updateResult.availableVersion || '',
+                          })}
+                        </span>
+                        {updateResult.date && (
+                          <span className="text-[11px] text-slate-400 block">
+                            {updateResult.date}
+                          </span>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => void handleInstallDesktopUpdate()}
+                        disabled={isInstallingUpdate}
+                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-semibold transition-colors"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        <span>
+                          {isInstallingUpdate
+                            ? t('updates_installing_btn', 'Downloading & Installing...')
+                            : t('updates_install_btn', 'Download & Install')}
+                        </span>
+                      </button>
+                    </div>
+
+                    {updateResult.body && (
+                      <pre className="p-3 rounded-lg bg-slate-950/70 border border-slate-800 text-[11px] text-slate-300 whitespace-pre-wrap max-h-36 overflow-y-auto font-sans">
+                        {updateResult.body}
+                      </pre>
+                    )}
+
+                    {isInstallingUpdate && updateProgress && (
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between text-[11px] font-mono text-indigo-300">
+                          <span>{t('updates_downloading_label', 'Downloading update package...')}</span>
+                          <span>
+                            {typeof updateProgress.percent === 'number'
+                              ? `${updateProgress.percent}%`
+                              : `${(updateProgress.downloadedBytes / (1024 * 1024)).toFixed(1)} MB`}
+                          </span>
+                        </div>
+                        <div className="w-full h-2 rounded-full bg-slate-900 overflow-hidden border border-slate-800">
+                          <div
+                            className="h-full bg-emerald-500 transition-all duration-150"
+                            style={{ width: `${updateProgress.percent ?? 100}%` }}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           )}

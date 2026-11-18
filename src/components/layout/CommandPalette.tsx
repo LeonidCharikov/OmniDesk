@@ -28,7 +28,8 @@ export type ConfigTabId =
   | 'mcp'
   | 'shortcuts'
   | 'backup'
-  | 'language';
+  | 'language'
+  | 'updates';
 
 interface CommandPaletteProps {
   isOpen: boolean;
@@ -186,6 +187,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         ? [{ tab: 'backup' as ConfigTabId, title: t('tab_backup', 'Backup & JSON Export/Import'), keywords: 'backup export import json workspace' }]
         : []),
       { tab: 'language', title: t('tab_language', 'Language'), keywords: 'language i18n locale english czech german spanish russian' },
+      ...(runningInTauri
+        ? [{ tab: 'updates' as ConfigTabId, title: t('tab_updates', 'Updates'), keywords: 'updates version release download install tauri' }]
+        : []),
     ];
 
     const matchedSettings: PaletteEntry[] = onOpenSettingsTab

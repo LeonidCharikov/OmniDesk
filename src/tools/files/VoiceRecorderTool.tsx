@@ -46,7 +46,10 @@ export const VoiceRecorderTool: React.FC = () => {
   const [volumeLevel, setVolumeLevel] = useState(0);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const recordingsRef = useRef<AudioRecord[]>([]);
+  recordingsRef.current = recordings;
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -65,6 +68,7 @@ export const VoiceRecorderTool: React.FC = () => {
     setErrorMsg(null);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaStreamRef.current = stream;
       audioChunksRef.current = [];
 
       // Set up AudioContext for volume visualization
@@ -104,6 +108,7 @@ export const VoiceRecorderTool: React.FC = () => {
 
       mediaRecorder.onstop = () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
+        audioChunksRef.current = [];
         const audioUrl = URL.createObjectURL(audioBlob);
 
         const newRec: AudioRecord = {
@@ -120,11 +125,16 @@ export const VoiceRecorderTool: React.FC = () => {
 
         // Clean up stream tracks
         stream.getTracks().forEach(track => track.stop());
+        if (mediaStreamRef.current === stream) {
+          mediaStreamRef.current = null;
+        }
         if (audioContextRef.current) {
           audioContextRef.current.close().catch(() => {});
+          audioContextRef.current = null;
         }
         if (animFrameRef.current) {
           cancelAnimationFrame(animFrameRef.current);
+          animFrameRef.current = null;
         }
         setVolumeLevel(0);
       };
@@ -209,6 +219,10 @@ export const VoiceRecorderTool: React.FC = () => {
   };
 
   const deleteRecording = (id: string) => {
+    const target = recordings.find(r => r.id === id);
+    if (target) {
+      URL.revokeObjectURL(target.url);
+    }
     setRecordings(prev => prev.filter(r => r.id !== id));
     if (activePlayingId === id && audioElementRef.current) {
       audioElementRef.current.pause();
@@ -244,7 +258,22 @@ export const VoiceRecorderTool: React.FC = () => {
     return () => {
       if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
-      if (audioElementRef.current) audioElementRef.current.pause();
+      if (audioElementRef.current) {
+        audioElementRef.current.pause();
+        audioElementRef.current = null;
+      }
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        mediaRecorderRef.current.stop();
+      }
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach(track => track.stop());
+        mediaStreamRef.current = null;
+      }
+      if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+        audioContextRef.current.close().catch(() => {});
+      }
+      audioChunksRef.current = [];
+      recordingsRef.current.forEach(rec => URL.revokeObjectURL(rec.url));
     };
   }, []);
 

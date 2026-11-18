@@ -30,6 +30,8 @@ export const ScreenWebcamRecorderTool: React.FC = () => {
   const [elapsedSec, setElapsedSec] = useState(0);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [clips, setClips] = useState<RecordedClip[]>([]);
+  const clipsRef = useRef<RecordedClip[]>([]);
+  clipsRef.current = clips;
 
   const cleanupStreams = () => {
     if (timerRef.current !== null) {
@@ -47,7 +49,12 @@ export const ScreenWebcamRecorderTool: React.FC = () => {
 
   useEffect(() => {
     return () => {
+      if (recorderRef.current && recorderRef.current.state !== 'inactive') {
+        recorderRef.current.stop();
+      }
       cleanupStreams();
+      chunksRef.current = [];
+      clipsRef.current.forEach(clip => URL.revokeObjectURL(clip.url));
     };
   }, []);
 
@@ -99,6 +106,7 @@ export const ScreenWebcamRecorderTool: React.FC = () => {
 
       recorder.onstop = () => {
         const blob = new Blob(chunksRef.current, { type: 'video/webm' });
+        chunksRef.current = [];
         const url = URL.createObjectURL(blob);
         const dur = Math.max(1, Math.round((Date.now() - startedAt) / 1000));
         setClips(prev => [

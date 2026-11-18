@@ -58,7 +58,7 @@
 | Capability | Details |
 | :--- | :--- |
 | 🔒 **Privacy, Lock Screen & Full Workspace Backup** | Every file edit, hash, PDF edit, QR scan, image compression, and color conversion runs 100% locally — installable as an offline-first PWA. On the **Tauri Desktop** build, also includes optional **PBKDF2 PIN Lock Screen**, **Full Workspace Backup** (settings + Calendar, Kanban, Notes, Expenses, Habits, Shopping List, Flashcards), and **AES-256-GCM encrypted bundles** (stripped on Web so browser users stay focused on individual tools). |
-| ⚡ **Dual Runtime (Tauri v2 + Web/PWA)** | Native **Tauri v2** desktop app (`sysinfo` hardware telemetry, OS system tray close-to-tray mode, OS file associations & quick Web/GitHub links) or streamlined offline browser PWA. Heavy dependencies (`pdf-lib`, `tesseract.js`, MCP client) are code-split and lazy-loaded strictly on demand to minimize RAM usage. |
+| ⚡ **Dual Runtime (Tauri v2 + Web/PWA), Workers & Auto-Updater** | Native **Tauri v2** desktop app (with **signed GitHub Releases Auto-Updater**, `sysinfo` hardware telemetry, OS tray mode, file associations & quick Web/GitHub links) or streamlined offline browser PWA. Heavy dependencies (`pdf-lib`, `tesseract.js`, MCP client), **Web Workers** (batch photo compression & cryptographic hashing), and **IndexedDB** tool storage keep the UI responsive with minimal RAM usage. |
 | 🖨️ **Built-In Document & Media Printing** | Print directly via native OS print dialogs without popup blockers from **PDF Studio**, **Image Editor**, **Text & Markdown Editor**, **Markdown Preview**, **Notes**, **Diagram Editor**, **Invoice Generator**, **Screenshot Annotator**, **Sketchpad**, and **QR Code Generator**. |
 | 🧭 **Extended Command Palette & Customizable Shortcuts** | Press `Ctrl+K` (`⌘K`) to search across **99 tools**, saved **Notes**, **Calendar events**, **Settings tabs**, and **Themes**. Rebind built-in actions or assign custom keyboard shortcuts to any tool in **Settings → Shortcuts** (press `Shift+?` for cheat sheet). |
 | 🔗 **Cross-Tool Piping & Smart Drag-and-Drop** | Pipe outputs directly between compatible tools with **Send to...** (`toolPipeService`), or drag & drop any file anywhere on the window to launch the **Smart Drop Router** with matching tools and 1-click **Load Sample** demos. |
@@ -420,8 +420,8 @@ See **[docs/MCP_SERVER_GUIDE.md](docs/MCP_SERVER_GUIDE.md)** for full architectu
 ### Option 1 — Live Web App (Browser / Offline PWA)
 Launch OmniDesk directly in your browser with zero installation at **[https://leonidcharikov.github.io/OmniDesk/](https://leonidcharikov.github.io/OmniDesk/)** — optionally click **Install App** in the header to install it as an offline-capable PWA.
 
-### Option 2 — Pre-Built Desktop Releases
-Download the latest installer for **Windows** (`.exe` / `.msi`), **macOS** (`.dmg`), or **Linux** (`.AppImage` / `.deb`) from the **Releases** page.
+### Option 2 — Pre-Built Desktop Releases & Auto-Updater
+Download the latest installer for **Windows** (`.exe` / `.msi`), **macOS** (`.dmg`), or **Linux** (`.AppImage` / `.deb`) from the **Releases** page. Future releases support 1-click cryptographically signed updates directly inside **Settings → Updates** (see **[docs/AUTO_UPDATER_GUIDE.md](docs/AUTO_UPDATER_GUIDE.md)** to configure signing keys in CI).
 
 ### Option 3 — One-Click Launcher
 - **Windows:** Double-click `start.bat`
@@ -432,6 +432,7 @@ Download the latest installer for **Windows** (`.exe` / `.msi`), **macOS** (`.dm
 npm install
 npm run dev          # Start dev server on http://localhost:3000
 npm test             # Run Vitest unit & registry tests
+npm run test:e2e     # Run headless Chromium Playwright E2E smoke tests
 npm run i18n:check   # Verify all translation keys exist across all 5 locales
 ```
 Open **[http://localhost:3000](http://localhost:3000)** and optionally click **Install App** in the header to install OmniDesk as an offline-capable PWA.
@@ -467,9 +468,11 @@ npm run tauri dev
 
 ```text
 ├── docs/
+│   ├── AUTO_UPDATER_GUIDE.md  # Signed GitHub Releases & Desktop auto-updater setup guide
 │   ├── MCP_SERVER_GUIDE.md    # Model Context Protocol architecture & setup guide
 │   ├── mcp-server-template/   # Standalone Node.js stdio <-> WebSocket MCP server
 │   └── screenshots/           # High-resolution README showcase screenshots
+├── e2e/                       # Playwright browser E2E smoke test suite
 ├── public/                    # Static icons, logos, PWA manifest & assets
 ├── src-tauri/                 # Tauri v2 Rust backend, capabilities & desktop icons
 ├── src/
@@ -478,7 +481,7 @@ npm run tauri dev
 │   │   └── ui/                # ConfigModal, McpSettingsTab, LanguageFlagIcon, ShortcutsSettingsPanel, SmartDropModal, SendToToolButton, ToastContainer, LockScreen
 │   ├── i18n/                  # Translation context & multi-language tool catalog
 │   ├── locales/               # Locale dictionaries (en, cs, de, es, ru)
-│   ├── services/              # storage, printService, mcpClient (desktop), shortcutsService, toolPipeService, workspaceBackupService, workspacePresetsService, toastService, securityService, currencyService, fileSystemService
+│   ├── services/              # storage, idbStorage, updaterService, printService, mcpClient (desktop), shortcutsService, toolPipeService, workspaceBackupService, workspacePresetsService, toastService, securityService, currencyService, fileSystemService
 │   ├── tools/
 │   │   ├── files/             # PDF Studio, PdfToolkitTool, Audio Editor, Photo Compressor, Screen/Webcam Recorder...
 │   │   ├── programming/       # Hash Suite, AES Studio, CIDR, Cron, Encoding, UUID, JSONPath...
@@ -490,10 +493,12 @@ npm run tauri dev
 │   │   ├── expanded/          # Additional & More workspace utilities
 │   │   └── registry.ts        # Central 99-tool lazy registry & Everyday Basics metadata
 │   ├── utils/                 # colorMath, safeMathParser & pure calculation helpers
-│   ├── __tests__/             # Vitest unit & registry test suites
+│   ├── workers/               # Dedicated ES module Web Workers (photoCompress.worker, hashSuite.worker)
+│   ├── __tests__/             # Vitest unit, storage & registry test suites
 │   ├── types/                 # Strict TypeScript tool & category interfaces
 │   ├── App.tsx                # Root workspace layout & category routing
 │   └── index.css              # Tailwind CSS v4 + 6 theme overrides
+├── playwright.config.ts
 ├── start.bat / start.sh       # One-click local launchers
 ├── package.json
 └── vite.config.ts

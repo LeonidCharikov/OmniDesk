@@ -158,6 +158,29 @@ fn take_opened_cli_file(
     Ok(Some(CliOpenedFilePayload { name, bytes }))
 }
 
+fn has_valid_updater_pubkey(app: &AppHandle) -> bool {
+    app.config()
+        .plugins
+        .0
+        .get("updater")
+        .and_then(|val| val.get("pubkey"))
+        .and_then(|v| v.as_str())
+        .map(|s| !s.trim().is_empty())
+        .unwrap_or(false)
+}
+
+#[tauri::command]
+fn is_updater_configured(app: AppHandle) -> bool {
+    #[cfg(desktop)]
+    {
+        has_valid_updater_pubkey(&app)
+    }
+    #[cfg(not(desktop))]
+    {
+        false
+    }
+}
+
 fn spawn_mcp_stdio_reader(app_handle: AppHandle) {
     std::thread::spawn(move || {
         let stdin = std::io::stdin();
@@ -204,6 +227,7 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_clipboard_manager::init())
+        .plugin(tauri_plugin_process::init())
         .manage(Mutex::new(System::new_with_specifics(
             RefreshKind::new()
                 .with_cpu(CpuRefreshKind::everything())
@@ -219,9 +243,15 @@ pub fn run() {
             mcp_stdio_ready,
             mcp_stdio_tx,
             set_close_to_tray,
-            take_opened_cli_file
+            take_opened_cli_file,
+            is_updater_configured
         ])
         .setup(|app| {
+            #[cfg(desktop)]
+            if has_valid_updater_pubkey(app.handle()) {
+                app.handle().plugin(tauri_plugin_updater::Builder::new().build())?;
+            }
+
             let is_mcp_stdio = std::env::args().any(|arg| arg == "--mcp-stdio");
             if cfg!(debug_assertions) && !is_mcp_stdio {
                 app.handle().plugin(

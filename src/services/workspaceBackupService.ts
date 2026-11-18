@@ -97,3 +97,50 @@ export function restoreFullWorkspaceBackup(
 
   return { valid: true, config: validated.config, restoredKeys };
 }
+
+export async function buildFullWorkspaceBackupAsync(
+  config: UserConfig
+): Promise<FullWorkspaceBackupPayload> {
+  const payload = buildFullWorkspaceBackup(config);
+  const { idbGetAll } = await import('./idbStorage');
+  const idbEntries = await idbGetAll();
+
+  for (const [key, value] of Object.entries(idbEntries)) {
+    if (!isAllowedWorkspaceKey(key) || typeof value !== 'string') continue;
+    payload.storageData[key] = value;
+  }
+
+  return payload;
+}
+
+export async function restoreFullWorkspaceBackupAsync(
+  payload: FullWorkspaceBackupPayload
+): Promise<{ valid: boolean; config?: UserConfig; restoredKeys: number; error?: string }> {
+  const validated = validateConfigJson(JSON.stringify(payload.config));
+  if (!validated.valid || !validated.config) {
+    return {
+      valid: false,
+      restoredKeys: 0,
+      error: validated.error || 'Invalid workspace backup config.',
+    };
+  }
+
+  const { saveToolData } = await import('./idbStorage');
+  let restoredKeys = 0;
+
+  for (const [key, value] of Object.entries(payload.storageData)) {
+    if (!isAllowedWorkspaceKey(key) || typeof value !== 'string') continue;
+    if (key === 'omnidesk_user_config_v2') continue;
+    await saveToolData(key, value);
+    restoredKeys += 1;
+  }
+
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('omnidesk-calendar-updated'));
+    window.dispatchEvent(new CustomEvent('omnidesk-kanban-updated'));
+    window.dispatchEvent(new CustomEvent('omnidesk-notes-updated'));
+  }
+
+  return { valid: true, config: validated.config, restoredKeys };
+}
+

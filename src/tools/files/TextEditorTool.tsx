@@ -25,6 +25,7 @@ import { saveTextWithDialog, openFileWithPicker } from '../../services/fileSyste
 import { printHtmlDocument, printPlainText } from '../../services/printService';
 import { consumePendingToolPipe } from '../../services/toolPipeService';
 import { SendToToolButton } from '../../components/ui/SendToToolButton';
+import { loadToolData, saveToolData } from '../../services/idbStorage';
 
 const DRAFT_STORAGE_KEY = 'omnidesk_text_editor_draft_v1';
 const FILENAME_STORAGE_KEY = 'omnidesk_text_editor_filename_v1';
@@ -60,22 +61,53 @@ export const TextEditorTool: React.FC = () => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const lineNumbersRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const idbHydratedRef = useRef(false);
+  const editedBeforeHydrationRef = useRef(false);
 
   const searchInputId = useId();
   const replaceInputId = useId();
 
-  // Auto-save draft on changes
+  // Hydrate oversized drafts from IndexedDB on mount
   useEffect(() => {
-    localStorage.setItem(DRAFT_STORAGE_KEY, content);
+    let active = true;
+    void (async () => {
+      const [idbDraft, idbName] = await Promise.all([
+        loadToolData(DRAFT_STORAGE_KEY),
+        loadToolData(FILENAME_STORAGE_KEY),
+      ]);
+      if (!active) return;
+      if (!editedBeforeHydrationRef.current) {
+        if (typeof idbDraft === 'string' && idbDraft.length > 0) {
+          setContent(idbDraft);
+        }
+        if (typeof idbName === 'string' && idbName.length > 0) {
+          setFileName(idbName);
+        }
+      }
+      idbHydratedRef.current = true;
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // Auto-save draft to IndexedDB (and small mirror in localStorage) on changes
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      void saveToolData(DRAFT_STORAGE_KEY, content);
+    }, 250);
+    return () => window.clearTimeout(timer);
   }, [content]);
 
   useEffect(() => {
-    localStorage.setItem(FILENAME_STORAGE_KEY, fileName);
+    if (!idbHydratedRef.current) return;
+    void saveToolData(FILENAME_STORAGE_KEY, fileName);
   }, [fileName]);
 
   useEffect(() => {
     const piped = consumePendingToolPipe('text-editor');
     if (!piped) return;
+    editedBeforeHydrationRef.current = true;
     if (piped.kind === 'text' && typeof piped.text === 'string') {
       setContent(piped.text);
     } else if (piped.kind === 'file' && piped.file) {
@@ -778,7 +810,10 @@ export const TextEditorTool: React.FC = () => {
             <textarea
               ref={textareaRef}
               value={content}
-              onChange={e => setContent(e.target.value)}
+              onChange={e => {
+                editedBeforeHydrationRef.current = true;
+                setContent(e.target.value);
+              }}
               onScroll={handleScroll}
               placeholder={t('editor_start_typing', 'Start writing or paste text...')}
               spellCheck={false}

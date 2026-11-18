@@ -24,6 +24,7 @@ import { printHtmlDocument, printImageDataUrl } from '../../services/printServic
 import { useI18n } from '../../i18n/context';
 import { findToolCatalogIdByTitle, getToolCatalogText } from '../../i18n/toolCatalog';
 import { consumePendingToolPipe } from '../../services/toolPipeService';
+import { loadToolJson, saveToolJson } from '../../services/idbStorage';
 import {
   useAppCurrency,
   getCurrencySymbol,
@@ -142,18 +143,32 @@ export const BudgetTool: React.FC = () => {
   const [label, setLabel] = useState('');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('food');
+  const hydratedRef = useRef(false);
+  const modifiedRef = useRef(false);
 
   useEffect(() => {
-    try {
-      localStorage.setItem(EXPENSE_STORAGE, JSON.stringify(items));
-    } catch {
-      // ignore
-    }
+    let active = true;
+    void loadToolJson<Expense[]>(EXPENSE_STORAGE).then(stored => {
+      if (!active) return;
+      if (!modifiedRef.current && Array.isArray(stored) && stored.length > 0) {
+        setItems(stored);
+      }
+      hydratedRef.current = true;
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!hydratedRef.current && !modifiedRef.current) return;
+    void saveToolJson(EXPENSE_STORAGE, items);
   }, [items]);
 
   const add = () => {
     const value = Number(amount);
     if (label.trim() && value > 0) {
+      modifiedRef.current = true;
       setItems([
         { id: Date.now(), label: label.trim(), amount: value, category, date: new Date().toISOString().slice(0, 10) },
         ...items,
@@ -164,11 +179,13 @@ export const BudgetTool: React.FC = () => {
   };
 
   const remove = (id: number) => {
+    modifiedRef.current = true;
     setItems(items.filter(x => x.id !== id));
   };
 
   const clearAll = () => {
     if (confirm(t('confirm_clear_expenses', 'Opravdu si přejete smazat všechny položky rozpočtu?'))) {
+      modifiedRef.current = true;
       setItems([]);
     }
   };

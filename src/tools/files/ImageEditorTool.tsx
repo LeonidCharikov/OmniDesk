@@ -332,6 +332,9 @@ export const ImageEditorTool: React.FC = () => {
       setZoom(1);
       URL.revokeObjectURL(url);
     };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+    };
     img.src = url;
   }, []);
 
@@ -435,6 +438,8 @@ export const ImageEditorTool: React.FC = () => {
         const sampleFile = new File([blob], 'sunset-landscape-sample.jpg', { type: 'image/jpeg' });
         loadImageFromFile(sampleFile);
       }
+      canvas.width = 0;
+      canvas.height = 0;
     }, 'image/jpeg', 0.95);
   }, [loadImageFromFile]);
 
@@ -474,6 +479,15 @@ export const ImageEditorTool: React.FC = () => {
       loadImageFromFile(piped.file);
     }
   }, [loadImageFromFile]);
+
+  useEffect(() => {
+    return () => {
+      if (previewCanvasRef.current) {
+        previewCanvasRef.current.width = 0;
+        previewCanvasRef.current.height = 0;
+      }
+    };
+  }, []);
 
   // Global Drag and Drop event handlers
   const handleGlobalDragEnter = (e: React.DragEvent) => {

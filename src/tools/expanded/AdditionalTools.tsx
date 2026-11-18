@@ -26,6 +26,7 @@ import { useI18n } from '../../i18n/context';
 import { findToolCatalogIdByTitle, getToolCatalogText } from '../../i18n/toolCatalog';
 import { consumePendingToolPipe } from '../../services/toolPipeService';
 import { SendToToolButton } from '../../components/ui/SendToToolButton';
+import { loadToolJson, saveToolJson } from '../../services/idbStorage';
 
 const button = 'px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed';
 const secondary = 'px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed';
@@ -139,9 +140,10 @@ export const OcrScannerTool: React.FC = () => {
     setText('');
     setProgress(0);
     setStatusMsg(t('loading_ocr_engine', 'Initializing OCR engine…'));
+    let worker: Awaited<ReturnType<(typeof import('tesseract.js'))['createWorker']>> | null = null;
     try {
       const { createWorker } = await import('tesseract.js');
-      const worker = await createWorker(selectedLang, 1, {
+      worker = await createWorker(selectedLang, 1, {
         logger: (data: { status?: string; progress?: number }) => {
           if (data.status) setStatusMsg(data.status);
           if (typeof data.progress === 'number') {
@@ -152,11 +154,11 @@ export const OcrScannerTool: React.FC = () => {
       setStatusMsg(t('recognizing_text', 'Recognizing text…'));
       const result = await worker.recognize(image);
       setText(result.data.text);
-      await worker.terminate();
       setStatusMsg('');
     } catch (error) {
       setText(error instanceof Error ? error.message : t('ocr_failed', 'OCR failed to complete.'));
     } finally {
+      await worker?.terminate().catch(() => {});
       setBusy(false);
     }
   };
@@ -673,21 +675,21 @@ export const NotesTool: React.FC = () => {
   });
   const [selected, setSelected] = useState<number | null>(notes[0]?.id || null);
   const [query, setQuery] = useState('');
+  const notesModifiedRef = useRef(false);
 
   const current = notes.find(note => note.id === selected);
 
   const save = (updated: Note[]) => {
+    notesModifiedRef.current = true;
     setNotes(updated);
-    try {
-      localStorage.setItem('omnidesk-notes', JSON.stringify(updated));
-    } catch {
-      // ignore
-    }
+    void saveToolJson('omnidesk-notes', updated);
   };
 
   useEffect(() => {
+    let active = true;
     const piped = consumePendingToolPipe('notes');
     if (piped) {
+      notesModifiedRef.current = true;
       const applyPipedText = (bodyText: string, titleHint?: string) => {
         const note: Note = {
           id: Date.now(),
@@ -697,11 +699,7 @@ export const NotesTool: React.FC = () => {
         };
         setNotes(prev => {
           const next = [note, ...prev];
-          try {
-            localStorage.setItem('omnidesk-notes', JSON.stringify(next));
-          } catch {
-            // ignore
-          }
+          void saveToolJson('omnidesk-notes', next);
           return next;
         });
         setSelected(note.id);
@@ -711,18 +709,35 @@ export const NotesTool: React.FC = () => {
       } else if (piped.kind === 'file' && piped.file) {
         piped.file.text().then(txt => applyPipedText(txt, piped.file?.name));
       }
+    } else {
+      void loadToolJson<Note[]>('omnidesk-notes').then(stored => {
+        if (!active || notesModifiedRef.current) return;
+        if (Array.isArray(stored) && stored.length > 0) {
+          setNotes(stored);
+          setSelected(prev => prev ?? stored[0].id);
+        }
+      });
     }
 
     const handleExternalNotes = () => {
       try {
         const saved = localStorage.getItem('omnidesk-notes');
-        if (saved) setNotes(JSON.parse(saved));
+        if (saved) {
+          setNotes(JSON.parse(saved));
+          return;
+        }
       } catch {
         // ignore
       }
+      void loadToolJson<Note[]>('omnidesk-notes').then(stored => {
+        if (Array.isArray(stored)) setNotes(stored);
+      });
     };
     window.addEventListener('omnidesk-notes-updated', handleExternalNotes);
-    return () => window.removeEventListener('omnidesk-notes-updated', handleExternalNotes);
+    return () => {
+      active = false;
+      window.removeEventListener('omnidesk-notes-updated', handleExternalNotes);
+    };
   }, []);
 
   const update = (patch: Partial<Note>) => {

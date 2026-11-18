@@ -107,10 +107,22 @@ export default defineConfig(() => {
         '@': path.resolve(__dirname, '.'),
       },
     },
+    worker: {
+      format: 'es',
+    },
     build: {
       rollupOptions: {
         output: {
           manualChunks(id) {
+            if (id.includes('node_modules/react-dom/') || id.includes('node_modules/react/') || id.includes('node_modules/scheduler/')) {
+              return 'vendor-react';
+            }
+            if (id.includes('node_modules/motion') || id.includes('node_modules/framer-motion')) {
+              return 'vendor-motion';
+            }
+            if (id.includes('node_modules/dompurify') || id.includes('node_modules/qrcode') || id.includes('node_modules/jsqr')) {
+              return 'vendor-utils';
+            }
             if (id.includes('node_modules/pdf-lib')) return 'vendor-pdf-lib';
             if (id.includes('node_modules/pdfjs-dist')) return 'vendor-pdfjs';
             if (id.includes('node_modules/tesseract.js')) return 'vendor-tesseract';

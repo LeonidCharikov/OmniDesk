@@ -43,6 +43,44 @@ jobs:
           npm test
           npm --prefix docs/mcp-server-template test
 
+      - name: Run Playwright browser smoke tests
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          npx playwright install chromium --with-deps
+          npm run build
+          npm run test:e2e
+
+      - name: Configure signed Tauri updater when keys are available
+        id: updater_cfg
+        shell: bash
+        env:
+          HAS_PRIV_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY != '' }}
+          PUB_KEY: ${{ vars.TAURI_SIGNING_PUBLIC_KEY || secrets.TAURI_SIGNING_PUBLIC_KEY }}
+        run: |
+          node -e '
+            const fs = require("fs");
+            const hasPriv = process.env.HAS_PRIV_KEY === "true";
+            const envPub = (process.env.PUB_KEY || "").trim();
+            const conf = JSON.parse(fs.readFileSync("src-tauri/tauri.conf.json", "utf8"));
+            const confPub = ((conf.plugins && conf.plugins.updater && conf.plugins.updater.pubkey) || "").trim();
+            const activePub = envPub || confPub;
+            if (hasPriv && activePub) {
+              const override = {
+                bundle: { createUpdaterArtifacts: true },
+                plugins: {
+                  updater: {
+                    endpoints: ["https://github.com/LeonidCharikov/OmniDesk/releases/latest/download/latest.json"],
+                    pubkey: activePub
+                  }
+                }
+              };
+              fs.writeFileSync("src-tauri/updater.override.json", JSON.stringify(override, null, 2));
+              fs.appendFileSync(process.env.GITHUB_OUTPUT, "enabled=true\nargs=--config src-tauri/updater.override.json\n");
+            } else {
+              fs.appendFileSync(process.env.GITHUB_OUTPUT, "enabled=false\nargs=\n");
+            }
+          '
+
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
@@ -50,11 +88,16 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           tauriScript: npx tauri
+          args: ${{ steps.updater_cfg.outputs.args }}
+          includeUpdaterJson: ${{ steps.updater_cfg.outputs.enabled == 'true' }}
           tagName: ${{ github.ref_name }}
           releaseName: OmniDesk ${{ github.ref_name }}
           releaseBody: |
             Download the installer for your platform (Windows, macOS, Linux) below.
           releaseDraft: false
           prerelease: false
+

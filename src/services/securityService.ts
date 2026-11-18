@@ -280,6 +280,28 @@ export interface StorageAuditItem {
   key: string;
   bytes: number;
   category: 'security' | 'user' | 'config' | 'cache';
+  source?: 'localStorage' | 'indexedDB';
+}
+
+function classifyStorageKey(key: string): 'security' | 'user' | 'config' | 'cache' {
+  if (key.includes('security') || key.includes('auth') || key.includes('lock')) {
+    return 'security';
+  }
+  if (
+    key.includes('notes') ||
+    key.includes('tasks') ||
+    key.includes('recent') ||
+    key.includes('calendar') ||
+    key.includes('draft') ||
+    key.includes('flashcards') ||
+    key.includes('budget')
+  ) {
+    return 'user';
+  }
+  if (key.includes('cache') || key.includes('currency') || key.includes('crypto')) {
+    return 'cache';
+  }
+  return 'config';
 }
 
 /**
@@ -296,22 +318,50 @@ export function getStorageAudit(): StorageAuditItem[] {
       const value = localStorage.getItem(key) || '';
       const bytes = new Blob([key + value]).size;
 
-      let category: 'security' | 'user' | 'config' | 'cache' = 'config';
-      if (key.includes('security') || key.includes('auth') || key.includes('lock')) {
-        category = 'security';
-      } else if (key.includes('notes') || key.includes('tasks') || key.includes('recent')) {
-        category = 'user';
-      } else if (key.includes('cache') || key.includes('currency') || key.includes('crypto')) {
-        category = 'cache';
-      }
-
-      items.push({ key, bytes, category });
+      items.push({
+        key,
+        bytes,
+        category: classifyStorageKey(key),
+        source: 'localStorage',
+      });
     }
   } catch (e) {
     console.error('Storage audit error:', e);
   }
 
   return items.sort((a, b) => b.bytes - a.bytes);
+}
+
+/**
+ * Scans both IndexedDB and localStorage for a complete device storage audit.
+ */
+export async function getStorageAuditAsync(): Promise<StorageAuditItem[]> {
+  const localItems = getStorageAudit();
+  const byKey = new Map<string, StorageAuditItem>();
+  for (const item of localItems) {
+    byKey.set(item.key, item);
+  }
+
+  try {
+    const { idbGetAll } = await import('./idbStorage');
+    const idbEntries = await idbGetAll();
+    for (const [key, value] of Object.entries(idbEntries)) {
+      const bytes = new Blob([key + value]).size;
+      const existing = byKey.get(key);
+      if (!existing || bytes >= existing.bytes) {
+        byKey.set(key, {
+          key,
+          bytes,
+          category: classifyStorageKey(key),
+          source: 'indexedDB',
+        });
+      }
+    }
+  } catch {
+    // ignore IndexedDB errors
+  }
+
+  return Array.from(byKey.values()).sort((a, b) => b.bytes - a.bytes);
 }
 
 /**
@@ -331,7 +381,7 @@ export function purgeSensitiveData(): void {
     // Also remove any standalone note/scratchpad keys
     for (let i = localStorage.length - 1; i >= 0; i--) {
       const key = localStorage.key(i);
-      if (key && (key.includes('note') || key.includes('sketch') || key.includes('scratch'))) {
+      if (key && (key.includes('note') || key.includes('sketch') || key.includes('scratch') || key.includes('draft'))) {
         localStorage.removeItem(key);
       }
     }
@@ -339,3 +389,19 @@ export function purgeSensitiveData(): void {
     console.error('Failed to purge sensitive data:', e);
   }
 }
+
+/**
+ * Purges sensitive notes, scratchpads, drafts, and tasks across localStorage and IndexedDB.
+ */
+export async function purgeSensitiveDataAsync(): Promise<void> {
+  purgeSensitiveData();
+  try {
+    const { idbPurgeMatching } = await import('./idbStorage');
+    await idbPurgeMatching(
+      key => key.includes('note') || key.includes('sketch') || key.includes('scratch') || key.includes('draft')
+    );
+  } catch {
+    // ignore IndexedDB errors
+  }
+}
+
