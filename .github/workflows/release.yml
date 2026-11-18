@@ -2,6 +2,8 @@ name: Build and release OmniDesk
 
 on:
   push:
+    branches:
+      - main
     tags:
       - "v*"
   workflow_dispatch:
@@ -56,6 +58,7 @@ jobs:
         env:
           HAS_PRIV_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY != '' }}
           PUB_KEY: ${{ vars.TAURI_SIGNING_PUBLIC_KEY || secrets.TAURI_SIGNING_PUBLIC_KEY }}
+          RUN_NUMBER: ${{ github.run_number }}
         run: |
           node -e '
             const fs = require("fs");
@@ -64,22 +67,45 @@ jobs:
             const conf = JSON.parse(fs.readFileSync("src-tauri/tauri.conf.json", "utf8"));
             const confPub = ((conf.plugins && conf.plugins.updater && conf.plugins.updater.pubkey) || "").trim();
             const activePub = envPub || confPub;
+            const refName = (process.env.GITHUB_REF_NAME || "").trim();
+            const tagVersion = /^v?(\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?)$/.test(refName)
+              ? refName.replace(/^v/, "")
+              : `0.1.${process.env.RUN_NUMBER || "0"}`;
+            if (!/^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/.test(tagVersion)) {
+              throw new Error(`Invalid release version: ${tagVersion}`);
+            }
+
+            const override = {
+              version: tagVersion,
+              bundle: {},
+              plugins: {}
+            };
+
             if (hasPriv && activePub) {
-              const override = {
-                bundle: { createUpdaterArtifacts: true },
-                plugins: {
-                  updater: {
-                    endpoints: ["https://github.com/LeonidCharikov/OmniDesk/releases/latest/download/latest.json"],
-                    pubkey: activePub
-                  }
-                }
+              override.bundle.createUpdaterArtifacts = true;
+              override.plugins.updater = {
+                endpoints: ["https://github.com/LeonidCharikov/OmniDesk/releases/latest/download/latest.json"],
+                pubkey: activePub
               };
               fs.writeFileSync("src-tauri/updater.override.json", JSON.stringify(override, null, 2));
               fs.appendFileSync(process.env.GITHUB_OUTPUT, "enabled=true\nargs=--config src-tauri/updater.override.json\n");
             } else {
-              fs.appendFileSync(process.env.GITHUB_OUTPUT, "enabled=false\nargs=\n");
+              fs.writeFileSync("src-tauri/updater.override.json", JSON.stringify(override, null, 2));
+              fs.appendFileSync(process.env.GITHUB_OUTPUT, "enabled=false\nargs=--config src-tauri/updater.override.json\n");
             }
+
+            fs.appendFileSync(process.env.GITHUB_OUTPUT, `version=${tagVersion}\n`);
           '
+
+      - name: Derive release tag
+        id: release_tag
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
+            echo "tag=$GITHUB_REF_NAME" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=v${{ steps.updater_cfg.outputs.version }}" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
@@ -94,8 +120,8 @@ jobs:
           tauriScript: npx tauri
           args: ${{ steps.updater_cfg.outputs.args }}
           includeUpdaterJson: ${{ steps.updater_cfg.outputs.enabled == 'true' }}
-          tagName: ${{ github.ref_name }}
-          releaseName: OmniDesk ${{ github.ref_name }}
+          tagName: ${{ steps.release_tag.outputs.tag }}
+          releaseName: OmniDesk ${{ steps.release_tag.outputs.tag }}
           releaseBody: |
             Download the installer for your platform (Windows, macOS, Linux) below.
           releaseDraft: false
