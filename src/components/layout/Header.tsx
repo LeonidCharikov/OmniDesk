@@ -133,14 +133,14 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header
       onMouseDown={handleHeaderMouseDown}
-      className="h-14 min-h-14 border-b border-slate-800/60 bg-slate-950/60 backdrop-blur-xl px-2 sm:px-4 md:px-5 py-2 flex items-center justify-between gap-1.5 sm:gap-2 shrink-0 select-none transition-colors z-20 min-w-0"
+      className="h-14 min-h-14 w-full max-w-full border-b border-slate-800/60 bg-slate-950/60 backdrop-blur-xl px-2.5 sm:px-4 md:px-5 py-2 flex items-center justify-between gap-1.5 sm:gap-2 shrink-0 select-none transition-colors z-20 min-w-0"
     >
       {/* Zone 1: Hamburger + Breadcrumbs & Back Navigation */}
-      <div className="flex items-center gap-1 sm:gap-2.5 flex-1 lg:flex-initial min-w-0 lg:max-w-[40%] overflow-hidden">
+      <div className="flex items-center gap-1.5 sm:gap-2 flex-1 lg:flex-initial min-w-0 lg:max-w-[40%] overflow-hidden">
         {onToggleSidebar && (
           <button
             onClick={onToggleSidebar}
-            className="p-1.5 sm:p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors shrink-0"
+            className="h-8 w-8 sm:h-9 sm:w-9 inline-flex items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors shrink-0"
             title={isSidebarOpen ? t('close_sidebar', 'Close sidebar') : t('open_sidebar', 'Open sidebar')}
             aria-label={isSidebarOpen ? t('close_sidebar', 'Close sidebar') : t('open_sidebar', 'Open sidebar')}
           >
@@ -151,12 +151,12 @@ export const Header: React.FC<HeaderProps> = ({
         {activeTool && (
           <button
             onClick={onBack}
-            className="p-1.5 sm:p-2 rounded-lg text-slate-300 hover:text-white bg-slate-900/80 hover:bg-slate-800 border border-slate-800 transition-colors shrink-0 flex items-center gap-1 text-xs"
+            className="h-8 px-2 sm:h-9 sm:px-2.5 rounded-lg text-slate-300 hover:text-white bg-slate-900/80 hover:bg-slate-800 border border-slate-800 transition-colors shrink-0 inline-flex items-center justify-center gap-1 text-xs"
             title={t('back', 'Back')}
             aria-label={t('back', 'Back')}
           >
-            <ArrowLeft className="w-4 h-4 text-slate-300" />
-            <span className="hidden xl:inline font-medium">{t('back', 'Back')}</span>
+            <ArrowLeft className="w-4 h-4 text-slate-300 shrink-0" />
+            <span className="hidden xl:inline font-medium whitespace-nowrap">{t('back', 'Back')}</span>
           </button>
         )}
 
@@ -165,10 +165,10 @@ export const Header: React.FC<HeaderProps> = ({
             <>
               <span className="font-semibold text-slate-300 hidden xl:inline shrink-0">OmniDesk</span>
               <span aria-hidden="true" className="text-slate-600 hidden xl:inline shrink-0">/</span>
-              <span className="text-slate-400 truncate hidden sm:inline shrink-0 max-w-28 xl:max-w-none">
+              <span className="text-slate-400 truncate hidden md:inline shrink-0 max-w-28 xl:max-w-none">
                 {currentCategoryName}
               </span>
-              <span aria-hidden="true" className="text-slate-600 hidden sm:inline shrink-0">/</span>
+              <span aria-hidden="true" className="text-slate-600 hidden md:inline shrink-0">/</span>
               <span className="text-indigo-400 font-semibold text-xs sm:text-sm truncate min-w-0">
                 {toolTitle}
               </span>
@@ -189,7 +189,7 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="hidden lg:flex items-center justify-center flex-1 min-w-0 max-w-sm xl:max-w-md mx-3">
         <button
           onClick={onOpenSearch}
-          className="w-full min-w-0 flex items-center justify-between px-3.5 py-1.5 rounded-lg bg-slate-900/70 border border-slate-800 text-xs text-slate-400 hover:border-slate-700 hover:text-slate-200 transition-colors shadow-sm"
+          className="w-full min-w-0 h-9 flex items-center justify-between px-3.5 rounded-lg bg-slate-900/70 border border-slate-800 text-xs text-slate-400 hover:border-slate-700 hover:text-slate-200 transition-colors shadow-sm"
         >
           <div className="flex items-center gap-2 min-w-0 overflow-hidden">
             <Search className="w-3.5 h-3.5 text-slate-500 shrink-0" />
@@ -202,10 +202,10 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       {/* Zone 3: PWA Install / Desktop Update Download, Connectivity/Lock, Language, Settings & Window Controls */}
-      <div className="flex items-center justify-end gap-1 sm:gap-2 shrink-0">
+      <div className="flex items-center justify-end gap-1 sm:gap-1.5 shrink-0">
         <button
           onClick={onOpenSearch}
-          className="lg:hidden p-1.5 sm:p-2 rounded-lg bg-slate-900/80 border border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200 transition-colors shrink-0"
+          className="lg:hidden h-8 w-8 sm:h-9 sm:w-9 inline-flex items-center justify-center rounded-lg bg-slate-900/80 border border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200 transition-colors shrink-0"
           title={t('search_placeholder', 'Search')}
           aria-label={t('search_placeholder', 'Search')}
         >
@@ -219,7 +219,7 @@ export const Header: React.FC<HeaderProps> = ({
             type="button"
             onClick={onTriggerUpdate}
             disabled={isInstallingUpdate}
-            className="inline-flex items-center gap-1.5 p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-300 hover:text-emerald-100 text-xs font-semibold transition-colors shrink-0 shadow-sm disabled:opacity-60"
+            className="inline-flex items-center justify-center gap-1.5 h-8 sm:h-9 px-2 sm:px-2.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-300 hover:text-emerald-100 text-xs font-semibold transition-colors shrink-0 shadow-sm disabled:opacity-60"
             title={
               isInstallingUpdate
                 ? t('header_update_installing_tooltip', 'Downloading and installing update v{version}...', {
@@ -234,7 +234,7 @@ export const Header: React.FC<HeaderProps> = ({
             })}
           >
             <Download className={`w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400 shrink-0 ${isInstallingUpdate ? 'animate-bounce' : ''}`} />
-            <span className="hidden sm:inline whitespace-nowrap">
+            <span className="hidden md:inline whitespace-nowrap">
               {isInstallingUpdate
                 ? typeof updateProgressPercent === 'number'
                   ? `${updateProgressPercent}%`
@@ -246,7 +246,7 @@ export const Header: React.FC<HeaderProps> = ({
 
         {isOffline && (
           <div
-            className="flex items-center gap-1.5 p-1.5 sm:px-2 sm:py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 shrink-0"
+            className="inline-flex items-center justify-center gap-1.5 h-8 sm:h-9 px-2 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 shrink-0"
             title={t('offline_mode_active', 'Offline mode active')}
           >
             <WifiOff className="w-3.5 h-3.5 shrink-0" />
@@ -259,7 +259,7 @@ export const Header: React.FC<HeaderProps> = ({
         {activeTool ? (
           <button
             onClick={onToggleFavorite}
-            className={`inline-flex items-center gap-1.5 p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg text-xs font-medium border transition-colors shrink-0 ${
+            className={`inline-flex items-center justify-center gap-1.5 h-8 w-8 sm:h-9 sm:w-auto sm:px-2.5 rounded-lg text-xs font-medium border transition-colors shrink-0 ${
               isFavorite
                 ? 'bg-amber-500/15 border-amber-500/40 text-amber-300 hover:bg-amber-500/25'
                 : 'bg-slate-900/80 border-slate-800 text-slate-300 hover:bg-slate-800 hover:text-white'
@@ -274,7 +274,7 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         ) : !isOffline ? (
           <div
-            className="hidden sm:flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 shrink-0"
+            className="hidden md:inline-flex items-center justify-center gap-1.5 h-9 px-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 shrink-0"
             title={t('local_sandboxed', 'Local Sandbox')}
           >
             <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
@@ -287,7 +287,7 @@ export const Header: React.FC<HeaderProps> = ({
         {canLock && onLockNow && (
           <button
             onClick={onLockNow}
-            className="p-1.5 sm:p-2 rounded-lg bg-slate-900/80 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-amber-300 transition-colors shrink-0"
+            className="h-8 w-8 sm:h-9 sm:w-9 inline-flex items-center justify-center rounded-lg bg-slate-900/80 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-amber-300 transition-colors shrink-0"
             title={t('lock_workspace_now', 'Lock Workspace')}
             aria-label={t('lock_workspace_now', 'Lock Workspace')}
           >
@@ -303,7 +303,7 @@ export const Header: React.FC<HeaderProps> = ({
             aria-expanded={langMenuOpen}
             aria-label={t('interface_language', 'Interface Language')}
             title={t('interface_language', 'Interface Language')}
-            className="flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2.5 py-1.5 rounded-lg bg-slate-900/80 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-xs text-slate-200 font-medium transition-colors"
+            className="h-8 sm:h-9 inline-flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 rounded-lg bg-slate-900/80 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-xs text-slate-200 font-medium transition-colors"
           >
             <LanguageFlagIcon code={currentLang.code} className="w-4 h-3 rounded-[2px] shrink-0" />
             <span className="hidden sm:inline text-xs uppercase font-semibold text-slate-300">{currentLang.code}</span>
@@ -349,18 +349,18 @@ export const Header: React.FC<HeaderProps> = ({
         {onOpenShortcutsHelp && (
           <button
             onClick={onOpenShortcutsHelp}
-            className="hidden sm:inline-flex p-1.5 sm:p-2 rounded-lg bg-slate-900/80 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition-colors shrink-0"
+            className="hidden md:inline-flex h-9 w-9 items-center justify-center rounded-lg bg-slate-900/80 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition-colors shrink-0"
             title={t('shortcuts_help_title', 'Keyboard Shortcuts')}
             aria-label={t('shortcuts_help_title', 'Keyboard Shortcuts')}
           >
-            <Keyboard className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-300" />
+            <Keyboard className="w-4 h-4 text-slate-300" />
           </button>
         )}
 
         {onOpenSettings && (
           <button
             onClick={onOpenSettings}
-            className="p-1.5 sm:p-2 rounded-lg bg-slate-900/80 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition-colors shrink-0"
+            className="h-8 w-8 sm:h-9 sm:w-9 inline-flex items-center justify-center rounded-lg bg-slate-900/80 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition-colors shrink-0"
             title={t('settings_modal_title', 'Settings & Appearance')}
             aria-label={t('settings_modal_title', 'Settings & Appearance')}
           >

@@ -25,12 +25,12 @@ export const PWAInstallButton: React.FC = () => {
     <>
       <button
         onClick={handleClick}
-        className="inline-flex items-center justify-center gap-1.5 p-1.5 sm:px-2.5 sm:py-1 rounded-lg bg-indigo-600/90 hover:bg-indigo-600 text-white text-xs font-semibold shadow-sm transition-all hover:scale-[1.02] shrink-0"
+        className="inline-flex items-center justify-center gap-1.5 h-8 sm:h-9 px-2 md:px-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-sm transition-colors shrink-0"
         title={t('install_app_title', 'Install as a standalone desktop or mobile app without launching via terminal')}
         aria-label={t('install_app', 'Install App')}
       >
         <Download className="w-3.5 h-3.5 shrink-0" />
-        <span className="hidden sm:inline whitespace-nowrap">{t('install_app', 'Install App')}</span>
+        <span className="hidden md:inline whitespace-nowrap">{t('install_app', 'Install App')}</span>
       </button>
 
       {showGuide && (

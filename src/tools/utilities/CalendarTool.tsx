@@ -328,22 +328,22 @@ export const CalendarTool: React.FC = () => {
   return (
     <div className="space-y-4">
       {/* ── Top Bar ──────────────────────────────────────────── */}
-      <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800 flex flex-wrap items-center justify-between gap-3">
-        <div>
+      <div className="p-3.5 sm:p-4 rounded-xl bg-slate-900/40 border border-slate-800 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+        <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <h2 className="text-lg font-semibold text-white">
+            <h2 className="text-base sm:text-lg font-semibold text-white">
               {t('tool_calendar_title', 'Kalendář & Plánovač')}
             </h2>
           </div>
-          <p className="text-sm text-slate-400 mt-0.5">
+          <p className="text-xs sm:text-sm text-slate-400 mt-0.5">
             {t('tool_calendar_desc', 'Týdenní a měsíční kalendář s poznámkami pro každou hodinu. Data se ukládají lokálně.')}
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
           {/* Quick jump to date */}
-          <div className="flex items-center gap-1.5 bg-slate-950 px-2 py-1 rounded-lg border border-slate-800 text-xs">
-            <span className="text-slate-400">{t('go_to_date', 'Přejít:')}</span>
+          <div className="flex items-center gap-1.5 bg-slate-950 h-8 px-2.5 rounded-lg border border-slate-800 text-xs shrink-0">
+            <span className="text-slate-400 whitespace-nowrap">{t('go_to_date', 'Přejít:')}</span>
             <input
               type="date"
               className="bg-transparent text-white outline-none font-mono text-xs"
@@ -362,29 +362,29 @@ export const CalendarTool: React.FC = () => {
           <button
             onClick={exportIcs}
             disabled={!events.length}
-            className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 h-8 px-3 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 transition-colors disabled:opacity-50 whitespace-nowrap shrink-0"
             title={t('export_ical_desc', 'Exportovat všechny události do standardního formátu iCalendar (.ics)')}
           >
-            <Download className="w-3.5 h-3.5" />
+            <Download className="w-3.5 h-3.5 shrink-0" />
             <span>.ICS Export</span>
           </button>
 
           {/* Clear past events */}
           <button
             onClick={clearPastEvents}
-            className="px-2.5 py-1.5 text-xs font-medium rounded-lg bg-slate-800/80 hover:bg-rose-950/40 hover:text-rose-300 text-slate-400 border border-slate-800 transition-colors"
+            className="inline-flex items-center h-8 px-2.5 text-xs font-medium rounded-lg bg-slate-800/80 hover:bg-rose-950/40 hover:text-rose-300 text-slate-400 border border-slate-800 transition-colors whitespace-nowrap shrink-0"
             title={t('clear_past_events', 'Smazat události před dnešním dnem')}
           >
             {t('clear_past', 'Smazat minulé')}
           </button>
 
           {/* View mode switch */}
-          <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800 text-xs">
+          <div className="grid grid-cols-3 sm:flex items-center gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800 text-xs w-full sm:w-auto">
             {(['month', 'week', 'day'] as ViewMode[]).map(mode => (
               <button
                 key={mode}
                 onClick={() => setViewMode(mode)}
-                className={`px-3 py-1.5 rounded-md font-medium transition-colors ${
+                className={`px-3 py-1.5 rounded-md font-medium transition-colors text-center whitespace-nowrap ${
                   viewMode === mode ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
                 }`}
               >
@@ -396,9 +396,9 @@ export const CalendarTool: React.FC = () => {
       </div>
 
       {/* ── Search Bar ────────────────────────────────────────── */}
-      <div className="flex flex-wrap items-center justify-between gap-3 p-2.5 rounded-xl bg-slate-900/30 border border-slate-800/80">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-500" />
+      <div className="flex items-center justify-between gap-2.5 p-2.5 rounded-xl bg-slate-900/40 border border-slate-800/80">
+        <div className="relative flex-1 min-w-0">
+          <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
           <input
             type="text"
             className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder-slate-500 outline-none focus:border-indigo-500"
@@ -407,7 +407,7 @@ export const CalendarTool: React.FC = () => {
             onChange={e => setSearchQuery(e.target.value)}
           />
         </div>
-        <div className="text-xs text-slate-500">
+        <div className="text-xs text-slate-500 whitespace-nowrap shrink-0">
           {t('total_events_count', `Celkem ${events.length} událostí`, { count: events.length })}
         </div>
       </div>
@@ -433,15 +433,15 @@ export const CalendarTool: React.FC = () => {
                   setSelectedDate(d);
                   openEditEvent(e);
                 }}
-                className="p-2 rounded-lg bg-slate-900/80 border border-slate-800 text-xs flex items-center justify-between cursor-pointer hover:bg-slate-800"
+                className="p-2 rounded-lg bg-slate-900/80 border border-slate-800 text-xs flex items-center justify-between gap-2 cursor-pointer hover:bg-slate-800"
               >
-                <div>
+                <div className="min-w-0">
                   <strong className="text-white">{e.title}</strong>
                   <span className="text-slate-400 ml-2">
                     {e.date} {t('at_time', 'v')} {formatTime(e.hour, e.minute)} ({e.durationMinutes} min)
                   </span>
                 </div>
-                <span className="text-[10px] text-indigo-400 underline">{t('open_event', 'Otevřít')}</span>
+                <span className="text-[10px] text-indigo-400 underline shrink-0">{t('open_event', 'Otevřít')}</span>
               </div>
             ))}
         </div>
@@ -449,37 +449,76 @@ export const CalendarTool: React.FC = () => {
 
       {/* ── Navigation Bar ───────────────────────────────────── */}
       <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3">
-        <div className="flex items-center gap-2">
-          <button onClick={() => navigate(-1)} className="p-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition-colors">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          <button
+            onClick={() => navigate(-1)}
+            aria-label={t('pdf_editor_prev_page', 'Previous')}
+            className="h-8 w-8 inline-flex items-center justify-center rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition-colors"
+          >
             <ChevronLeft className="w-4 h-4" />
           </button>
-          <button onClick={() => navigate(1)} className="p-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition-colors">
+          <button
+            onClick={() => navigate(1)}
+            aria-label={t('pdf_editor_next_page', 'Next')}
+            className="h-8 w-8 inline-flex items-center justify-center rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition-colors"
+          >
             <ChevronRight className="w-4 h-4" />
           </button>
-          <button onClick={goToday} className="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white transition-colors">
+          <button
+            onClick={goToday}
+            className="h-8 px-3 text-xs font-medium rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white transition-colors whitespace-nowrap"
+          >
             {t('cal_today', 'Dnes')}
           </button>
         </div>
 
-        <h3 className="text-sm font-bold text-white tracking-tight">{getTitle()}</h3>
+        <h3 className="order-last sm:order-none w-full sm:w-auto text-center sm:text-left text-sm font-bold text-white tracking-tight pt-1 sm:pt-0">
+          {getTitle()}
+        </h3>
 
         <button
           onClick={() => openNewEvent(dateToStr(selectedDate), new Date().getHours())}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition-colors shrink-0"
+          className="inline-flex items-center justify-center gap-1.5 h-8 px-3 text-xs font-medium rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition-colors whitespace-nowrap shrink-0"
         >
-          <Plus className="w-3.5 h-3.5" />
+          <Plus className="w-3.5 h-3.5 shrink-0" />
           <span>{t('cal_new_event', 'Nová událost')}</span>
         </button>
       </div>
 
       {/* ── Working Days Planning Card ───────────────────────── */}
-      <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800">
-        <h3 className="text-sm font-semibold text-white mb-2">{t('working_days_planning', 'Plánování pracovních dnů a dovolené')}</h3>
-        <div className="flex flex-wrap items-end gap-2">
-          <label className="text-xs text-slate-400">{t('start_date', 'Počáteční datum')}<input className="block mt-1 px-2 py-1.5 rounded bg-slate-950 border border-slate-800 text-white" type="date" value={workdayStart} onChange={event => setWorkdayStart(event.target.value)} /></label>
-          <label className="text-xs text-slate-400">{t('working_days', 'Pracovní dny')}<input className="block mt-1 w-24 px-2 py-1.5 rounded bg-slate-950 border border-slate-800 text-white" type="number" min="0" value={workdayCount} onChange={event => setWorkdayCount(Number(event.target.value))} /></label>
-          <button onClick={calculateWorkday} className="px-3 py-1.5 rounded bg-indigo-600 hover:bg-indigo-500 text-white text-xs">{t('calculate_date', 'Vypočítat datum')}</button>
-          {workdayResult && <span className="text-xs text-emerald-400">{t('result', 'Výsledek')}: {workdayResult}</span>}
+      <div className="p-3.5 sm:p-4 rounded-xl bg-slate-900/40 border border-slate-800">
+        <h3 className="text-sm font-semibold text-white mb-2.5">{t('working_days_planning', 'Plánování pracovních dnů a dovolené')}</h3>
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap sm:items-end gap-2.5">
+          <label className="text-xs text-slate-400 min-w-0">
+            <span className="block mb-1">{t('start_date', 'Počáteční datum')}</span>
+            <input
+              className="w-full sm:w-auto h-9 px-2.5 rounded-lg bg-slate-950 border border-slate-800 text-white text-xs font-mono"
+              type="date"
+              value={workdayStart}
+              onChange={event => setWorkdayStart(event.target.value)}
+            />
+          </label>
+          <label className="text-xs text-slate-400 min-w-0">
+            <span className="block mb-1">{t('working_days', 'Pracovní dny')}</span>
+            <input
+              className="w-full sm:w-24 h-9 px-2.5 rounded-lg bg-slate-950 border border-slate-800 text-white text-xs font-mono"
+              type="number"
+              min="0"
+              value={workdayCount}
+              onChange={event => setWorkdayCount(Number(event.target.value))}
+            />
+          </label>
+          <button
+            onClick={calculateWorkday}
+            className="col-span-2 sm:col-span-1 w-full sm:w-auto h-9 px-4 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium whitespace-nowrap transition-colors"
+          >
+            {t('calculate_date', 'Vypočítat datum')}
+          </button>
+          {workdayResult && (
+            <span className="col-span-2 sm:col-span-1 text-xs font-medium text-emerald-400 self-center">
+              {t('result', 'Výsledek')}: {workdayResult}
+            </span>
+          )}
         </div>
       </div>
 
@@ -631,31 +670,32 @@ const WeekView: React.FC<{
   const weekDays = getWeekDays(currentDate);
 
   return (
-    <div className="rounded-xl bg-slate-900/40 border border-slate-800 overflow-hidden">
-      {/* Header row with day names */}
-      <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b border-slate-800 bg-slate-900/80 sticky top-0 z-10">
-        <div className="py-2 px-2 text-[10px] text-slate-500 font-mono border-r border-slate-800/60" />
-        {weekDays.map((day, i) => {
-          const ds = dateToStr(day);
-          const isToday = ds === todayStr;
-          return (
-            <div key={i} className={`py-2 px-1 text-center border-r border-slate-800/60 ${isToday ? 'bg-indigo-950/30' : ''}`}>
-              <div className="text-[10px] text-slate-400 uppercase font-semibold">{dayNames[i].slice(0, 2)}</div>
-              <div className={`text-sm font-bold mt-0.5 ${isToday ? 'text-indigo-400' : 'text-slate-200'}`}>
-                {day.getDate()}
+    <div className="rounded-xl bg-slate-900/40 border border-slate-800 overflow-x-auto">
+      <div className="min-w-[350px]">
+        {/* Header row with day names */}
+        <div className="grid grid-cols-[44px_repeat(7,minmax(0,1fr))] sm:grid-cols-[60px_repeat(7,minmax(0,1fr))] border-b border-slate-800 bg-slate-900/80 sticky top-0 z-10">
+          <div className="py-2 px-1 sm:px-2 text-[10px] text-slate-500 font-mono border-r border-slate-800/60" />
+          {weekDays.map((day, i) => {
+            const ds = dateToStr(day);
+            const isToday = ds === todayStr;
+            return (
+              <div key={i} className={`py-2 px-0.5 sm:px-1 text-center border-r border-slate-800/60 ${isToday ? 'bg-indigo-950/30' : ''}`}>
+                <div className="text-[10px] text-slate-400 uppercase font-semibold">{dayNames[i].slice(0, 2)}</div>
+                <div className={`text-xs sm:text-sm font-bold mt-0.5 ${isToday ? 'text-indigo-400' : 'text-slate-200'}`}>
+                  {day.getDate()}
+                </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
 
-      {/* Time grid */}
-      <div ref={scrollRef} className="overflow-y-auto max-h-[600px]">
-        {HOURS.map(hour => (
-          <div key={hour} className="grid grid-cols-[60px_repeat(7,1fr)] border-b border-slate-800/40">
-            <div className="py-2 px-2 text-[10px] text-slate-500 font-mono border-r border-slate-800/60 flex items-start justify-end pr-2">
-              {formatTime(hour, 0)}
-            </div>
+        {/* Time grid */}
+        <div ref={scrollRef} className="overflow-y-auto max-h-[600px]">
+          {HOURS.map(hour => (
+            <div key={hour} className="grid grid-cols-[44px_repeat(7,minmax(0,1fr))] sm:grid-cols-[60px_repeat(7,minmax(0,1fr))] border-b border-slate-800/40">
+              <div className="py-2 px-1 sm:px-2 text-[10px] text-slate-500 font-mono border-r border-slate-800/60 flex items-start justify-end pr-1.5 sm:pr-2">
+                {formatTime(hour, 0)}
+              </div>
             {weekDays.map((day, di) => {
               const ds = dateToStr(day);
               const slotEvents = getEventsForSlot(ds, hour);
@@ -702,7 +742,8 @@ const WeekView: React.FC<{
               );
             })}
           </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -733,9 +774,9 @@ const DayView: React.FC<{
           return (
             <div
               key={hour}
-              className={`grid grid-cols-[80px_1fr] border-b border-slate-800/40 ${isCurrentHour ? 'bg-indigo-950/20' : ''}`}
+              className={`grid grid-cols-[56px_1fr] sm:grid-cols-[80px_1fr] border-b border-slate-800/40 ${isCurrentHour ? 'bg-indigo-950/20' : ''}`}
             >
-              <div className="py-3 px-3 text-xs text-slate-500 font-mono border-r border-slate-800/60 flex items-start justify-end">
+              <div className="py-3 px-2 sm:px-3 text-xs text-slate-500 font-mono border-r border-slate-800/60 flex items-start justify-end">
                 {formatTime(hour, 0)}
               </div>
               <div
@@ -827,7 +868,7 @@ const EventModal: React.FC<{
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={onClose}>
       <div
         onClick={e => e.stopPropagation()}
-        className="w-full max-w-md bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden"
+        className="w-full max-w-md max-h-[90vh] overflow-y-auto bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl"
       >
         {/* Modal Header */}
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-800 bg-slate-950/60">
@@ -840,7 +881,7 @@ const EventModal: React.FC<{
           </button>
         </div>
 
-        <div className="p-5 space-y-4">
+        <div className="p-4 sm:p-5 space-y-4">
           {/* Title */}
           <div>
             <label className="block text-[11px] text-slate-400 uppercase tracking-wider mb-1">{t('event_name', 'Název události')}</label>
@@ -855,7 +896,7 @@ const EventModal: React.FC<{
           </div>
 
           {/* Date & Time row */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-[11px] text-slate-400 uppercase tracking-wider mb-1">{t('date', 'Datum')}</label>
               <input

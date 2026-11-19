@@ -224,7 +224,7 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
         </div>
 
         {/* Content Body */}
-        <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-6">
+        <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-5 sm:space-y-6">
           {statusBanner && (
             <div
               className={`p-3.5 rounded-xl border flex items-center gap-3 text-xs animate-fade-in ${

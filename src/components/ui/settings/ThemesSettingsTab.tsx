@@ -96,47 +96,47 @@ export const ThemesSettingsTab: React.FC<ThemesSettingsTabProps> = ({
         })}
       </div>
 
-      <div className="pt-4 border-t border-slate-800 space-y-3">
-        <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-indigo-400" />
-          <div>
-            <h4 className="text-xs font-semibold text-white">
-              {t('workspace_presets_title', 'Workspace Starter Presets')}
-            </h4>
-            <p className="text-[11px] text-slate-400">
-              {runningInTauri
-                ? t('workspace_presets_desc', 'Configure pinned favorites and sidebar widgets for your workflow in one click.')
-                : t('workspace_presets_desc_web', 'Pin recommended favorite tools for your workflow in one click.')}
-            </p>
+      {runningInTauri && (
+        <div className="pt-4 border-t border-slate-800 space-y-3">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-indigo-400" />
+            <div>
+              <h4 className="text-xs font-semibold text-white">
+                {t('workspace_presets_title', 'Workspace Starter Presets')}
+              </h4>
+              <p className="text-[11px] text-slate-400">
+                {t('workspace_presets_desc', 'Configure pinned favorites and sidebar widgets for your workflow in one click.')}
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+            {WORKSPACE_PRESETS.map(preset => (
+              <button
+                key={preset.id}
+                type="button"
+                onClick={() => {
+                  onUpdateConfig(applyWorkspacePreset(config, preset.id));
+                  toastService.show({
+                    type: 'success',
+                    title: t('workspace_preset_applied', 'Applied "{name}" preset', {
+                      name: t(preset.nameKey, preset.defaultName),
+                    }),
+                  });
+                }}
+                className="p-3 rounded-xl bg-slate-950/60 hover:bg-slate-800/80 border border-slate-800 hover:border-indigo-500/50 text-left transition-colors"
+              >
+                <span className="text-xs font-semibold text-white block">
+                  {t(preset.nameKey, preset.defaultName)}
+                </span>
+                <span className="text-[11px] text-slate-400 block mt-1 leading-relaxed">
+                  {t(preset.descKey, preset.defaultDesc)}
+                </span>
+              </button>
+            ))}
           </div>
         </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-          {WORKSPACE_PRESETS.map(preset => (
-            <button
-              key={preset.id}
-              type="button"
-              onClick={() => {
-                onUpdateConfig(applyWorkspacePreset(config, preset.id));
-                toastService.show({
-                  type: 'success',
-                  title: t('workspace_preset_applied', 'Applied "{name}" preset', {
-                    name: t(preset.nameKey, preset.defaultName),
-                  }),
-                });
-              }}
-              className="p-3 rounded-xl bg-slate-950/60 hover:bg-slate-800/80 border border-slate-800 hover:border-indigo-500/50 text-left transition-colors"
-            >
-              <span className="text-xs font-semibold text-white block">
-                {t(preset.nameKey, preset.defaultName)}
-              </span>
-              <span className="text-[11px] text-slate-400 block mt-1 leading-relaxed">
-                {t(preset.descKey, preset.defaultDesc)}
-              </span>
-            </button>
-          ))}
-        </div>
-      </div>
+      )}
     </div>
   );
 };

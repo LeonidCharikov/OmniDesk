@@ -804,7 +804,7 @@ export default function App() {
   }
 
   return (
-    <div className={`flex h-[100dvh] w-screen overflow-hidden font-sans text-slate-100 theme-${config.themeId || 'midnight'} bg-slate-950`}>
+    <div className={`flex h-[100dvh] w-full max-w-full overflow-hidden font-sans text-slate-100 theme-${config.themeId || 'midnight'} bg-slate-950`}>
       {isSidebarOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-30 sm:hidden"
@@ -881,13 +881,13 @@ export default function App() {
                 </Suspense>
               </ErrorBoundary>
             ) : activeTool ? (
-              <div className="overflow-x-hidden relative">
+              <div className="relative min-w-0">
                 <div className="flex justify-end mb-2">
                   <button
                     type="button"
                     onClick={() => setIsToolInfoOpen(true)}
                     aria-label={t('tool_info_label', 'Tool info')}
-                    className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 border border-slate-800"
+                    className="h-8 w-8 inline-flex items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 border border-slate-800 bg-slate-900/60 transition-colors"
                   >
                     <Info className="w-4 h-4" />
                   </button>

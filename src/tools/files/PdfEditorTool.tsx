@@ -289,7 +289,12 @@ export const PdfEditorTool: React.FC = () => {
   // Tool & selection state
   const [activeTool, setActiveTool] = useState<ToolMode>('select');
   const [eraseSubMode, setEraseSubMode] = useState<EraseSubMode>('clean');
-  const [zoomScale, setZoomScale] = useState<number>(1.2);
+  const [zoomScale, setZoomScale] = useState<number>(() =>
+    typeof window !== 'undefined' && window.innerWidth < 768
+      ? Math.max(0.48, Math.min(0.85, (window.innerWidth - 48) / 595))
+      : 1.15
+  );
+  const [isPagesDrawerOpen, setIsPagesDrawerOpen] = useState(false);
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -369,10 +374,24 @@ export const PdfEditorTool: React.FC = () => {
   // DOM Refs
   const pageCanvasRef = useRef<HTMLCanvasElement>(null);
   const stageContainerRef = useRef<HTMLDivElement>(null);
+  const stageScrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const renderTaskRef = useRef<pdfjsLib.RenderTask | null>(null);
   const initialLoadRef = useRef(false);
+
+  const fitZoomToStage = useCallback(
+    (targetPageWidth?: number) => {
+      const pageWidth = targetPageWidth ?? pageSize.width;
+      const availableWidth =
+        stageScrollRef.current?.clientWidth ||
+        (typeof window !== 'undefined' ? window.innerWidth - 32 : 700);
+      const horizontalPad = typeof window !== 'undefined' && window.innerWidth < 640 ? 24 : 48;
+      const computed = (availableWidth - horizontalPad) / Math.max(200, pageWidth);
+      setZoomScale(Number(Math.max(0.45, Math.min(1.5, computed)).toFixed(2)));
+    },
+    [pageSize.width]
+  );
 
   const showNotification = useCallback((type: 'success' | 'error', text: string) => {
     setStatusMessage({ type, text });
@@ -2154,74 +2173,207 @@ export const PdfEditorTool: React.FC = () => {
   const selectedImgElem = elements.find(el => el.id === selectedElementId && el.type === 'image') as ImageElement | undefined;
   const hasStagedEdits = elements.length > 0 || drawingStrokes.length > 0;
 
-  return (
-    <div className="flex flex-col h-full bg-slate-950 text-slate-100 select-none overflow-hidden font-sans relative">
-      {/* TOP APP BAR */}
-      <div className="flex flex-wrap items-center justify-between gap-2 px-3 sm:px-4 py-2.5 bg-slate-900 border-b border-slate-800 shrink-0 z-30">
-        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-500/20 shrink-0">
-            <FileText className="w-5 h-5 text-slate-950 font-bold" />
-          </div>
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-              <span className="font-semibold text-sm text-slate-100 truncate">{t('pdf_editor_title', 'PDF Studio & Visual Editor')}</span>
-              <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium shrink-0">
-                {totalPages > 0
-                  ? t('pdf_editor_page_num', 'Page {current} of {total}', {
-                      current: activePageIndex + 1,
-                      total: totalPages,
-                    })
-                  : t('pdf_editor_all_saved', 'Document ready')}
-              </span>
+  const renderPageThumbnailsList = (closeDrawerOnSelect: boolean) => (
+    <>
+      <div className="px-3 py-2.5 border-b border-slate-800/80 flex items-center justify-between gap-2 shrink-0">
+        <span className="text-xs font-semibold text-slate-300 uppercase tracking-wider truncate">
+          {t('pdf_editor_pages_title', 'Document Pages')}
+        </span>
+        <div className="flex items-center gap-1 shrink-0">
+          <button
+            onClick={() => handleInsertBlankPage(totalPages - 1)}
+            className="p-1 text-slate-400 hover:text-emerald-400 hover:bg-slate-800 rounded-lg transition-all"
+            title={t('pdf_editor_add_blank_page', 'Insert Blank Page')}
+          >
+            <Plus className="w-4 h-4" />
+          </button>
+          {closeDrawerOnSelect && (
+            <button
+              onClick={() => setIsPagesDrawerOpen(false)}
+              className="p-1 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all"
+              aria-label={t('close', 'Close')}
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-3 space-y-3">
+        {Array.from({ length: totalPages }).map((_, idx) => {
+          const isActive = idx === activePageIndex;
+          const thumbUrl = pageThumbnails[idx];
+
+          return (
+            <div
+              key={idx}
+              className={`group relative rounded-xl border p-2 transition-all cursor-pointer ${
+                isActive
+                  ? 'bg-slate-800/90 border-emerald-500 shadow-lg shadow-emerald-500/10'
+                  : 'bg-slate-950/40 border-slate-800/80 hover:border-slate-700 hover:bg-slate-900/80'
+              }`}
+              onClick={() => {
+                setActivePageIndex(idx);
+                setSelectedElementId(null);
+                setSelectedDetectedText(null);
+                setSelectedDetectedImage(null);
+                if (closeDrawerOnSelect) setIsPagesDrawerOpen(false);
+              }}
+            >
+              <div className="flex items-center justify-between mb-1.5 text-[11px] text-slate-400">
+                <span className="font-semibold text-slate-200">
+                  {t('pdf_editor_page_short', 'Page')} {idx + 1}
+                </span>
+                <div className="flex items-center gap-0.5 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRotatePage(idx, 90);
+                    }}
+                    className="p-1 text-slate-400 hover:text-white rounded hover:bg-slate-700"
+                    title={t('pdf_editor_rotate_cw', 'Rotate 90°')}
+                  >
+                    <RotateCw className="w-3 h-3" />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDuplicatePage(idx);
+                    }}
+                    className="p-1 text-slate-400 hover:text-sky-400 rounded hover:bg-slate-700"
+                    title={t('pdf_editor_duplicate_page', 'Duplicate Page')}
+                  >
+                    <Copy className="w-3 h-3" />
+                  </button>
+                  {totalPages > 1 && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeletePage(idx);
+                      }}
+                      className="p-1 text-slate-400 hover:text-rose-400 rounded hover:bg-slate-700"
+                      title={t('pdf_editor_delete_page', 'Delete Page')}
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div className="w-full aspect-[1/1.414] bg-white rounded-lg overflow-hidden flex items-center justify-center border border-slate-700/50 shadow-sm relative">
+                {thumbUrl ? (
+                  <img src={thumbUrl} alt={`${t('pdf_editor_page_short', 'Page')} ${idx + 1}`} className="w-full h-full object-contain" />
+                ) : (
+                  <div className="text-slate-400 text-[10px] font-mono">{idx + 1}</div>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between mt-1 text-[10px] text-slate-500">
+                <button
+                  disabled={idx === 0}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleMovePage(idx, idx - 1);
+                  }}
+                  className="hover:text-slate-300 disabled:opacity-20"
+                  title={t('pdf_editor_move_page_up', 'Move Up')}
+                >
+                  ▲
+                </button>
+                <button
+                  disabled={idx === totalPages - 1}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleMovePage(idx, idx + 1);
+                  }}
+                  className="hover:text-slate-300 disabled:opacity-20"
+                  title={t('pdf_editor_move_page_down', 'Move Down')}
+                >
+                  ▼
+                </button>
+              </div>
             </div>
-            <p className="text-xs text-slate-400 truncate max-w-[180px] sm:max-w-xs">{fileName}</p>
+          );
+        })}
+      </div>
+    </>
+  );
+
+  return (
+    <div className="flex flex-col min-h-[75dvh] rounded-xl border border-slate-800 bg-slate-950 text-slate-100 select-none overflow-hidden font-sans relative">
+      {/* Hidden File Inputs */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".pdf,application/pdf"
+        className="hidden"
+        onChange={handleFileInputChange}
+      />
+      <input
+        ref={imageInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) handleImageFileSelected(file);
+          e.target.value = '';
+        }}
+      />
+
+      {/* TOP APP BAR */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5 px-3 sm:px-4 py-2.5 bg-slate-900 border-b border-slate-800 shrink-0 z-30">
+        {/* Title & File Meta */}
+        <div className="flex items-center justify-between gap-2 min-w-0">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center shadow-md shadow-emerald-500/20 shrink-0">
+              <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-slate-950 font-bold" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+                <span className="font-semibold text-sm text-slate-100 truncate">
+                  {t('pdf_editor_title', 'PDF Studio & Visual Editor')}
+                </span>
+                <span className="text-[11px] px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 font-medium whitespace-nowrap shrink-0">
+                  {totalPages > 0
+                    ? t('pdf_editor_page_num', 'Page {current} of {total}', {
+                        current: activePageIndex + 1,
+                        total: totalPages,
+                      })
+                    : t('pdf_editor_all_saved', 'Document ready')}
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 truncate max-w-[240px] sm:max-w-xs">{fileName}</p>
+            </div>
           </div>
         </div>
 
-        {/* Center Document Actions */}
-        <div className="hidden lg:flex items-center gap-1.5 bg-slate-950/70 p-1 rounded-xl border border-slate-800">
+        {/* Center Document Actions (Desktop) */}
+        <div className="hidden lg:flex items-center gap-1.5 bg-slate-950/70 p-1 rounded-xl border border-slate-800 shrink-0">
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-200 hover:text-white hover:bg-slate-800/80 rounded-lg transition-all"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-200 hover:text-white hover:bg-slate-800/80 rounded-lg transition-all whitespace-nowrap"
             title={t('pdf_editor_open_file', 'Open PDF')}
           >
-            <Upload className="w-3.5 h-3.5 text-emerald-400" />
+            <Upload className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
             <span>{t('pdf_editor_open_file', 'Open PDF')}</span>
           </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".pdf,application/pdf"
-            className="hidden"
-            onChange={handleFileInputChange}
-          />
-          <input
-            ref={imageInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) handleImageFileSelected(file);
-              e.target.value = '';
-            }}
-          />
 
           <button
             onClick={handleLoadSamplePdf}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800/80 rounded-lg transition-all"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800/80 rounded-lg transition-all whitespace-nowrap"
             title={t('pdf_editor_sample_file', 'Sample PDF')}
           >
-            <FileText className="w-3.5 h-3.5 text-sky-400" />
+            <FileText className="w-3.5 h-3.5 text-sky-400 shrink-0" />
             <span>{t('pdf_editor_sample_file', 'Sample PDF')}</span>
           </button>
 
           <button
             onClick={handleCreateBlankPdf}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800/80 rounded-lg transition-all"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800/80 rounded-lg transition-all whitespace-nowrap"
             title={t('pdf_editor_new_blank', 'New Blank PDF')}
           >
-            <FilePlus className="w-3.5 h-3.5 text-amber-400" />
+            <FilePlus className="w-3.5 h-3.5 text-amber-400 shrink-0" />
             <span>{t('pdf_editor_new_blank', 'New Blank PDF')}</span>
           </button>
 
@@ -2245,61 +2397,106 @@ export const PdfEditorTool: React.FC = () => {
           </button>
         </div>
 
-        {/* Right Save / Export buttons */}
-        <div className="flex flex-wrap items-center gap-2">
-          {hasStagedEdits && (
+        {/* Action Row: Mobile File/Undo/Pages Controls + Export/Print Controls */}
+        <div className="flex flex-wrap items-center justify-between lg:justify-end gap-1.5 sm:gap-2">
+          {/* Mobile / Tablet Quick Controls */}
+          <div className="flex lg:hidden items-center gap-1">
             <button
-              onClick={handleCommitToPdf}
-              disabled={isProcessing}
-              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-sky-300 hover:text-white bg-sky-500/15 hover:bg-sky-500/30 border border-sky-500/40 rounded-xl transition-all"
-              title={t('pdf_editor_apply_to_pdf', 'Commit to PDF')}
+              onClick={() => setIsPagesDrawerOpen(true)}
+              className="md:hidden inline-flex items-center gap-1 h-8 px-2.5 text-xs font-medium text-slate-200 bg-slate-800/70 hover:bg-slate-800 border border-slate-700/60 rounded-lg transition-colors whitespace-nowrap shrink-0"
+              title={t('pdf_editor_pages_title', 'Document Pages')}
             >
-              <Layers className="w-3.5 h-3.5" />
-              <span>{t('pdf_editor_apply_to_pdf', 'Commit to PDF')}</span>
+              <Layers className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+              <span>{t('pdf_editor_tool_pages', 'Pages')}</span>
             </button>
-          )}
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="inline-flex items-center gap-1 h-8 px-2.5 text-xs font-medium text-slate-200 bg-slate-800/70 hover:bg-slate-800 border border-slate-700/60 rounded-lg transition-colors whitespace-nowrap shrink-0"
+              title={t('pdf_editor_open_file', 'Open PDF')}
+            >
+              <Upload className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+              <span className="hidden sm:inline">{t('pdf_editor_open_file', 'Open PDF')}</span>
+            </button>
+            <button
+              onClick={handleCreateBlankPdf}
+              className="inline-flex items-center justify-center h-8 w-8 text-slate-300 bg-slate-800/70 hover:bg-slate-800 border border-slate-700/60 rounded-lg transition-colors shrink-0"
+              title={t('pdf_editor_new_blank', 'New Blank PDF')}
+            >
+              <FilePlus className="w-3.5 h-3.5 text-amber-400" />
+            </button>
+            <button
+              onClick={handleUndo}
+              disabled={historyIndex <= 0}
+              className="inline-flex items-center justify-center h-8 w-8 text-slate-300 bg-slate-800/70 hover:bg-slate-800 border border-slate-700/60 rounded-lg transition-colors disabled:opacity-30 shrink-0"
+              title={t('pdf_editor_undo', 'Undo')}
+            >
+              <Undo2 className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={handleRedo}
+              disabled={historyIndex >= history.length - 1}
+              className="inline-flex items-center justify-center h-8 w-8 text-slate-300 bg-slate-800/70 hover:bg-slate-800 border border-slate-700/60 rounded-lg transition-colors disabled:opacity-30 shrink-0"
+              title={t('pdf_editor_redo', 'Redo')}
+            >
+              <Redo2 className="w-3.5 h-3.5" />
+            </button>
+          </div>
 
-          <button
-            onClick={handleExportPagePng}
-            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white bg-slate-800/70 hover:bg-slate-800 border border-slate-700/60 rounded-xl transition-all"
-            title={t('pdf_editor_export_png', 'Export Page PNG')}
-          >
-            <Maximize2 className="w-3.5 h-3.5 text-slate-400" />
-            <span className="hidden md:inline">{t('pdf_editor_export_png', 'Export Page PNG')}</span>
-          </button>
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            {hasStagedEdits && (
+              <button
+                onClick={handleCommitToPdf}
+                disabled={isProcessing}
+                className="hidden sm:inline-flex items-center gap-1.5 h-8 sm:h-9 px-3 text-xs font-semibold text-sky-300 hover:text-white bg-sky-500/15 hover:bg-sky-500/30 border border-sky-500/40 rounded-lg sm:rounded-xl transition-all whitespace-nowrap shrink-0"
+                title={t('pdf_editor_apply_to_pdf', 'Commit to PDF')}
+              >
+                <Layers className="w-3.5 h-3.5 shrink-0" />
+                <span>{t('pdf_editor_apply_to_pdf', 'Commit to PDF')}</span>
+              </button>
+            )}
 
-          <button
-            onClick={handlePrintPdf}
-            disabled={isProcessing || !currentPdfBytes}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-200 hover:text-white bg-slate-800/70 hover:bg-slate-800 border border-slate-700/60 rounded-xl transition-all disabled:opacity-50"
-            title={t('print_btn', 'Print')}
-          >
-            <Printer className="w-3.5 h-3.5 text-emerald-400" />
-            <span className="hidden md:inline">{t('print_btn', 'Print')}</span>
-          </button>
+            <button
+              onClick={handleExportPagePng}
+              className="hidden sm:inline-flex items-center gap-1.5 h-8 sm:h-9 px-2.5 sm:px-3 text-xs font-medium text-slate-300 hover:text-white bg-slate-800/70 hover:bg-slate-800 border border-slate-700/60 rounded-lg sm:rounded-xl transition-all whitespace-nowrap shrink-0"
+              title={t('pdf_editor_export_png', 'Export Page PNG')}
+            >
+              <Maximize2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <span className="hidden md:inline">{t('pdf_editor_export_png', 'Export Page PNG')}</span>
+            </button>
 
-          <button
-            onClick={() => originalPdfBytes && setShowResetConfirm(true)}
-            className="p-2 text-slate-400 hover:text-rose-400 hover:bg-slate-800/60 rounded-xl transition-all"
-            title={t('pdf_editor_reset', 'Reset to Original')}
-          >
-            <RefreshCw className="w-4 h-4" />
-          </button>
+            <button
+              onClick={handlePrintPdf}
+              disabled={isProcessing || !currentPdfBytes}
+              className="inline-flex items-center justify-center gap-1.5 h-8 sm:h-9 px-2.5 sm:px-3 text-xs font-medium text-slate-200 hover:text-white bg-slate-800/70 hover:bg-slate-800 border border-slate-700/60 rounded-lg sm:rounded-xl transition-all disabled:opacity-50 whitespace-nowrap shrink-0"
+              title={t('print_btn', 'Print')}
+            >
+              <Printer className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+              <span className="hidden md:inline">{t('print_btn', 'Print')}</span>
+            </button>
 
-          <button
-            onClick={handleExportPdf}
-            disabled={isProcessing || !currentPdfBytes}
-            className="flex items-center gap-2 px-4 py-2 text-xs font-semibold text-slate-950 bg-gradient-to-r from-emerald-400 to-teal-300 hover:from-emerald-300 hover:to-teal-200 rounded-xl shadow-md shadow-emerald-500/20 active:scale-95 transition-all disabled:opacity-50"
-          >
-            <Download className="w-4 h-4" />
-            <span>{t('pdf_editor_save_export', 'Export PDF')}</span>
-          </button>
+            <button
+              onClick={() => originalPdfBytes && setShowResetConfirm(true)}
+              className="inline-flex items-center justify-center h-8 w-8 sm:h-9 sm:w-9 text-slate-400 hover:text-rose-400 bg-slate-800/40 hover:bg-slate-800/80 border border-slate-800 rounded-lg sm:rounded-xl transition-all shrink-0"
+              title={t('pdf_editor_reset', 'Reset to Original')}
+            >
+              <RefreshCw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            </button>
+
+            <button
+              onClick={handleExportPdf}
+              disabled={isProcessing || !currentPdfBytes}
+              className="inline-flex items-center justify-center gap-1.5 h-8 sm:h-9 px-3 sm:px-4 text-xs font-semibold text-slate-950 bg-gradient-to-r from-emerald-400 to-teal-300 hover:from-emerald-300 hover:to-teal-200 rounded-lg sm:rounded-xl shadow-md shadow-emerald-500/20 active:scale-95 transition-all disabled:opacity-50 whitespace-nowrap shrink-0"
+            >
+              <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+              <span>{t('pdf_editor_save_export', 'Export PDF')}</span>
+            </button>
+          </div>
         </div>
       </div>
 
       {/* STATUS NOTIFICATION TOAST */}
       {statusMessage && (
-        <div className="absolute top-16 right-6 z-50 flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-medium bg-slate-900/95 border border-slate-700 shadow-2xl backdrop-blur-md">
+        <div className="fixed sm:absolute bottom-4 left-4 right-4 sm:left-auto sm:bottom-auto sm:top-16 sm:right-6 z-50 flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-medium bg-slate-900 border border-slate-700 shadow-2xl">
           {statusMessage.type === 'success' ? (
             <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
           ) : (
@@ -2310,115 +2507,115 @@ export const PdfEditorTool: React.FC = () => {
       )}
 
       {/* SECONDARY TOOLBAR */}
-      <div className="flex items-center justify-between px-4 py-2 bg-slate-900/80 border-b border-slate-800/80 text-xs shrink-0 overflow-x-auto gap-2 z-20">
-        <div className="flex items-center gap-1">
+      <div className="flex items-center justify-between px-3 sm:px-4 py-2 bg-slate-900/80 border-b border-slate-800/80 text-xs shrink-0 overflow-x-auto gap-2 z-20">
+        <div className="flex items-center gap-1 shrink-0">
           <button
             onClick={() => {
               setActiveTool('select');
               setSelectedElementId(null);
             }}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all ${
+            className={`inline-flex items-center gap-1.5 h-8 px-2.5 sm:px-3 rounded-lg font-medium transition-all whitespace-nowrap shrink-0 ${
               activeTool === 'select'
                 ? 'bg-emerald-500 text-slate-950 font-semibold shadow-sm'
                 : 'text-slate-300 hover:text-white hover:bg-slate-800'
             }`}
             title={t('pdf_editor_drag_hint', 'Drag to move anywhere. Press Delete to remove.')}
           >
-            <Move className="w-3.5 h-3.5" />
+            <Move className="w-3.5 h-3.5 shrink-0" />
             <span>{t('pdf_editor_tool_select', 'Select & Move')}</span>
           </button>
 
           <button
             onClick={() => setActiveTool('add_text')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all ${
+            className={`inline-flex items-center gap-1.5 h-8 px-2.5 sm:px-3 rounded-lg font-medium transition-all whitespace-nowrap shrink-0 ${
               activeTool === 'add_text'
                 ? 'bg-sky-500 text-slate-950 font-semibold shadow-sm'
                 : 'text-slate-300 hover:text-white hover:bg-slate-800'
             }`}
             title={t('pdf_editor_text_hint', 'Click anywhere on the page to insert a custom text box')}
           >
-            <Plus className="w-3.5 h-3.5" />
+            <Plus className="w-3.5 h-3.5 shrink-0" />
             <span>{t('pdf_editor_tool_add_text', 'Add Text')}</span>
           </button>
 
           <button
             onClick={() => imageInputRef.current?.click()}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-all"
+            className="inline-flex items-center gap-1.5 h-8 px-2.5 sm:px-3 rounded-lg font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-all whitespace-nowrap shrink-0"
             title={t('pdf_editor_add_image_hint', 'Insert a PNG, JPG, WebP, or SVG image into the PDF')}
           >
-            <ImagePlus className="w-3.5 h-3.5 text-cyan-400" />
+            <ImagePlus className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
             <span>{t('pdf_editor_tool_add_image', 'Add Image')}</span>
           </button>
 
           <button
             onClick={() => setActiveTool('whiteout')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all ${
+            className={`inline-flex items-center gap-1.5 h-8 px-2.5 sm:px-3 rounded-lg font-medium transition-all whitespace-nowrap shrink-0 ${
               activeTool === 'whiteout'
                 ? 'bg-amber-400 text-slate-950 font-semibold shadow-sm'
                 : 'text-slate-300 hover:text-white hover:bg-slate-800'
             }`}
             title={t('pdf_editor_erase_area_hint', 'Drag over text or images to permanently delete them from inside the PDF')}
           >
-            <Eraser className="w-3.5 h-3.5" />
+            <Eraser className="w-3.5 h-3.5 shrink-0" />
             <span>{t('pdf_editor_tool_erase', 'Erase Inside')}</span>
           </button>
 
           <button
             onClick={() => setActiveTool('redact')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all ${
+            className={`inline-flex items-center gap-1.5 h-8 px-2.5 sm:px-3 rounded-lg font-medium transition-all whitespace-nowrap shrink-0 ${
               activeTool === 'redact'
                 ? 'bg-rose-500 text-white font-semibold shadow-sm'
                 : 'text-slate-300 hover:text-white hover:bg-slate-800'
             }`}
             title={t('pdf_editor_redact_hint', 'Drag over confidential text or images to blackout redact')}
           >
-            <Square className="w-3.5 h-3.5" />
+            <Square className="w-3.5 h-3.5 shrink-0" />
             <span>{t('pdf_editor_tool_redact', 'Redact')}</span>
           </button>
 
           <button
             onClick={() => setActiveTool('highlight')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all ${
+            className={`inline-flex items-center gap-1.5 h-8 px-2.5 sm:px-3 rounded-lg font-medium transition-all whitespace-nowrap shrink-0 ${
               activeTool === 'highlight'
                 ? 'bg-yellow-400 text-slate-950 font-semibold shadow-sm'
                 : 'text-slate-300 hover:text-white hover:bg-slate-800'
             }`}
             title={t('pdf_editor_highlight_hint', 'Drag across lines of text to highlight them')}
           >
-            <Highlighter className="w-3.5 h-3.5" />
+            <Highlighter className="w-3.5 h-3.5 shrink-0" />
             <span>{t('pdf_editor_tool_highlight', 'Highlight')}</span>
           </button>
 
           <button
             onClick={() => setActiveTool('pen')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all ${
+            className={`inline-flex items-center gap-1.5 h-8 px-2.5 sm:px-3 rounded-lg font-medium transition-all whitespace-nowrap shrink-0 ${
               activeTool === 'pen'
                 ? 'bg-purple-400 text-slate-950 font-semibold shadow-sm'
                 : 'text-slate-300 hover:text-white hover:bg-slate-800'
             }`}
             title={t('pdf_editor_tool_pen', 'Pen')}
           >
-            <PenTool className="w-3.5 h-3.5" />
+            <PenTool className="w-3.5 h-3.5 shrink-0" />
             <span>{t('pdf_editor_tool_pen', 'Pen')}</span>
           </button>
 
-          <div className="w-px h-4 bg-slate-800 mx-1" />
+          <div className="w-px h-4 bg-slate-800 mx-1 shrink-0" />
 
           <button
             onClick={() => setShowSigModal(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg font-medium transition-all"
+            className="inline-flex items-center gap-1.5 h-8 px-2.5 sm:px-3 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg font-medium transition-all whitespace-nowrap shrink-0"
             title={t('pdf_editor_signature_title', 'Signatures & Stamps')}
           >
-            <FileSignature className="w-3.5 h-3.5 text-teal-400" />
+            <FileSignature className="w-3.5 h-3.5 text-teal-400 shrink-0" />
             <span>{t('pdf_editor_tool_signature', 'Signature & Stamp')}</span>
           </button>
 
           <button
             onClick={() => setShowWatermarkModal(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg font-medium transition-all"
+            className="inline-flex items-center gap-1.5 h-8 px-2.5 sm:px-3 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg font-medium transition-all whitespace-nowrap shrink-0"
             title={t('pdf_editor_watermark_text', 'Watermark Text')}
           >
-            <Stamp className="w-3.5 h-3.5 text-rose-400" />
+            <Stamp className="w-3.5 h-3.5 text-rose-400 shrink-0" />
             <span>{t('pdf_editor_tool_watermark', 'Watermark')}</span>
           </button>
         </div>
@@ -2548,183 +2745,91 @@ export const PdfEditorTool: React.FC = () => {
         )}
 
         {/* Zoom & Pen Controls */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           {activeTool === 'pen' && (
-            <div className="flex items-center gap-1.5 bg-slate-950/70 px-2 py-1 rounded-lg border border-slate-800">
-              <span className="text-[10px] text-slate-400">{t('pdf_editor_pen_color', 'Brush Color')}:</span>
+            <div className="flex items-center gap-1.5 bg-slate-950/70 px-2 py-1 rounded-lg border border-slate-800 shrink-0">
+              <span className="text-[10px] text-slate-400 whitespace-nowrap">{t('pdf_editor_pen_color', 'Brush Color')}:</span>
               {['#ef4444', '#3b82f6', '#10b981', '#0f172a', '#f59e0b', '#ffffff'].map(c => (
                 <button
                   key={c}
                   onClick={() => setPenColor(c)}
-                  className={`w-4 h-4 rounded-full border ${penColor === c ? 'scale-125 border-white ring-2 ring-emerald-400' : 'border-slate-700'}`}
+                  className={`w-4 h-4 rounded-full border shrink-0 ${penColor === c ? 'scale-125 border-white ring-2 ring-emerald-400' : 'border-slate-700'}`}
                   style={{ backgroundColor: c }}
                 />
               ))}
               <div className="w-px h-3 bg-slate-800 mx-1" />
               <button
                 onClick={() => setDrawingStrokes(prev => prev.filter(s => s.pageIndex !== activePageIndex))}
-                className="text-[10px] text-rose-400 hover:underline"
+                className="text-[10px] text-rose-400 hover:underline whitespace-nowrap"
               >
                 {t('pdf_editor_clear_drawings', 'Clear Strokes')}
               </button>
             </div>
           )}
 
-          <div className="flex items-center gap-1 bg-slate-950/80 px-2 py-1 rounded-lg border border-slate-800">
+          <div className="flex items-center gap-1 bg-slate-950/80 px-2 py-1 rounded-lg border border-slate-800 shrink-0">
             <button
-              onClick={() => setZoomScale(z => Math.max(0.6, z - 0.15))}
+              onClick={() => setZoomScale(z => Math.max(0.45, Number((z - 0.15).toFixed(2))))}
               className="p-1 text-slate-400 hover:text-white rounded hover:bg-slate-800"
               title={t('pdf_editor_zoom_out', 'Zoom Out')}
             >
               <ZoomOut className="w-3.5 h-3.5" />
             </button>
-            <span className="text-[11px] font-mono text-slate-300 w-12 text-center">
+            <span className="text-[11px] font-mono text-slate-300 w-10 text-center tabular-nums">
               {Math.round(zoomScale * 100)}%
             </span>
             <button
-              onClick={() => setZoomScale(z => Math.min(2.5, z + 0.15))}
+              onClick={() => setZoomScale(z => Math.min(2.5, Number((z + 0.15).toFixed(2))))}
               className="p-1 text-slate-400 hover:text-white rounded hover:bg-slate-800"
               title={t('pdf_editor_zoom_in', 'Zoom In')}
             >
               <ZoomIn className="w-3.5 h-3.5" />
             </button>
             <button
-              onClick={() => setZoomScale(1.0)}
-              className="px-1.5 py-0.5 text-[10px] text-slate-400 hover:text-white rounded hover:bg-slate-800"
+              onClick={() => fitZoomToStage()}
+              className="px-1.5 py-0.5 text-[10px] text-slate-400 hover:text-white rounded hover:bg-slate-800 whitespace-nowrap"
               title={t('pdf_editor_zoom_fit', 'Fit Page')}
             >
-              100%
+              {t('pdf_editor_zoom_fit', 'Fit Page')}
             </button>
           </div>
         </div>
       </div>
 
       {/* MAIN WORKSPACE */}
-      <div className="flex flex-1 overflow-hidden relative">
-        {/* LEFT RAIL: Page Thumbnails */}
-        <div className="w-56 bg-slate-900/60 border-r border-slate-800 flex flex-col shrink-0">
-          <div className="px-3 py-2.5 border-b border-slate-800/80 flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
-              {t('pdf_editor_pages_title', 'Document Pages')}
-            </span>
-            <button
-              onClick={() => handleInsertBlankPage(totalPages - 1)}
-              className="p-1 text-slate-400 hover:text-emerald-400 hover:bg-slate-800 rounded-lg transition-all"
-              title={t('pdf_editor_add_blank_page', 'Insert Blank Page')}
-            >
-              <Plus className="w-4 h-4" />
-            </button>
-          </div>
-
-          <div className="flex-1 overflow-y-auto p-3 space-y-3">
-            {Array.from({ length: totalPages }).map((_, idx) => {
-              const isActive = idx === activePageIndex;
-              const thumbUrl = pageThumbnails[idx];
-
-              return (
-                <div
-                  key={idx}
-                  className={`group relative rounded-xl border p-2 transition-all cursor-pointer ${
-                    isActive
-                      ? 'bg-slate-800/90 border-emerald-500 shadow-lg shadow-emerald-500/10'
-                      : 'bg-slate-950/40 border-slate-800/80 hover:border-slate-700 hover:bg-slate-900/80'
-                  }`}
-                  onClick={() => {
-                    setActivePageIndex(idx);
-                    setSelectedElementId(null);
-                    setSelectedDetectedText(null);
-                    setSelectedDetectedImage(null);
-                  }}
-                >
-                  <div className="flex items-center justify-between mb-1.5 text-[11px] text-slate-400">
-                    <span className="font-semibold text-slate-200">
-                      {t('pdf_editor_page_short', 'Page')} {idx + 1}
-                    </span>
-                    <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleRotatePage(idx, 90);
-                        }}
-                        className="p-1 text-slate-400 hover:text-white rounded hover:bg-slate-700"
-                        title={t('pdf_editor_rotate_cw', 'Rotate 90°')}
-                      >
-                        <RotateCw className="w-3 h-3" />
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDuplicatePage(idx);
-                        }}
-                        className="p-1 text-slate-400 hover:text-sky-400 rounded hover:bg-slate-700"
-                        title={t('pdf_editor_duplicate_page', 'Duplicate Page')}
-                      >
-                        <Copy className="w-3 h-3" />
-                      </button>
-                      {totalPages > 1 && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeletePage(idx);
-                          }}
-                          className="p-1 text-slate-400 hover:text-rose-400 rounded hover:bg-slate-700"
-                          title={t('pdf_editor_delete_page', 'Delete Page')}
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="w-full aspect-[1/1.414] bg-white rounded-lg overflow-hidden flex items-center justify-center border border-slate-700/50 shadow-sm relative">
-                    {thumbUrl ? (
-                      <img src={thumbUrl} alt={`${t('pdf_editor_page_short', 'Page')} ${idx + 1}`} className="w-full h-full object-contain" />
-                    ) : (
-                      <div className="text-slate-400 text-[10px] font-mono">{idx + 1}</div>
-                    )}
-                  </div>
-
-                  <div className="flex items-center justify-between mt-1 text-[10px] text-slate-500">
-                    <button
-                      disabled={idx === 0}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleMovePage(idx, idx - 1);
-                      }}
-                      className="hover:text-slate-300 disabled:opacity-20"
-                      title={t('pdf_editor_move_page_up', 'Move Up')}
-                    >
-                      ▲
-                    </button>
-                    <button
-                      disabled={idx === totalPages - 1}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleMovePage(idx, idx + 1);
-                      }}
-                      className="hover:text-slate-300 disabled:opacity-20"
-                      title={t('pdf_editor_move_page_down', 'Move Down')}
-                    >
-                      ▼
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+      <div className="flex flex-1 overflow-hidden relative min-h-[60dvh]">
+        {/* LEFT RAIL (Desktop & Tablet >= md): Page Thumbnails */}
+        <div className="hidden md:flex md:w-52 lg:w-56 bg-slate-900/60 border-r border-slate-800 flex-col shrink-0">
+          {renderPageThumbnailsList(false)}
         </div>
+
+        {/* MOBILE PAGES DRAWER (< md) */}
+        {isPagesDrawerOpen && (
+          <div className="fixed inset-0 z-50 md:hidden flex">
+            <div
+              className="fixed inset-0 bg-black/60 backdrop-blur-xs"
+              onClick={() => setIsPagesDrawerOpen(false)}
+            />
+            <div className="relative z-10 w-64 max-w-[82vw] h-full bg-slate-900 border-r border-slate-800 flex flex-col shadow-2xl">
+              {renderPageThumbnailsList(true)}
+            </div>
+          </div>
+        )}
 
         {/* CENTER STAGE */}
         <div
-          className="flex-1 overflow-auto bg-slate-950 flex flex-col items-center justify-start p-6 relative"
+          ref={stageScrollRef}
+          className="flex-1 min-w-0 overflow-auto bg-slate-950 flex flex-col items-center justify-start p-3 sm:p-6 relative"
           onDragOver={(e) => e.preventDefault()}
           onDrop={handleStageDrop}
         >
           {/* Active Tool Help Banner */}
-          <div className="sticky top-0 z-20 mb-4 px-4 py-1.5 rounded-full bg-slate-900/95 border border-slate-800 text-xs text-slate-300 shadow-xl backdrop-blur-md flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <div className="w-full max-w-2xl mb-3 sm:mb-4 px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-[11px] sm:text-xs text-slate-300 shadow-sm flex items-start sm:items-center justify-center gap-2 text-center leading-snug">
             {activeTool === 'select' && (
-              <span>{t('pdf_editor_drag_hint', 'Drag to move anywhere. Press Delete to remove.')} · {t('pdf_editor_paste_image_hint', 'Tip: Drag & drop or paste (Ctrl+V) any image onto the page')}</span>
+              <span>
+                {t('pdf_editor_drag_hint', 'Drag to move anywhere. Press Delete to remove.')}
+                <span className="hidden sm:inline"> · {t('pdf_editor_paste_image_hint', 'Tip: Drag & drop or paste (Ctrl+V) any image onto the page')}</span>
+              </span>
             )}
             {activeTool === 'add_text' && (
               <span>{t('pdf_editor_text_hint', 'Click anywhere on the page to insert a custom text box')}</span>
@@ -3249,8 +3354,8 @@ export const PdfEditorTool: React.FC = () => {
 
       {/* MODAL 1: In-Place Text Editor Modal */}
       {editingTextElement && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl p-5 text-slate-100">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-3 sm:p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl p-4 sm:p-5 text-slate-100">
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
               <div className="flex items-center gap-2">
                 <Type className="w-4 h-4 text-sky-400" />
@@ -3343,7 +3448,7 @@ export const PdfEditorTool: React.FC = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 pt-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                 <div>
                   <label className="text-[11px] text-slate-400 block mb-1">
                     {t('pdf_editor_font_size', 'Font Size')}: {textFontSize}pt
@@ -3430,8 +3535,8 @@ export const PdfEditorTool: React.FC = () => {
 
       {/* MODAL 2: Signature & Stamps Modal */}
       {showSigModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl p-5 text-slate-100">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-3 sm:p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl p-4 sm:p-5 text-slate-100">
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
               <div className="flex items-center gap-2">
                 <FileSignature className="w-4 h-4 text-teal-400" />
