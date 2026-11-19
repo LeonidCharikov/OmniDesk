@@ -3238,5 +3238,15 @@
   "updates_downloading_label": "Update-Paket wird heruntergeladen...",
   "header_update_btn": "Update v{version}",
   "header_update_available_tooltip": "Update v{version} verfügbar — klicken zum Herunterladen und Aktualisieren",
-  "header_update_installing_tooltip": "Update v{version} wird heruntergeladen und installiert..."
+  "header_update_installing_tooltip": "Update v{version} wird heruntergeladen und installiert...",
+  "window_restore": "Wiederherstellen",
+  "theme_midnight": "Mitternachtsblau",
+  "theme_oled": "OLED Schwarz",
+  "theme_graphite": "Anthrazit Graphit",
+  "theme_nord": "Nordischer Frost",
+  "theme_ocean": "Tiefer Ozean",
+  "theme_emerald": "Cyber-Smaragd",
+  "theme_purple": "Königliche Dämmerung",
+  "theme_sunset": "Bernstein-Glut",
+  "theme_sand": "Warmes Papier"
 }

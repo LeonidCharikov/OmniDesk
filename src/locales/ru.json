@@ -3238,5 +3238,15 @@
   "updates_downloading_label": "Загрузка пакета обновления...",
   "header_update_btn": "Обновить v{version}",
   "header_update_available_tooltip": "Доступно обновление v{version} — нажмите, чтобы скачать и обновить",
-  "header_update_installing_tooltip": "Скачивание и установка обновления v{version}..."
+  "header_update_installing_tooltip": "Скачивание и установка обновления v{version}...",
+  "window_restore": "Восстановить",
+  "theme_midnight": "Полночный синий",
+  "theme_oled": "OLED Чёрный",
+  "theme_graphite": "Угольный графит",
+  "theme_nord": "Северный мороз",
+  "theme_ocean": "Глубокий океан",
+  "theme_emerald": "Кибер-изумруд",
+  "theme_purple": "Королевские сумерки",
+  "theme_sunset": "Янтарный жар",
+  "theme_sand": "Тёплая бумага"
 }

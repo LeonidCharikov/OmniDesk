@@ -3238,5 +3238,15 @@
   "updates_downloading_label": "Descargando paquete de actualización...",
   "header_update_btn": "Actualizar v{version}",
   "header_update_available_tooltip": "Actualización v{version} disponible — haz clic para descargar y actualizar",
-  "header_update_installing_tooltip": "Descargando e instalando actualización v{version}..."
+  "header_update_installing_tooltip": "Descargando e instalando actualización v{version}...",
+  "window_restore": "Restaurar",
+  "theme_midnight": "Azul medianoche",
+  "theme_oled": "Negro OLED",
+  "theme_graphite": "Grafito carbón",
+  "theme_nord": "Escarcha nórdica",
+  "theme_ocean": "Océano profundo",
+  "theme_emerald": "Esmeralda cibernético",
+  "theme_purple": "Crepúsculo real",
+  "theme_sunset": "Brasa ámbar",
+  "theme_sand": "Papel cálido"
 }

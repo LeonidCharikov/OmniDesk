@@ -3238,5 +3238,15 @@
   "updates_downloading_label": "Stahování aktualizačního balíčku...",
   "header_update_btn": "Aktualizovat v{version}",
   "header_update_available_tooltip": "Dostupná aktualizace v{version} — kliknutím stáhnete a aktualizujete",
-  "header_update_installing_tooltip": "Stahování a instalace aktualizace v{version}..."
+  "header_update_installing_tooltip": "Stahování a instalace aktualizace v{version}...",
+  "window_restore": "Obnovit",
+  "theme_midnight": "Půlnoční modrá",
+  "theme_oled": "OLED černá",
+  "theme_graphite": "Uhlově grafitová",
+  "theme_nord": "Severský mráz",
+  "theme_ocean": "Hluboký oceán",
+  "theme_emerald": "Kyber smaragd",
+  "theme_purple": "Královský soumrak",
+  "theme_sunset": "Jantarový žár",
+  "theme_sand": "Teplý papír"
 }
