@@ -478,12 +478,16 @@ export default function App() {
     return () => document.removeEventListener('click', handleDocumentLinkClick);
   }, [runningInTauri]);
 
+  const tRef = useRef(t);
+  tRef.current = t;
+
   // Once-per-session desktop auto-update check on app open (Desktop / Tauri only)
   useEffect(() => {
     if (!runningInTauri || didCheckUpdateRef.current) return;
-    didCheckUpdateRef.current = true;
     let cancelled = false;
     const timerId = window.setTimeout(() => {
+      if (cancelled) return;
+      didCheckUpdateRef.current = true;
       void checkForDesktopUpdate().then(res => {
         if (cancelled) {
           void disposeDesktopUpdateHandle(res.updateHandle);
@@ -493,8 +497,10 @@ export default function App() {
         if (res.status === 'available' && res.availableVersion) {
           toastService.show({
             type: 'info',
-            title: t('update_available_toast', 'Update v{version} available', { version: res.availableVersion }),
-            message: t(
+            title: tRef.current('update_available_toast', 'Update v{version} available', {
+              version: res.availableVersion,
+            }),
+            message: tRef.current(
               'update_available_toast_desc',
               'Click the download icon in the top bar or open Settings -> Updates to update.'
             ),
@@ -508,7 +514,7 @@ export default function App() {
       cancelled = true;
       window.clearTimeout(timerId);
     };
-  }, [runningInTauri, t]);
+  }, [runningInTauri]);
 
   const handleTriggerMainScreenUpdate = useCallback(async () => {
     if (!runningInTauri || !desktopUpdateResult || desktopUpdateResult.status !== 'available' || isInstallingDesktopUpdate) {

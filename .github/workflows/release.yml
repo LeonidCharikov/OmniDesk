@@ -5,9 +5,216 @@ on:
     tags:
       - "v*"
   workflow_dispatch:
+    inputs:
+      bump:
+        description: "Version bump (ignored if exact version is set)"
+        type: choice
+        default: patch
+        options:
+          - patch
+          - minor
+          - major
+      custom_version:
+        description: "Optional exact version (e.g. 0.2.0 — leave empty to auto-bump)"
+        type: string
+        required: false
+        default: ""
+      release_notes:
+        description: "Optional release notes shown in OmniDesk Settings -> Updates"
+        type: string
+        required: false
+        default: ""
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
 
 jobs:
-  release:
+  prepare:
+    runs-on: ubuntu-22.04
+    outputs:
+      version: ${{ steps.version_cfg.outputs.version }}
+      tag: ${{ steps.version_cfg.outputs.tag }}
+      updater_enabled: ${{ steps.version_cfg.outputs.updater_enabled }}
+      release_body: ${{ steps.version_cfg.outputs.release_body }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install frontend & MCP server dependencies
+        run: |
+          npm ci
+          npm --prefix docs/mcp-server-template ci
+
+      - name: Verify i18n parity, unit & MCP E2E tests
+        run: |
+          npm run i18n:check
+          npm test
+          npm --prefix docs/mcp-server-template test
+
+      - name: Run Playwright browser smoke tests
+        run: |
+          npx playwright install chromium --with-deps
+          npm run build
+          npm run test:e2e
+
+      - name: Compute release version & verify updater signing keys
+        id: version_cfg
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HAS_PRIV_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY != '' }}
+          PUB_KEY: ${{ vars.TAURI_SIGNING_PUBLIC_KEY || secrets.TAURI_SIGNING_PUBLIC_KEY }}
+          INPUT_BUMP: ${{ inputs.bump || 'patch' }}
+          INPUT_CUSTOM_VERSION: ${{ inputs.custom_version || '' }}
+          INPUT_RELEASE_NOTES: ${{ inputs.release_notes || '' }}
+        run: |
+          node -e '
+            const fs = require("fs");
+            const { execSync } = require("child_process");
+
+            function parseSemver(raw) {
+              const match = String(raw || "").trim().match(/^v?(\d+)\.(\d+)\.(\d+)$/);
+              if (!match) return null;
+              return [Number(match[1]), Number(match[2]), Number(match[3])];
+            }
+
+            function compareSemver(a, b) {
+              for (let i = 0; i < 3; i++) {
+                if (a[i] !== b[i]) return a[i] - b[i];
+              }
+              return 0;
+            }
+
+            async function main() {
+              const conf = JSON.parse(fs.readFileSync("src-tauri/tauri.conf.json", "utf8"));
+              const refType = (process.env.GITHUB_REF_TYPE || "").trim();
+              const refName = (process.env.GITHUB_REF_NAME || "").trim();
+              const customVersion = (process.env.INPUT_CUSTOM_VERSION || "").trim();
+              const bump = (process.env.INPUT_BUMP || "patch").trim();
+
+              let releaseVersion = "";
+              let releaseTag = "";
+
+              if (refType === "tag" && /^v?\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/.test(refName)) {
+                releaseVersion = refName.replace(/^v/, "");
+                releaseTag = refName.startsWith("v") ? refName : `v${releaseVersion}`;
+              } else if (customVersion) {
+                const cleaned = customVersion.replace(/^v/i, "");
+                if (!/^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/.test(cleaned)) {
+                  throw new Error(`Invalid custom_version "${customVersion}". Expected format like 0.2.0`);
+                }
+                releaseVersion = cleaned;
+                releaseTag = `v${releaseVersion}`;
+              } else {
+                let highest = parseSemver(conf.version) || [0, 1, 0];
+
+                try {
+                  const gitTags = execSync("git tag -l \"v*\"", { encoding: "utf8" })
+                    .split(/\r?\n/)
+                    .map(t => parseSemver(t))
+                    .filter(Boolean);
+                  for (const parsed of gitTags) {
+                    if (compareSemver(parsed, highest) > 0) highest = parsed;
+                  }
+                } catch {}
+
+                try {
+                  const repo = process.env.GITHUB_REPOSITORY;
+                  const token = process.env.GITHUB_TOKEN;
+                  if (repo && token) {
+                    const res = await fetch(`https://api.github.com/repos/${repo}/releases?per_page=25`, {
+                      headers: {
+                        Authorization: `Bearer ${token}`,
+                        Accept: "application/vnd.github+json",
+                        "User-Agent": "OmniDesk-Release-Workflow",
+                      },
+                    });
+                    if (res.ok) {
+                      const releases = await res.json();
+                      for (const rel of releases) {
+                        const parsed = parseSemver(rel.tag_name);
+                        if (parsed && compareSemver(parsed, highest) > 0) {
+                          highest = parsed;
+                        }
+                      }
+                    }
+                  }
+                } catch {}
+
+                let next;
+                if (bump === "major") {
+                  next = [highest[0] + 1, 0, 0];
+                } else if (bump === "minor") {
+                  next = [highest[0], highest[1] + 1, 0];
+                } else {
+                  next = [highest[0], highest[1], highest[2] + 1];
+                }
+                releaseVersion = next.join(".");
+                releaseTag = `v${releaseVersion}`;
+              }
+
+              const customNotes = (process.env.INPUT_RELEASE_NOTES || "").trim();
+              const releaseBody =
+                customNotes ||
+                "Download the installer for your platform (Windows, macOS, Linux) below, or update directly inside OmniDesk Desktop via Settings -> Updates.";
+
+              const hasPriv = process.env.HAS_PRIV_KEY === "true";
+              const envPub = (process.env.PUB_KEY || "").trim();
+              const confPub = ((conf.plugins && conf.plugins.updater && conf.plugins.updater.pubkey) || "").trim();
+              const hasPub = Boolean(envPub || confPub);
+              const updaterEnabled = hasPriv && hasPub;
+
+              const delimiter = "OMNIDESK_RELEASE_BODY_EOF";
+              fs.appendFileSync(
+                process.env.GITHUB_OUTPUT,
+                [
+                  `version=${releaseVersion}`,
+                  `tag=${releaseTag}`,
+                  `updater_enabled=${updaterEnabled ? "true" : "false"}`,
+                  `release_body<<${delimiter}`,
+                  releaseBody,
+                  delimiter,
+                  "",
+                ].join("\n")
+              );
+
+              const summaryLines = [
+                `### OmniDesk Desktop Release \`${releaseTag}\``,
+                `- **Version:** \`${releaseVersion}\``,
+                `- **Signed In-App Auto-Updater (\`latest.json\`):** ${updaterEnabled ? "Enabled" : "Disabled (missing signing keys)"}`,
+              ];
+              if (!hasPriv) {
+                summaryLines.push("- ⚠️ Missing GitHub Secret: `TAURI_SIGNING_PRIVATE_KEY`");
+              }
+              if (!hasPub) {
+                summaryLines.push("- ⚠️ Missing GitHub Variable/Secret: `TAURI_SIGNING_PUBLIC_KEY` (or `plugins.updater.pubkey` in `src-tauri/tauri.conf.json`)");
+              }
+              if (process.env.GITHUB_STEP_SUMMARY) {
+                fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, summaryLines.join("\n") + "\n");
+              }
+              console.log(summaryLines.join("\n"));
+            }
+
+            main().catch(err => {
+              console.error(err);
+              process.exit(1);
+            });
+          '
+
+  build:
+    needs: prepare
     permissions:
       contents: write
     strategy:
@@ -32,83 +239,43 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
 
-      - name: Install frontend & MCP server dependencies
-        run: |
-          npm ci
-          npm --prefix docs/mcp-server-template ci
+      - name: Install frontend dependencies
+        run: npm ci
 
-      - name: Verify i18n parity, unit & MCP E2E tests
-        run: |
-          npm run i18n:check
-          npm test
-          npm --prefix docs/mcp-server-template test
-
-      - name: Run Playwright browser smoke tests
-        if: matrix.platform == 'ubuntu-22.04'
-        run: |
-          npx playwright install chromium --with-deps
-          npm run build
-          npm run test:e2e
-
-      - name: Configure signed Tauri updater when keys are available
-        id: updater_cfg
+      - name: Patch tauri.conf.json with release version & updater config
         shell: bash
         env:
-          HAS_PRIV_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY != '' }}
+          RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
+          UPDATER_ENABLED: ${{ needs.prepare.outputs.updater_enabled }}
           PUB_KEY: ${{ vars.TAURI_SIGNING_PUBLIC_KEY || secrets.TAURI_SIGNING_PUBLIC_KEY }}
-          RUN_NUMBER: ${{ github.run_number }}
         run: |
           node -e '
             const fs = require("fs");
-            const hasPriv = process.env.HAS_PRIV_KEY === "true";
+            const confPath = "src-tauri/tauri.conf.json";
+            const conf = JSON.parse(fs.readFileSync(confPath, "utf8"));
+            conf.version = process.env.RELEASE_VERSION;
+
             const envPub = (process.env.PUB_KEY || "").trim();
-            const conf = JSON.parse(fs.readFileSync("src-tauri/tauri.conf.json", "utf8"));
             const confPub = ((conf.plugins && conf.plugins.updater && conf.plugins.updater.pubkey) || "").trim();
             const activePub = envPub || confPub;
-            const refName = (process.env.GITHUB_REF_NAME || "").trim();
-            const tagVersion = /^v?(\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?)$/.test(refName)
-              ? refName.replace(/^v/, "")
-              : `0.1.${process.env.RUN_NUMBER || "0"}`;
-            if (!/^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/.test(tagVersion)) {
-              throw new Error(`Invalid release version: ${tagVersion}`);
-            }
 
-            const override = {
-              version: tagVersion,
-              bundle: {},
-              plugins: {}
-            };
-
-            if (hasPriv && activePub) {
-              override.bundle.createUpdaterArtifacts = true;
-              override.plugins.updater = {
+            if (process.env.UPDATER_ENABLED === "true" && activePub) {
+              conf.bundle = conf.bundle || {};
+              conf.bundle.createUpdaterArtifacts = true;
+              conf.plugins = conf.plugins || {};
+              conf.plugins.updater = {
                 endpoints: ["https://github.com/LeonidCharikov/OmniDesk/releases/latest/download/latest.json"],
-                pubkey: activePub
+                pubkey: activePub,
               };
-              fs.writeFileSync("src-tauri/updater.override.json", JSON.stringify(override, null, 2));
-              fs.appendFileSync(process.env.GITHUB_OUTPUT, "enabled=true\nargs=--config src-tauri/updater.override.json\n");
-            } else {
-              fs.writeFileSync("src-tauri/updater.override.json", JSON.stringify(override, null, 2));
-              fs.appendFileSync(process.env.GITHUB_OUTPUT, "enabled=false\nargs=--config src-tauri/updater.override.json\n");
             }
 
-            fs.appendFileSync(process.env.GITHUB_OUTPUT, `version=${tagVersion}\n`);
+            fs.writeFileSync(confPath, JSON.stringify(conf, null, 2) + "\n");
           '
-
-      - name: Derive release tag
-        id: release_tag
-        shell: bash
-        run: |
-          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
-            echo "tag=$GITHUB_REF_NAME" >> "$GITHUB_OUTPUT"
-          else
-            echo "tag=v${{ steps.updater_cfg.outputs.version }}" >> "$GITHUB_OUTPUT"
-          fi
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Build and publish release
+      - name: Build and upload release artifacts
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -116,12 +283,68 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           tauriScript: npx tauri
-          args: ${{ steps.updater_cfg.outputs.args }}
-          includeUpdaterJson: ${{ steps.updater_cfg.outputs.enabled == 'true' }}
-          tagName: ${{ steps.release_tag.outputs.tag }}
-          releaseName: OmniDesk ${{ steps.release_tag.outputs.tag }}
-          releaseBody: |
-            Download the installer for your platform (Windows, macOS, Linux) below.
-          releaseDraft: false
+          includeUpdaterJson: ${{ needs.prepare.outputs.updater_enabled == 'true' }}
+          tagName: ${{ needs.prepare.outputs.tag }}
+          releaseName: OmniDesk ${{ needs.prepare.outputs.tag }}
+          releaseBody: ${{ needs.prepare.outputs.release_body }}
+          releaseDraft: true
           prerelease: false
 
+  publish:
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Publish draft GitHub Release atomically
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
+        run: |
+          node -e '
+            async function main() {
+              const repo = process.env.GITHUB_REPOSITORY;
+              const token = process.env.GITHUB_TOKEN;
+              const tag = process.env.RELEASE_TAG;
+              const headers = {
+                Authorization: `Bearer ${token}`,
+                Accept: "application/vnd.github+json",
+                "Content-Type": "application/json",
+                "User-Agent": "OmniDesk-Release-Workflow",
+              };
+
+              const listRes = await fetch(`https://api.github.com/repos/${repo}/releases?per_page=30`, { headers });
+              if (!listRes.ok) {
+                throw new Error(`Failed to list releases: HTTP ${listRes.status}`);
+              }
+              const releases = await listRes.json();
+              const target = releases.find(r => r.tag_name === tag);
+              if (!target) {
+                throw new Error(`Could not find draft release for tag ${tag}`);
+              }
+
+              if (target.draft) {
+                const patchRes = await fetch(`https://api.github.com/repos/${repo}/releases/${target.id}`, {
+                  method: "PATCH",
+                  headers,
+                  body: JSON.stringify({
+                    draft: false,
+                    prerelease: false,
+                    make_latest: "true",
+                  }),
+                });
+                if (!patchRes.ok) {
+                  const text = await patchRes.text();
+                  throw new Error(`Failed to publish release ${tag}: HTTP ${patchRes.status} ${text}`);
+                }
+              }
+
+              const assetNames = (target.assets || []).map(a => a.name);
+              console.log(`Published release ${tag} with ${assetNames.length} assets:`, assetNames);
+            }
+
+            main().catch(err => {
+              console.error(err);
+              process.exit(1);
+            });
+          '

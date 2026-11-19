@@ -6,14 +6,14 @@ OmniDesk's native **Tauri v2 Desktop** application supports cryptographically si
 
 ## 1. How the Automated Update Flow Works
 
-1. **Push or Tag & CI Build**: Pushing to `main` publishes an automatic `v0.1.<run-number>` release. Pushing a manual `vX.Y.Z` tag publishes that exact version instead. The workflow runs tests, i18n validation, Playwright E2E checks, and builds native Desktop installers across Windows, macOS, and Linux.
+1. **Controlled Desktop Releases (On-Demand or Tag)**: Regular commits pushed to `main` update the **Web/PWA** app automatically (`pages.yml`) without spamming Desktop users. When you are ready to ship a batch of changes to Desktop, trigger **Actions → Build and release OmniDesk → Run workflow** (or push a `vX.Y.Z` tag). The workflow runs tests, i18n validation, Playwright E2E checks, and builds native Desktop installers across Windows, macOS, and Linux.
 2. **Cryptographic Signing**: Each installer package is signed using your Ed25519 private signing key (`TAURI_SIGNING_PRIVATE_KEY`), producing `.sig` signature files and a unified **`latest.json`** updater manifest attached directly to the GitHub Release.
 3. **Startup Check & Toast Notification**: When a user opens OmniDesk Desktop, `App.tsx` waits briefly after launch and calls `checkForDesktopUpdate()` against:
    `https://github.com/LeonidCharikov/OmniDesk/releases/latest/download/latest.json`
-   If a newer version exists, a non-blocking toast invites the user to open **Settings → Updates**.
-4. **One-Click Install & Relaunch**: In **Settings → Updates**, the user reviews the version and release notes, clicks **Download & Install**, watches real-time download progress, and Tauri verifies the Ed25519 signature before installing and relaunching automatically via `tauri-plugin-process`.
+   If a newer version exists, a non-blocking toast and a top-bar / sidebar **Update** button invite the user to update.
+4. **One-Click Install & Relaunch**: Clicking the update button (or opening **Settings → Updates** and clicking **Download & Install**) streams download progress, verifies the Ed25519 signature, installs the update, and relaunches automatically via `tauri-plugin-process`.
 
-> **Safe Fallback**: If signing keys have not been configured yet in CI or `tauri.conf.json`, the app never crashes or panics — `src-tauri/src/lib.rs` detects an empty public key cleanly and **Settings → Updates** displays a clear status banner explaining how to enable signed updates.
+> **Safe Fallback**: If signing keys have not been configured yet in CI or `tauri.conf.json`, the app never crashes or panics — `src-tauri/src/lib.rs` detects an empty public key cleanly and falls back to checking GitHub Releases with a direct installer download link.
 
 ---
 
@@ -45,18 +45,23 @@ In your GitHub repository go to **Settings → Secrets and variables → Actions
 
 ---
 
-## 4. Publishing a New Auto-Update Release
+## 4. Publishing a New Desktop Release
 
-You do not need to edit `package.json`, `src-tauri/tauri.conf.json`, or `src-tauri/Cargo.toml` for routine changes.
+You do not need to edit `package.json`, `src-tauri/tauri.conf.json`, or `src-tauri/Cargo.toml` manually.
 
-1. Commit and push to `main`:
-   ```bash
-   git add .
-   git commit -m "fix: improve an existing feature"
-   git push origin main
-   ```
-2. `.github/workflows/release.yml` assigns an automatic monotonic patch version (`0.1.<GitHub run number>`) and publishes a matching `v...` tag.
-3. The workflow compiles Windows/macOS/Linux bundles, signs them, uploads `.sig` + installer artifacts + `latest.json`, and publishes the GitHub Release.
-4. Verify that `https://github.com/LeonidCharikov/OmniDesk/releases/latest/download/latest.json` downloads valid JSON with a `"version"` newer than the installed app and signed `platforms` entries.
+### Method A — From GitHub UI (Recommended)
+1. Push your normal commits to `main` as usual (Web/PWA deploys automatically).
+2. When you are ready to ship a Desktop update, open **GitHub → Actions → Build and release OmniDesk → Run workflow**.
+3. Choose:
+   - **Version bump**: `patch` (e.g. `0.1.18` → `0.1.19`), `minor` (`0.2.0`), or `major` (`1.0.0`).
+   - **Optional exact version**: leave empty to auto-bump, or enter e.g. `0.2.0`.
+   - **Optional release notes**: short summary shown inside OmniDesk **Settings → Updates**.
+4. Click **Run workflow**. CI runs tests once, builds signed Windows/macOS/Linux installers + unified `latest.json` into a draft release, and publishes it atomically when all platforms finish.
 
-The version written from the release workflow is a build override, so the base version in `tauri.conf.json` is used only for local/non-release builds. Manual semantic versions remain supported: pushing a tag such as `v1.2.3` uses `1.2.3` instead of the generated patch version.
+### Method B — From Terminal with a Git Tag
+```bash
+git tag v0.1.19
+git push origin v0.1.19
+```
+
+Verify in the GitHub Actions job summary that **Signed In-App Auto-Updater (`latest.json`)** shows **Enabled**, and that `https://github.com/LeonidCharikov/OmniDesk/releases/latest/download/latest.json` downloads valid JSON with signed `platforms` entries.

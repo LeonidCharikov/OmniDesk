@@ -61,7 +61,7 @@ export async function getDesktopAppVersion(): Promise<string> {
     const { getVersion } = await import('@tauri-apps/api/app');
     return await getVersion();
   } catch {
-    return '0.1.17';
+    return '0.1.18';
   }
 }
 
@@ -131,6 +131,7 @@ async function checkGitHubLatestRelease(currentVersion: string): Promise<Desktop
   try {
     const response = await fetch(GITHUB_RELEASES_API_URL, {
       headers: { Accept: 'application/vnd.github+json' },
+      cache: 'no-store',
       signal: controller.signal,
     });
 
@@ -210,6 +211,10 @@ export async function checkForDesktopUpdate(): Promise<DesktopUpdateCheckResult>
     const { check } = await import('@tauri-apps/plugin-updater');
     const update = await check({ timeout: 15000 });
     if (!update) {
+      const fallbackResult = await checkGitHubLatestRelease(currentVersion);
+      if (fallbackResult.status === 'available') {
+        return fallbackResult;
+      }
       return {
         status: 'up-to-date',
         currentVersion,
