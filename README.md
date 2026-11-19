@@ -44,11 +44,9 @@
 <br />
 
 <div align="center">
-  <a href="docs/screenshots/dashboard.png">
-    <img src="docs/screenshots/dashboard.png" alt="OmniDesk Workspace — Utilities, Everyday Basics Filter & Sidebar Mini-Widgets" width="100%" />
-  </a>
+  <video autoplay loop muted playsinline width="100%" src="docs/videos/all-tools.webm" poster="docs/screenshots/dashboard.png"></video>
   <br />
-  <sub><strong>Main Workspace:</strong> Categorized tool grid with the <em>Everyday Basics</em> quick filter, favorites, live sidebar world clocks &amp; crypto ticker, and local Tauri sandbox status.</sub>
+  <sub><strong>Main Workspace:</strong> Categorized 99-tool grid with instant search, favorites, recently used tools, language switcher, and local offline sandbox status.</sub>
 </div>
 
 ---
@@ -74,13 +72,61 @@
 <table>
   <tr>
     <td width="50%" align="center">
-      <a href="docs/screenshots/pdf-editor.png">
-        <img src="docs/screenshots/pdf-editor.png" alt="PDF Studio & Visual Editor" />
-      </a>
+      <video autoplay loop muted playsinline width="100%" src="docs/videos/pdf-editor.webm" poster="docs/screenshots/pdf-editor.png"></video>
       <br />
       <strong>📄 PDF Studio &amp; Visual Editor</strong><br />
       <sub>Direct text editing, image embedding, whiteout, redaction, signatures, watermarks &amp; page management.</sub>
     </td>
+    <td width="50%" align="center">
+      <video autoplay loop muted playsinline width="100%" src="docs/videos/calendar.webm" poster="docs/screenshots/calendar.png"></video>
+      <br />
+      <strong>📅 Calendar &amp; Leave Planner</strong><br />
+      <sub>Month, Week &amp; Day views with hourly slots, instant search, working-days calculator &amp; .ICS export.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center">
+      <video autoplay loop muted playsinline width="100%" src="docs/videos/currency-converter.webm" poster="docs/screenshots/crypto-rates.png"></video>
+      <br />
+      <strong>💱 Currency Converter &amp; Crypto Tracker</strong><br />
+      <sub>Offline-ready forex cross-rates across 19+ fiat currencies plus live cryptocurrency &amp; portfolio tracking.</sub>
+    </td>
+    <td width="50%" align="center">
+      <video autoplay loop muted playsinline width="100%" src="docs/videos/color-picker.webm" poster="docs/screenshots/color-picker.png"></video>
+      <br />
+      <strong>🎨 Color Picker, Wheel &amp; Charts Studio</strong><br />
+      <sub>Classic HSV picker, interactive color wheel, Tailwind/Material/Web-Safe charts, 7 harmony schemes &amp; live RGB ↔ Hex converter.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center">
+      <video autoplay loop muted playsinline width="100%" src="docs/videos/function-grapher.webm" poster="docs/screenshots/function-grapher.png"></video>
+      <br />
+      <strong>📈 2D Function Grapher &amp; Plotter</strong><br />
+      <sub>Multi-function expressions, drag pan &amp; zoom, point inspector with tangent slope &amp; PNG export.</sub>
+    </td>
+    <td width="50%" align="center">
+      <video autoplay loop muted playsinline width="100%" src="docs/videos/periodic-table.webm" poster="docs/screenshots/function-chemistry.png"></video>
+      <br />
+      <strong>🧪 Chemistry &amp; 118-Element Periodic Table</strong><br />
+      <sub>Full IUPAC periodic table with state &amp; orbital filters, molar mass parser &amp; solution molarity solver.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center">
+      <video autoplay loop muted playsinline width="100%" src="docs/videos/themes.webm" poster="docs/screenshots/config.png"></video>
+      <br />
+      <strong>🎨 10 Live Themes &amp; Starter Presets</strong><br />
+      <sub>Instant switching across 8 curated dark palettes and 2 daylight palettes (Clean Light &amp; Warm Paper) plus 1-click workspace presets.</sub>
+    </td>
+    <td width="50%" align="center">
+      <video autoplay loop muted playsinline width="100%" src="docs/videos/settings.webm" poster="docs/screenshots/config.png"></video>
+      <br />
+      <strong>⚙️ Settings, Widgets, MCP Bridge &amp; Backup</strong><br />
+      <sub>Configure default currency, sidebar mini-widgets, privacy audit, MCP Bridge, custom shortcuts, encrypted JSON backups, languages &amp; updates.</sub>
+    </td>
+  </tr>
+  <tr>
     <td width="50%" align="center">
       <a href="docs/screenshots/audio-editor.png">
         <img src="docs/screenshots/audio-editor.png" alt="Audio Editor & Trimmer" />
@@ -89,44 +135,6 @@
       <strong>🎧 Audio Editor &amp; Trimmer</strong><br />
       <sub>Interactive Web Audio waveform trimming, cutting, silence insertion, fade in/out, 0dB normalize &amp; WAV export.</sub>
     </td>
-  </tr>
-  <tr>
-    <td width="50%" align="center">
-      <a href="docs/screenshots/calendar.png">
-        <img src="docs/screenshots/calendar.png" alt="Calendar & Planner" />
-      </a>
-      <br />
-      <strong>📅 Calendar &amp; Leave Planner</strong><br />
-      <sub>Month, Week &amp; Day views with hourly slots, instant search, working-days calculator &amp; .ICS export.</sub>
-    </td>
-    <td width="50%" align="center">
-      <a href="docs/screenshots/crypto-rates.png">
-        <img src="docs/screenshots/crypto-rates.png" alt="Currency Converter & Crypto Tracker" />
-      </a>
-      <br />
-      <strong>💱 Currency Converter &amp; Crypto Tracker</strong><br />
-      <sub>Offline-ready forex cross-rates across 19+ fiat currencies plus live cryptocurrency &amp; portfolio tracking.</sub>
-    </td>
-  </tr>
-  <tr>
-    <td width="50%" align="center">
-      <a href="docs/screenshots/function-grapher.png">
-        <img src="docs/screenshots/function-grapher.png" alt="2D Function Grapher & Plotter" />
-      </a>
-      <br />
-      <strong>📈 2D Function Grapher &amp; Plotter</strong><br />
-      <sub>Multi-function expressions, drag pan &amp; zoom, point inspector with tangent slope &amp; PNG export.</sub>
-    </td>
-    <td width="50%" align="center">
-      <a href="docs/screenshots/function-chemistry.png">
-        <img src="docs/screenshots/function-chemistry.png" alt="Chemistry & Molecular Calculator" />
-      </a>
-      <br />
-      <strong>🧪 Chemistry &amp; 118-Element Periodic Table</strong><br />
-      <sub>Full IUPAC periodic table with state &amp; orbital filters, molar mass parser &amp; solution molarity solver.</sub>
-    </td>
-  </tr>
-  <tr>
     <td width="50%" align="center">
       <a href="docs/screenshots/hash-suite.png">
         <img src="docs/screenshots/hash-suite.png" alt="Hash, HMAC & Checksum Suite" />
@@ -134,24 +142,6 @@
       <br />
       <strong>🔐 Hash, HMAC &amp; Checksum Suite</strong><br />
       <sub>Simultaneous MD5, SHA-1, SHA-2, SHA-3, Keccak, CRC-32, Adler-32 &amp; keyed HMAC verification for text and files.</sub>
-    </td>
-    <td width="50%" align="center">
-      <a href="docs/screenshots/color-picker.png">
-        <img src="docs/screenshots/color-picker.png" alt="Color Picker, Wheel &amp; Charts Studio" />
-      </a>
-      <br />
-      <strong>🎨 Color Picker, Wheel &amp; Charts Studio</strong><br />
-      <sub>Classic HSV picker, interactive color wheel, Tailwind/Material/Web-Safe charts, 7 harmony schemes &amp; live RGB ↔ Hex converter.</sub>
-    </td>
-  </tr>
-  <tr>
-    <td colspan="2" align="center">
-      <a href="docs/screenshots/config.png">
-        <img src="docs/screenshots/config.png" alt="Settings & Appearance" width="82%" />
-      </a>
-      <br />
-      <strong>⚙️ Settings, Themes, Currencies, Widgets &amp; Backup</strong><br />
-      <sub>Switch between 10 visual themes, set default currency, toggle sidebar mini-widgets, change language, or export/restore your full JSON profile.</sub>
     </td>
   </tr>
 </table>
@@ -476,7 +466,8 @@ npm run tauri dev
 │   ├── AUTO_UPDATER_GUIDE.md  # Signed GitHub Releases & Desktop auto-updater setup guide
 │   ├── MCP_SERVER_GUIDE.md    # Model Context Protocol architecture & setup guide
 │   ├── mcp-server-template/   # Standalone Node.js stdio <-> WebSocket MCP server
-│   └── screenshots/           # High-resolution README showcase screenshots
+│   ├── screenshots/           # High-resolution README showcase screenshots & video posters
+│   └── videos/                # Looping WebM demo recordings for README showcase
 ├── e2e/                       # Playwright browser E2E smoke test suite
 ├── public/                    # Static icons, logos, PWA manifest & assets
 ├── src-tauri/                 # Tauri v2 Rust backend, capabilities & desktop icons
