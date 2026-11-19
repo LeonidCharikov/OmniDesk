@@ -44,7 +44,9 @@
 <br />
 
 <div align="center">
-  <video autoplay loop muted playsinline width="100%" src="docs/videos/all-tools.webm" poster="docs/screenshots/dashboard.png"></video>
+  <a href="docs/videos/all-tools.webp">
+    <img src="docs/videos/all-tools.webp" alt="OmniDesk Main Workspace — All 99 Tools" width="100%" />
+  </a>
   <br />
   <sub><strong>Main Workspace:</strong> Categorized 99-tool grid with instant search, favorites, recently used tools, language switcher, and local offline sandbox status.</sub>
 </div>
@@ -72,13 +74,17 @@
 <table>
   <tr>
     <td width="50%" align="center">
-      <video autoplay loop muted playsinline width="100%" src="docs/videos/pdf-editor.webm" poster="docs/screenshots/pdf-editor.png"></video>
+      <a href="docs/videos/pdf-editor.webp">
+        <img src="docs/videos/pdf-editor.webp" alt="PDF Studio & Visual Editor" width="100%" />
+      </a>
       <br />
       <strong>📄 PDF Studio &amp; Visual Editor</strong><br />
       <sub>Direct text editing, image embedding, whiteout, redaction, signatures, watermarks &amp; page management.</sub>
     </td>
     <td width="50%" align="center">
-      <video autoplay loop muted playsinline width="100%" src="docs/videos/calendar.webm" poster="docs/screenshots/calendar.png"></video>
+      <a href="docs/videos/calendar.webp">
+        <img src="docs/videos/calendar.webp" alt="Calendar & Leave Planner" width="100%" />
+      </a>
       <br />
       <strong>📅 Calendar &amp; Leave Planner</strong><br />
       <sub>Month, Week &amp; Day views with hourly slots, instant search, working-days calculator &amp; .ICS export.</sub>
@@ -86,13 +92,17 @@
   </tr>
   <tr>
     <td width="50%" align="center">
-      <video autoplay loop muted playsinline width="100%" src="docs/videos/currency-converter.webm" poster="docs/screenshots/crypto-rates.png"></video>
+      <a href="docs/videos/currency-converter.webp">
+        <img src="docs/videos/currency-converter.webp" alt="Currency Converter & Crypto Tracker" width="100%" />
+      </a>
       <br />
       <strong>💱 Currency Converter &amp; Crypto Tracker</strong><br />
       <sub>Offline-ready forex cross-rates across 19+ fiat currencies plus live cryptocurrency &amp; portfolio tracking.</sub>
     </td>
     <td width="50%" align="center">
-      <video autoplay loop muted playsinline width="100%" src="docs/videos/color-picker.webm" poster="docs/screenshots/color-picker.png"></video>
+      <a href="docs/videos/color-picker.webp">
+        <img src="docs/videos/color-picker.webp" alt="Color Picker, Wheel & Charts Studio" width="100%" />
+      </a>
       <br />
       <strong>🎨 Color Picker, Wheel &amp; Charts Studio</strong><br />
       <sub>Classic HSV picker, interactive color wheel, Tailwind/Material/Web-Safe charts, 7 harmony schemes &amp; live RGB ↔ Hex converter.</sub>
@@ -100,13 +110,17 @@
   </tr>
   <tr>
     <td width="50%" align="center">
-      <video autoplay loop muted playsinline width="100%" src="docs/videos/function-grapher.webm" poster="docs/screenshots/function-grapher.png"></video>
+      <a href="docs/videos/function-grapher.webp">
+        <img src="docs/videos/function-grapher.webp" alt="2D Function Grapher & Plotter" width="100%" />
+      </a>
       <br />
       <strong>📈 2D Function Grapher &amp; Plotter</strong><br />
       <sub>Multi-function expressions, drag pan &amp; zoom, point inspector with tangent slope &amp; PNG export.</sub>
     </td>
     <td width="50%" align="center">
-      <video autoplay loop muted playsinline width="100%" src="docs/videos/periodic-table.webm" poster="docs/screenshots/function-chemistry.png"></video>
+      <a href="docs/videos/periodic-table.webp">
+        <img src="docs/videos/periodic-table.webp" alt="Chemistry & 118-Element Periodic Table" width="100%" />
+      </a>
       <br />
       <strong>🧪 Chemistry &amp; 118-Element Periodic Table</strong><br />
       <sub>Full IUPAC periodic table with state &amp; orbital filters, molar mass parser &amp; solution molarity solver.</sub>
@@ -114,34 +128,20 @@
   </tr>
   <tr>
     <td width="50%" align="center">
-      <video autoplay loop muted playsinline width="100%" src="docs/videos/themes.webm" poster="docs/screenshots/config.png"></video>
+      <a href="docs/videos/themes.webp">
+        <img src="docs/videos/themes.webp" alt="10 Live Themes & Starter Presets" width="100%" />
+      </a>
       <br />
       <strong>🎨 10 Live Themes &amp; Starter Presets</strong><br />
       <sub>Instant switching across 8 curated dark palettes and 2 daylight palettes (Clean Light &amp; Warm Paper) plus 1-click workspace presets.</sub>
     </td>
     <td width="50%" align="center">
-      <video autoplay loop muted playsinline width="100%" src="docs/videos/settings.webm" poster="docs/screenshots/config.png"></video>
+      <a href="docs/videos/settings.webp">
+        <img src="docs/videos/settings.webp" alt="Settings, Widgets, MCP Bridge & Backup" width="100%" />
+      </a>
       <br />
       <strong>⚙️ Settings, Widgets, MCP Bridge &amp; Backup</strong><br />
       <sub>Configure default currency, sidebar mini-widgets, privacy audit, MCP Bridge, custom shortcuts, encrypted JSON backups, languages &amp; updates.</sub>
-    </td>
-  </tr>
-  <tr>
-    <td width="50%" align="center">
-      <a href="docs/screenshots/audio-editor.png">
-        <img src="docs/screenshots/audio-editor.png" alt="Audio Editor & Trimmer" />
-      </a>
-      <br />
-      <strong>🎧 Audio Editor &amp; Trimmer</strong><br />
-      <sub>Interactive Web Audio waveform trimming, cutting, silence insertion, fade in/out, 0dB normalize &amp; WAV export.</sub>
-    </td>
-    <td width="50%" align="center">
-      <a href="docs/screenshots/hash-suite.png">
-        <img src="docs/screenshots/hash-suite.png" alt="Hash, HMAC & Checksum Suite" />
-      </a>
-      <br />
-      <strong>🔐 Hash, HMAC &amp; Checksum Suite</strong><br />
-      <sub>Simultaneous MD5, SHA-1, SHA-2, SHA-3, Keccak, CRC-32, Adler-32 &amp; keyed HMAC verification for text and files.</sub>
     </td>
   </tr>
 </table>
@@ -466,8 +466,8 @@ npm run tauri dev
 │   ├── AUTO_UPDATER_GUIDE.md  # Signed GitHub Releases & Desktop auto-updater setup guide
 │   ├── MCP_SERVER_GUIDE.md    # Model Context Protocol architecture & setup guide
 │   ├── mcp-server-template/   # Standalone Node.js stdio <-> WebSocket MCP server
-│   ├── screenshots/           # High-resolution README showcase screenshots & video posters
-│   └── videos/                # Looping WebM demo recordings for README showcase
+│   ├── screenshots/           # High-resolution static showcase screenshots
+│   └── videos/                # Looping animated WebP demo recordings for README showcase
 ├── e2e/                       # Playwright browser E2E smoke test suite
 ├── public/                    # Static icons, logos, PWA manifest & assets
 ├── src-tauri/                 # Tauri v2 Rust backend, capabilities & desktop icons
