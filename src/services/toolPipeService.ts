@@ -59,34 +59,43 @@ export function getMatchingToolIdsForFile(fileName: string, mimeType = ''): stri
   const mime = mimeType.toLowerCase();
 
   if (ext === 'pdf' || mime === 'application/pdf') {
-    return ['pdf-editor', 'pdf-toolkit', 'file-inspector', 'hash-checksum-suite'];
+    return ['pdf-editor', 'pdf-toolkit', 'multi-converter', 'file-inspector', 'hash-checksum-suite'];
   }
-  if (ext === 'docx' || mime.includes('wordprocessingml')) {
-    return ['docx-to-pdf', 'multi-converter', 'file-inspector'];
+  if (ext === 'docx' || ext === 'rtf' || mime.includes('wordprocessingml')) {
+    return ['multi-converter', 'docx-to-pdf', 'file-inspector'];
   }
-  if (['png', 'jpg', 'jpeg', 'webp', 'bmp', 'gif'].includes(ext) || mime.startsWith('image/')) {
-    return ['image-editor', 'photo-compressor', 'ocr-scanner', 'color-picker', 'qr-barcode-reader', 'file-inspector'];
+  if (['mp4', 'mov', 'm4v', 'ogv'].includes(ext) || mime.startsWith('video/')) {
+    return ['multi-converter', 'file-inspector', 'hash-checksum-suite'];
+  }
+  if (['png', 'jpg', 'jpeg', 'webp', 'bmp', 'gif', 'avif', 'svg', 'ico'].includes(ext) || mime.startsWith('image/')) {
+    return ['multi-converter', 'image-editor', 'photo-compressor', 'ocr-scanner', 'color-picker', 'qr-barcode-reader', 'file-inspector'];
+  }
+  if (['xlsx', 'xls', 'ods'].includes(ext)) {
+    return ['multi-converter', 'file-inspector', 'hash-checksum-suite'];
+  }
+  if (['zip', 'tar', 'gz', 'tgz'].includes(ext) || mime.includes('zip') || mime.includes('gzip')) {
+    return ['multi-converter', 'file-inspector', 'hash-checksum-suite'];
   }
   if (ext === 'json' || mime === 'application/json') {
-    return ['json-formatter', 'jsonpath-explorer', 'data-converter', 'text-diff', 'text-editor'];
+    return ['json-formatter', 'multi-converter', 'jsonpath-explorer', 'data-converter', 'text-diff', 'text-editor'];
   }
   if (['csv', 'tsv'].includes(ext) || mime === 'text/csv') {
-    return ['data-converter', 'multi-converter', 'sql-playground', 'text-editor'];
+    return ['multi-converter', 'data-converter', 'sql-playground', 'text-editor'];
   }
   if (['yaml', 'yml'].includes(ext)) {
-    return ['yaml-formatter', 'data-converter', 'text-editor', 'text-diff'];
+    return ['yaml-formatter', 'multi-converter', 'data-converter', 'text-editor', 'text-diff'];
   }
   if (ext === 'xml' || mime.includes('xml')) {
-    return ['xml-formatter', 'text-editor', 'text-diff'];
+    return ['xml-formatter', 'multi-converter', 'text-editor', 'text-diff'];
   }
   if (['md', 'markdown'].includes(ext)) {
-    return ['markdown-preview', 'text-editor', 'word-counter-cleaner', 'text-diff'];
+    return ['markdown-preview', 'multi-converter', 'text-editor', 'word-counter-cleaner', 'text-diff'];
   }
-  if (['mp3', 'wav', 'ogg', 'flac', 'm4a', 'webm', 'aac'].includes(ext) || mime.startsWith('audio/')) {
-    return ['audio-editor', 'file-inspector', 'hash-checksum-suite'];
+  if (['mp3', 'wav', 'ogg', 'flac', 'm4a', 'webm', 'aac', 'opus', 'aiff'].includes(ext) || mime.startsWith('audio/')) {
+    return ['audio-editor', 'multi-converter', 'file-inspector', 'hash-checksum-suite'];
   }
   if (['txt', 'log', 'ts', 'tsx', 'js', 'jsx', 'css', 'html', 'sql', 'py', 'rs'].includes(ext) || mime.startsWith('text/')) {
-    return ['text-editor', 'word-counter-cleaner', 'text-diff', 'hash-checksum-suite', 'file-inspector'];
+    return ['text-editor', 'multi-converter', 'word-counter-cleaner', 'text-diff', 'hash-checksum-suite', 'file-inspector'];
   }
 
   return ['file-inspector', 'hash-checksum-suite', 'file-crypto'];

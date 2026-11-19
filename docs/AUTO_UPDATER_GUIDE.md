@@ -6,8 +6,8 @@ OmniDesk's native **Tauri v2 Desktop** application supports cryptographically si
 
 ## 1. How the Automated Update Flow Works
 
-1. **Controlled Desktop Releases (On-Demand or Tag)**: Regular commits pushed to `main` update the **Web/PWA** app automatically (`pages.yml`) without spamming Desktop users. When you are ready to ship a batch of changes to Desktop, trigger **Actions → Build and release OmniDesk → Run workflow** (or push a `vX.Y.Z` tag). The workflow runs tests, i18n validation, Playwright E2E checks, and builds native Desktop installers across Windows, macOS, and Linux.
-2. **Cryptographic Signing**: Each installer package is signed using your Ed25519 private signing key (`TAURI_SIGNING_PRIVATE_KEY`), producing `.sig` signature files and a unified **`latest.json`** updater manifest attached directly to the GitHub Release.
+1. **Controlled Desktop Releases (On-Demand or Tag)**: Regular commits pushed to `main` update the **Web/PWA** app automatically (`pages.yml`) without spamming Desktop users. When you are ready to ship a batch of changes to Desktop, trigger **Actions → Build and release OmniDesk → Run workflow** (or push a `vX.Y.Z` tag). The workflow runs tests, i18n validation, Playwright E2E checks, and builds one primary installer per OS: **Windows** (`-setup.exe`), **macOS** (`.dmg` + `.app.tar.gz` updater payload), and **Linux** (`.AppImage`).
+2. **Cryptographic Signing**: Each update payload is signed using your Ed25519 private signing key (`TAURI_SIGNING_PRIVATE_KEY`), embedding the signatures directly inside a unified **`latest.json`** updater manifest attached to the GitHub Release (redundant standalone `.sig` files are automatically removed before publish so the release page stays clean).
 3. **Startup Check & Toast Notification**: When a user opens OmniDesk Desktop, `App.tsx` waits briefly after launch and calls `checkForDesktopUpdate()` against:
    `https://github.com/LeonidCharikov/OmniDesk/releases/latest/download/latest.json`
    If a newer version exists, a non-blocking toast and a top-bar / sidebar **Update** button invite the user to update.

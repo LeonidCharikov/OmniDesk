@@ -126,6 +126,7 @@ export default defineConfig(() => {
             if (id.includes('node_modules/pdfjs-dist')) return 'vendor-pdfjs';
             if (id.includes('node_modules/tesseract.js')) return 'vendor-tesseract';
             if (id.includes('node_modules/mammoth')) return 'vendor-mammoth';
+            if (id.includes('node_modules/xlsx')) return 'vendor-xlsx';
             if (id.includes('node_modules/lucide-react')) return 'vendor-icons';
           },
         },

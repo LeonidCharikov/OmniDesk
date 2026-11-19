@@ -220,7 +220,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [macos-latest, ubuntu-22.04, windows-latest]
+        include:
+          - platform: macos-latest
+            bundles: app,dmg
+          - platform: ubuntu-22.04
+            bundles: appimage
+          - platform: windows-latest
+            bundles: nsis
     runs-on: ${{ matrix.platform }}
 
     steps:
@@ -283,6 +289,7 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           tauriScript: npx tauri
+          args: --bundles ${{ matrix.bundles }}
           includeUpdaterJson: ${{ needs.prepare.outputs.updater_enabled == 'true' }}
           tagName: ${{ needs.prepare.outputs.tag }}
           releaseName: OmniDesk ${{ needs.prepare.outputs.tag }}
@@ -323,6 +330,25 @@ jobs:
                 throw new Error(`Could not find draft release for tag ${tag}`);
               }
 
+              const assets = target.assets || [];
+              const hasLatestJson = assets.some(a => a.name === "latest.json");
+              const removedSigs = [];
+              if (hasLatestJson) {
+                for (const asset of assets) {
+                  if (asset.name && asset.name.endsWith(".sig")) {
+                    const delRes = await fetch(`https://api.github.com/repos/${repo}/releases/assets/${asset.id}`, {
+                      method: "DELETE",
+                      headers,
+                    });
+                    if (delRes.ok) {
+                      removedSigs.push(asset.name);
+                    } else {
+                      console.warn(`Could not remove redundant .sig asset ${asset.name}: HTTP ${delRes.status}`);
+                    }
+                  }
+                }
+              }
+
               if (target.draft) {
                 const patchRes = await fetch(`https://api.github.com/repos/${repo}/releases/${target.id}`, {
                   method: "PATCH",
@@ -339,8 +365,13 @@ jobs:
                 }
               }
 
-              const assetNames = (target.assets || []).map(a => a.name);
-              console.log(`Published release ${tag} with ${assetNames.length} assets:`, assetNames);
+              const remainingAssetNames = assets
+                .filter(a => !removedSigs.includes(a.name))
+                .map(a => a.name);
+              if (removedSigs.length > 0) {
+                console.log(`Cleaned up ${removedSigs.length} redundant .sig assets (embedded in latest.json):`, removedSigs);
+              }
+              console.log(`Published release ${tag} with ${remainingAssetNames.length} assets:`, remainingAssetNames);
             }
 
             main().catch(err => {

@@ -426,7 +426,7 @@ See **[docs/MCP_SERVER_GUIDE.md](docs/MCP_SERVER_GUIDE.md)** for full architectu
 Launch OmniDesk directly in your browser with zero installation at **[https://leonidcharikov.github.io/OmniDesk/](https://leonidcharikov.github.io/OmniDesk/)** — optionally click **Install App** in the header to install it as an offline-capable PWA.
 
 ### Option 2 — Pre-Built Desktop Releases & Auto-Updater
-Download the latest installer for **Windows** (`.exe` / `.msi`), **macOS** (`.dmg`), or **Linux** (`.AppImage` / `.deb`) from the **Releases** page. Future releases support 1-click cryptographically signed updates directly inside **Settings → Updates** (see **[docs/AUTO_UPDATER_GUIDE.md](docs/AUTO_UPDATER_GUIDE.md)** to configure signing keys in CI).
+Download the latest installer for **Windows** (`-setup.exe`), **macOS** (`.dmg`), or **Linux** (`.AppImage`) from the **Releases** page. Future releases support 1-click cryptographically signed updates directly inside **Settings → Updates** (see **[docs/AUTO_UPDATER_GUIDE.md](docs/AUTO_UPDATER_GUIDE.md)** to configure signing keys in CI).
 
 ### Option 3 — One-Click Launcher
 - **Windows:** Double-click `start.bat`
