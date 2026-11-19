@@ -1,7 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import {
-  hashMasterKey,
-  verifyMasterKey,
   encryptJsonPayload,
   decryptJsonPayload,
   calculateEntropy,
@@ -12,15 +10,6 @@ import {
 describe('securityService', () => {
   beforeEach(() => {
     localStorage.clear();
-  });
-
-  it('hashes and verifies master PIN / passphrase with PBKDF2-SHA256', async () => {
-    const { hashHex, saltHex } = await hashMasterKey('correct-horse-battery');
-    expect(hashHex).toHaveLength(64);
-    expect(saltHex).toHaveLength(32);
-
-    expect(await verifyMasterKey('correct-horse-battery', hashHex, saltHex)).toBe(true);
-    expect(await verifyMasterKey('wrong-passphrase', hashHex, saltHex)).toBe(false);
   });
 
   it('encrypts and decrypts JSON payloads using AES-256-GCM', async () => {

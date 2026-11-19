@@ -57,13 +57,13 @@
 
 | Capability | Details |
 | :--- | :--- |
-| 🔒 **Privacy, Lock Screen & Full Workspace Backup** | Every file edit, hash, PDF edit, QR scan, image compression, and color conversion runs 100% locally — installable as an offline-first PWA. On the **Tauri Desktop** build, also includes optional **PBKDF2 PIN Lock Screen**, **Full Workspace Backup** (settings + Calendar, Kanban, Notes, Expenses, Habits, Shopping List, Flashcards), and **AES-256-GCM encrypted bundles** (stripped on Web so browser users stay focused on individual tools). |
-| ⚡ **Dual Runtime (Tauri v2 + Web/PWA), Workers & Auto-Updater** | Native **Tauri v2** desktop app (with **signed GitHub Releases Auto-Updater**, `sysinfo` hardware telemetry, OS tray mode, file associations & quick Web/GitHub links) or streamlined offline browser PWA. Heavy dependencies (`pdf-lib`, `tesseract.js`, MCP client), **Web Workers** (batch photo compression & cryptographic hashing), and **IndexedDB** tool storage keep the UI responsive with minimal RAM usage. |
+| 🔒 **Privacy, Storage Audit & Full Workspace Backup** | Every file edit, hash, PDF edit, QR scan, image compression, and color conversion runs 100% locally — installable as an offline-first PWA. On the **Tauri Desktop** build, also includes **Full Workspace Backup** (settings + Calendar, Kanban, Notes, Expenses, Habits, Shopping List, Flashcards) and **AES-256-GCM encrypted bundles** (stripped on Web so browser users stay focused on individual tools). |
+| ⚡ **Dual Runtime (Tauri v2 + Web/PWA), Workers & Auto-Updater** | Native **Tauri v2** desktop app (with **signed GitHub Releases Auto-Updater**, multi-monitor-safe **persistent window geometry**, double-click titlebar maximize/restore, `sysinfo` hardware telemetry, OS tray mode, file associations & quick Web/GitHub links) or streamlined offline browser PWA. Heavy dependencies (`pdf-lib`, `tesseract.js`, MCP client), **Web Workers** (batch photo compression & cryptographic hashing), and **IndexedDB** tool storage keep the UI responsive with minimal RAM usage. |
 | 🖨️ **Built-In Document & Media Printing** | Print directly via native OS print dialogs without popup blockers from **PDF Studio**, **Image Editor**, **Text & Markdown Editor**, **Markdown Preview**, **Notes**, **Diagram Editor**, **Invoice Generator**, **Screenshot Annotator**, **Sketchpad**, and **QR Code Generator**. |
 | 🧭 **Extended Command Palette & Customizable Shortcuts** | Press `Ctrl+K` (`⌘K`) to search across **99 tools**, saved **Notes**, **Calendar events**, **Settings tabs**, and **Themes**. Rebind built-in actions or assign custom keyboard shortcuts to any tool in **Settings → Shortcuts** (press `Shift+?` for cheat sheet). |
 | 🔗 **Cross-Tool Piping & Smart Drag-and-Drop** | Pipe outputs directly between compatible tools with **Send to...** (`toolPipeService`), or drag & drop any file anywhere on the window to launch the **Smart Drop Router** with matching tools and 1-click **Load Sample** demos. |
 | 💱 **Universal Multi-Currency Engine & Starter Presets** | Configure a global default currency across 13+ world currencies (`CZK`, `EUR`, `USD`, `GBP`, `CHF`, `PLN`, `JPY`, etc.) synced across finance tools, plus 1-click **Workspace Starter Presets** (*Developer*, *Student & Science*, *Finance & Daily*). |
-| 🎨 **6 Themes & Adaptive Mini-Widgets *(Desktop)*** | Switch seamlessly between 5 curated dark palettes and Clean Light mode across both Desktop and Web, while the **Tauri Desktop** app adds 7 sidebar mini-widgets with automatic **compact tabbed mode** on smaller screens and subtle non-blocking **Toast notifications**. |
+| 🎨 **10 Themes & Adaptive Mini-Widgets *(Desktop)*** | Switch seamlessly between **8 curated dark palettes** and **2 light palettes** (*Clean Light* & *Warm Paper*) across both Desktop and Web, while the **Tauri Desktop** app adds 7 sidebar mini-widgets with automatic **compact tabbed mode** on smaller screens and subtle non-blocking **Toast notifications**. |
 | 🤖 **MCP Bridge *(Desktop App Only)*** | Exclusive to the **Tauri Desktop** build (stripped from the Web/PWA version): connect AI assistants (Claude Desktop, Cursor, VS Code, Windsurf) via WebSocket or Tauri `stdio` IPC to Calendar, Tasks, Notes, System Telemetry, Tool Navigation, and Clipboard Sync with **Connected Tools**, **MCP Log**, and interactive setup tutorial. |
 | 🌍 **5 Built-In Languages with Crisp SVG Flags** | Instant localization across **English** (`en`, default), **Čeština** (`cs`), **Deutsch** (`de`), **Español** (`es`), and **Русский** (`ru`) with cross-platform inline SVG flag icons (rendered identically on Windows, macOS, Linux, and web) and automated i18n checks. |
 
@@ -151,7 +151,7 @@
       </a>
       <br />
       <strong>⚙️ Settings, Themes, Currencies, Widgets &amp; Backup</strong><br />
-      <sub>Switch between 6 visual themes, set default currency, toggle sidebar mini-widgets, change language, or export/restore your full JSON profile.</sub>
+      <sub>Switch between 10 visual themes, set default currency, toggle sidebar mini-widgets, change language, or export/restore your full JSON profile.</sub>
     </td>
   </tr>
 </table>
@@ -310,13 +310,17 @@ OmniDesk organizes **99 specialized tools** into **7 primary categories**, plus 
 <details>
 <summary><strong>Visual Palettes, Sidebar Mini-Widgets, Languages &amp; Profile Backup</strong></summary>
 
-### 6 Color Palettes
+### 10 Color Palettes (8 Dark + 2 Light)
 - **Midnight Navy** — Deep navy workspace with indigo accents *(default)*
 - **OLED Black** — True `#000000` pitch-black dark mode
 - **Charcoal Graphite** — Matte neutral developer grey
+- **Nordic Frost** — Arctic slate-blue low-glare dark palette
+- **Deep Ocean** — Abyssal teal-blue palette with ocean cyan tones
 - **Cyber Emerald** — Dark terminal forest green palette
 - **Royal Twilight** — Deep amethyst & violet tones
-- **Light** — Clean daylight theme with crisp white surfaces
+- **Amber Ember** — Warm espresso obsidian with terracotta & amber tones
+- **Clean Light** — Crisp daylight theme with clean white surfaces
+- **Warm Paper** — Soft parchment/sepia daylight theme for long reading sessions
 
 ### 7 Adaptive Sidebar Mini-Widgets *(Desktop Only)*
 In the **Tauri Desktop** build, on smaller viewports (`< 1024px` wide or `< 880px` tall), mini-widgets automatically switch into a **collapsible compact tabbed bar** inside the shared scrollable sidebar so tool categories always stay visible and reachable, with a one-click toggle between compact and stacked views *(hidden in the Web/PWA build so browser users can focus purely on individual tools)*:
@@ -328,11 +332,12 @@ In the **Tauri Desktop** build, on smaller viewports (`< 1024px` wide or `< 880p
 6. **Scratchpad Note** — Auto-saved sticky note for quick snippets
 7. **System Gauge** — CPU & RAM utilization overview
 
-### 5 Languages, Shortcuts, Starter Presets & Desktop Security/Backup
+### 5 Languages, Shortcuts, Starter Presets & Desktop Privacy/Backup
 - **Supported Locales**: English (`en`), Čeština (`cs`), Deutsch (`de`), Español (`es`), Русский (`ru`) — paired with custom inline SVG flag icons in both the header switcher and Settings.
-- **Custom Keyboard Shortcuts**: Rebind core shortcuts (`Ctrl+K` Command Palette, `Ctrl+,` Settings, `Ctrl+B` Sidebar, `Shift+?` Cheat Sheet, plus `Ctrl+L` Lock on Desktop) or assign direct hotkeys to any tool under **Settings → Shortcuts**.
+- **Custom Keyboard Shortcuts**: Rebind core shortcuts (`Ctrl+K` Command Palette, `Ctrl+,` Settings, `Ctrl+B` Sidebar, `Alt+←` Back, `Shift+?` Cheat Sheet) or assign direct hotkeys to any tool under **Settings → Shortcuts**.
 - **Workspace Starter Presets**: Apply curated favorite-tool presets (*Developer Workstation*, *Student & Science Lab*, *Finance & Daily Planner*) in one click.
-- **Workspace PIN Lock *(Desktop Only)*** & **Storage Audit**: Optional local PBKDF2-SHA256 PIN/passphrase lock screen with inactivity timeout in the Desktop app, plus local-storage inspection/purge across both Desktop and Web.
+- **Desktop Window Polish**: Automatically remembers window size, position, and maximized state across restarts (with multi-monitor bounds validation and a **Reset Window Size** tray action), plus double-click titlebar maximize/restore.
+- **Offline Simulation & Storage Audit**: Simulate offline mode and inspect or purge local scratchpads and tasks across both Desktop and Web.
 - **Full Workspace Backup & Portability *(Desktop Only)***: Export or restore settings alone (`omnidesk-profile.json`), a **Full Workspace Backup** including Calendar, Kanban, Notes, Expenses, Habits, Shopping List, and Flashcards (`omnidesk-workspace.json`), or **AES-256-GCM passphrase-encrypted** `.enc.json` bundles on Desktop.
 
 </details>
@@ -351,7 +356,7 @@ OmniDesk includes full end-to-end MCP support across the lazy-loaded desktop Rea
   - **WebSocket Bridge (`ws://127.0.0.1:3847/bridge`)**: Connects with exponential backoff auto-reconnect to `docs/mcp-server-template/server.mjs` (also provides `omnidesk_bridge_status` + scoped `OMNIDESK_WORKSPACE_DIR` file tools and `notifications/tools/list_changed`).
   - **Native Tauri `stdio` IPC (`--mcp-stdio`) & Background Clipboard**: Rust `stdin`/`stdout` JSON-RPC bridge (`mcp_stdio_ready`, `mcp_stdio_tx`) with startup line buffering and `tauri-plugin-clipboard-manager` (`mcp_read_clipboard`, `mcp_write_clipboard`).
 - **In-App Tutorial, Connected Tools & Live MCP Log**: Built directly into **Settings → MCP Bridge** — includes an interactive **Setup Tutorial** (`McpSetupTutorialPanel`) with copyable config snippets for Claude Desktop / Cursor / VS Code / Windsurf, a **Connected Tools** capability matrix (`McpConnectedToolsPanel`) with a searchable 99-tool catalog, and a live **MCP Log** (`McpLogPanel`) with JSON-RPC payload inspection.
-- **Security Controls**: Loopback-only (`127.0.0.1` / `localhost`) WebSocket validation, optional `OMNIDESK_MCP_TOKEN` handshake, `readonly` vs `readwrite` enforcement, and automatic blocking while the Workspace Lock Screen is active.
+- **Security Controls**: Loopback-only (`127.0.0.1` / `localhost`) WebSocket validation, optional `OMNIDESK_MCP_TOKEN` handshake, and `readonly` vs `readwrite` permission enforcement.
 
 ### 🔌 Tutorial: How to Connect Any Desktop AI to OmniDesk
 
@@ -409,7 +414,7 @@ You can also view this interactive tutorial (with one-click config copying) dire
    ```
 3. Reload your AI client so it launches OmniDesk over `stdin`/`stdout` (debug stdout logs are automatically suppressed in `--mcp-stdio` mode).
 
-> **Notes:** While the OmniDesk **Lock Screen** is active, MCP calls return error `-32001` until unlocked. If port `3847` is busy, update both `OMNIDESK_MCP_PORT` and the WebSocket URL port in Settings.
+> **Note:** If port `3847` is busy, update both `OMNIDESK_MCP_PORT` and the WebSocket URL port in Settings.
 
 See **[docs/MCP_SERVER_GUIDE.md](docs/MCP_SERVER_GUIDE.md)** for full architecture details, security boundaries, and E2E test commands (`npm --prefix docs/mcp-server-template test`).
 
@@ -478,7 +483,7 @@ npm run tauri dev
 ├── src/
 │   ├── components/
 │   │   ├── layout/            # Header, Sidebar, SidebarWidgets, ToolGrid, CommandPalette
-│   │   └── ui/                # ConfigModal, McpSettingsTab, LanguageFlagIcon, ShortcutsSettingsPanel, SmartDropModal, SendToToolButton, ToastContainer, LockScreen
+│   │   └── ui/                # ConfigModal, McpSettingsTab, LanguageFlagIcon, ShortcutsSettingsPanel, SmartDropModal, SendToToolButton, ToastContainer
 │   ├── i18n/                  # Translation context & multi-language tool catalog
 │   ├── locales/               # Locale dictionaries (en, cs, de, es, ru)
 │   ├── services/              # storage, idbStorage, updaterService, printService, mcpClient (desktop), shortcutsService, toolPipeService, workspaceBackupService, workspacePresetsService, toastService, securityService, currencyService, fileSystemService
@@ -497,7 +502,7 @@ npm run tauri dev
 │   ├── __tests__/             # Vitest unit, storage & registry test suites
 │   ├── types/                 # Strict TypeScript tool & category interfaces
 │   ├── App.tsx                # Root workspace layout & category routing
-│   └── index.css              # Tailwind CSS v4 + 6 theme overrides
+│   └── index.css              # Tailwind CSS v4 + 10 theme palettes
 ├── playwright.config.ts
 ├── start.bat / start.sh       # One-click local launchers
 ├── package.json

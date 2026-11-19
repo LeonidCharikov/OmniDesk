@@ -62,4 +62,28 @@ describe('storage service', () => {
     expect(validImport.config?.widgets.timerDurationMinutes).toBe(180);
     expect(validImport.config?.widgets.selectedCities).toHaveLength(3);
   });
+
+  it('supports all 10 themes and strips legacy security fields safely', () => {
+    const sandImport = validateConfigJson(JSON.stringify({ themeId: 'sand' }));
+    expect(sandImport.valid).toBe(true);
+    expect(sandImport.config?.themeId).toBe('sand');
+    expect(sandImport.config?.theme).toBe('light');
+
+    const nordImport = validateConfigJson(JSON.stringify({ themeId: 'nord' }));
+    expect(nordImport.valid).toBe(true);
+    expect(nordImport.config?.themeId).toBe('nord');
+    expect(nordImport.config?.theme).toBe('dark');
+
+    localStorage.setItem(
+      'omnidesk_user_config_v2',
+      JSON.stringify({
+        version: 2,
+        themeId: 'ocean',
+        security: { lockEnabled: true, pinHash: 'legacy', pinSalt: 'legacy' },
+      }),
+    );
+    const loaded = loadUserConfig() as unknown as Record<string, unknown>;
+    expect(loaded.themeId).toBe('ocean');
+    expect(loaded.security).toBeUndefined();
+  });
 });

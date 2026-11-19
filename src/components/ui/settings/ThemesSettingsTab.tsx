@@ -1,8 +1,8 @@
 import React from 'react';
-import { Check, Sparkles } from 'lucide-react';
+import { Check, Moon, Sparkles, Sun } from 'lucide-react';
 import { ThemeId, UserConfig } from '../../../types/tool';
 import { useI18n } from '../../../i18n/context';
-import { THEMES } from '../../../services/themes';
+import { isLightTheme, THEMES } from '../../../services/themes';
 import { toastService } from '../../../services/toastService';
 import { WORKSPACE_PRESETS, applyWorkspacePreset } from '../../../services/workspacePresetsService';
 
@@ -24,7 +24,7 @@ export const ThemesSettingsTab: React.FC<ThemesSettingsTabProps> = ({
     onUpdateConfig({
       ...config,
       themeId,
-      theme: themeId === 'light' ? 'light' : 'dark',
+      theme: isLightTheme(themeId) ? 'light' : 'dark',
     });
   };
 
@@ -39,28 +39,38 @@ export const ThemesSettingsTab: React.FC<ThemesSettingsTabProps> = ({
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
         {THEMES.map(th => {
           const isSelected = currentThemeId === th.id;
           return (
-            <div
+            <button
               key={th.id}
+              type="button"
               onClick={() => handleSelectTheme(th.id)}
-              className={`cursor-pointer p-3.5 rounded-xl border transition-all relative group flex flex-col justify-between ${
+              aria-pressed={isSelected}
+              className={`cursor-pointer p-3 rounded-xl border transition-all relative group flex flex-col justify-between text-left ${
                 isSelected
                   ? 'border-indigo-500 ring-2 ring-indigo-500/30 bg-indigo-950/20'
                   : 'border-slate-800 hover:border-slate-700 bg-slate-950/50'
               }`}
             >
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-semibold text-white">
+              <div className="flex items-center justify-between gap-2 mb-2.5 w-full">
+                <span className="text-xs font-semibold text-white truncate">
                   {t(th.nameKey, th.defaultName)}
                 </span>
-                {isSelected && (
-                  <span className="w-4 h-4 rounded-full bg-indigo-600 text-white flex items-center justify-center">
-                    <Check className="w-2.5 h-2.5" />
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span
+                    className="inline-flex items-center justify-center text-slate-400"
+                    title={th.isLight ? t('theme_light', 'Light') : t('theme_dark', 'Dark')}
+                  >
+                    {th.isLight ? <Sun className="w-3 h-3 text-amber-400" /> : <Moon className="w-3 h-3 text-slate-400" />}
                   </span>
-                )}
+                  {isSelected && (
+                    <span className="w-4 h-4 rounded-full bg-indigo-600 text-white flex items-center justify-center">
+                      <Check className="w-2.5 h-2.5" />
+                    </span>
+                  )}
+                </div>
               </div>
 
               <div
@@ -91,7 +101,7 @@ export const ThemesSettingsTab: React.FC<ThemesSettingsTabProps> = ({
                   />
                 </div>
               </div>
-            </div>
+            </button>
           );
         })}
       </div>

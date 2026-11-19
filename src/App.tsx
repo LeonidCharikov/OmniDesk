@@ -4,14 +4,13 @@ import { Header } from './components/layout/Header';
 import { ToolGrid } from './components/layout/ToolGrid';
 import { CommandPalette, ConfigTabId } from './components/layout/CommandPalette';
 import { ConfigModal, ConfigTabType } from './components/ui/ConfigModal';
-import { LockScreen } from './components/ui/LockScreen';
 import { ToastContainer } from './components/ui/ToastContainer';
 import { ShortcutsHelpModal } from './components/ui/ShortcutsHelpModal';
 import { SmartDropModal } from './components/ui/SmartDropModal';
 import { TOOLS_REGISTRY } from './tools/registry';
 import { ThemeId, ToolCategory, UserConfig, WidgetCustomization } from './types/tool';
 import { loadUserConfig, saveUserConfig, DEFAULT_CONFIG } from './services/storage';
-import { applyTheme } from './services/themes';
+import { applyTheme, isLightTheme } from './services/themes';
 import { useI18n } from './i18n/context';
 import { Info, FileUp } from 'lucide-react';
 import { getToolCatalogText } from './i18n/toolCatalog';
@@ -103,19 +102,12 @@ export default function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isToolInfoOpen, setIsToolInfoOpen] = useState(false);
   const runningInTauri = isTauri();
-  const [isLocked, setIsLocked] = useState<boolean>(() => {
-    if (!isTauri()) return false;
-    const initial = loadUserConfig();
-    return Boolean(initial.security?.lockEnabled && initial.security?.pinHash && initial.security?.pinSalt);
-  });
   const [mcpStatus, setMcpStatus] = useState<McpConnectionStatus>('disconnected');
   const [mcpError, setMcpError] = useState<string | undefined>(undefined);
   const [mcpLogs, setMcpLogs] = useState<McpLogEntry[]>([]);
   const [desktopUpdateResult, setDesktopUpdateResult] = useState<DesktopUpdateCheckResult | null>(null);
   const [isInstallingDesktopUpdate, setIsInstallingDesktopUpdate] = useState(false);
   const [desktopUpdateProgress, setDesktopUpdateProgress] = useState<DesktopUpdateProgress | null>(null);
-  const isLockedRef = useRef(isLocked);
-  isLockedRef.current = isLocked;
   const selectedToolIdRef = useRef(selectedToolId);
   selectedToolIdRef.current = selectedToolId;
   const didCheckUpdateRef = useRef(false);
@@ -129,7 +121,6 @@ export default function App() {
   }, []);
 
   const { t, language } = useI18n();
-  const canLock = runningInTauri && Boolean(config.security?.lockEnabled && config.security?.pinHash && config.security?.pinSalt);
 
   // Apply theme dynamically to document root
   useEffect(() => {
@@ -146,7 +137,7 @@ export default function App() {
     const customBindings = config.customToolShortcuts || [];
 
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
-      if (isLocked || e.defaultPrevented) return;
+      if (e.defaultPrevented) return;
 
       if (matchesShortcutCombo(e, shortcuts.openSearch)) {
         e.preventDefault();
@@ -164,15 +155,6 @@ export default function App() {
       if (matchesShortcutCombo(e, shortcuts.toggleSidebar)) {
         e.preventDefault();
         toggleSidebar();
-        return;
-      }
-
-      if (matchesShortcutCombo(e, shortcuts.lockWorkspace)) {
-        if (canLock) {
-          e.preventDefault();
-          setIsLocked(true);
-          toastService.show({ type: 'info', title: t('workspace_locked_toast', 'Workspace locked') });
-        }
         return;
       }
 
@@ -226,8 +208,6 @@ export default function App() {
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
   }, [
-    isLocked,
-    canLock,
     config.shortcuts,
     config.customToolShortcuts,
     isConfigOpen,
@@ -235,7 +215,6 @@ export default function App() {
     isShortcutsHelpOpen,
     droppedFile,
     toggleSidebar,
-    t,
   ]);
 
   // Sync URL hash with current category / active tool
@@ -284,45 +263,6 @@ export default function App() {
       window.removeEventListener('offline', handleOffline);
     };
   }, []);
-
-  // Lock on blur & inactivity auto-lock enforcement
-
-  useEffect(() => {
-    if (!canLock || isLocked) return;
-
-    const handleVisibilityOrBlur = () => {
-      if (config.security?.lockOnBlur && (document.hidden || !document.hasFocus())) {
-        setIsLocked(true);
-      }
-    };
-
-    window.addEventListener('blur', handleVisibilityOrBlur);
-    document.addEventListener('visibilitychange', handleVisibilityOrBlur);
-    return () => {
-      window.removeEventListener('blur', handleVisibilityOrBlur);
-      document.removeEventListener('visibilitychange', handleVisibilityOrBlur);
-    };
-  }, [canLock, isLocked, config.security?.lockOnBlur]);
-
-  useEffect(() => {
-    const minutes = config.security?.autoLockMinutes ?? 0;
-    if (!canLock || isLocked || minutes <= 0) return;
-
-    let timeoutId: number;
-    const resetTimer = () => {
-      window.clearTimeout(timeoutId);
-      timeoutId = window.setTimeout(() => setIsLocked(true), minutes * 60 * 1000);
-    };
-
-    resetTimer();
-    const events: Array<keyof WindowEventMap> = ['pointerdown', 'keydown', 'mousemove'];
-    events.forEach(ev => window.addEventListener(ev, resetTimer, { passive: true }));
-
-    return () => {
-      window.clearTimeout(timeoutId);
-      events.forEach(ev => window.removeEventListener(ev, resetTimer));
-    };
-  }, [canLock, isLocked, config.security?.autoLockMinutes]);
 
   // Save config
   const updateConfig = useCallback((newConfig: UserConfig) => {
@@ -381,13 +321,13 @@ export default function App() {
       Boolean(e.dataTransfer?.types && Array.from(e.dataTransfer.types).includes('Files'));
 
     const handleDragEnter = (e: DragEvent) => {
-      if (isLockedRef.current || !hasFiles(e)) return;
+      if (!hasFiles(e)) return;
       dragCounterRef.current += 1;
       setIsDraggingFile(true);
     };
 
     const handleDragOver = (e: DragEvent) => {
-      if (isLockedRef.current || e.defaultPrevented || !hasFiles(e)) return;
+      if (e.defaultPrevented || !hasFiles(e)) return;
       e.preventDefault();
     };
 
@@ -402,7 +342,7 @@ export default function App() {
     const handleDrop = (e: DragEvent) => {
       dragCounterRef.current = 0;
       setIsDraggingFile(false);
-      if (isLockedRef.current || e.defaultPrevented) return;
+      if (e.defaultPrevented) return;
       const files = e.dataTransfer?.files;
       if (files && files.length > 0) {
         e.preventDefault();
@@ -416,7 +356,7 @@ export default function App() {
     window.addEventListener('drop', handleDrop);
 
     const unregisterTauriDrop = registerTauriDropListener(files => {
-      if (isLockedRef.current || files.length === 0) return;
+      if (files.length === 0) return;
       const activeId = selectedToolIdRef.current;
       if (activeId && (activeId === 'docx-to-pdf' || activeId === 'image-editor')) {
         return;
@@ -562,7 +502,6 @@ export default function App() {
       if (disposed) return;
       const client = new ClientClass({
         accessMode: config.mcp?.accessMode ?? 'readonly',
-        isLocked: () => isLockedRef.current,
         getAvailableTools: () =>
           TOOLS_REGISTRY.map(tool => ({
             id: tool.id,
@@ -607,7 +546,7 @@ export default function App() {
     if (!runningInTauri) return;
     const client = mcpClientRef.current;
     const mcpCfg = config.mcp;
-    if (!client || !mcpCfg?.enabled || isLockedRef.current) return;
+    if (!client || !mcpCfg?.enabled) return;
     void import('./services/mcpClient').then(({ createTransportFromConfig }) => {
       const transport = createTransportFromConfig(mcpCfg);
       void client.connect(transport, { autoReconnect: mcpCfg.transport === 'websocket' }).catch(() => {
@@ -623,7 +562,7 @@ export default function App() {
     const mcpCfg = config.mcp;
     client.setAccessMode(mcpCfg?.accessMode ?? 'readonly');
 
-    if (!mcpCfg?.enabled || isLocked) {
+    if (!mcpCfg?.enabled) {
       void client.disconnect();
       return;
     }
@@ -649,7 +588,6 @@ export default function App() {
     config.mcp?.wsUrl,
     config.mcp?.authToken,
     config.mcp?.accessMode,
-    isLocked,
   ]);
 
   const handleToggleFavorite = (toolId: string) => {
@@ -667,7 +605,6 @@ export default function App() {
   const handleResetDefaults = () => {
     updateConfig(DEFAULT_CONFIG);
     applyTheme(DEFAULT_CONFIG.themeId);
-    setIsLocked(false);
   };
 
   const mcpConnectedCapabilities: McpConnectedToolCapability[] = React.useMemo(() => {
@@ -676,8 +613,8 @@ export default function App() {
     if (!client) return [];
     client.setAccessMode(config.mcp?.accessMode ?? 'readonly');
     return client.getConnectedToolCapabilities();
-    // Recompute whenever connection status, permission level, or lock state changes
-  }, [runningInTauri, mcpClientReady, mcpStatus, config.mcp?.accessMode, config.mcp?.enabled, isLocked]);
+    // Recompute whenever connection status or permission level changes
+  }, [runningInTauri, mcpClientReady, mcpStatus, config.mcp?.accessMode, config.mcp?.enabled]);
 
   const isEffectiveOffline = !isBrowserOnline || Boolean(config.simulatedOffline);
 
@@ -797,18 +734,6 @@ export default function App() {
     </div>
   );
 
-  if (runningInTauri && isLocked && config.security) {
-    return (
-      <div className={`theme-${config.themeId || 'midnight'}`}>
-        <LockScreen
-          security={config.security}
-          onUnlock={() => setIsLocked(false)}
-          onFactoryReset={handleResetDefaults}
-        />
-      </div>
-    );
-  }
-
   return (
     <div className={`flex h-[100dvh] w-full max-w-full overflow-hidden font-sans text-slate-100 theme-${config.themeId || 'midnight'} bg-slate-950`}>
       {isSidebarOpen && (
@@ -864,12 +789,6 @@ export default function App() {
           onToggleSidebar={toggleSidebar}
           isSidebarOpen={isSidebarOpen}
           isOffline={isEffectiveOffline}
-          canLock={canLock}
-          onLockNow={() => {
-            if (!runningInTauri) return;
-            setIsLocked(true);
-            toastService.show({ type: 'info', title: t('workspace_locked_toast', 'Workspace locked') });
-          }}
           availableUpdateVersion={
             desktopUpdateResult?.status === 'available' ? desktopUpdateResult.availableVersion : undefined
           }
@@ -959,7 +878,11 @@ export default function App() {
           setIsConfigOpen(true);
         }}
         onSelectTheme={(themeId: ThemeId) => {
-          updateConfig({ ...config, themeId });
+          updateConfig({
+            ...config,
+            themeId,
+            theme: isLightTheme(themeId) ? 'light' : 'dark',
+          });
           toastService.show({
             type: 'success',
             title: t('toast_theme_switched', 'Theme updated'),
@@ -978,11 +901,6 @@ export default function App() {
         initialTab={configInitialTab}
         onResetDefaults={handleResetDefaults}
         onUpdateConfig={handleUpdateConfig}
-        onLockNow={() => {
-          if (!runningInTauri) return;
-          setIsLocked(true);
-          toastService.show({ type: 'info', title: t('workspace_locked_toast', 'Workspace locked') });
-        }}
         mcpStatus={mcpStatus}
         mcpError={mcpError}
         mcpLogs={mcpLogs}

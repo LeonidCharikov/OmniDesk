@@ -5,7 +5,6 @@ import { CustomToolShortcut, ShortcutBindings } from '../../types/tool';
 import { TOOLS_REGISTRY } from '../../tools/registry';
 import { useI18n } from '../../i18n/context';
 import { getToolCatalogText } from '../../i18n/toolCatalog';
-import { isTauri } from '../../services/fileSystemService';
 
 interface ShortcutsHelpModalProps {
   isOpen: boolean;
@@ -23,10 +22,6 @@ export const ShortcutsHelpModal: React.FC<ShortcutsHelpModalProps> = ({
   onCustomize,
 }) => {
   const { t, language } = useI18n();
-  const runningInTauri = isTauri();
-  const visibleBuiltinActions = BUILTIN_SHORTCUT_ACTIONS.filter(
-    action => runningInTauri || action.id !== 'lockWorkspace'
-  );
 
   useEffect(() => {
     if (!isOpen) return;
@@ -84,7 +79,7 @@ export const ShortcutsHelpModal: React.FC<ShortcutsHelpModalProps> = ({
               {t('shortcuts_builtin_heading', 'Workspace Navigation')}
             </h3>
             <div className="divide-y divide-slate-800/80 rounded-xl border border-slate-800 bg-slate-950/50">
-              {visibleBuiltinActions.map(action => (
+              {BUILTIN_SHORTCUT_ACTIONS.map(action => (
                 <div key={action.id} className="px-3.5 py-2.5 flex items-center justify-between gap-3 text-xs">
                   <span className="text-slate-200">{t(action.labelKey, action.defaultLabel)}</span>
                   <kbd className="px-2 py-0.5 rounded bg-slate-900 border border-slate-700 font-mono text-[11px] text-indigo-300 shrink-0">

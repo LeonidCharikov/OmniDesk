@@ -3238,5 +3238,15 @@
   "updates_downloading_label": "Downloading update package...",
   "header_update_btn": "Update v{version}",
   "header_update_available_tooltip": "Update v{version} available — click to download and update",
-  "header_update_installing_tooltip": "Downloading and installing update v{version}..."
+  "header_update_installing_tooltip": "Downloading and installing update v{version}...",
+  "window_restore": "Restore",
+  "theme_midnight": "Midnight Navy",
+  "theme_oled": "OLED Black",
+  "theme_graphite": "Charcoal Graphite",
+  "theme_nord": "Nordic Frost",
+  "theme_ocean": "Deep Ocean",
+  "theme_emerald": "Cyber Emerald",
+  "theme_purple": "Royal Twilight",
+  "theme_sunset": "Amber Ember",
+  "theme_sand": "Warm Paper"
 }

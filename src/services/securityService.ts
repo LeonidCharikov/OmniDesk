@@ -1,7 +1,7 @@
 /**
- * OmniDesk Security Service
- * Implements client-side cryptography, PBKDF2 + AES-256-GCM, password verification,
- * storage privacy audit and secure data sanitization using the standard Web Crypto API.
+ * OmniDesk Security & Privacy Service
+ * Implements client-side AES-256-GCM encrypted backup serialization (PBKDF2),
+ * password entropy analysis, storage privacy audit and secure data sanitization using Web Crypto API.
  */
 
 // Helper to convert Uint8Array to hex string
@@ -51,58 +51,6 @@ async function derivePbkdf2Key(
     false,
     usages
   );
-}
-
-/**
- * Hashes a master PIN or password using PBKDF2 with SHA-256 (100,000 rounds)
- * and a cryptographically secure 16-byte salt.
- */
-export async function hashMasterKey(
-  passphrase: string,
-  saltHex?: string
-): Promise<{ hashHex: string; saltHex: string }> {
-  const salt = saltHex ? hexToBuffer(saltHex) : crypto.getRandomValues(new Uint8Array(16));
-  const encoder = new TextEncoder();
-
-  const baseKey = await crypto.subtle.importKey(
-    'raw',
-    encoder.encode(passphrase),
-    { name: 'PBKDF2' },
-    false,
-    ['deriveBits']
-  );
-
-  const derivedBits = await crypto.subtle.deriveBits(
-    {
-      name: 'PBKDF2',
-      salt: salt as unknown as BufferSource,
-      iterations: 100000,
-      hash: 'SHA-256',
-    },
-    baseKey,
-    256
-  );
-
-  return {
-    hashHex: bufferToHex(derivedBits),
-    saltHex: bufferToHex(salt),
-  };
-}
-
-/**
- * Verifies a passphrase against stored hash and salt.
- */
-export async function verifyMasterKey(
-  passphrase: string,
-  expectedHashHex: string,
-  saltHex: string
-): Promise<boolean> {
-  try {
-    const { hashHex } = await hashMasterKey(passphrase, saltHex);
-    return hashHex.toLowerCase() === expectedHashHex.toLowerCase();
-  } catch {
-    return false;
-  }
 }
 
 /**

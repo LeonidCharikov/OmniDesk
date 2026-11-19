@@ -154,7 +154,6 @@ interface NativeSystemTelemetry {
 
 export interface OmniDeskMcpClientOptions {
   accessMode?: McpAccessMode;
-  isLocked?: () => boolean;
   getAvailableTools?: () => McpCatalogToolSummary[];
   onOpenTool?: (toolId: string) => void;
   clipboard?: McpClipboardAdapter;
@@ -616,7 +615,6 @@ export class OmniDeskMcpClient {
   private unbindMessage: (() => void) | null = null;
   private unbindStatus: (() => void) | null = null;
   private accessMode: McpAccessMode;
-  private readonly isLockedFn: () => boolean;
   private readonly getAvailableToolsFn: () => McpCatalogToolSummary[];
   private readonly onOpenToolFn?: (toolId: string) => void;
   private readonly clipboard: McpClipboardAdapter;
@@ -633,7 +631,6 @@ export class OmniDeskMcpClient {
 
   constructor(options: OmniDeskMcpClientOptions = {}) {
     this.accessMode = options.accessMode ?? 'readonly';
-    this.isLockedFn = options.isLocked ?? (() => false);
     this.getAvailableToolsFn = options.getAvailableTools ?? (() => []);
     this.onOpenToolFn = options.onOpenTool;
     this.clipboard = options.clipboard ?? DEFAULT_CLIPBOARD_ADAPTER;
@@ -720,7 +717,7 @@ export class OmniDeskMcpClient {
   }
 
   private scheduleReconnect(): void {
-    if (!this.autoReconnect || this.manualDisconnect || !this.transport || this.reconnectTimer || this.isLockedFn()) {
+    if (!this.autoReconnect || this.manualDisconnect || !this.transport || this.reconnectTimer) {
       return;
     }
     const delayMs = Math.min(15000, 2000 * Math.pow(2, Math.min(this.reconnectAttempts, 3)));
@@ -728,7 +725,7 @@ export class OmniDeskMcpClient {
     const targetTransport = this.transport;
     this.reconnectTimer = setTimeout(() => {
       this.reconnectTimer = null;
-      if (!this.autoReconnect || this.manualDisconnect || this.transport !== targetTransport || this.isLockedFn()) {
+      if (!this.autoReconnect || this.manualDisconnect || this.transport !== targetTransport) {
         return;
       }
       targetTransport.connect().catch(() => {
@@ -793,7 +790,7 @@ export class OmniDeskMcpClient {
   }
 
   public getConnectedToolCapabilities(): McpConnectedToolCapability[] {
-    const isAvailable = this.currentStatus === 'connected' && !this.isLockedFn();
+    const isAvailable = this.currentStatus === 'connected';
     const canWrite = this.accessMode === 'readwrite';
     const exposedNames = new Set(this.getExposedTools().map(tool => tool.name));
     const pickExposed = (...names: string[]) => names.filter(name => exposedNames.has(name));
@@ -961,19 +958,6 @@ export class OmniDeskMcpClient {
                 name: 'omnidesk-desktop-bridge',
                 version: '0.1.14',
               },
-            },
-          }
-        : null;
-    }
-
-    if (this.isLockedFn()) {
-      return hasId
-        ? {
-            jsonrpc: '2.0',
-            id: req.id ?? null,
-            error: {
-              code: -32001,
-              message: 'OmniDesk workspace is currently locked.',
             },
           }
         : null;

@@ -16,7 +16,6 @@ export const DEFAULT_SHORTCUTS: ShortcutBindings = {
   openSettings: 'Ctrl+,',
   toggleSidebar: 'Ctrl+B',
   goBack: 'Alt+ArrowLeft',
-  lockWorkspace: 'Ctrl+Shift+L',
   openShortcutsHelp: 'Shift+?',
 };
 
@@ -44,12 +43,6 @@ export const BUILTIN_SHORTCUT_ACTIONS: BuiltinShortcutActionMeta[] = [
     labelKey: 'shortcut_action_go_back',
     defaultLabel: 'Back to Tool Grid',
     defaultCombo: DEFAULT_SHORTCUTS.goBack,
-  },
-  {
-    id: 'lockWorkspace',
-    labelKey: 'shortcut_action_lock_workspace',
-    defaultLabel: 'Lock Workspace',
-    defaultCombo: DEFAULT_SHORTCUTS.lockWorkspace,
   },
   {
     id: 'openShortcutsHelp',

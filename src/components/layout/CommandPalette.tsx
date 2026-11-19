@@ -178,7 +178,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       ...(runningInTauri
         ? [{ tab: 'widgets' as ConfigTabId, title: t('tab_widgets', 'Sidebar Widgets'), keywords: 'widgets clock timer crypto tasks calc' }]
         : []),
-      { tab: 'security', title: t('tab_security', 'Security & Privacy'), keywords: 'security pin lock privacy purge' },
+      { tab: 'security', title: t('tab_security', 'Security & Privacy'), keywords: 'security privacy offline audit purge' },
       ...(runningInTauri
         ? [{ tab: 'mcp' as ConfigTabId, title: t('tab_mcp', 'MCP Bridge'), keywords: 'mcp ai claude cursor websocket stdio log' }]
         : []),

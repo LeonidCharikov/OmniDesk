@@ -68,7 +68,6 @@ interface ConfigModalProps {
   config: UserConfig;
   onUpdateConfig: (newConfig: UserConfig) => void;
   onResetDefaults: () => void;
-  onLockNow?: () => void;
   initialTab?: ConfigTabType;
   mcpStatus?: McpConnectionStatus;
   mcpError?: string;
@@ -89,7 +88,6 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
   config,
   onUpdateConfig,
   onResetDefaults,
-  onLockNow,
   initialTab,
   mcpStatus = 'disconnected',
   mcpError,
@@ -263,10 +261,7 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({
           {activeTab === 'security' && (
             <SecuritySettingsTab
               config={config}
-              runningInTauri={runningInTauri}
               onUpdateConfig={onUpdateConfig}
-              onClose={onClose}
-              onLockNow={onLockNow}
               onStatusMessage={showStatusMessage}
             />
           )}

@@ -41,6 +41,19 @@ export const BackupSettingsTab: React.FC<BackupSettingsTabProps> = ({
   };
 
   const jsonString = JSON.stringify(jsonExportPayload, null, 2);
+  const previewJsonString = JSON.stringify(
+    {
+      ...jsonExportPayload,
+      mcp: jsonExportPayload.mcp
+        ? {
+            ...jsonExportPayload.mcp,
+            authToken: jsonExportPayload.mcp.authToken ? '••••••••' : undefined,
+          }
+        : undefined,
+    },
+    null,
+    2
+  );
 
   const downloadConfigFile = async () => {
     const defaultName = `omnidesk-profile-${new Date().toISOString().slice(0, 10)}.json`;
@@ -368,8 +381,8 @@ export const BackupSettingsTab: React.FC<BackupSettingsTabProps> = ({
         <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
           {t('current_json_preview', 'Current Configuration (Live JSON)')}
         </span>
-        <pre className="p-3 rounded-xl bg-slate-950 border border-slate-850 text-[11px] font-mono text-slate-400 overflow-x-auto max-h-40">
-          {jsonString}
+        <pre className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-[11px] font-mono text-slate-400 overflow-x-auto max-h-40">
+          {previewJsonString}
         </pre>
       </div>
 

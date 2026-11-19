@@ -41,7 +41,7 @@ Because external AI hosts communicate with local MCP servers over **stdio** (or 
 
 ### A. Internal OmniDesk Workspace & System APIs (`src/services/mcpClient.ts`)
 
-All tools respect OmniDesk’s **Permission Level** (`readonly` vs `readwrite`) and **Workspace Lock Screen** (`isLocked`).
+All tools respect OmniDesk’s **Permission Level** (`readonly` vs `readwrite`).
 
 | Tool Name | Mode | Source / Tauri Integration | Capabilities & Parameters |
 | :--- | :--- | :--- | :--- |
@@ -79,8 +79,7 @@ OmniDesk separates **user-driven file dialogs** from **AI-accessible directories
 ### D. Intentionally Excluded APIs (Security Boundary)
 
 To protect user privacy and workspace integrity, the following are **never** exposed over MCP:
-- `securityService.ts` PIN hashes, PBKDF2 salts, and AES-GCM backup encryption keys.
-- `LockScreen` bypass or unlock controls (when locked, all MCP `tools/*` and `resources/*` calls return JSON-RPC error `-32001`).
+- `securityService.ts` AES-GCM backup encryption keys and passphrases.
 - Password Generator (`password-gen`), AES Cipher Studio (`aes-cipher-studio`), and arbitrary host shell/filesystem commands.
 
 ---

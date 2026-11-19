@@ -25,7 +25,17 @@ export interface ToolDefinition {
   tags: string[];
 }
 
-export type ThemeId = 'midnight' | 'oled' | 'graphite' | 'emerald' | 'purple' | 'light';
+export type ThemeId =
+  | 'midnight'
+  | 'oled'
+  | 'graphite'
+  | 'emerald'
+  | 'purple'
+  | 'nord'
+  | 'sunset'
+  | 'ocean'
+  | 'light'
+  | 'sand';
 
 export interface DailyTask {
   id: string;
@@ -47,15 +57,6 @@ export interface WidgetCustomization {
   dailyTasks?: DailyTask[];
 }
 
-export interface SecurityConfig {
-  lockEnabled: boolean;
-  pinHash?: string;
-  pinSalt?: string;
-  autoLockMinutes: number;
-  lockOnBlur: boolean;
-  securityHint?: string;
-}
-
 export type McpTransportMode = 'websocket' | 'stdio';
 export type McpAccessMode = 'readonly' | 'readwrite';
 
@@ -72,7 +73,6 @@ export type BuiltinShortcutActionId =
   | 'openSettings'
   | 'toggleSidebar'
   | 'goBack'
-  | 'lockWorkspace'
   | 'openShortcutsHelp';
 
 export type ShortcutBindings = Record<BuiltinShortcutActionId, string>;
@@ -99,7 +99,6 @@ export interface UserConfig {
   widgets: WidgetCustomization;
   enabledWidgets?: string[];
   language?: string;
-  security?: SecurityConfig;
   mcp?: McpBridgeConfig;
   shortcuts?: ShortcutBindings;
   customToolShortcuts?: CustomToolShortcut[];

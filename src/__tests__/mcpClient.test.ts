@@ -102,19 +102,6 @@ describe('OmniDeskMcpClient', () => {
     expect(res?.error?.code).toBe(-32002);
   });
 
-  it('blocks all tools and resources while workspace is locked', async () => {
-    const client = new OmniDeskMcpClient({
-      accessMode: 'readwrite',
-      isLocked: () => true,
-    });
-    const res = await client.handleRequest({
-      jsonrpc: '2.0',
-      id: 4,
-      method: 'tools/list',
-    });
-    expect(res?.error?.code).toBe(-32001);
-  });
-
   it('creates, lists, and deletes calendar events in readwrite mode', async () => {
     const calendarEventsListener = vi.fn();
     window.addEventListener('omnidesk-calendar-updated', calendarEventsListener);
@@ -329,12 +316,10 @@ describe('OmniDeskMcpClient', () => {
     await client.disconnect();
   });
 
-  it('dynamically computes connected tool capabilities based on connection status, lock, and access mode', async () => {
+  it('dynamically computes connected tool capabilities based on connection status and access mode', async () => {
     const mock = createMockTransport();
-    let locked = false;
     const client = new OmniDeskMcpClient({
       accessMode: 'readonly',
-      isLocked: () => locked,
       getAvailableTools: () => [
         { id: 'calendar', title: 'Calendar', category: 'planning', shortDesc: 'Planner' },
         { id: 'pdf-editor', title: 'PDF Editor', category: 'files', shortDesc: 'PDF' },
@@ -360,11 +345,6 @@ describe('OmniDeskMcpClient', () => {
     ]);
     const catalogCap = active.find(cap => cap.id === 'workspace-tools');
     expect(catalogCap?.localTools).toHaveLength(2);
-
-    // Locked workspace -> dynamically unavailable even while socket is connected
-    locked = true;
-    const lockedCaps = client.getConnectedToolCapabilities();
-    expect(lockedCaps.every(cap => !cap.isAvailable)).toBe(true);
 
     await client.disconnect();
   });

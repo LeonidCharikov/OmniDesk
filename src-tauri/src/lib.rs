@@ -1,4 +1,4 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
 use std::io::{BufRead, BufReader, Write};
 use std::path::{Path, PathBuf};
@@ -7,12 +7,17 @@ use std::sync::Mutex;
 use sysinfo::{CpuRefreshKind, Disks, MemoryRefreshKind, RefreshKind, System};
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
-use tauri::{AppHandle, Emitter, Manager, State, WindowEvent};
+use tauri::{AppHandle, Emitter, Manager, PhysicalPosition, PhysicalSize, State, WebviewWindow, WindowEvent};
 use tauri_plugin_clipboard_manager::ClipboardExt;
 
 const MAX_CLIPBOARD_CHARS: usize = 100_000;
 const MAX_PENDING_STDIO_LINES: usize = 128;
 const MAX_CLI_OPEN_FILE_BYTES: u64 = 25 * 1024 * 1024;
+const WINDOW_STATE_FILE: &str = "window-state.json";
+const MIN_SAVED_WINDOW_WIDTH: u32 = 900;
+const MIN_SAVED_WINDOW_HEIGHT: u32 = 600;
+const DEFAULT_WINDOW_WIDTH: u32 = 1280;
+const DEFAULT_WINDOW_HEIGHT: u32 = 800;
 
 #[derive(Default)]
 struct McpStdioState {
@@ -23,6 +28,17 @@ struct McpStdioState {
 struct CloseToTrayState(AtomicBool);
 
 struct OpenedCliFileState(Mutex<Option<String>>);
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+struct PersistedWindowState {
+    width: u32,
+    height: u32,
+    x: i32,
+    y: i32,
+    maximized: bool,
+}
+
+struct WindowGeometryState(Mutex<Option<PersistedWindowState>>);
 
 #[derive(Serialize)]
 struct CliOpenedFilePayload {
@@ -39,6 +55,139 @@ struct NativeSystemTelemetry {
     disk_used_gb: f64,
     disk_total_gb: f64,
     uptime_seconds: u64,
+}
+
+fn window_state_path(app: &AppHandle) -> Option<PathBuf> {
+    app.path()
+        .app_data_dir()
+        .ok()
+        .map(|dir| dir.join(WINDOW_STATE_FILE))
+}
+
+fn load_persisted_window_state(app: &AppHandle) -> Option<PersistedWindowState> {
+    let path = window_state_path(app)?;
+    let raw = std::fs::read_to_string(path).ok()?;
+    let parsed: PersistedWindowState = serde_json::from_str(&raw).ok()?;
+    if parsed.width < MIN_SAVED_WINDOW_WIDTH || parsed.height < MIN_SAVED_WINDOW_HEIGHT {
+        return None;
+    }
+    Some(parsed)
+}
+
+fn save_persisted_window_state(app: &AppHandle, state: &PersistedWindowState) {
+    let Some(path) = window_state_path(app) else {
+        return;
+    };
+    if let Some(parent) = path.parent() {
+        let _ = std::fs::create_dir_all(parent);
+    }
+    if let Ok(serialized) = serde_json::to_string_pretty(state) {
+        let _ = std::fs::write(path, serialized);
+    }
+}
+
+fn is_position_on_any_monitor(window: &WebviewWindow, x: i32, y: i32, width: u32, height: u32) -> bool {
+    let Ok(monitors) = window.available_monitors() else {
+        return true;
+    };
+    if monitors.is_empty() {
+        return true;
+    }
+    let w = width as i32;
+    let h = height as i32;
+    monitors.iter().any(|monitor| {
+        let pos = monitor.position();
+        let size = monitor.size();
+        let mon_left = pos.x;
+        let mon_top = pos.y;
+        let mon_right = pos.x + size.width as i32;
+        let mon_bottom = pos.y + size.height as i32;
+
+        // Require at least 80px of the window titlebar region to overlap an active monitor
+        let overlap_x = (x + w).min(mon_right) - x.max(mon_left);
+        let overlap_y = (y + h.min(120)).min(mon_bottom) - y.max(mon_top);
+        overlap_x >= 80 && overlap_y >= 40
+    })
+}
+
+fn capture_window_state(window: &WebviewWindow) {
+    let minimized = window.is_minimized().unwrap_or(false);
+    if minimized {
+        return;
+    }
+    let maximized = window.is_maximized().unwrap_or(false);
+    let app = window.app_handle();
+    let geom_state = app.state::<WindowGeometryState>();
+    let Ok(mut guard) = geom_state.0.lock() else {
+        return;
+    };
+
+    if maximized {
+        if let Some(existing) = guard.as_mut() {
+            existing.maximized = true;
+        } else {
+            *guard = Some(PersistedWindowState {
+                width: DEFAULT_WINDOW_WIDTH,
+                height: DEFAULT_WINDOW_HEIGHT,
+                x: 80,
+                y: 60,
+                maximized: true,
+            });
+        }
+        return;
+    }
+
+    let Ok(size) = window.inner_size() else {
+        return;
+    };
+    let Ok(pos) = window.outer_position() else {
+        return;
+    };
+
+    if size.width < MIN_SAVED_WINDOW_WIDTH || size.height < MIN_SAVED_WINDOW_HEIGHT {
+        return;
+    }
+    if pos.x <= -10_000 || pos.y <= -10_000 {
+        return;
+    }
+
+    *guard = Some(PersistedWindowState {
+        width: size.width,
+        height: size.height,
+        x: pos.x,
+        y: pos.y,
+        maximized: false,
+    });
+}
+
+fn flush_window_state(app: &AppHandle) {
+    let geom_state = app.state::<WindowGeometryState>();
+    let snapshot = geom_state.0.lock().ok().and_then(|g| g.clone());
+    if let Some(state) = snapshot {
+        save_persisted_window_state(app, &state);
+    }
+}
+
+fn restore_window_state(app: &AppHandle, window: &WebviewWindow) {
+    let Some(saved) = load_persisted_window_state(app) else {
+        return;
+    };
+
+    let _ = window.set_size(PhysicalSize::new(saved.width, saved.height));
+    if is_position_on_any_monitor(window, saved.x, saved.y, saved.width, saved.height) {
+        let _ = window.set_position(PhysicalPosition::new(saved.x, saved.y));
+    } else {
+        let _ = window.center();
+    }
+
+    if saved.maximized {
+        let _ = window.maximize();
+    }
+
+    let geom_state = app.state::<WindowGeometryState>();
+    if let Ok(mut guard) = geom_state.0.lock() {
+        *guard = Some(saved);
+    }
 }
 
 #[tauri::command]
@@ -275,6 +424,7 @@ pub fn run() {
         .manage(Mutex::new(McpStdioState::default()))
         .manage(CloseToTrayState(AtomicBool::new(false)))
         .manage(OpenedCliFileState(Mutex::new(None)))
+        .manage(WindowGeometryState(Mutex::new(None)))
         .invoke_handler(tauri::generate_handler![
             get_system_telemetry,
             mcp_read_clipboard,
@@ -301,6 +451,10 @@ pub fn run() {
                 )?;
             }
 
+            if let Some(main_win) = app.get_webview_window("main") {
+                restore_window_state(app.handle(), &main_win);
+            }
+
             if !is_mcp_stdio {
                 if let Some(arg_path) = std::env::args().skip(1).find(|arg| !arg.starts_with('-')) {
                     let path_buf = PathBuf::from(&arg_path);
@@ -316,8 +470,13 @@ pub fn run() {
                     MenuItem::with_id(app, "show", "Show OmniDesk", true, None::<&str>)?;
                 let hide_item =
                     MenuItem::with_id(app, "hide", "Hide to Tray", true, None::<&str>)?;
+                let reset_bounds_item =
+                    MenuItem::with_id(app, "reset_window", "Reset Window Size", true, None::<&str>)?;
                 let quit_item = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
-                let tray_menu = Menu::with_items(app, &[&show_item, &hide_item, &quit_item])?;
+                let tray_menu = Menu::with_items(
+                    app,
+                    &[&show_item, &hide_item, &reset_bounds_item, &quit_item],
+                )?;
 
                 let mut tray_builder = TrayIconBuilder::new()
                     .menu(&tray_menu)
@@ -336,7 +495,22 @@ pub fn run() {
                                 let _ = win.hide();
                             }
                         }
+                        "reset_window" => {
+                            if let Some(win) = app.get_webview_window("main") {
+                                let _ = win.unmaximize();
+                                let _ = win.set_size(PhysicalSize::new(
+                                    DEFAULT_WINDOW_WIDTH,
+                                    DEFAULT_WINDOW_HEIGHT,
+                                ));
+                                let _ = win.center();
+                                let _ = win.show();
+                                let _ = win.set_focus();
+                                capture_window_state(&win);
+                                flush_window_state(app);
+                            }
+                        }
                         "quit" => {
+                            flush_window_state(app);
                             app.exit(0);
                         }
                         _ => {}
@@ -367,8 +541,18 @@ pub fn run() {
             spawn_mcp_stdio_reader(app.handle().clone());
             Ok(())
         })
-        .on_window_event(|window, event| {
-            if let WindowEvent::CloseRequested { api, .. } = event {
+        .on_window_event(|window, event| match event {
+            WindowEvent::Resized(_) | WindowEvent::Moved(_) => {
+                if let Some(webview_win) = window.app_handle().get_webview_window(window.label()) {
+                    capture_window_state(&webview_win);
+                }
+            }
+            WindowEvent::CloseRequested { api, .. } => {
+                if let Some(webview_win) = window.app_handle().get_webview_window(window.label()) {
+                    capture_window_state(&webview_win);
+                }
+                flush_window_state(window.app_handle());
+
                 let close_to_tray = window
                     .app_handle()
                     .state::<CloseToTrayState>()
@@ -379,6 +563,7 @@ pub fn run() {
                     let _ = window.hide();
                 }
             }
+            _ => {}
         })
         .run(tauri::generate_context!())
         .expect("error while building tauri application");

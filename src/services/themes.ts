@@ -36,6 +36,22 @@ export const THEMES: ThemeMeta[] = [
     previewAccent: '#38bdf8',
   },
   {
+    id: 'nord',
+    nameKey: 'theme_nord',
+    defaultName: 'Nordic Frost',
+    previewBg: '#242933',
+    previewBorder: '#3b4252',
+    previewAccent: '#88c0d0',
+  },
+  {
+    id: 'ocean',
+    nameKey: 'theme_ocean',
+    defaultName: 'Deep Ocean',
+    previewBg: '#04121c',
+    previewBorder: '#123347',
+    previewAccent: '#06b6d4',
+  },
+  {
     id: 'emerald',
     nameKey: 'theme_emerald',
     defaultName: 'Cyber Emerald',
@@ -52,6 +68,14 @@ export const THEMES: ThemeMeta[] = [
     previewAccent: '#a855f7',
   },
   {
+    id: 'sunset',
+    nameKey: 'theme_sunset',
+    defaultName: 'Amber Ember',
+    previewBg: '#140d0a',
+    previewBorder: '#3b2419',
+    previewAccent: '#f59e0b',
+  },
+  {
     id: 'light',
     nameKey: 'theme_light',
     defaultName: 'Clean Light',
@@ -60,14 +84,34 @@ export const THEMES: ThemeMeta[] = [
     previewAccent: '#4f46e5',
     isLight: true,
   },
+  {
+    id: 'sand',
+    nameKey: 'theme_sand',
+    defaultName: 'Warm Paper',
+    previewBg: '#f6f1e7',
+    previewBorder: '#ddd3c0',
+    previewAccent: '#b45309',
+    isLight: true,
+  },
 ];
 
+const THEME_ID_SET = new Set<string>(THEMES.map(t => t.id));
+
+export function isValidThemeId(value: unknown): value is ThemeId {
+  return typeof value === 'string' && THEME_ID_SET.has(value);
+}
+
+export function isLightTheme(themeId: ThemeId): boolean {
+  return Boolean(THEMES.find(t => t.id === themeId)?.isLight);
+}
+
 export function applyTheme(themeId: ThemeId): void {
+  const safeThemeId: ThemeId = isValidThemeId(themeId) ? themeId : 'midnight';
   const root = document.documentElement;
   const body = document.body;
 
-  root.setAttribute('data-theme', themeId);
-  body.setAttribute('data-theme', themeId);
+  root.setAttribute('data-theme', safeThemeId);
+  body.setAttribute('data-theme', safeThemeId);
 
   // Remove existing theme classes
   THEMES.forEach(t => {
@@ -75,10 +119,10 @@ export function applyTheme(themeId: ThemeId): void {
     body.classList.remove(`theme-${t.id}`);
   });
 
-  root.classList.add(`theme-${themeId}`);
-  body.classList.add(`theme-${themeId}`);
+  root.classList.add(`theme-${safeThemeId}`);
+  body.classList.add(`theme-${safeThemeId}`);
 
-  if (themeId === 'light') {
+  if (isLightTheme(safeThemeId)) {
     root.classList.remove('dark');
     body.classList.remove('dark');
     root.classList.add('light');
