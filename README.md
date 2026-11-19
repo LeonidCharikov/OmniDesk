@@ -69,82 +69,93 @@
 
 ---
 
-## 📸 Visual Showcase
+## 🎬 Visual Showcase
 
-<table>
-  <tr>
-    <td width="50%" align="center">
-      <a href="docs/videos/pdf-editor.webp">
-        <img src="docs/videos/pdf-editor.webp" alt="PDF Studio & Visual Editor" width="100%" />
-      </a>
-      <br />
-      <strong>📄 PDF Studio &amp; Visual Editor</strong><br />
-      <sub>Direct text editing, image embedding, whiteout, redaction, signatures, watermarks &amp; page management.</sub>
-    </td>
-    <td width="50%" align="center">
-      <a href="docs/videos/calendar.webp">
-        <img src="docs/videos/calendar.webp" alt="Calendar & Leave Planner" width="100%" />
-      </a>
-      <br />
-      <strong>📅 Calendar &amp; Leave Planner</strong><br />
-      <sub>Month, Week &amp; Day views with hourly slots, instant search, working-days calculator &amp; .ICS export.</sub>
-    </td>
-  </tr>
-  <tr>
-    <td width="50%" align="center">
-      <a href="docs/videos/currency-converter.webp">
-        <img src="docs/videos/currency-converter.webp" alt="Currency Converter & Crypto Tracker" width="100%" />
-      </a>
-      <br />
-      <strong>💱 Currency Converter &amp; Crypto Tracker</strong><br />
-      <sub>Offline-ready forex cross-rates across 19+ fiat currencies plus live cryptocurrency &amp; portfolio tracking.</sub>
-    </td>
-    <td width="50%" align="center">
-      <a href="docs/videos/color-picker.webp">
-        <img src="docs/videos/color-picker.webp" alt="Color Picker, Wheel & Charts Studio" width="100%" />
-      </a>
-      <br />
-      <strong>🎨 Color Picker, Wheel &amp; Charts Studio</strong><br />
-      <sub>Classic HSV picker, interactive color wheel, Tailwind/Material/Web-Safe charts, 7 harmony schemes &amp; live RGB ↔ Hex converter.</sub>
-    </td>
-  </tr>
-  <tr>
-    <td width="50%" align="center">
-      <a href="docs/videos/function-grapher.webp">
-        <img src="docs/videos/function-grapher.webp" alt="2D Function Grapher & Plotter" width="100%" />
-      </a>
-      <br />
-      <strong>📈 2D Function Grapher &amp; Plotter</strong><br />
-      <sub>Multi-function expressions, drag pan &amp; zoom, point inspector with tangent slope &amp; PNG export.</sub>
-    </td>
-    <td width="50%" align="center">
-      <a href="docs/videos/periodic-table.webp">
-        <img src="docs/videos/periodic-table.webp" alt="Chemistry & 118-Element Periodic Table" width="100%" />
-      </a>
-      <br />
-      <strong>🧪 Chemistry &amp; 118-Element Periodic Table</strong><br />
-      <sub>Full IUPAC periodic table with state &amp; orbital filters, molar mass parser &amp; solution molarity solver.</sub>
-    </td>
-  </tr>
-  <tr>
-    <td width="50%" align="center">
-      <a href="docs/videos/themes.webp">
-        <img src="docs/videos/themes.webp" alt="10 Live Themes & Starter Presets" width="100%" />
-      </a>
-      <br />
-      <strong>🎨 10 Live Themes &amp; Starter Presets</strong><br />
-      <sub>Instant switching across 8 curated dark palettes and 2 daylight palettes (Clean Light &amp; Warm Paper) plus 1-click workspace presets.</sub>
-    </td>
-    <td width="50%" align="center">
-      <a href="docs/videos/settings.webp">
-        <img src="docs/videos/settings.webp" alt="Settings, Widgets, MCP Bridge & Backup" width="100%" />
-      </a>
-      <br />
-      <strong>⚙️ Settings, Widgets, MCP Bridge &amp; Backup</strong><br />
-      <sub>Configure default currency, sidebar mini-widgets, privacy audit, MCP Bridge, custom shortcuts, encrypted JSON backups, languages &amp; updates.</sub>
-    </td>
-  </tr>
-</table>
+### 📄 PDF Studio & Visual Editor
+Direct text editing, image embedding, whiteout, redaction, signatures, watermarks &amp; page management.
+
+<div align="center">
+  <a href="docs/videos/pdf-editor.webp">
+    <img src="docs/videos/pdf-editor.webp" alt="PDF Studio & Visual Editor" width="100%" />
+  </a>
+</div>
+
+<br />
+
+### 📅 Calendar & Leave Planner
+Month, Week &amp; Day views with hourly slots, instant search, working-days calculator &amp; `.ICS` export.
+
+<div align="center">
+  <a href="docs/videos/calendar.webp">
+    <img src="docs/videos/calendar.webp" alt="Calendar & Leave Planner" width="100%" />
+  </a>
+</div>
+
+<br />
+
+### 💱 Currency Converter & Crypto Tracker
+Offline-ready forex cross-rates across 19+ fiat currencies plus live cryptocurrency &amp; portfolio tracking.
+
+<div align="center">
+  <a href="docs/videos/currency-converter.webp">
+    <img src="docs/videos/currency-converter.webp" alt="Currency Converter & Crypto Tracker" width="100%" />
+  </a>
+</div>
+
+<br />
+
+### 🎨 Color Picker, Wheel & Charts Studio
+Classic HSV picker, interactive color wheel, Tailwind/Material/Web-Safe charts, 7 harmony schemes &amp; live RGB ↔ Hex converter.
+
+<div align="center">
+  <a href="docs/videos/color-picker.webp">
+    <img src="docs/videos/color-picker.webp" alt="Color Picker, Wheel & Charts Studio" width="100%" />
+  </a>
+</div>
+
+<br />
+
+### 📈 2D Function Grapher & Plotter
+Multi-function expressions, drag pan &amp; zoom, point inspector with tangent slope &amp; PNG export.
+
+<div align="center">
+  <a href="docs/videos/function-grapher.webp">
+    <img src="docs/videos/function-grapher.webp" alt="2D Function Grapher & Plotter" width="100%" />
+  </a>
+</div>
+
+<br />
+
+### 🧪 Chemistry & 118-Element Periodic Table
+Full IUPAC periodic table with state &amp; orbital filters, molar mass parser &amp; solution molarity solver.
+
+<div align="center">
+  <a href="docs/videos/periodic-table.webp">
+    <img src="docs/videos/periodic-table.webp" alt="Chemistry & 118-Element Periodic Table" width="100%" />
+  </a>
+</div>
+
+<br />
+
+### 🎨 10 Live Themes & Starter Presets
+Instant switching across 8 curated dark palettes and 2 daylight palettes (*Clean Light* &amp; *Warm Paper*) plus 1-click workspace presets.
+
+<div align="center">
+  <a href="docs/videos/themes.webp">
+    <img src="docs/videos/themes.webp" alt="10 Live Themes & Starter Presets" width="100%" />
+  </a>
+</div>
+
+<br />
+
+### ⚙️ Settings, Widgets, MCP Bridge & Backup
+Configure default currency, sidebar mini-widgets, privacy audit, MCP Bridge, custom shortcuts, encrypted JSON backups, languages &amp; updates.
+
+<div align="center">
+  <a href="docs/videos/settings.webp">
+    <img src="docs/videos/settings.webp" alt="Settings, Widgets, MCP Bridge & Backup" width="100%" />
+  </a>
+</div>
 
 ---
 
