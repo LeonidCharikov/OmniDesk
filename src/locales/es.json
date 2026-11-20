@@ -3570,5 +3570,6 @@
   "mcp_cap_snippets_title": "Code & Shell Snippet Vault",
   "mcp_cap_snippets_desc": "Search local code/command templates with {{variable}} rendering or save new snippets.",
   "mcp_cap_utilities_title": "Developer & Offline Utilities",
-  "mcp_cap_utilities_desc": "Run local SHA hashing, Base64/Hex/URL encoding, SVG optimization, safe math, mock datasets, and Lorem Ipsum."
+  "mcp_cap_utilities_desc": "Run local SHA hashing, Base64/Hex/URL encoding, SVG optimization, safe math, mock datasets, and Lorem Ipsum.",
+  "sidebar_brand_subtitle": "Multi-Tool"
 }

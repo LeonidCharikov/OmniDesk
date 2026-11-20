@@ -119,7 +119,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   TAURI
                 </span>
               </div>
-              <span className="text-xs text-slate-400 block -mt-0.5">Desktop Multi-Tool</span>
+              <span className="text-xs text-slate-400 block -mt-0.5">{t('sidebar_brand_subtitle', 'Multi-Tool')}</span>
             </div>
           )}
         </div>
