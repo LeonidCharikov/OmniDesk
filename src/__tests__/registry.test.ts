@@ -12,8 +12,9 @@ const VALID_CATEGORIES = new Set([
 ]);
 
 describe('TOOLS_REGISTRY', () => {
-  it('contains all 101 tools with unique IDs and valid categories', () => {
-    expect(TOOLS_REGISTRY.length).toBe(101);
+  it('contains all 100 tools with unique IDs and valid categories', () => {
+    expect(TOOLS_REGISTRY.length).toBe(100);
+    expect(TOOLS_REGISTRY.some(t => t.id === 'online-translator')).toBe(false);
 
     const ids = new Set<string>();
     for (const tool of TOOLS_REGISTRY) {

@@ -7,6 +7,7 @@ export const MCP_PROTOCOL_VERSION = '2024-11-05';
 export const CALENDAR_STORAGE_KEY = 'omnidesk_calendar_events';
 export const KANBAN_STORAGE_KEY = 'omnidesk-kanban-board-v2';
 export const NOTES_STORAGE_KEY = 'omnidesk-notes';
+export const SNIPPETS_STORAGE_KEY = 'omnidesk_snippet_vault_v1';
 
 export type McpConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
 
@@ -152,10 +153,22 @@ interface NativeSystemTelemetry {
   uptime_seconds: number;
 }
 
+interface SnippetRecord {
+  id: string;
+  title: string;
+  description: string;
+  language: 'bash' | 'sql' | 'docker' | 'git' | 'typescript' | 'regex' | 'other';
+  tags: string[];
+  code: string;
+  favorite: boolean;
+  updatedAt: number;
+}
+
 export interface OmniDeskMcpClientOptions {
   accessMode?: McpAccessMode;
   getAvailableTools?: () => McpCatalogToolSummary[];
   onOpenTool?: (toolId: string) => void;
+  isWorkspaceLocked?: () => boolean;
   clipboard?: McpClipboardAdapter;
   maxLogEntries?: number;
 }
@@ -164,8 +177,77 @@ const VALID_COLORS = new Set(['indigo', 'emerald', 'amber', 'rose', 'blue', 'pur
 const VALID_RECURRENCES = new Set(['none', 'daily', 'weekly']);
 const VALID_COLUMNS = new Set(['todo', 'doing', 'done']);
 const VALID_PRIORITIES = new Set(['low', 'med', 'high']);
+const VALID_SNIPPET_LANGUAGES = new Set(['bash', 'sql', 'docker', 'git', 'typescript', 'regex', 'other']);
+const VALID_HASH_ALGOS = new Set(['SHA-256', 'SHA-384', 'SHA-512', 'SHA-1']);
+const VALID_CONVERTER_CATEGORIES = new Set(['video', 'audio', 'images', 'documents', 'spreadsheets', 'archives']);
 const MAX_CLIPBOARD_CHARS = 100_000;
+const MAX_DATA_CONVERT_BYTES = 512 * 1024;
+const MAX_FILE_CONVERT_BYTES = 5 * 1024 * 1024;
+const MAX_TEXT_UTIL_CHARS = 500_000;
 const DEFAULT_MAX_LOG_ENTRIES = 200;
+
+function sanitizeFileName(raw: unknown): string {
+  const cleaned = sanitizeText(raw, 180)
+    .replace(/[\\/]+/g, '_')
+    .replace(/\.\.+/g, '.')
+    .replace(/[^a-zA-Z0-9._ -]/g, '_')
+    .trim();
+  return cleaned || 'input.txt';
+}
+
+function bytesToBase64(bytes: Uint8Array): string {
+  let binary = '';
+  const chunkSize = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+  }
+  return btoa(binary);
+}
+
+function base64ToBytes(b64: string): Uint8Array {
+  const normalized = b64.replace(/\s+/g, '');
+  const binary = atob(normalized);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes;
+}
+
+function utf8ToBase64(text: string): string {
+  return bytesToBase64(new TextEncoder().encode(text));
+}
+
+function base64ToUtf8(b64: string): string {
+  return new TextDecoder().decode(base64ToBytes(b64));
+}
+
+function xmlEscape(val: unknown): string {
+  return String(val ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
+function objectToXml(value: unknown, tagName = 'root', indent = ''): string {
+  const safeTag = tagName.replace(/[^a-zA-Z0-9_.-]/g, '_') || 'item';
+  if (value === null || value === undefined) {
+    return `${indent}<${safeTag} />`;
+  }
+  if (Array.isArray(value)) {
+    const children = value.map(item => objectToXml(item, 'item', `${indent}  `)).join('\n');
+    return `${indent}<${safeTag}>\n${children}\n${indent}</${safeTag}>`;
+  }
+  if (typeof value === 'object') {
+    const entries = Object.entries(value as Record<string, unknown>);
+    if (entries.length === 0) return `${indent}<${safeTag} />`;
+    const children = entries.map(([k, v]) => objectToXml(v, k, `${indent}  `)).join('\n');
+    return `${indent}<${safeTag}>\n${children}\n${indent}</${safeTag}>`;
+  }
+  return `${indent}<${safeTag}>${xmlEscape(value)}</${safeTag}>`;
+}
 
 function sanitizeText(value: unknown, maxLength: number): string {
   if (typeof value !== 'string') return '';
@@ -418,6 +500,197 @@ export const OMNIDESK_MCP_TOOLS: ReadonlyArray<McpToolDescriptor> = [
       required: ['text'],
     },
   },
+  {
+    name: 'convert_list_formats',
+    description: 'List supported file conversion categories, extensions, and target formats available in OmniDesk Multi-Format Converter.',
+    access: 'readonly',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        category: {
+          type: 'string',
+          description: 'Optional category filter.',
+          enum: ['video', 'audio', 'images', 'documents', 'spreadsheets', 'archives'],
+        },
+        inputExtension: {
+          type: 'string',
+          description: 'Optional input extension (e.g. "csv", "png", "md") to inspect valid output formats.',
+        },
+      },
+    },
+  },
+  {
+    name: 'convert_data',
+    description: 'Convert structured text data offline between JSON, YAML, CSV, TSV, Markdown tables, and XML.',
+    access: 'readonly',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        input: { type: 'string', description: 'Raw input text payload (max 512 KB).' },
+        fromFormat: {
+          type: 'string',
+          description: 'Source data format.',
+          enum: ['json', 'yaml', 'csv', 'tsv'],
+        },
+        toFormat: {
+          type: 'string',
+          description: 'Target data format.',
+          enum: ['json', 'yaml', 'csv', 'tsv', 'markdown', 'xml'],
+        },
+      },
+      required: ['input', 'fromFormat', 'toFormat'],
+    },
+  },
+  {
+    name: 'convert_file_base64',
+    description: 'Convert a Base64-encoded file (documents, spreadsheets, images, or archives, max 5 MB) using OmniDesk local Multi-Format Converter engine.',
+    access: 'readonly',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        fileName: { type: 'string', description: 'Original file name with extension (e.g. "report.md", "data.csv", "photo.png").' },
+        base64Content: { type: 'string', description: 'Base64-encoded file bytes.' },
+        targetFormat: { type: 'string', description: 'Target file extension without dot (e.g. "html", "json", "pdf", "webp", "zip").' },
+        category: {
+          type: 'string',
+          description: 'Optional category override (auto-detected from fileName if omitted).',
+          enum: ['video', 'audio', 'images', 'documents', 'spreadsheets', 'archives'],
+        },
+      },
+      required: ['fileName', 'base64Content', 'targetFormat'],
+    },
+  },
+  {
+    name: 'snippets_search',
+    description: 'Search saved code and shell snippets in OmniDesk Snippet Vault and optionally render {{variable}} templates.',
+    access: 'readonly',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: 'Optional search string matched against title, description, tags, and code.' },
+        language: {
+          type: 'string',
+          description: 'Optional language filter.',
+          enum: ['bash', 'sql', 'docker', 'git', 'typescript', 'regex', 'other'],
+        },
+        variablesJson: {
+          type: 'string',
+          description: 'Optional JSON object string of {{variable}} substitutions to render matching snippets.',
+        },
+      },
+    },
+  },
+  {
+    name: 'snippets_create',
+    description: 'Save a new reusable code or shell snippet to OmniDesk Snippet Vault.',
+    access: 'readwrite',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        title: { type: 'string', description: 'Snippet title.' },
+        code: { type: 'string', description: 'Code or command template (supports {{var}} placeholders).' },
+        language: {
+          type: 'string',
+          description: 'Snippet language.',
+          enum: ['bash', 'sql', 'docker', 'git', 'typescript', 'regex', 'other'],
+        },
+        description: { type: 'string', description: 'Optional short description.' },
+        tags: { type: 'array', description: 'Optional list of tag strings.' },
+      },
+      required: ['title', 'code'],
+    },
+  },
+  {
+    name: 'crypto_hash_text',
+    description: 'Compute a cryptographic digest (SHA-256, SHA-384, SHA-512, or SHA-1) of UTF-8 text locally.',
+    access: 'readonly',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        text: { type: 'string', description: 'UTF-8 input text to hash.' },
+        algorithm: {
+          type: 'string',
+          description: 'Hash algorithm (default: SHA-256).',
+          enum: ['SHA-256', 'SHA-384', 'SHA-512', 'SHA-1'],
+        },
+      },
+      required: ['text'],
+    },
+  },
+  {
+    name: 'encode_decode_text',
+    description: 'Encode or decode UTF-8 text using Base64, Base64URL, URL percent-encoding, Hex, or Binary.',
+    access: 'readonly',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        text: { type: 'string', description: 'Input text to transform.' },
+        mode: { type: 'string', description: 'Operation direction.', enum: ['encode', 'decode'] },
+        encoding: {
+          type: 'string',
+          description: 'Encoding format.',
+          enum: ['base64', 'base64url', 'url', 'hex', 'binary'],
+        },
+      },
+      required: ['text', 'mode', 'encoding'],
+    },
+  },
+  {
+    name: 'svg_optimize',
+    description: 'Minify SVG markup locally, inspect byte savings, and optionally convert to a typed React JSX component.',
+    access: 'readonly',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        svg: { type: 'string', description: 'Raw SVG markup.' },
+        precision: { type: 'integer', description: 'Decimal precision for numbers (0-5, default: 2).', minimum: 0, maximum: 5 },
+        asReactJsx: { type: 'boolean', description: 'When true, also return a typed React TSX component.' },
+        componentName: { type: 'string', description: 'Component name when asReactJsx=true (default: CustomIcon).' },
+      },
+      required: ['svg'],
+    },
+  },
+  {
+    name: 'math_evaluate',
+    description: 'Safely evaluate a mathematical expression (arithmetic, trig, logs, constants) using OmniDesk safe math parser.',
+    access: 'readonly',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        expression: { type: 'string', description: 'Math expression (e.g. "sqrt(144) + sin(pi / 2) * 10").' },
+        x: { type: 'number', description: 'Optional value for variable x.' },
+      },
+      required: ['expression'],
+    },
+  },
+  {
+    name: 'generate_mock_data',
+    description: 'Generate deterministic offline test datasets in JSON, CSV, or SQL INSERT format.',
+    access: 'readonly',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        rows: { type: 'integer', description: 'Number of rows to generate (1-200, default: 10).', minimum: 1, maximum: 200 },
+        format: { type: 'string', description: 'Output format (default: json).', enum: ['json', 'csv', 'sql'] },
+        tableName: { type: 'string', description: 'SQL table name when format=sql (default: records).' },
+        seed: { type: 'integer', description: 'Deterministic seed integer (default: 2026).' },
+      },
+    },
+  },
+  {
+    name: 'generate_lorem_ipsum',
+    description: 'Generate offline placeholder copy (Classic Latin, Tech, or Business) in Plain Text, HTML, or Markdown.',
+    access: 'readonly',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        style: { type: 'string', description: 'Vocabulary style.', enum: ['classic', 'tech', 'business'] },
+        unit: { type: 'string', description: 'Generation unit.', enum: ['paragraphs', 'sentences', 'words', 'list'] },
+        count: { type: 'integer', description: 'Number of units (1-50, default: 3).', minimum: 1, maximum: 50 },
+        format: { type: 'string', description: 'Output format.', enum: ['plain', 'html', 'markdown'] },
+      },
+    },
+  },
 ];
 
 export const OMNIDESK_MCP_RESOURCES: ReadonlyArray<McpResourceDescriptor> = [
@@ -431,6 +704,12 @@ export const OMNIDESK_MCP_RESOURCES: ReadonlyArray<McpResourceDescriptor> = [
     uri: 'omnidesk://tasks/summary',
     name: 'OmniDesk Tasks Summary',
     description: 'Combined snapshot of sidebar daily tasks and Kanban board cards.',
+    mimeType: 'application/json',
+  },
+  {
+    uri: 'omnidesk://snippets/list',
+    name: 'OmniDesk Snippet Vault',
+    description: 'JSON list of reusable code and shell snippets stored locally in Snippet Vault.',
     mimeType: 'application/json',
   },
   {
@@ -617,6 +896,7 @@ export class OmniDeskMcpClient {
   private accessMode: McpAccessMode;
   private readonly getAvailableToolsFn: () => McpCatalogToolSummary[];
   private readonly onOpenToolFn?: (toolId: string) => void;
+  private readonly isWorkspaceLockedFn: () => boolean;
   private readonly clipboard: McpClipboardAdapter;
   private readonly maxLogEntries: number;
   private statusListeners = new Set<(status: McpConnectionStatus, error?: string) => void>();
@@ -633,6 +913,7 @@ export class OmniDeskMcpClient {
     this.accessMode = options.accessMode ?? 'readonly';
     this.getAvailableToolsFn = options.getAvailableTools ?? (() => []);
     this.onOpenToolFn = options.onOpenTool;
+    this.isWorkspaceLockedFn = options.isWorkspaceLocked ?? (() => false);
     this.clipboard = options.clipboard ?? DEFAULT_CLIPBOARD_ADAPTER;
     this.maxLogEntries = Math.max(20, options.maxLogEntries ?? DEFAULT_MAX_LOG_ENTRIES);
   }
@@ -856,6 +1137,49 @@ export class OmniDeskMcpClient {
         isAvailable,
       },
       {
+        id: 'converter',
+        localToolId: 'multi-converter',
+        titleKey: 'mcp_cap_converter_title',
+        defaultTitle: 'Multi-Format File & Data Converter',
+        descKey: 'mcp_cap_converter_desc',
+        defaultDesc: 'List supported formats and convert JSON/YAML/CSV/TSV/Markdown/XML or Base64 files locally.',
+        exposedMcpTools: pickExposed('convert_list_formats', 'convert_data', 'convert_file_base64'),
+        canRead: true,
+        canWrite: false,
+        isAvailable,
+      },
+      {
+        id: 'snippets',
+        localToolId: 'snippet-vault',
+        titleKey: 'mcp_cap_snippets_title',
+        defaultTitle: 'Code & Shell Snippet Vault',
+        descKey: 'mcp_cap_snippets_desc',
+        defaultDesc: 'Search local code/command templates with {{variable}} rendering or save new snippets.',
+        exposedMcpTools: pickExposed('snippets_search', 'snippets_create'),
+        canRead: true,
+        canWrite,
+        isAvailable,
+      },
+      {
+        id: 'dev-utilities',
+        localToolId: 'hash-suite',
+        titleKey: 'mcp_cap_utilities_title',
+        defaultTitle: 'Developer & Offline Utilities',
+        descKey: 'mcp_cap_utilities_desc',
+        defaultDesc: 'Run local SHA hashing, Base64/Hex/URL encoding, SVG optimization, safe math, mock datasets, and Lorem Ipsum.',
+        exposedMcpTools: pickExposed(
+          'crypto_hash_text',
+          'encode_decode_text',
+          'svg_optimize',
+          'math_evaluate',
+          'generate_mock_data',
+          'generate_lorem_ipsum'
+        ),
+        canRead: true,
+        canWrite: false,
+        isAvailable,
+      },
+      {
         id: 'workspace-tools',
         titleKey: 'mcp_cap_catalog_title',
         defaultTitle: 'Local Tool Launcher & Catalog',
@@ -973,6 +1297,19 @@ export class OmniDeskMcpClient {
     }
 
     if (req.method === 'tools/call') {
+      if (this.isWorkspaceLockedFn()) {
+        return hasId
+          ? {
+              jsonrpc: '2.0',
+              id: req.id ?? null,
+              error: {
+                code: -32003,
+                message: 'Workspace is locked. Unlock OmniDesk PIN Lock Screen to run MCP tools.',
+              },
+            }
+          : null;
+      }
+
       const params = req.params || {};
       const toolName = typeof params.name === 'string' ? params.name : '';
       const args =
@@ -1015,6 +1352,19 @@ export class OmniDeskMcpClient {
     }
 
     if (req.method === 'resources/read') {
+      if (this.isWorkspaceLockedFn()) {
+        return hasId
+          ? {
+              jsonrpc: '2.0',
+              id: req.id ?? null,
+              error: {
+                code: -32003,
+                message: 'Workspace is locked. Unlock OmniDesk PIN Lock Screen to read MCP resources.',
+              },
+            }
+          : null;
+      }
+
       const uri = typeof req.params?.uri === 'string' ? req.params.uri : '';
       const content = await this.readResource(uri);
       if (!content) {
@@ -1046,6 +1396,27 @@ export class OmniDeskMcpClient {
       : null;
   }
 
+  private async readSnippetsStore(): Promise<SnippetRecord[]> {
+    try {
+      const { loadToolJson } = await import('./idbStorage');
+      const saved = await loadToolJson<SnippetRecord[]>(SNIPPETS_STORAGE_KEY);
+      if (Array.isArray(saved)) return saved;
+    } catch {
+      // Fall back to localStorage below
+    }
+    return readJsonStorage<SnippetRecord[]>(SNIPPETS_STORAGE_KEY, []);
+  }
+
+  private async writeSnippetsStore(snippets: SnippetRecord[]): Promise<void> {
+    writeJsonStorage(SNIPPETS_STORAGE_KEY, snippets, 'omnidesk-snippets-updated');
+    try {
+      const { saveToolJson } = await import('./idbStorage');
+      await saveToolJson(SNIPPETS_STORAGE_KEY, snippets);
+    } catch {
+      // localStorage mirror already written
+    }
+  }
+
   private async readResource(uri: string): Promise<unknown | null> {
     if (uri === 'omnidesk://calendar/events') {
       return readJsonStorage<CalendarEventRecord[]>(CALENDAR_STORAGE_KEY, []);
@@ -1057,6 +1428,9 @@ export class OmniDeskMcpClient {
         dailyTasks: cfg.widgets?.dailyTasks || [],
         kanbanTasks: kanban,
       };
+    }
+    if (uri === 'omnidesk://snippets/list') {
+      return await this.readSnippetsStore();
     }
     if (uri === 'omnidesk://system/telemetry') {
       return await this.collectSystemInfo();
@@ -1365,6 +1739,445 @@ export class OmniDeskMcpClient {
           this.appendLog('error', msg, { tool: 'clipboard_write' });
           return this.errResult(msg);
         }
+      }
+
+      case 'convert_list_formats': {
+        const catalog = await import('../tools/files/converterCatalog');
+        const category = typeof args.category === 'string' ? args.category.trim().toLowerCase() : '';
+        const inputExtension = typeof args.inputExtension === 'string'
+          ? args.inputExtension.trim().toLowerCase().replace(/^\./, '')
+          : '';
+
+        if (inputExtension) {
+          const detectedCat =
+            category && VALID_CONVERTER_CATEGORIES.has(category)
+              ? (category as 'video' | 'audio' | 'images' | 'documents' | 'spreadsheets' | 'archives')
+              : catalog.detectCategoryForFile(`file.${inputExtension}`);
+          const targets = catalog.getTargetFormatsForInput(inputExtension, detectedCat);
+          return this.okResult({
+            inputExtension,
+            category: detectedCat,
+            targetFormats: targets.map(item => ({ ext: item.ext, label: item.label })),
+          });
+        }
+
+        const categories = catalog.FORMAT_CATALOG.filter(c => (!category ? true : c.id === category)).map(cat => ({
+          id: cat.id,
+          label: cat.defaultLabel,
+          formats: cat.formats.map(f => ({ ext: f.ext, label: f.label })),
+        }));
+        return this.okResult({
+          totalSupportedFormats: catalog.TOTAL_SUPPORTED_FORMATS,
+          categories,
+        });
+      }
+
+      case 'convert_data': {
+        if (typeof args.input !== 'string' || !args.input.trim()) {
+          return this.errResult('input text is required.');
+        }
+        if (new TextEncoder().encode(args.input).length > MAX_DATA_CONVERT_BYTES) {
+          return this.errResult(`Input exceeds maximum size of ${MAX_DATA_CONVERT_BYTES} bytes.`);
+        }
+        const fromFormat = typeof args.fromFormat === 'string' ? args.fromFormat.toLowerCase() : '';
+        const toFormat = typeof args.toFormat === 'string' ? args.toFormat.toLowerCase() : '';
+        if (!['json', 'yaml', 'csv', 'tsv'].includes(fromFormat)) {
+          return this.errResult('fromFormat must be one of: json, yaml, csv, tsv.');
+        }
+        if (!['json', 'yaml', 'csv', 'tsv', 'markdown', 'xml'].includes(toFormat)) {
+          return this.errResult('toFormat must be one of: json, yaml, csv, tsv, markdown, xml.');
+        }
+
+        try {
+          const yamlMod = await import('js-yaml');
+          const logic = await import('../utils/newTools.logic');
+          let parsed: unknown;
+
+          if (fromFormat === 'json') {
+            parsed = JSON.parse(args.input);
+          } else if (fromFormat === 'yaml') {
+            parsed = yamlMod.load(args.input);
+          } else {
+            const delim = fromFormat === 'tsv' ? '\t' : ',';
+            const grid = logic.parseCsvGrid(args.input, delim);
+            parsed = logic.gridToJsonObjects(grid.headers, grid.rows);
+          }
+
+          let output = '';
+          if (toFormat === 'json') {
+            output = JSON.stringify(parsed, null, 2);
+          } else if (toFormat === 'yaml') {
+            output = yamlMod.dump(parsed, { indent: 2, lineWidth: 120 });
+          } else if (toFormat === 'xml') {
+            output = `<?xml version="1.0" encoding="UTF-8"?>\n${objectToXml(parsed, 'root')}`;
+          } else {
+            const rowsArr: Record<string, unknown>[] = Array.isArray(parsed)
+              ? parsed.map(item =>
+                  item && typeof item === 'object' && !Array.isArray(item)
+                    ? (item as Record<string, unknown>)
+                    : { value: item }
+                )
+              : parsed && typeof parsed === 'object'
+                ? [parsed as Record<string, unknown>]
+                : [{ value: parsed }];
+
+            const headerSet = new Set<string>();
+            for (const row of rowsArr) {
+              Object.keys(row).forEach(k => headerSet.add(k));
+            }
+            const headers = Array.from(headerSet);
+            const matrix = rowsArr.map(row =>
+              headers.map(h => {
+                const v = row[h];
+                return v === null || v === undefined ? '' : typeof v === 'object' ? JSON.stringify(v) : String(v);
+              })
+            );
+            if (toFormat === 'markdown') {
+              output = logic.gridToMarkdownTable(headers, matrix);
+            } else {
+              output = logic.serializeCsvGrid(headers, matrix, toFormat === 'tsv' ? '\t' : ',');
+            }
+          }
+
+          return this.okResult({
+            fromFormat,
+            toFormat,
+            outputBytes: new TextEncoder().encode(output).length,
+            output,
+          });
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : 'Failed to convert structured data.';
+          return this.errResult(msg);
+        }
+      }
+
+      case 'convert_file_base64': {
+        const fileName = sanitizeFileName(args.fileName);
+        const base64Content = typeof args.base64Content === 'string' ? args.base64Content.trim() : '';
+        const targetFormat = typeof args.targetFormat === 'string'
+          ? args.targetFormat.trim().toLowerCase().replace(/^\./, '')
+          : '';
+
+        if (!base64Content) return this.errResult('base64Content is required.');
+        if (!targetFormat || !/^[a-z0-9]{1,10}$/.test(targetFormat)) {
+          return this.errResult('targetFormat must be a valid alphanumeric file extension (e.g. "html", "json", "pdf").');
+        }
+
+        let inputBytes: Uint8Array;
+        try {
+          inputBytes = base64ToBytes(base64Content);
+        } catch {
+          return this.errResult('Invalid base64Content payload.');
+        }
+        if (inputBytes.byteLength > MAX_FILE_CONVERT_BYTES) {
+          return this.errResult(`Decoded file exceeds maximum limit of ${MAX_FILE_CONVERT_BYTES} bytes (5 MB).`);
+        }
+
+        try {
+          const catalog = await import('../tools/files/converterCatalog');
+          const engine = await import('../tools/files/converterEngine');
+          const rawCategory = typeof args.category === 'string' ? args.category.trim().toLowerCase() : '';
+          const category =
+            rawCategory && VALID_CONVERTER_CATEGORIES.has(rawCategory)
+              ? (rawCategory as 'video' | 'audio' | 'images' | 'documents' | 'spreadsheets' | 'archives')
+              : catalog.detectCategoryForFile(fileName);
+
+          const inputBuffer = inputBytes.buffer.slice(
+            inputBytes.byteOffset,
+            inputBytes.byteOffset + inputBytes.byteLength
+          ) as ArrayBuffer;
+          const file = new File([inputBuffer], fileName);
+          const result = await engine.convertFile(file, category, targetFormat);
+          const outBytes = new Uint8Array(await result.blob.arrayBuffer());
+          const mime = result.blob.type || 'application/octet-stream';
+          const isText =
+            mime.startsWith('text/') ||
+            mime.includes('json') ||
+            mime.includes('xml') ||
+            mime.includes('yaml') ||
+            mime.includes('svg');
+
+          return this.okResult({
+            fileName: result.fileName,
+            category,
+            mime,
+            originalSize: result.originalSize,
+            newSize: result.newSize,
+            durationMs: result.durationMs,
+            base64Output: bytesToBase64(outBytes),
+            textPreview: isText && outBytes.byteLength <= 16_000 ? new TextDecoder().decode(outBytes) : undefined,
+          });
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : 'File conversion failed.';
+          return this.errResult(msg);
+        }
+      }
+
+      case 'snippets_search': {
+        const query = sanitizeText(args.query, 160).toLowerCase();
+        const lang = typeof args.language === 'string' ? args.language.trim().toLowerCase() : '';
+        let variables: Record<string, string> | null = null;
+        if (typeof args.variablesJson === 'string' && args.variablesJson.trim()) {
+          try {
+            const parsedVars: unknown = JSON.parse(args.variablesJson);
+            if (parsedVars && typeof parsedVars === 'object' && !Array.isArray(parsedVars)) {
+              variables = Object.fromEntries(
+                Object.entries(parsedVars as Record<string, unknown>).map(([k, v]) => [k, String(v ?? '')])
+              );
+            }
+          } catch {
+            return this.errResult('variablesJson must be a valid JSON object string.');
+          }
+        }
+
+        const snippets = await this.readSnippetsStore();
+        const filtered = snippets.filter(item => {
+          if (lang && item.language !== lang) return false;
+          if (!query) return true;
+          return (
+            item.title.toLowerCase().includes(query) ||
+            item.description.toLowerCase().includes(query) ||
+            item.code.toLowerCase().includes(query) ||
+            item.tags.some(tag => tag.toLowerCase().includes(query))
+          );
+        });
+
+        const logic = await import('../utils/newTools.logic');
+        const enriched = filtered.map(item => ({
+          ...item,
+          variables: logic.extractSnippetVariables(item.code),
+          renderedCode: variables ? logic.renderSnippetTemplate(item.code, variables) : undefined,
+        }));
+
+        return this.okResult({ count: enriched.length, snippets: enriched });
+      }
+
+      case 'snippets_create': {
+        const title = sanitizeText(args.title, 180);
+        const code = typeof args.code === 'string' ? sanitizeClipboardText(args.code, 20_000).trim() : '';
+        if (!title) return this.errResult('Snippet title is required.');
+        if (!code) return this.errResult('Snippet code is required.');
+
+        const rawLang = typeof args.language === 'string' ? args.language.trim().toLowerCase() : 'other';
+        const language = (
+          VALID_SNIPPET_LANGUAGES.has(rawLang) ? rawLang : 'other'
+        ) as SnippetRecord['language'];
+        const description = sanitizeText(args.description, 400);
+        const tags = Array.isArray(args.tags)
+          ? args.tags
+              .map(tag => sanitizeText(tag, 40))
+              .filter(Boolean)
+              .slice(0, 12)
+          : [];
+
+        const existing = await this.readSnippetsStore();
+        const created: SnippetRecord = {
+          id: `mcp-snip-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          title,
+          description,
+          language,
+          tags,
+          code,
+          favorite: false,
+          updatedAt: Date.now(),
+        };
+        await this.writeSnippetsStore([created, ...existing]);
+        return this.okResult({ created });
+      }
+
+      case 'crypto_hash_text': {
+        if (typeof args.text !== 'string') return this.errResult('text must be a string.');
+        if (args.text.length > MAX_TEXT_UTIL_CHARS) {
+          return this.errResult(`text exceeds maximum length of ${MAX_TEXT_UTIL_CHARS} characters.`);
+        }
+        const algorithm =
+          typeof args.algorithm === 'string' && VALID_HASH_ALGOS.has(args.algorithm.toUpperCase())
+            ? args.algorithm.toUpperCase()
+            : 'SHA-256';
+        try {
+          const data = new TextEncoder().encode(args.text);
+          const digest = await crypto.subtle.digest(algorithm, data);
+          const hex = Array.from(new Uint8Array(digest))
+            .map(b => b.toString(16).padStart(2, '0'))
+            .join('');
+          return this.okResult({ algorithm, byteLength: data.byteLength, hex });
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : 'Failed to compute hash digest.';
+          return this.errResult(msg);
+        }
+      }
+
+      case 'encode_decode_text': {
+        if (typeof args.text !== 'string') return this.errResult('text must be a string.');
+        if (args.text.length > MAX_TEXT_UTIL_CHARS) {
+          return this.errResult(`text exceeds maximum length of ${MAX_TEXT_UTIL_CHARS} characters.`);
+        }
+        const mode = args.mode === 'decode' ? 'decode' : args.mode === 'encode' ? 'encode' : null;
+        const encoding = typeof args.encoding === 'string' ? args.encoding.toLowerCase() : '';
+        if (!mode) return this.errResult('mode must be "encode" or "decode".');
+        if (!['base64', 'base64url', 'url', 'hex', 'binary'].includes(encoding)) {
+          return this.errResult('encoding must be one of: base64, base64url, url, hex, binary.');
+        }
+
+        try {
+          let result = '';
+          if (encoding === 'base64') {
+            result = mode === 'encode' ? utf8ToBase64(args.text) : base64ToUtf8(args.text);
+          } else if (encoding === 'base64url') {
+            if (mode === 'encode') {
+              result = utf8ToBase64(args.text).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+            } else {
+              const padLen = (4 - (args.text.length % 4)) % 4;
+              const std = args.text.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat(padLen);
+              result = base64ToUtf8(std);
+            }
+          } else if (encoding === 'url') {
+            result = mode === 'encode' ? encodeURIComponent(args.text) : decodeURIComponent(args.text);
+          } else if (encoding === 'hex') {
+            if (mode === 'encode') {
+              result = Array.from(new TextEncoder().encode(args.text))
+                .map(b => b.toString(16).padStart(2, '0'))
+                .join('');
+            } else {
+              const clean = args.text.replace(/\s+/g, '');
+              if (clean.length % 2 !== 0 || !/^[0-9a-fA-F]*$/.test(clean)) {
+                return this.errResult('Invalid hex input string.');
+              }
+              const bytes = new Uint8Array(clean.length / 2);
+              for (let i = 0; i < clean.length; i += 2) {
+                bytes[i / 2] = parseInt(clean.slice(i, i + 2), 16);
+              }
+              result = new TextDecoder().decode(bytes);
+            }
+          } else {
+            if (mode === 'encode') {
+              result = Array.from(new TextEncoder().encode(args.text))
+                .map(b => b.toString(2).padStart(8, '0'))
+                .join(' ');
+            } else {
+              const tokens = args.text.trim().split(/\s+/).filter(Boolean);
+              if (tokens.some(tok => !/^[01]{1,8}$/.test(tok))) {
+                return this.errResult('Invalid binary input string (expected space-separated 8-bit groups).');
+              }
+              const bytes = new Uint8Array(tokens.map(tok => parseInt(tok, 2)));
+              result = new TextDecoder().decode(bytes);
+            }
+          }
+          return this.okResult({ mode, encoding, result });
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : 'Failed to encode/decode text.';
+          return this.errResult(msg);
+        }
+      }
+
+      case 'svg_optimize': {
+        if (typeof args.svg !== 'string' || !args.svg.trim()) {
+          return this.errResult('svg markup string is required.');
+        }
+        if (args.svg.length > MAX_TEXT_UTIL_CHARS) {
+          return this.errResult(`svg exceeds maximum length of ${MAX_TEXT_UTIL_CHARS} characters.`);
+        }
+        const precision =
+          typeof args.precision === 'number' && Number.isFinite(args.precision)
+            ? Math.max(0, Math.min(5, Math.round(args.precision)))
+            : 2;
+        const asReactJsx = Boolean(args.asReactJsx);
+        const componentName = sanitizeText(args.componentName, 60) || 'CustomIcon';
+
+        const logic = await import('../utils/newTools.logic');
+        const { output, stats } = logic.optimizeSvgMarkup(args.svg, {
+          precision,
+          removeComments: true,
+          removeMetadata: true,
+          removeDimensions: false,
+        });
+        return this.okResult({
+          optimizedSvg: output,
+          stats,
+          reactJsx: asReactJsx ? logic.svgToReactJsx(output, componentName) : undefined,
+        });
+      }
+
+      case 'math_evaluate': {
+        const expression = sanitizeText(args.expression, 500);
+        if (!expression) return this.errResult('expression is required.');
+        const scope = typeof args.x === 'number' && Number.isFinite(args.x) ? { x: args.x } : {};
+        try {
+          const { evaluateSafeMathExpression } = await import('../utils/safeMathParser');
+          const value = evaluateSafeMathExpression(expression, scope);
+          if (!Number.isFinite(value)) {
+            return this.errResult('Expression evaluated to a non-finite value (NaN or Infinity).');
+          }
+          return this.okResult({ expression, value });
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : 'Invalid math expression.';
+          return this.errResult(msg);
+        }
+      }
+
+      case 'generate_mock_data': {
+        const rows =
+          typeof args.rows === 'number' && Number.isFinite(args.rows)
+            ? Math.max(1, Math.min(200, Math.round(args.rows)))
+            : 10;
+        const format =
+          args.format === 'csv' || args.format === 'sql' || args.format === 'json' ? args.format : 'json';
+        const seed =
+          typeof args.seed === 'number' && Number.isFinite(args.seed) ? Math.round(args.seed) : 2026;
+        const tableName = sanitizeText(args.tableName, 64) || 'records';
+
+        const logic = await import('../utils/newTools.logic');
+        const defaultFields = [
+          { id: '1', name: 'id', kind: 'uuid' as const },
+          { id: '2', name: 'full_name', kind: 'fullName' as const },
+          { id: '3', name: 'email', kind: 'email' as const },
+          { id: '4', name: 'company', kind: 'company' as const },
+          { id: '5', name: 'city', kind: 'city' as const },
+          { id: '6', name: 'amount', kind: 'price' as const },
+          { id: '7', name: 'status', kind: 'status' as const },
+        ];
+        const dataset = logic.generateMockDataset(defaultFields, rows, seed);
+        let output = '';
+        if (format === 'json') {
+          output = JSON.stringify(dataset, null, 2);
+        } else if (format === 'csv') {
+          const headers = defaultFields.map(f => f.name);
+          const matrix = dataset.map(rec => headers.map(h => String(rec[h] ?? '')));
+          output = logic.serializeCsvGrid(headers, matrix, ',');
+        } else {
+          output = logic.formatMockAsSqlInserts(tableName, dataset);
+        }
+        return this.okResult({ rows: dataset.length, format, seed, output });
+      }
+
+      case 'generate_lorem_ipsum': {
+        const style =
+          args.style === 'tech' || args.style === 'business' || args.style === 'classic'
+            ? args.style
+            : 'classic';
+        const unit =
+          args.unit === 'sentences' || args.unit === 'words' || args.unit === 'list' || args.unit === 'paragraphs'
+            ? args.unit
+            : 'paragraphs';
+        const format =
+          args.format === 'html' || args.format === 'markdown' || args.format === 'plain'
+            ? args.format
+            : 'plain';
+        const count =
+          typeof args.count === 'number' && Number.isFinite(args.count)
+            ? Math.max(1, Math.min(50, Math.round(args.count)))
+            : 3;
+
+        const logic = await import('../utils/newTools.logic');
+        const text = logic.generateLoremIpsum({
+          style,
+          unit,
+          count,
+          startWithClassic: style === 'classic',
+          format,
+          seed: 1337,
+        });
+        return this.okResult({ style, unit, count, format, text });
       }
 
       default:

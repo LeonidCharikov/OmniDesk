@@ -3564,5 +3564,11 @@
   "tool_resume_builder_title": "Offline Resume / CV Builder",
   "tool_resume_builder_desc": "Build ATS-friendly resumes privately with live templates, print-to-PDF, standalone HTML, and JSON backups.",
   "tool_lorem_ipsum_title": "Lorem Ipsum & Placeholder Text Generator",
-  "tool_lorem_ipsum_desc": "Generate Classic Latin, Tech, or Business placeholder paragraphs, sentences, words, or lists in plain text, HTML, or Markdown."
+  "tool_lorem_ipsum_desc": "Generate Classic Latin, Tech, or Business placeholder paragraphs, sentences, words, or lists in plain text, HTML, or Markdown.",
+  "mcp_cap_converter_title": "Multi-Format File & Data Converter",
+  "mcp_cap_converter_desc": "List supported formats and convert JSON/YAML/CSV/TSV/Markdown/XML or Base64 files locally.",
+  "mcp_cap_snippets_title": "Code & Shell Snippet Vault",
+  "mcp_cap_snippets_desc": "Search local code/command templates with {{variable}} rendering or save new snippets.",
+  "mcp_cap_utilities_title": "Developer & Offline Utilities",
+  "mcp_cap_utilities_desc": "Run local SHA hashing, Base64/Hex/URL encoding, SVG optimization, safe math, mock datasets, and Lorem Ipsum."
 }

@@ -29,7 +29,6 @@ const PasswordGeneratorTool = lazyTool(() => import('./utilities/PasswordGenerat
 const QrCodeGeneratorTool = lazyTool(() => import('./utilities/QrCodeGeneratorTool'), 'QrCodeGeneratorTool');
 const PomodoroTimerTool = lazyTool(() => import('./utilities/PomodoroTimerTool'), 'PomodoroTimerTool');
 const WorldTimezonesTool = lazyTool(() => import('./utilities/WorldTimezonesTool'), 'WorldTimezonesTool');
-const OnlineTranslatorTool = lazyTool(() => import('./utilities/OnlineTranslatorTool'), 'OnlineTranslatorTool');
 const ColorPaletteWcagTool = lazyTool(() => import('./utilities/ColorPaletteWcagTool'), 'ColorPaletteWcagTool');
 const SystemMonitorTool = lazyTool(() => import('./utilities/SystemMonitorTool'), 'SystemMonitorTool');
 const WcagContrastValidatorTool = lazyTool(() => import('./utilities/WcagContrastValidatorTool'), 'WcagContrastValidatorTool');
@@ -479,17 +478,6 @@ export const TOOLS_REGISTRY: ToolDefinition[] = [
     requiresOnline: false,
     component: ColorPaletteWcagTool,
     tags: ['barvy', 'wcag', 'kontrast', 'paleta', 'design', 'hex', 'rgb'],
-  },
-  {
-    id: 'online-translator',
-    title: 'Hybridní Překladač',
-    shortDesc: 'Ukázka online modulu s automatickou detekcí síťového připojení.',
-    category: 'utilities',
-    icon: 'Globe',
-    requiresOnline: true,
-    isBasic: true,
-    component: OnlineTranslatorTool as unknown as React.ComponentType,
-    tags: ['preklad', 'jazyky', 'online', 'slovnik'],
   },
   {
     id: 'pdf-toolkit',

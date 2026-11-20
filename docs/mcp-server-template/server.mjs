@@ -75,6 +75,25 @@ const LOCAL_FS_TOOLS = WORKSPACE_ROOT
           required: ['relativePath'],
         },
       },
+      {
+        name: 'workspace_convert_file',
+        description: 'Convert a file inside OMNIDESK_WORKSPACE_DIR using OmniDesk Multi-Format Converter and optionally write the converted output back into the workspace.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            inputRelativePath: { type: 'string', description: 'Input file path relative to workspace root (max 5 MB).' },
+            targetFormat: { type: 'string', description: 'Target extension without dot (e.g. "html", "json", "csv", "pdf", "webp", "zip").' },
+            outputRelativePath: { type: 'string', description: 'Optional output file path relative to workspace root. Defaults next to input file.' },
+            category: {
+              type: 'string',
+              description: 'Optional converter category override.',
+              enum: ['video', 'audio', 'images', 'documents', 'spreadsheets', 'archives'],
+            },
+            saveOutput: { type: 'boolean', description: 'When true (default), writes the converted file inside OMNIDESK_WORKSPACE_DIR.' },
+          },
+          required: ['inputRelativePath', 'targetFormat'],
+        },
+      },
     ]
   : [];
 
@@ -138,6 +157,91 @@ async function runLocalTool(name, args) {
     const content = await fs.readFile(filePath, 'utf8');
     return {
       content: [{ type: 'text', text: content }],
+    };
+  }
+
+  if (name === 'workspace_convert_file') {
+    const inputPath = resolveSafeWorkspacePath(args?.inputRelativePath);
+    const targetFormat = String(args?.targetFormat || '')
+      .trim()
+      .toLowerCase()
+      .replace(/^\./, '');
+    if (!targetFormat || !/^[a-z0-9]{1,10}$/.test(targetFormat)) {
+      throw new Error('targetFormat must be a valid alphanumeric extension (e.g. "html", "json", "pdf").');
+    }
+
+    const stat = await fs.stat(inputPath);
+    if (!stat.isFile()) {
+      throw new Error('inputRelativePath is not a regular file.');
+    }
+    const maxBytes = 5 * 1024 * 1024;
+    if (stat.size > maxBytes) {
+      throw new Error('File exceeds 5 MB conversion limit.');
+    }
+
+    const rawBytes = await fs.readFile(inputPath);
+    const bridgeRes = await forwardToDesktopBridge(
+      'tools/call',
+      {
+        name: 'convert_file_base64',
+        arguments: {
+          fileName: path.basename(inputPath),
+          base64Content: rawBytes.toString('base64'),
+          targetFormat,
+          category: typeof args?.category === 'string' ? args.category : undefined,
+        },
+      },
+      25000
+    );
+
+    if (bridgeRes.error) {
+      throw new Error(bridgeRes.error.message || 'OmniDesk bridge conversion error.');
+    }
+    if (bridgeRes.result?.isError) {
+      const errText = bridgeRes.result?.content?.[0]?.text || 'Conversion failed.';
+      throw new Error(errText);
+    }
+
+    const payloadText = bridgeRes.result?.content?.[0]?.text;
+    const parsed = JSON.parse(payloadText);
+    const outBuffer = Buffer.from(parsed.base64Output || '', 'base64');
+    if (outBuffer.byteLength > 20 * 1024 * 1024) {
+      throw new Error('Converted output exceeds maximum allowed size (20 MB).');
+    }
+
+    let savedRelativePath = null;
+    if (args?.saveOutput !== false) {
+      const defaultOutRel = path.join(
+        path.dirname(String(args.inputRelativePath)),
+        parsed.fileName || `${path.parse(inputPath).name}.${targetFormat}`
+      );
+      const outputPath = resolveSafeWorkspacePath(args?.outputRelativePath || defaultOutRel);
+      await fs.mkdir(path.dirname(outputPath), { recursive: true });
+      await fs.writeFile(outputPath, outBuffer);
+      savedRelativePath = path.relative(WORKSPACE_ROOT, outputPath);
+    }
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(
+            {
+              inputRelativePath: path.relative(WORKSPACE_ROOT, inputPath),
+              outputRelativePath: savedRelativePath,
+              fileName: parsed.fileName,
+              category: parsed.category,
+              mime: parsed.mime,
+              originalSize: parsed.originalSize,
+              newSize: parsed.newSize,
+              durationMs: parsed.durationMs,
+              textPreview: parsed.textPreview,
+            },
+            null,
+            2
+          ),
+        },
+      ],
     };
   }
 
@@ -309,7 +413,8 @@ async function handleStdioRequest(req) {
         return;
       }
 
-      const bridgeRes = await forwardToDesktopBridge('tools/call', { name, arguments: args });
+      const timeoutMs = name === 'convert_file_base64' ? 25000 : 8000;
+      const bridgeRes = await forwardToDesktopBridge('tools/call', { name, arguments: args }, timeoutMs);
       if (hasId) {
         if (bridgeRes.error) {
           writeStdio({ jsonrpc: '2.0', id: req.id, error: bridgeRes.error });

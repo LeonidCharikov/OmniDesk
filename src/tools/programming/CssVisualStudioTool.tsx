@@ -137,7 +137,11 @@ export const CssVisualStudioTool: React.FC = () => {
       </div>
 
       <div className="p-4 rounded-xl bg-slate-900/50 border border-slate-800 space-y-5">
-        <div className="flex flex-wrap gap-1.5 bg-slate-950 p-1 rounded-lg border border-slate-800 w-fit">
+        <div
+          role="tablist"
+          aria-label={t('tool_css_studio_title', 'CSS Visual Generator Studio')}
+          className="flex flex-wrap gap-1.5 bg-slate-950 p-1 rounded-lg border border-slate-800 w-fit"
+        >
           {([
             ['shadow', t('css_tab_shadow', 'Box Shadow')],
             ['glass', t('css_tab_glass', 'Glassmorphism')],
@@ -148,9 +152,11 @@ export const CssVisualStudioTool: React.FC = () => {
             <button
               key={id}
               type="button"
+              role="tab"
+              aria-selected={tab === id}
               onClick={() => setTab(id)}
               className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                tab === id ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
+                tab === id ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'
               }`}
             >
               {label}
@@ -187,8 +193,8 @@ export const CssVisualStudioTool: React.FC = () => {
             {tab === 'gradient' && (
               <>
                 <div className="flex gap-2">
-                  <button type="button" onClick={() => setGradType('linear')} className={`px-3 py-1 rounded-lg ${gradType === 'linear' ? 'bg-indigo-600 text-white' : 'bg-slate-800'}`}>Linear</button>
-                  <button type="button" onClick={() => setGradType('radial')} className={`px-3 py-1 rounded-lg ${gradType === 'radial' ? 'bg-indigo-600 text-white' : 'bg-slate-800'}`}>Radial</button>
+                  <button type="button" aria-pressed={gradType === 'linear'} onClick={() => setGradType('linear')} className={`px-3 py-1 rounded-lg ${gradType === 'linear' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-200'}`}>Linear</button>
+                  <button type="button" aria-pressed={gradType === 'radial'} onClick={() => setGradType('radial')} className={`px-3 py-1 rounded-lg ${gradType === 'radial' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-200'}`}>Radial</button>
                 </div>
                 {gradType === 'linear' && (
                   <label className="block">Angle ({gradAngle}°)<input type="range" min={0} max={360} value={gradAngle} onChange={e => setGradAngle(Number(e.target.value))} className="w-full mt-1" /></label>
@@ -197,7 +203,7 @@ export const CssVisualStudioTool: React.FC = () => {
                   <label className="inline-flex items-center gap-2">Stop 1 <input type="color" value={gradC1} onChange={e => setGradC1(e.target.value)} /></label>
                   <label className="inline-flex items-center gap-2">Stop 2 <input type="color" value={gradC2} onChange={e => setGradC2(e.target.value)} /></label>
                   <label className="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={useThirdStop} onChange={e => setUseThirdStop(e.target.checked)} /> 3rd Stop</label>
-                  {useThirdStop && <input type="color" value={gradC3} onChange={e => setGradC3(e.target.value)} />}
+                  {useThirdStop && <input type="color" aria-label="Stop 3 Color" value={gradC3} onChange={e => setGradC3(e.target.value)} />}
                 </div>
               </>
             )}
@@ -205,23 +211,23 @@ export const CssVisualStudioTool: React.FC = () => {
             {tab === 'layout' && (
               <>
                 <div className="flex gap-2">
-                  <button type="button" onClick={() => setLayoutKind('flex')} className={`px-3 py-1 rounded-lg ${layoutKind === 'flex' ? 'bg-indigo-600 text-white' : 'bg-slate-800'}`}>Flexbox</button>
-                  <button type="button" onClick={() => setLayoutKind('grid')} className={`px-3 py-1 rounded-lg ${layoutKind === 'grid' ? 'bg-indigo-600 text-white' : 'bg-slate-800'}`}>CSS Grid</button>
+                  <button type="button" aria-pressed={layoutKind === 'flex'} onClick={() => setLayoutKind('flex')} className={`px-3 py-1 rounded-lg ${layoutKind === 'flex' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-200'}`}>Flexbox</button>
+                  <button type="button" aria-pressed={layoutKind === 'grid'} onClick={() => setLayoutKind('grid')} className={`px-3 py-1 rounded-lg ${layoutKind === 'grid' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-200'}`}>CSS Grid</button>
                 </div>
                 {layoutKind === 'flex' ? (
                   <div className="grid grid-cols-3 gap-2">
-                    <select value={flexDir} onChange={e => setFlexDir(e.target.value as 'row' | 'column')} className="p-2 rounded bg-slate-950 border border-slate-800">
+                    <select aria-label="Flex direction" value={flexDir} onChange={e => setFlexDir(e.target.value as 'row' | 'column')} className="p-2 rounded bg-slate-950 border border-slate-800 text-slate-200">
                       <option value="row">row</option>
                       <option value="column">column</option>
                     </select>
-                    <select value={justify} onChange={e => setJustify(e.target.value)} className="p-2 rounded bg-slate-950 border border-slate-800">
+                    <select aria-label="Justify content" value={justify} onChange={e => setJustify(e.target.value)} className="p-2 rounded bg-slate-950 border border-slate-800 text-slate-200">
                       <option value="flex-start">start</option>
                       <option value="center">center</option>
                       <option value="flex-end">end</option>
                       <option value="space-between">between</option>
                       <option value="space-around">around</option>
                     </select>
-                    <select value={align} onChange={e => setAlign(e.target.value)} className="p-2 rounded bg-slate-950 border border-slate-800">
+                    <select aria-label="Align items" value={align} onChange={e => setAlign(e.target.value)} className="p-2 rounded bg-slate-950 border border-slate-800 text-slate-200">
                       <option value="stretch">stretch</option>
                       <option value="flex-start">start</option>
                       <option value="center">center</option>
@@ -248,15 +254,17 @@ export const CssVisualStudioTool: React.FC = () => {
           {/* Live Preview Stage */}
           <div className="space-y-4">
             <div
-              className="h-56 rounded-2xl border border-slate-800 flex items-center justify-center p-6 overflow-hidden"
+              className={`h-56 rounded-2xl border border-slate-800 flex items-center justify-center p-6 overflow-hidden ${
+                tab === 'glass' ? '' : 'od-fixed-dark-stage'
+              }`}
               style={
                 tab === 'glass'
                   ? { background: 'linear-gradient(135deg, #4f46e5 0%, #db2777 50%, #f59e0b 100%)' }
-                  : { background: '#0f172a' }
+                  : undefined
               }
             >
               {tab === 'layout' ? (
-                <div className="w-full h-full p-3 rounded-xl bg-slate-950/70 border border-slate-800" style={generated.style}>
+                <div className="w-full h-full p-3 rounded-xl border border-slate-700/60" style={{ backgroundColor: 'rgba(15, 23, 42, 0.72)', ...generated.style }}>
                   {[1, 2, 3, 4].map(n => (
                     <div key={n} className="px-4 py-3 rounded-lg bg-indigo-600/80 text-white font-mono text-xs flex items-center justify-center">
                       Item {n}
@@ -265,8 +273,9 @@ export const CssVisualStudioTool: React.FC = () => {
                 </div>
               ) : (
                 <div
-                  className="w-48 h-28 flex items-center justify-center text-white text-xs font-semibold border border-slate-700/60"
+                  className="w-48 h-28 flex items-center justify-center od-stage-text text-xs font-semibold border border-slate-700/60"
                   style={{
+                    color: '#f8fafc',
                     background: tab === 'shadow' || tab === 'radius' ? '#1e293b' : undefined,
                     borderRadius: tab === 'shadow' ? '16px' : undefined,
                     ...generated.style,

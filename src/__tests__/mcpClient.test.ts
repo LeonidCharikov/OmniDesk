@@ -348,4 +348,232 @@ describe('OmniDeskMcpClient', () => {
 
     await client.disconnect();
   });
+
+  it('supports converter MCP tools (convert_list_formats, convert_data, convert_file_base64)', async () => {
+    const client = new OmniDeskMcpClient({ accessMode: 'readonly' });
+
+    const listRes = await client.handleRequest({
+      jsonrpc: '2.0',
+      id: 50,
+      method: 'tools/call',
+      params: { name: 'convert_list_formats', arguments: { inputExtension: 'csv' } },
+    });
+    const listPayload = JSON.parse(
+      (listRes?.result as { content: Array<{ text: string }> }).content[0].text
+    ) as { category: string; targetFormats: Array<{ ext: string }> };
+    expect(listPayload.category).toBe('spreadsheets');
+    expect(listPayload.targetFormats.some(f => f.ext === 'json')).toBe(true);
+
+    const dataRes = await client.handleRequest({
+      jsonrpc: '2.0',
+      id: 51,
+      method: 'tools/call',
+      params: {
+        name: 'convert_data',
+        arguments: {
+          input: 'name,score\nAda,99\nAlan,95',
+          fromFormat: 'csv',
+          toFormat: 'yaml',
+        },
+      },
+    });
+    const dataPayload = JSON.parse(
+      (dataRes?.result as { content: Array<{ text: string }> }).content[0].text
+    ) as { output: string };
+    expect(dataPayload.output).toContain('name: Ada');
+    expect(dataPayload.output).toContain('score: 99');
+
+    const mdInput = '# Hello OmniDesk\n\nConverted via MCP.';
+    const fileRes = await client.handleRequest({
+      jsonrpc: '2.0',
+      id: 52,
+      method: 'tools/call',
+      params: {
+        name: 'convert_file_base64',
+        arguments: {
+          fileName: 'notes.md',
+          base64Content: btoa(mdInput),
+          targetFormat: 'html',
+        },
+      },
+    });
+    const filePayload = JSON.parse(
+      (fileRes?.result as { content: Array<{ text: string }> }).content[0].text
+    ) as { fileName: string; textPreview?: string; base64Output: string };
+    expect(filePayload.fileName).toBe('notes.html');
+    expect(filePayload.base64Output.length).toBeGreaterThan(10);
+    expect(filePayload.textPreview).toContain('Hello OmniDesk');
+  });
+
+  it('supports Snippet Vault MCP tools and omnidesk://snippets/list resource with access control', async () => {
+    const roClient = new OmniDeskMcpClient({ accessMode: 'readonly' });
+    const blocked = await roClient.handleRequest({
+      jsonrpc: '2.0',
+      id: 60,
+      method: 'tools/call',
+      params: { name: 'snippets_create', arguments: { title: 'Test', code: 'echo hi' } },
+    });
+    expect(blocked?.error?.code).toBe(-32002);
+
+    const rwClient = new OmniDeskMcpClient({ accessMode: 'readwrite' });
+    const createRes = await rwClient.handleRequest({
+      jsonrpc: '2.0',
+      id: 61,
+      method: 'tools/call',
+      params: {
+        name: 'snippets_create',
+        arguments: {
+          title: 'SSH Tunnel',
+          code: 'ssh -L {{localPort}}:127.0.0.1:{{remotePort}} {{host}}',
+          language: 'bash',
+          tags: ['ssh', 'network'],
+        },
+      },
+    });
+    const created = JSON.parse(
+      (createRes?.result as { content: Array<{ text: string }> }).content[0].text
+    ) as { created: { title: string } };
+    expect(created.created.title).toBe('SSH Tunnel');
+
+    const searchRes = await rwClient.handleRequest({
+      jsonrpc: '2.0',
+      id: 62,
+      method: 'tools/call',
+      params: {
+        name: 'snippets_search',
+        arguments: {
+          query: 'tunnel',
+          variablesJson: JSON.stringify({ localPort: '8080', remotePort: '5432', host: 'db.internal' }),
+        },
+      },
+    });
+    const searchPayload = JSON.parse(
+      (searchRes?.result as { content: Array<{ text: string }> }).content[0].text
+    ) as { count: number; snippets: Array<{ renderedCode: string; variables: string[] }> };
+    expect(searchPayload.count).toBe(1);
+    expect(searchPayload.snippets[0].renderedCode).toBe('ssh -L 8080:127.0.0.1:5432 db.internal');
+    expect(searchPayload.snippets[0].variables).toEqual(['localPort', 'remotePort', 'host']);
+
+    const resourceRes = await rwClient.handleRequest({
+      jsonrpc: '2.0',
+      id: 63,
+      method: 'resources/read',
+      params: { uri: 'omnidesk://snippets/list' },
+    });
+    const contents = (resourceRes?.result as { contents: Array<{ text: string }> }).contents;
+    expect(JSON.parse(contents[0].text)).toHaveLength(1);
+  });
+
+  it('supports developer utility MCP tools (hash, encode/decode, svg, math, mock data, lorem ipsum)', async () => {
+    const client = new OmniDeskMcpClient({ accessMode: 'readonly' });
+
+    const hashRes = await client.handleRequest({
+      jsonrpc: '2.0',
+      id: 70,
+      method: 'tools/call',
+      params: { name: 'crypto_hash_text', arguments: { text: 'omnidesk', algorithm: 'SHA-256' } },
+    });
+    const hashPayload = JSON.parse(
+      (hashRes?.result as { content: Array<{ text: string }> }).content[0].text
+    ) as { hex: string };
+    expect(hashPayload.hex).toHaveLength(64);
+
+    const encRes = await client.handleRequest({
+      jsonrpc: '2.0',
+      id: 71,
+      method: 'tools/call',
+      params: { name: 'encode_decode_text', arguments: { text: 'Hello MCP!', mode: 'encode', encoding: 'hex' } },
+    });
+    const encPayload = JSON.parse(
+      (encRes?.result as { content: Array<{ text: string }> }).content[0].text
+    ) as { result: string };
+    expect(encPayload.result).toBe('48656c6c6f204d435021');
+
+    const svgRes = await client.handleRequest({
+      jsonrpc: '2.0',
+      id: 72,
+      method: 'tools/call',
+      params: {
+        name: 'svg_optimize',
+        arguments: {
+          svg: '<svg viewBox="0 0 24 24"><!-- comment --><path stroke-width="2.12345" d="M0 0"/></svg>',
+          asReactJsx: true,
+          componentName: 'TestIcon',
+        },
+      },
+    });
+    const svgPayload = JSON.parse(
+      (svgRes?.result as { content: Array<{ text: string }> }).content[0].text
+    ) as { optimizedSvg: string; reactJsx: string };
+    expect(svgPayload.optimizedSvg).not.toContain('comment');
+    expect(svgPayload.reactJsx).toContain('export const TestIcon');
+
+    const mathRes = await client.handleRequest({
+      jsonrpc: '2.0',
+      id: 73,
+      method: 'tools/call',
+      params: { name: 'math_evaluate', arguments: { expression: 'sqrt(144) + 2^3' } },
+    });
+    const mathPayload = JSON.parse(
+      (mathRes?.result as { content: Array<{ text: string }> }).content[0].text
+    ) as { value: number };
+    expect(mathPayload.value).toBe(20);
+
+    const mockRes = await client.handleRequest({
+      jsonrpc: '2.0',
+      id: 74,
+      method: 'tools/call',
+      params: { name: 'generate_mock_data', arguments: { rows: 3, format: 'sql', tableName: 'customers' } },
+    });
+    const mockPayload = JSON.parse(
+      (mockRes?.result as { content: Array<{ text: string }> }).content[0].text
+    ) as { rows: number; output: string };
+    expect(mockPayload.rows).toBe(3);
+    expect(mockPayload.output).toContain('INSERT INTO customers');
+
+    const loremRes = await client.handleRequest({
+      jsonrpc: '2.0',
+      id: 75,
+      method: 'tools/call',
+      params: { name: 'generate_lorem_ipsum', arguments: { style: 'classic', unit: 'paragraphs', count: 2, format: 'html' } },
+    });
+    const loremPayload = JSON.parse(
+      (loremRes?.result as { content: Array<{ text: string }> }).content[0].text
+    ) as { text: string };
+    expect(loremPayload.text).toContain('<p>Lorem ipsum dolor sit amet');
+  });
+
+  it('blocks MCP tool calls and resource reads when workspace lock is active', async () => {
+    let locked = true;
+    const client = new OmniDeskMcpClient({
+      accessMode: 'readwrite',
+      isWorkspaceLocked: () => locked,
+    });
+
+    const lockedToolRes = await client.handleRequest({
+      jsonrpc: '2.0',
+      id: 80,
+      method: 'tools/call',
+      params: { name: 'math_evaluate', arguments: { expression: '1+1' } },
+    });
+    expect(lockedToolRes?.error?.code).toBe(-32003);
+
+    const lockedResRead = await client.handleRequest({
+      jsonrpc: '2.0',
+      id: 81,
+      method: 'resources/read',
+      params: { uri: 'omnidesk://snippets/list' },
+    });
+    expect(lockedResRead?.error?.code).toBe(-32003);
+
+    locked = false;
+    const unlockedRes = await client.handleRequest({
+      jsonrpc: '2.0',
+      id: 82,
+      method: 'tools/call',
+      params: { name: 'math_evaluate', arguments: { expression: '1+1' } },
+    });
+    expect(unlockedRes?.error).toBeUndefined();
+  });
 });
+

@@ -107,11 +107,13 @@ export const MockDataGeneratorTool: React.FC = () => {
                 <input
                   value={f.name}
                   onChange={e => updateField(f.id, { name: e.target.value })}
+                  aria-label={`Field name ${f.name}`}
                   className="flex-1 px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-xs font-mono text-slate-200 outline-none focus:border-indigo-500"
                 />
                 <select
                   value={f.kind}
                   onChange={e => updateField(f.id, { kind: e.target.value as MockFieldKind })}
+                  aria-label={`Field type for ${f.name}`}
                   className="w-36 px-2 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-200"
                 >
                   {FIELD_KINDS.map(k => (
@@ -123,6 +125,7 @@ export const MockDataGeneratorTool: React.FC = () => {
                   onClick={() => removeField(f.id)}
                   className="p-1.5 text-slate-500 hover:text-rose-400"
                   title={t('remove', 'Remove')}
+                  aria-label={`${t('remove', 'Remove')} ${f.name}`}
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
@@ -156,6 +159,7 @@ export const MockDataGeneratorTool: React.FC = () => {
                   onClick={() => setSeed(Math.floor(Math.random() * 100000))}
                   className="px-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300"
                   title={t('mock_randomize_seed', 'New random seed')}
+                  aria-label={t('mock_randomize_seed', 'New random seed')}
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
                 </button>
@@ -176,11 +180,13 @@ export const MockDataGeneratorTool: React.FC = () => {
 
         <div className="p-4 rounded-xl bg-slate-900/50 border border-slate-800 space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800 text-xs">
+            <div role="tablist" aria-label="Mock data output format" className="flex gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800 text-xs">
               {(['json', 'csv', 'sql'] as const).map(fmt => (
                 <button
                   key={fmt}
                   type="button"
+                  role="tab"
+                  aria-selected={format === fmt}
                   onClick={() => setFormat(fmt)}
                   className={`px-2.5 py-1 rounded uppercase font-semibold ${
                     format === fmt ? 'bg-indigo-600 text-white' : 'text-slate-400'
@@ -204,6 +210,7 @@ export const MockDataGeneratorTool: React.FC = () => {
 
           <textarea
             readOnly
+            aria-label="Generated mock dataset output"
             value={output}
             className="w-full min-h-80 p-3 rounded-lg bg-slate-950 border border-slate-800 font-mono text-xs text-emerald-300 leading-relaxed"
           />

@@ -202,6 +202,7 @@ export const CsvGridEditorTool: React.FC = () => {
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder={t('csv_filter_placeholder', 'Filter rows…')}
+            aria-label={t('csv_filter_placeholder', 'Filter rows…')}
             className="px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-200 w-52 outline-none focus:border-indigo-500"
           />
         </div>
@@ -224,6 +225,7 @@ export const CsvGridEditorTool: React.FC = () => {
                       <input
                         value={h}
                         onChange={e => updateHeader(ci, e.target.value)}
+                        aria-label={`Column ${ci + 1} header`}
                         className="w-full bg-transparent font-semibold text-slate-200 px-1.5 py-1 rounded hover:bg-slate-800/60 focus:bg-slate-950 outline-none"
                       />
                       <button
@@ -231,6 +233,7 @@ export const CsvGridEditorTool: React.FC = () => {
                         onClick={() => toggleSort(ci)}
                         className={`p-1 rounded hover:bg-slate-800 ${sortCol === ci ? 'text-indigo-400' : 'text-slate-500'}`}
                         title={t('csv_sort_col', 'Sort column')}
+                        aria-label={`${t('csv_sort_col', 'Sort column')} ${h}`}
                       >
                         <ArrowUpDown className="w-3 h-3" />
                       </button>
@@ -240,6 +243,7 @@ export const CsvGridEditorTool: React.FC = () => {
                           onClick={() => removeColumn(ci)}
                           className="p-1 rounded text-slate-600 hover:text-rose-400"
                           title={t('csv_remove_col', 'Delete column')}
+                          aria-label={`${t('csv_remove_col', 'Delete column')} ${h}`}
                         >
                           <Trash2 className="w-3 h-3" />
                         </button>
@@ -254,11 +258,12 @@ export const CsvGridEditorTool: React.FC = () => {
               {visibleRowIndices.map(ri => (
                 <tr key={ri} className="border-b border-slate-800/60 hover:bg-slate-900/40">
                   <td className="p-1.5 text-center text-slate-600 font-mono">{ri + 1}</td>
-                  {headers.map((_, ci) => (
+                  {headers.map((headerName, ci) => (
                     <td key={ci} className="p-1 border-l border-slate-800/60">
                       <input
                         value={rows[ri][ci] ?? ''}
                         onChange={e => updateCell(ri, ci, e.target.value)}
+                        aria-label={`Row ${ri + 1} ${headerName}`}
                         className="w-full bg-transparent text-slate-200 font-mono px-1.5 py-1 rounded focus:bg-slate-900 outline-none"
                       />
                     </td>
@@ -269,6 +274,7 @@ export const CsvGridEditorTool: React.FC = () => {
                       onClick={() => removeRow(ri)}
                       className="p-1 text-slate-600 hover:text-rose-400"
                       title={t('remove', 'Remove')}
+                      aria-label={`${t('remove', 'Remove')} row ${ri + 1}`}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>

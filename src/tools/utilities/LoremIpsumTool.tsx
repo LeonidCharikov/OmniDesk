@@ -110,6 +110,7 @@ export const LoremIpsumTool: React.FC = () => {
               <button
                 key={item}
                 type="button"
+                aria-pressed={style === item}
                 onClick={() => setStyle(item)}
                 className={`px-2 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                   style === item
@@ -131,6 +132,7 @@ export const LoremIpsumTool: React.FC = () => {
               <button
                 key={item}
                 type="button"
+                aria-pressed={unit === item}
                 onClick={() => handleUnitChange(item)}
                 className={`px-2 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                   unit === item
@@ -161,6 +163,7 @@ export const LoremIpsumTool: React.FC = () => {
               <button
                 key={item}
                 type="button"
+                aria-pressed={format === item}
                 onClick={() => setFormat(item)}
                 className={`px-2 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                   format === item
@@ -182,6 +185,7 @@ export const LoremIpsumTool: React.FC = () => {
             </label>
             <input
               type="number"
+              aria-label={t('lorem_count_label', 'Count')}
               min={limits.min}
               max={limits.max}
               value={count}
@@ -253,6 +257,7 @@ export const LoremIpsumTool: React.FC = () => {
 
         <textarea
           readOnly
+          aria-label={t('lorem_ipsum_title', 'Lorem Ipsum & Placeholder Text Generator')}
           rows={14}
           value={output}
           className="w-full p-4 rounded-xl bg-slate-950 border border-slate-800 text-sm text-slate-100 leading-relaxed outline-none font-mono"

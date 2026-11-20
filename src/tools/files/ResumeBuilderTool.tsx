@@ -403,11 +403,13 @@ ${bodyHtml}
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <div className="inline-flex rounded-lg bg-slate-950 border border-slate-800 p-0.5">
+          <div role="tablist" aria-label="Resume template" className="inline-flex rounded-lg bg-slate-950 border border-slate-800 p-0.5">
             {(['modern', 'classic', 'compact'] as ResumeTemplate[]).map(tpl => (
               <button
                 key={tpl}
                 type="button"
+                role="tab"
+                aria-selected={data.template === tpl}
                 onClick={() => updateField('template', tpl)}
                 className={`px-2.5 py-1 rounded-md text-xs font-medium capitalize transition-colors ${
                   data.template === tpl ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'
@@ -477,6 +479,7 @@ ${bodyHtml}
               onClick={() => setConfirmReset(true)}
               className="px-2.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs inline-flex items-center gap-1"
               title={t('reset_sample', 'Reset to sample')}
+              aria-label={t('reset_sample', 'Reset to sample')}
             >
               <RotateCcw className="w-3.5 h-3.5" />
             </button>
@@ -506,6 +509,7 @@ ${bodyHtml}
                 value={data.fullName}
                 onChange={e => updateField('fullName', e.target.value)}
                 placeholder={t('resume_full_name', 'Full Name')}
+                aria-label={t('resume_full_name', 'Full Name')}
                 className="px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 focus:border-indigo-500 outline-none text-sm text-slate-100"
               />
               <input
@@ -513,6 +517,7 @@ ${bodyHtml}
                 value={data.headline}
                 onChange={e => updateField('headline', e.target.value)}
                 placeholder={t('resume_headline', 'Job Title / Headline')}
+                aria-label={t('resume_headline', 'Job Title / Headline')}
                 className="px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 focus:border-indigo-500 outline-none text-sm text-slate-100"
               />
               <input
@@ -520,6 +525,7 @@ ${bodyHtml}
                 value={data.email}
                 onChange={e => updateField('email', e.target.value)}
                 placeholder={t('resume_email', 'Email')}
+                aria-label={t('resume_email', 'Email')}
                 className="px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 focus:border-indigo-500 outline-none text-sm text-slate-100"
               />
               <input
@@ -527,6 +533,7 @@ ${bodyHtml}
                 value={data.phone}
                 onChange={e => updateField('phone', e.target.value)}
                 placeholder={t('resume_phone', 'Phone')}
+                aria-label={t('resume_phone', 'Phone')}
                 className="px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 focus:border-indigo-500 outline-none text-sm text-slate-100"
               />
               <input
@@ -534,6 +541,7 @@ ${bodyHtml}
                 value={data.location}
                 onChange={e => updateField('location', e.target.value)}
                 placeholder={t('resume_location', 'City, Country')}
+                aria-label={t('resume_location', 'City, Country')}
                 className="px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 focus:border-indigo-500 outline-none text-sm text-slate-100"
               />
               <input
@@ -541,6 +549,7 @@ ${bodyHtml}
                 value={data.website}
                 onChange={e => updateField('website', e.target.value)}
                 placeholder={t('resume_website', 'Portfolio / GitHub / LinkedIn')}
+                aria-label={t('resume_website', 'Portfolio / GitHub / LinkedIn')}
                 className="px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 focus:border-indigo-500 outline-none text-sm text-slate-100"
               />
             </div>
@@ -549,6 +558,7 @@ ${bodyHtml}
               value={data.summary}
               onChange={e => updateField('summary', e.target.value)}
               placeholder={t('resume_summary_placeholder', 'Concise professional summary...')}
+              aria-label={t('resume_summary_heading', 'Summary')}
               className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 focus:border-indigo-500 outline-none text-sm text-slate-100"
             />
           </section>

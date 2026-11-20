@@ -246,7 +246,7 @@ export async function saveConvertedFile(targetPath: string, data: Uint8Array): P
 │       │   └── loan-calc/     # Loan & mortgage calculator with amortization
 │       └── utilities/
 │           ├── json-formatter/# JSON formatter, validator & linter
-│           └── translator/    # Hybrid translator (online/offline)
+│           └── svg-optimizer/ # SVG minifier & JSX converter
 └── package.json`}</pre>
         </div>
       )}

@@ -156,8 +156,18 @@ export const SnippetVaultTool: React.FC = () => {
       setDraftCode(piped.text);
     }
 
+    const onExternalUpdate = () => {
+      void loadToolJson<CodeSnippet[]>(STORAGE_KEY).then(saved => {
+        if (active && isValidSnippetArray(saved) && saved.length > 0) {
+          setSnippets(saved);
+        }
+      });
+    };
+    window.addEventListener('omnidesk-snippets-updated', onExternalUpdate);
+
     return () => {
       active = false;
+      window.removeEventListener('omnidesk-snippets-updated', onExternalUpdate);
     };
   }, []);
 
@@ -393,13 +403,15 @@ export const SnippetVaultTool: React.FC = () => {
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder={t('snippet_search_placeholder', 'Search titles, tags, or code...')}
+              aria-label={t('snippet_search_placeholder', 'Search titles, tags, or code...')}
               className="w-full pl-9 pr-3 py-2 rounded-lg bg-slate-950 border border-slate-800 focus:border-indigo-500 outline-none text-xs text-slate-200"
             />
           </div>
 
-          <div className="flex flex-wrap items-center gap-1.5">
+          <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Snippet language filter">
             <button
               type="button"
+              aria-pressed={langFilter === 'all'}
               onClick={() => setLangFilter('all')}
               className={`px-2 py-1 rounded text-[11px] font-medium border transition-colors ${
                 langFilter === 'all'
@@ -413,6 +425,7 @@ export const SnippetVaultTool: React.FC = () => {
               <button
                 key={lang}
                 type="button"
+                aria-pressed={langFilter === lang}
                 onClick={() => setLangFilter(lang)}
                 className={`px-2 py-1 rounded text-[11px] font-mono uppercase border transition-colors ${
                   langFilter === lang
@@ -425,6 +438,7 @@ export const SnippetVaultTool: React.FC = () => {
             ))}
             <button
               type="button"
+              aria-pressed={onlyFavorites}
               onClick={() => setOnlyFavorites(v => !v)}
               className={`ml-auto px-2 py-1 rounded text-[11px] inline-flex items-center gap-1 border transition-colors ${
                 onlyFavorites
@@ -445,14 +459,24 @@ export const SnippetVaultTool: React.FC = () => {
             ) : (
               filteredSnippets.map(item => {
                 const isSelected = activeSnippet?.id === item.id && !isEditing;
+                const selectItem = () => {
+                  setSelectedId(item.id);
+                  setIsEditing(false);
+                  setVarValues({});
+                  setConfirmDeleteId(null);
+                };
                 return (
                   <div
                     key={item.id}
-                    onClick={() => {
-                      setSelectedId(item.id);
-                      setIsEditing(false);
-                      setVarValues({});
-                      setConfirmDeleteId(null);
+                    role="button"
+                    tabIndex={0}
+                    aria-pressed={isSelected}
+                    onClick={selectItem}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        selectItem();
+                      }
                     }}
                     className={`p-3 rounded-lg border cursor-pointer transition-colors ${
                       isSelected
@@ -500,6 +524,7 @@ export const SnippetVaultTool: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsEditing(false)}
+                  aria-label={t('cancel', 'Cancel')}
                   className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300"
                 >
                   <X className="w-4 h-4" />

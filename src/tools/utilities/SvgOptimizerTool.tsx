@@ -74,8 +74,8 @@ export const SvgOptimizerTool: React.FC = () => {
     previewBg === 'light'
       ? 'bg-white text-slate-900'
       : previewBg === 'dark'
-        ? 'bg-slate-950 text-slate-100'
-        : 'bg-[radial-gradient(#334155_1px,transparent_1px)] [background-size:12px_12px] bg-slate-900';
+        ? 'od-fixed-dark-stage'
+        : 'od-fixed-checker-stage';
 
   return (
     <div className="space-y-5">
@@ -166,9 +166,10 @@ export const SvgOptimizerTool: React.FC = () => {
                 <button
                   key={bg}
                   type="button"
+                  aria-pressed={previewBg === bg}
                   onClick={() => setPreviewBg(bg)}
                   className={`px-2 py-0.5 rounded text-[11px] capitalize ${
-                    previewBg === bg ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400'
+                    previewBg === bg ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-300'
                   }`}
                 >
                   {bg}
@@ -184,7 +185,7 @@ export const SvgOptimizerTool: React.FC = () => {
                   className="flex items-center justify-center [&>svg]:w-full [&>svg]:h-full"
                   dangerouslySetInnerHTML={{ __html: sanitizedPreviewSvg }}
                 />
-                <span className="text-[10px] font-mono opacity-70">{sz}px</span>
+                <span className="text-[10px] font-mono opacity-80">{sz}px</span>
               </div>
             ))}
           </div>
@@ -193,8 +194,10 @@ export const SvgOptimizerTool: React.FC = () => {
         {/* Source vs Output */}
         <div className="grid md:grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <span className="text-xs font-medium text-slate-300 block">{t('svg_source_input', 'Input SVG Markup')}</span>
+            <label htmlFor="svg-source-input" className="text-xs font-medium text-slate-300 block">{t('svg_source_input', 'Input SVG Markup')}</label>
             <textarea
+              id="svg-source-input"
+              aria-label={t('svg_source_input', 'Input SVG Markup')}
               value={rawSvg}
               onChange={e => setRawSvg(e.target.value)}
               className="w-full min-h-60 p-3 rounded-lg bg-slate-950 border border-slate-800 font-mono text-xs text-slate-200 outline-none focus:border-indigo-500"
@@ -202,9 +205,11 @@ export const SvgOptimizerTool: React.FC = () => {
           </div>
           <div className="space-y-1.5">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="flex gap-1 bg-slate-950 p-0.5 rounded-lg border border-slate-800 text-xs">
+              <div role="tablist" aria-label="SVG output format" className="flex gap-1 bg-slate-950 p-0.5 rounded-lg border border-slate-800 text-xs">
                 <button
                   type="button"
+                  role="tab"
+                  aria-selected={outputTab === 'svg'}
                   onClick={() => setOutputTab('svg')}
                   className={`px-2.5 py-1 rounded ${outputTab === 'svg' ? 'bg-indigo-600 text-white' : 'text-slate-400'}`}
                 >
@@ -212,6 +217,8 @@ export const SvgOptimizerTool: React.FC = () => {
                 </button>
                 <button
                   type="button"
+                  role="tab"
+                  aria-selected={outputTab === 'jsx'}
                   onClick={() => setOutputTab('jsx')}
                   className={`px-2.5 py-1 rounded ${outputTab === 'jsx' ? 'bg-indigo-600 text-white' : 'text-slate-400'}`}
                 >
