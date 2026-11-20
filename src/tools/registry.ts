@@ -27,7 +27,6 @@ const CurrencyCryptoTool = lazyTool(() => import('./finance/CurrencyCryptoTool')
 const JsonFormatterTool = lazyTool(() => import('./utilities/JsonFormatterTool'), 'JsonFormatterTool');
 const PasswordGeneratorTool = lazyTool(() => import('./utilities/PasswordGeneratorTool'), 'PasswordGeneratorTool');
 const QrCodeGeneratorTool = lazyTool(() => import('./utilities/QrCodeGeneratorTool'), 'QrCodeGeneratorTool');
-const RegexEncoderTool = lazyTool(() => import('./utilities/RegexEncoderTool'), 'RegexEncoderTool');
 const PomodoroTimerTool = lazyTool(() => import('./utilities/PomodoroTimerTool'), 'PomodoroTimerTool');
 const WorldTimezonesTool = lazyTool(() => import('./utilities/WorldTimezonesTool'), 'WorldTimezonesTool');
 const OnlineTranslatorTool = lazyTool(() => import('./utilities/OnlineTranslatorTool'), 'OnlineTranslatorTool');
@@ -56,7 +55,6 @@ const DiagramEditorTool = lazyTool(() => import('./expanded/DiagramEditorTool'),
 const BudgetTool = lazyTool(() => import('./expanded/BudgetTool'), 'BudgetTool');
 const InvestmentCalculatorTool = lazyTool(() => import('./expanded/InvestmentCalculatorTool'), 'InvestmentCalculatorTool');
 const InvoiceGeneratorTool = lazyTool(() => import('./expanded/InvoiceGeneratorTool'), 'InvoiceGeneratorTool');
-const FileCryptoTool = lazyTool(() => import('./expanded/FileCryptoTool'), 'FileCryptoTool');
 const JwtDecoderTool = lazyTool(() => import('./expanded/JwtDecoderTool'), 'JwtDecoderTool');
 const XmlFormatterTool = lazyTool(() => import('./expanded/XmlFormatterTool'), 'XmlFormatterTool');
 const YamlFormatterTool = lazyTool(() => import('./expanded/YamlFormatterTool'), 'YamlFormatterTool');
@@ -66,8 +64,6 @@ const RegexBuilderTool = lazyTool(() => import('./expanded/RegexBuilderTool'), '
 const ColorPickerTool = lazyTool(() => import('./expanded/ColorPickerTool'), 'ColorPickerTool');
 const ScreenshotAnnotatorTool = lazyTool(() => import('./expanded/ScreenshotAnnotatorTool'), 'ScreenshotAnnotatorTool');
 const GeoGpsTool = lazyTool(() => import('./expanded/GeoGpsTool'), 'GeoGpsTool');
-const PeriodicFinanceTool = lazyTool(() => import('./expanded/PeriodicFinanceTool'), 'PeriodicFinanceTool');
-const BinaryHexTool = lazyTool(() => import('./expanded/BinaryHexTool'), 'BinaryHexTool');
 
 const HashChecksumSuiteTool = lazyTool(() => import('./programming/HashChecksumSuiteTool'), 'HashChecksumSuiteTool');
 const EncodingSuiteTool = lazyTool(() => import('./programming/EncodingSuiteTool'), 'EncodingSuiteTool');
@@ -110,6 +106,13 @@ const AmbientNoiseMixerTool = lazyTool(() => import('./utilities/AmbientNoiseMix
 const SleepCycleCalcTool = lazyTool(() => import('./utilities/SleepCycleCalcTool'), 'SleepCycleCalcTool');
 const BreathingEyeGuideTool = lazyTool(() => import('./utilities/BreathingEyeGuideTool'), 'BreathingEyeGuideTool');
 const ColorStudioTool = lazyTool(() => import('./utilities/ColorStudioTool'), 'ColorStudioTool');
+const CsvGridEditorTool = lazyTool(() => import('./files/CsvGridEditorTool'), 'CsvGridEditorTool');
+const SvgOptimizerTool = lazyTool(() => import('./utilities/SvgOptimizerTool'), 'SvgOptimizerTool');
+const CssVisualStudioTool = lazyTool(() => import('./programming/CssVisualStudioTool'), 'CssVisualStudioTool');
+const MockDataGeneratorTool = lazyTool(() => import('./programming/MockDataGeneratorTool'), 'MockDataGeneratorTool');
+const SnippetVaultTool = lazyTool(() => import('./programming/SnippetVaultTool'), 'SnippetVaultTool');
+const ResumeBuilderTool = lazyTool(() => import('./files/ResumeBuilderTool'), 'ResumeBuilderTool');
+const LoremIpsumTool = lazyTool(() => import('./utilities/LoremIpsumTool'), 'LoremIpsumTool');
 
 
 export const TOOLS_REGISTRY: ToolDefinition[] = [
@@ -215,16 +218,6 @@ export const TOOLS_REGISTRY: ToolDefinition[] = [
   },
 
   // 2. Programování & Kód (programming)
-  {
-    id: 'regex-encoder',
-    title: 'RegEx Tester & Base64 / URL',
-    shortDesc: 'Testování regulárních výrazů se skupinami a obousměrné kódování Base64 i URL.',
-    category: 'programming',
-    icon: 'Code2',
-    requiresOnline: false,
-    component: RegexEncoderTool,
-    tags: ['regex', 'regularni', 'base64', 'url', 'dekodovani', 'vyvoj', 'kod'],
-  },
   {
     id: 'json-formatter',
     title: 'JSON Formátovač & Validátor',
@@ -500,13 +493,13 @@ export const TOOLS_REGISTRY: ToolDefinition[] = [
   },
   {
     id: 'pdf-toolkit',
-    title: 'PDF nástroje',
-    shortDesc: 'Lokálně slučujte vybrané soubory PDF nebo otočte všechny stránky jednoho PDF a uložte výsledek.',
+    title: 'PDF Toolkit (Merge, Split & Rotate)',
+    shortDesc: 'Locally merge PDFs, extract or split page ranges, or rotate all pages and save offline.',
     category: 'files',
-    icon: 'FileBox',
+    icon: 'Layers',
     requiresOnline: false,
     component: PdfToolkitTool,
-    tags: ['pdf', 'sloucit', 'otocit', 'dokumenty'],
+    tags: ['pdf', 'merge', 'split', 'extract', 'rotate', 'documents'],
   },
   {
     id: 'ocr-scanner',
@@ -601,9 +594,8 @@ export const TOOLS_REGISTRY: ToolDefinition[] = [
     tags: ['diagram', 'flowchart', 'uml', 'svg', 'editor'],
   },
   { id: 'budget-tracker', title: 'Výdajový tracker a rozpočet', shortDesc: 'Zaznamenávejte popisy a částky výdajů a sledujte průběžný součet aktuální relace.', category: 'finance', icon: 'Wallet', requiresOnline: false, component: BudgetTool, tags: ['expenses', 'budget', 'finance', 'money'] },
-  { id: 'investment-calculator', title: 'Investiční kalkulačka', shortDesc: 'Odhadněte složené zhodnocení z počátečního vkladu, měsíčních vkladů, ročního výnosu a délky investice.', category: 'finance', icon: 'ChartNoAxesCombined', requiresOnline: false, component: InvestmentCalculatorTool, tags: ['investment', 'return', 'compound', 'finance'] },
+  { id: 'investment-calculator', title: 'Investiční & Složené Úročení', shortDesc: 'Složené úročení s volbou periodicity, inflací, grafem růstu a ročním rozpisem.', category: 'finance', icon: 'ChartNoAxesCombined', requiresOnline: false, component: InvestmentCalculatorTool, tags: ['investment', 'return', 'compound', 'interest', 'period', 'inflation', 'finance'] },
   { id: 'invoice-generator', title: 'Generátor faktur', shortDesc: 'Vytvořte HTML fakturu s údaji dodavatele, odběratele a položkami.', category: 'finance', icon: 'ReceiptText', requiresOnline: false, component: InvoiceGeneratorTool, tags: ['invoice', 'document', 'business', 'finance'] },
-  { id: 'file-crypto', title: 'Hashování a šifrování souborů', shortDesc: 'Vypočítejte SHA-256 nebo zašifrujte text či soubor heslem pomocí AES-GCM.', category: 'programming', icon: 'ShieldCheck', requiresOnline: false, component: FileCryptoTool, tags: ['hash', 'sha256', 'files', 'encryption', 'aes', 'security'] },
   { id: 'jwt-decoder', title: 'Dekodér JWT', shortDesc: 'Lokálně dekódujte hlavičku a obsah JWT; podpis se neověřuje.', category: 'programming', icon: 'KeyRound', requiresOnline: false, component: JwtDecoderTool, tags: ['jwt', 'token', 'json', 'web'] },
   { id: 'xml-formatter', title: 'Formátovač a validátor XML', shortDesc: 'Analyzujte XML parserem prohlížeče, oznamte chybný vstup a zobrazte čitelný výstup.', category: 'programming', icon: 'FileCode', requiresOnline: false, component: XmlFormatterTool, tags: ['xml', 'format', 'validation', 'code'] },
   { id: 'yaml-formatter', title: 'Formátovač a validátor YAML', shortDesc: 'Lokálně normalizujte základní konfigurační text YAML.', category: 'programming', icon: 'FileCode', requiresOnline: false, component: YamlFormatterTool, tags: ['yaml', 'format', 'validation', 'configuration'] },
@@ -612,9 +604,7 @@ export const TOOLS_REGISTRY: ToolDefinition[] = [
   { id: 'regex-builder', title: 'Generátor regulárních výrazů', shortDesc: 'Escapujte hledaný text a spojte jej s příznaky do bezpečného základu výrazu.', category: 'programming', icon: 'Regex', requiresOnline: false, component: RegexBuilderTool, tags: ['regex', 'builder', 'development'] },
   { id: 'color-picker', title: 'Výběr barvy z obrázku', shortDesc: 'Otevřete obrázek, klikněte na pixel plátna a zjistěte jeho HEX barvu.', category: 'utilities', icon: 'Pipette', requiresOnline: false, component: ColorPickerTool, tags: ['colors', 'picker', 'image', 'hex'] },
   { id: 'screenshot-annotator', title: 'Anotace snímků obrazovky', shortDesc: 'Otevřete obrázek, přidejte textovou anotaci a exportujte kopii PNG.', category: 'files', icon: 'Screenshot', requiresOnline: false, component: ScreenshotAnnotatorTool, tags: ['screenshot', 'annotation', 'png', 'image'] },
-  { id: 'geo-gps', title: 'Geografický a GPS převodník', shortDesc: 'Převeďte desetinnou šířku a délku na zápis ve stupních, minutách a sekundách.', category: 'science', icon: 'MapPin', requiresOnline: false, component: GeoGpsTool, tags: ['gps', 'coordinates', 'geography', 'dms'] },
-  { id: 'periodic-finance', title: 'Periodický finanční kalkulátor', shortDesc: 'Vypočítejte složené úročení z jistiny, roční sazby a počtu úročení.', category: 'finance', icon: 'Percent', requiresOnline: false, component: PeriodicFinanceTool, tags: ['interest', 'finance', 'period', 'investment'] },
-  { id: 'binary-hex', title: 'Binární a hexadecimální převodník', shortDesc: 'Převeďte text UTF-8 na bajtový hexadecimální a binární výstup.', category: 'programming', icon: 'Binary', requiresOnline: false, component: BinaryHexTool, tags: ['binary', 'hex', 'converter', 'utf8'] },
+  { id: 'geo-gps', title: 'Geografický a GPS převodník', shortDesc: 'Obousměrný převod DD ↔ DMS, Haversine vzdálenost, azimut a geografický střed.', category: 'science', icon: 'MapPin', requiresOnline: false, component: GeoGpsTool, tags: ['gps', 'coordinates', 'geography', 'dms', 'bearing', 'midpoint'] },
   {
     id: 'hash-checksum-suite',
     title: 'Hash, HMAC & Checksum Suite',
@@ -1043,5 +1033,78 @@ export const TOOLS_REGISTRY: ToolDefinition[] = [
     isBasic: true,
     component: ColorStudioTool,
     tags: ['color', 'picker', 'palette', 'wheel', 'chart', 'tailwind', 'hex', 'rgb', 'hsl', 'oklch', 'converter', 'basic'],
+  },
+  {
+    id: 'csv-editor',
+    title: 'CSV & Spreadsheet Grid Editor',
+    shortDesc: 'Inspect, edit, filter, sort, deduplicate, and compute column stats for CSV/TSV files with JSON & Markdown export.',
+    category: 'files',
+    icon: 'Table2',
+    requiresOnline: false,
+    isBasic: true,
+    component: CsvGridEditorTool,
+    tags: ['csv', 'tsv', 'spreadsheet', 'table', 'grid', 'editor', 'data', 'json', 'markdown'],
+  },
+  {
+    id: 'svg-optimizer',
+    title: 'SVG Inspector & Optimizer',
+    shortDesc: 'Sanitize and minify SVG markup, recolor fills/strokes, preview safely, and convert to React TSX or PNG.',
+    category: 'utilities',
+    icon: 'Image',
+    requiresOnline: false,
+    component: SvgOptimizerTool,
+    tags: ['svg', 'vector', 'optimize', 'minify', 'jsx', 'react', 'png', 'icons'],
+  },
+  {
+    id: 'css-visual-studio',
+    title: 'CSS Visual Generator Studio',
+    shortDesc: 'Interactive visual builder for CSS gradients, layered box shadows, glassmorphism, border radius, and grid layouts.',
+    category: 'programming',
+    icon: 'Palette',
+    requiresOnline: false,
+    component: CssVisualStudioTool,
+    tags: ['css', 'gradient', 'shadow', 'glassmorphism', 'border-radius', 'grid', 'design', 'frontend'],
+  },
+  {
+    id: 'mock-data-generator',
+    title: 'Mock Data & Test Dataset Generator',
+    shortDesc: 'Generate deterministic seeded JSON, CSV, or SQL INSERT test datasets locally with custom schemas.',
+    category: 'programming',
+    icon: 'Database',
+    requiresOnline: false,
+    component: MockDataGeneratorTool,
+    tags: ['mock', 'fake', 'dataset', 'seed', 'json', 'csv', 'sql', 'testing', 'fixtures'],
+  },
+  {
+    id: 'snippet-vault',
+    title: 'Local Code & Shell Snippet Vault',
+    shortDesc: 'Organize reusable shell commands, SQL queries, and code templates locally with fillable {{variable}} placeholders.',
+    category: 'programming',
+    icon: 'Terminal',
+    requiresOnline: false,
+    component: SnippetVaultTool,
+    tags: ['snippets', 'shell', 'bash', 'sql', 'docker', 'git', 'templates', 'vault', 'code'],
+  },
+  {
+    id: 'resume-builder',
+    title: 'Offline Resume / CV Builder',
+    shortDesc: 'Build ATS-friendly resumes privately with live templates, print-to-PDF, standalone HTML, and JSON backups.',
+    category: 'files',
+    icon: 'FileText',
+    requiresOnline: false,
+    isBasic: true,
+    component: ResumeBuilderTool,
+    tags: ['resume', 'cv', 'career', 'pdf', 'html', 'template', 'document', 'basic'],
+  },
+  {
+    id: 'lorem-ipsum',
+    title: 'Lorem Ipsum & Placeholder Text Generator',
+    shortDesc: 'Generate Classic Latin, Tech, or Business placeholder paragraphs, sentences, words, or lists in plain text, HTML, or Markdown.',
+    category: 'utilities',
+    icon: 'Type',
+    requiresOnline: false,
+    isBasic: true,
+    component: LoremIpsumTool,
+    tags: ['lorem', 'ipsum', 'placeholder', 'dummy', 'text', 'copy', 'design', 'typography', 'basic'],
   },
 ];

@@ -1,7 +1,9 @@
-import React, { useState, useId } from 'react';
-import { Lock, Unlock, RefreshCw, Copy, Check, AlertCircle } from 'lucide-react';
+import React, { useState, useId, useEffect } from 'react';
+import { Lock, Unlock, RefreshCw, Copy, Check, AlertCircle, FileUp, ShieldCheck } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
 import { bytesToHex, hexToBytes, bytesToBase64, base64ToBytes } from '../../utils/cryptoAlgorithms';
+import { saveBinaryWithDialog } from '../../services/fileSystemService';
+import { consumePendingToolPipe } from '../../services/toolPipeService';
 
 type AesMode = 'AES-GCM' | 'AES-CBC' | 'AES-CTR';
 type KeyBits = 128 | 192 | 256;
@@ -24,6 +26,106 @@ export const AesCipherStudioTool: React.FC = () => {
   const [ciphertext, setCiphertext] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [fileStatus, setFileStatus] = useState<string>('');
+  const [fileBusy, setFileBusy] = useState(false);
+
+  useEffect(() => {
+    const piped = consumePendingToolPipe('aes-cipher-studio');
+    if (!piped) return;
+    if (piped.kind === 'file' && piped.file) {
+      setSelectedFile(piped.file);
+    } else if (piped.kind === 'text' && typeof piped.text === 'string') {
+      setPlaintext(piped.text);
+    }
+  }, []);
+
+  const handleEncryptFile = async () => {
+    if (!selectedFile) return;
+    setError(null);
+    setFileStatus('');
+    if (!keyInput) {
+      setError(t('enter_password', 'Enter an encryption passphrase.'));
+      return;
+    }
+    setFileBusy(true);
+    try {
+      const rawBuf = await selectedFile.arrayBuffer();
+      const salt = crypto.getRandomValues(new Uint8Array(16));
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(keyInput), 'PBKDF2', false, ['deriveKey']);
+      const key = await crypto.subtle.deriveKey(
+        { name: 'PBKDF2', salt, iterations: Math.max(1000, iterations), hash: 'SHA-256' },
+        base,
+        { name: 'AES-GCM', length: keyBits },
+        false,
+        ['encrypt']
+      );
+      const encBuf = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, rawBuf);
+      const envelope = new Uint8Array(16 + 12 + encBuf.byteLength);
+      envelope.set(salt, 0);
+      envelope.set(iv, 16);
+      envelope.set(new Uint8Array(encBuf), 28);
+      const res = await saveBinaryWithDialog(
+        `${selectedFile.name}.enc`,
+        new Blob([envelope], { type: 'application/octet-stream' }),
+        'application/octet-stream',
+        [{ name: 'Encrypted (*.enc)', extensions: ['enc'] }],
+        t('aes_save_encrypted_file', 'Save Encrypted File')
+      );
+      if (res.success) {
+        setFileStatus(t('aes_file_encrypted_ok', 'Encrypted {name} with AES-{bits}-GCM (salt + IV embedded).', { name: selectedFile.name, bits: keyBits }));
+      }
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : t('err_encryption_failed', 'File encryption failed.'));
+    } finally {
+      setFileBusy(false);
+    }
+  };
+
+  const handleDecryptFile = async () => {
+    if (!selectedFile) return;
+    setError(null);
+    setFileStatus('');
+    if (!keyInput) {
+      setError(t('enter_password', 'Enter an encryption passphrase.'));
+      return;
+    }
+    setFileBusy(true);
+    try {
+      const bytes = new Uint8Array(await selectedFile.arrayBuffer());
+      if (bytes.length <= 28) throw new Error('File is too small to contain an encrypted AES-GCM envelope.');
+      const salt = bytes.slice(0, 16);
+      const iv = bytes.slice(16, 28);
+      const cipherData = bytes.slice(28);
+      const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(keyInput), 'PBKDF2', false, ['deriveKey']);
+      const key = await crypto.subtle.deriveKey(
+        { name: 'PBKDF2', salt, iterations: Math.max(1000, iterations), hash: 'SHA-256' },
+        base,
+        { name: 'AES-GCM', length: keyBits },
+        false,
+        ['decrypt']
+      );
+      const decBuf = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, cipherData);
+      const outName = selectedFile.name.endsWith('.enc')
+        ? selectedFile.name.slice(0, -4)
+        : `decrypted-${selectedFile.name}`;
+      const res = await saveBinaryWithDialog(
+        outName,
+        new Blob([decBuf], { type: 'application/octet-stream' }),
+        'application/octet-stream',
+        [{ name: 'All Files (*.*)', extensions: ['*'] }],
+        t('aes_save_decrypted_file', 'Save Decrypted File')
+      );
+      if (res.success) {
+        setFileStatus(t('aes_file_decrypted_ok', 'Decrypted file saved as {name}.', { name: outName }));
+      }
+    } catch {
+      setError(t('decrypt_failed', 'Decryption failed: invalid passphrase, key size, or corrupted file.'));
+    } finally {
+      setFileBusy(false);
+    }
+  };
 
   const plainId = useId();
   const cipherId = useId();
@@ -305,6 +407,67 @@ export const AesCipherStudioTool: React.FC = () => {
             className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono text-indigo-300 focus:outline-none focus:border-indigo-500"
           />
         </div>
+      </div>
+
+      {/* Binary File AES-GCM Encryption / Decryption (absorbed from File Crypto) */}
+      <div className="p-5 rounded-2xl bg-slate-900/40 border border-slate-800 space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h3 className="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+              {t('aes_file_vault_title', 'File Encryption & Decryption (AES-GCM + PBKDF2)')}
+            </h3>
+            <p className="text-xs text-slate-400 mt-0.5">
+              {t('aes_file_vault_desc', 'Encrypts any local file with the passphrase above (random salt & IV stored in the .enc header).')}
+            </p>
+          </div>
+          <label className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer">
+            <FileUp className="w-3.5 h-3.5" />
+            {t('aes_choose_file', 'Choose file')}
+            <input
+              type="file"
+              className="sr-only"
+              onChange={e => {
+                setSelectedFile(e.target.files?.[0] || null);
+                setFileStatus('');
+              }}
+            />
+          </label>
+        </div>
+
+        {selectedFile && (
+          <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs">
+            <span className="font-mono text-slate-300 truncate">
+              {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)
+            </span>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                disabled={fileBusy}
+                onClick={() => void handleEncryptFile()}
+                className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium disabled:opacity-50"
+              >
+                <Lock className="w-3.5 h-3.5 inline mr-1" />
+                {t('aes_encrypt_file_btn', 'Encrypt → .enc')}
+              </button>
+              <button
+                type="button"
+                disabled={fileBusy}
+                onClick={() => void handleDecryptFile()}
+                className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium disabled:opacity-50"
+              >
+                <Unlock className="w-3.5 h-3.5 inline mr-1" />
+                {t('aes_decrypt_file_btn', 'Decrypt .enc')}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {fileStatus && (
+          <div className="p-2.5 rounded-lg bg-emerald-950/30 border border-emerald-800/40 text-emerald-300 text-xs">
+            {fileStatus}
+          </div>
+        )}
       </div>
     </div>
   );

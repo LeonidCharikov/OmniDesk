@@ -215,11 +215,12 @@ export const CalendarTool: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
+  const [confirmClearPast, setConfirmClearPast] = useState(false);
+
   const clearPastEvents = () => {
     const todayVal = dateToStr(new Date());
-    if (confirm(t('confirm_clear_past_events', 'Opravdu si přejete smazat události před dnešním dnem?'))) {
-      setEvents(events.filter(e => e.date >= todayVal));
-    }
+    setEvents(events.filter(e => e.date >= todayVal));
+    setConfirmClearPast(false);
   };
 
   // Scroll to current hour on mount
@@ -370,13 +371,33 @@ export const CalendarTool: React.FC = () => {
           </button>
 
           {/* Clear past events */}
-          <button
-            onClick={clearPastEvents}
-            className="inline-flex items-center h-8 px-2.5 text-xs font-medium rounded-lg bg-slate-800/80 hover:bg-rose-950/40 hover:text-rose-300 text-slate-400 border border-slate-800 transition-colors whitespace-nowrap shrink-0"
-            title={t('clear_past_events', 'Smazat události před dnešním dnem')}
-          >
-            {t('clear_past', 'Smazat minulé')}
-          </button>
+          {confirmClearPast ? (
+            <div className="inline-flex items-center gap-1 shrink-0">
+              <button
+                type="button"
+                onClick={clearPastEvents}
+                className="inline-flex items-center h-8 px-2.5 text-xs font-medium rounded-lg bg-rose-950/60 hover:bg-rose-900/70 text-rose-200 border border-rose-700/60 transition-colors whitespace-nowrap"
+              >
+                {t('confirm_delete_btn', 'Confirm')}
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmClearPast(false)}
+                className="inline-flex items-center h-8 px-2 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors whitespace-nowrap"
+              >
+                {t('cancel', 'Cancel')}
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setConfirmClearPast(true)}
+              className="inline-flex items-center h-8 px-2.5 text-xs font-medium rounded-lg bg-slate-800/80 hover:bg-rose-950/40 hover:text-rose-300 text-slate-400 border border-slate-800 transition-colors whitespace-nowrap shrink-0"
+              title={t('clear_past_events', 'Smazat události před dnešním dnem')}
+            >
+              {t('clear_past', 'Smazat minulé')}
+            </button>
+          )}
 
           {/* View mode switch */}
           <div className="grid grid-cols-3 sm:flex items-center gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800 text-xs w-full sm:w-auto">

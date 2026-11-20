@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useId, useEffect } from 'react';
+import * as yaml from 'js-yaml';
 import { Braces, Copy, Check, AlertCircle, ArrowRight } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
 import { consumePendingToolPipe } from '../../services/toolPipeService';
@@ -26,97 +27,12 @@ function parseScalar(raw: string): unknown {
 }
 
 function parseSimpleYaml(src: string): unknown {
-  const lines = src.split(/\r?\n/).filter(l => l.trim() && !l.trim().startsWith('#'));
-  if (!lines.length) return {};
-
-  interface Frame {
-    indent: number;
-    container: Record<string, unknown> | unknown[];
-  }
-  const rootIsArray = lines[0].trim().startsWith('- ');
-  const root: Record<string, unknown> | unknown[] = rootIsArray ? [] : {};
-  const stack: Frame[] = [{ indent: -1, container: root }];
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    const indent = line.search(/\S/);
-    const trimmed = line.trim();
-
-    while (stack.length > 1 && indent <= stack[stack.length - 1].indent) {
-      stack.pop();
-    }
-    const parent = stack[stack.length - 1].container;
-
-    if (trimmed.startsWith('- ')) {
-      const rest = trimmed.slice(2).trim();
-      if (Array.isArray(parent)) {
-        if (rest.includes(':')) {
-          const colonIdx = rest.indexOf(':');
-          const k = rest.slice(0, colonIdx).trim();
-          const v = rest.slice(colonIdx + 1).trim();
-          const obj: Record<string, unknown> = {};
-          obj[k] = v ? parseScalar(v) : {};
-          parent.push(obj);
-          stack.push({ indent, container: obj });
-        } else {
-          parent.push(parseScalar(rest));
-        }
-      }
-      continue;
-    }
-
-    const colonIdx = trimmed.indexOf(':');
-    if (colonIdx === -1) throw new Error('YAML_SYNTAX');
-    const key = trimmed.slice(0, colonIdx).trim().replace(/^['"]|['"]$/g, '');
-    const valRaw = trimmed.slice(colonIdx + 1).trim();
-
-    if (!Array.isArray(parent)) {
-      if (valRaw === '') {
-        const nextLine = lines[i + 1];
-        const nextIsArray = nextLine && nextLine.trim().startsWith('- ');
-        const child: Record<string, unknown> | unknown[] = nextIsArray ? [] : {};
-        parent[key] = child;
-        stack.push({ indent, container: child });
-      } else {
-        parent[key] = parseScalar(valRaw);
-      }
-    }
-  }
-  return root;
+  const parsed = yaml.load(src);
+  return parsed === undefined ? {} : parsed;
 }
 
-function toYaml(val: unknown, indent = 0): string {
-  const pad = '  '.repeat(indent);
-  if (val === null || val === undefined) return 'null';
-  if (typeof val === 'boolean' || typeof val === 'number') return String(val);
-  if (typeof val === 'string') {
-    if (/[:#\n]|^\s|\s$/.test(val) || val === '') return JSON.stringify(val);
-    return val;
-  }
-  if (Array.isArray(val)) {
-    if (!val.length) return '[]';
-    return val
-      .map(item => {
-        if (typeof item === 'object' && item !== null) {
-          const nested = toYaml(item, indent + 1);
-          const firstLineBreak = nested.indexOf('\n');
-          if (firstLineBreak === -1) return `${pad}- ${nested.trimStart()}`;
-          return `${pad}- ${nested.trimStart()}`;
-        }
-        return `${pad}- ${toYaml(item, indent + 1)}`;
-      })
-      .join('\n');
-  }
-  const entries = Object.entries(val as Record<string, unknown>);
-  if (!entries.length) return '{}';
-  return entries
-    .map(([k, v]) => {
-      if (typeof v === 'object' && v !== null && ((Array.isArray(v) && v.length > 0) || (!Array.isArray(v) && Object.keys(v).length > 0))) {
-        return `${pad}${k}:\n${toYaml(v, indent + 1)}`;
-      }
-      return `${pad}${k}: ${toYaml(v, indent)}`;
-    })
-    .join('\n');
+function toYaml(val: unknown): string {
+  return yaml.dump(val, { indent: 2, lineWidth: 100, noRefs: true }).trim();
 }
 
 function parseSimpleToml(src: string): Record<string, unknown> {

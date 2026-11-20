@@ -1,12 +1,20 @@
-import React, { useEffect, useState } from 'react';
-import { Download, Play, Copy, Table, Code } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Download, Play, Copy, Table, Code, AlertCircle } from 'lucide-react';
 import { saveTextWithDialog } from '../../services/fileSystemService';
 import { useI18n } from '../../i18n/context';
 import { consumePendingToolPipe } from '../../services/toolPipeService';
-import { button, secondary, input, panel, ToolHeader } from './shared';
+import { SendToToolButton } from '../../components/ui/SendToToolButton';
+import {
+  executeSqlQuery,
+  formatRowsAsCsv,
+  parseDatasetInput,
+  type SqlRow,
+} from '../../utils/sqlPlaygroundEngine';
+import { button, secondary, input, panel, ToolHeader, FilePicker } from './shared';
 
 /* ─────────────────────────────────────────────────────────────
-   7. SQL PLAYGROUND (Presets, WHERE operators, ORDER BY, LIMIT, Table & JSON view, CSV export)
+   SQL PLAYGROUND (JSON/CSV/TSV input, WHERE AND/OR/IN/LIKE/BETWEEN,
+   GROUP BY, HAVING, COUNT/SUM/AVG/MIN/MAX, DISTINCT, ORDER BY, LIMIT/OFFSET)
    ───────────────────────────────────────────────────────────── */
 const SQL_DATASETS = {
   employees: [
@@ -15,196 +23,269 @@ const SQL_DATASETS = {
     { id: 3, name: 'Cecilia Dvorak', department: 'Management', role: 'Product Manager', city: 'Prague', salary: 95000 },
     { id: 4, name: 'David Kucera', department: 'Development', role: 'Backend Engineer', city: 'Ostrava', salary: 78000 },
     { id: 5, name: 'Eva Horak', department: 'Marketing', role: 'Content Specialist', city: 'Brno', salary: 52000 },
+    { id: 6, name: 'Filip Kral', department: 'Development', role: 'QA Engineer', city: 'Prague', salary: 68000 },
   ],
   orders: [
-    { orderId: 101, customer: 'Petr Svoboda', item: 'Mechanical Keyboard', price: 2990, status: 'Delivered' },
-    { orderId: 102, customer: 'Jana Vesela', item: 'Gaming Monitor 27"', price: 8490, status: 'Shipped' },
-    { orderId: 103, customer: 'Karel Prochazka', item: 'Wireless Mouse', price: 1290, status: 'Processing' },
-    { orderId: 104, customer: 'Lucie Benes', item: 'USB-C Dock 100W', price: 2490, status: 'Delivered' },
+    { orderId: 101, customer: 'Petr Svoboda', item: 'Mechanical Keyboard', category: 'Peripherals', price: 2990, status: 'Delivered' },
+    { orderId: 102, customer: 'Jana Vesela', item: 'Gaming Monitor 27"', category: 'Displays', price: 8490, status: 'Shipped' },
+    { orderId: 103, customer: 'Karel Prochazka', item: 'Wireless Mouse', category: 'Peripherals', price: 1290, status: 'Processing' },
+    { orderId: 104, customer: 'Lucie Benes', item: 'USB-C Dock 100W', category: 'Accessories', price: 2490, status: 'Delivered' },
+    { orderId: 105, customer: 'Tomas Marek', item: '4K Webcam', category: 'Peripherals', price: 3190, status: 'Delivered' },
   ],
+  csvSample: `product,region,units,revenue
+Laptop,EU,14,21000
+Monitor,US,28,11200
+Keyboard,EU,65,6500
+Laptop,US,19,28500
+Monitor,EU,22,8800`,
 };
 
 export const SqlPlaygroundTool: React.FC = () => {
   const { t } = useI18n();
-  const [data, setData] = useState(JSON.stringify(SQL_DATASETS.employees, null, 2));
-  const [query, setQuery] = useState("SELECT name, role, salary FROM data WHERE city = 'Prague' ORDER BY salary DESC");
-  const [rowsResult, setRowsResult] = useState<Record<string, unknown>[]>([]);
+  const [data, setData] = useState(() => JSON.stringify(SQL_DATASETS.employees, null, 2));
+  const [query, setQuery] = useState(
+    "SELECT department, COUNT(*) AS headcount, AVG(salary) AS avg_salary FROM data GROUP BY department ORDER BY avg_salary DESC"
+  );
+  const [rowsResult, setRowsResult] = useState<SqlRow[]>([]);
   const [rawOutput, setRawOutput] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
+  const [elapsedMs, setElapsedMs] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<'table' | 'json'>('table');
+  const [copied, setCopied] = useState(false);
 
-  const executeSql = () => {
+  const datasetMeta = useMemo(() => {
     try {
-      const rows = JSON.parse(data) as Record<string, unknown>[];
-      if (!Array.isArray(rows)) throw new Error(t('data_must_be_array', 'Input data must be an array of JSON objects.'));
+      const parsed = parseDatasetInput(data);
+      return { columns: parsed.columns, format: parsed.format, totalRows: parsed.rows.length, parseError: '' };
+    } catch (e) {
+      return {
+        columns: [] as string[],
+        format: 'json' as const,
+        totalRows: 0,
+        parseError: e instanceof Error ? e.message : '',
+      };
+    }
+  }, [data]);
 
-      // Parse SQL statement: SELECT [fields] FROM data [WHERE ...] [ORDER BY ...] [LIMIT ...]
-      const regex = /select\s+(.+?)\s+from\s+data(?:\s+where\s+(.+?))?(?:\s+order\s+by\s+(.+?)(?:\s+(asc|desc))?)?(?:\s+limit\s+(\d+))?$/i;
-      const match = query.trim().match(regex);
-      if (!match) {
-        throw new Error(
-          t('supported_sql_syntax', 'Supported syntax: SELECT col1, col2 FROM data [WHERE col = val] [ORDER BY col [ASC|DESC]] [LIMIT n]')
-        );
-      }
-
-      const selectClause = match[1].trim();
-      const whereClause = match[2]?.trim();
-      const orderByField = match[3]?.trim();
-      const orderDir = (match[4] || 'asc').toLowerCase();
-      const limitVal = match[5] ? parseInt(match[5], 10) : undefined;
-
-      // 1. Filter
-      let filtered = rows.filter(row => {
-        if (!whereClause) return true;
-
-        // LIKE '%term%'
-        const likeMatch = whereClause.match(/(\w+)\s+like\s+['"]%?([^%]+)%?['"]/i);
-        if (likeMatch) {
-          const val = String(row[likeMatch[1]] || '').toLowerCase();
-          return val.includes(likeMatch[2].toLowerCase());
-        }
-
-        // Comparison operators: >=, <=, !=, <>, >, <, =
-        const compMatch = whereClause.match(/(\w+)\s*(>=|<=|!=|<>|>|<|=)\s*['"]?([^'"]+)['"]?/);
-        if (compMatch) {
-          const key = compMatch[1];
-          const op = compMatch[2];
-          const targetStr = compMatch[3];
-          const rowVal = row[key];
-
-          const isNum = !isNaN(Number(targetStr)) && typeof rowVal === 'number';
-          const rVal = isNum ? Number(rowVal) : String(rowVal ?? '');
-          const tVal = isNum ? Number(targetStr) : targetStr;
-
-          if (op === '=' || op === '==') return rVal === tVal;
-          if (op === '!=' || op === '<>') return rVal !== tVal;
-          if (op === '>') return rVal > tVal;
-          if (op === '<') return rVal < tVal;
-          if (op === '>=') return rVal >= tVal;
-          if (op === '<=') return rVal <= tVal;
-        }
-
-        return true;
-      });
-
-      // 2. Order by
-      if (orderByField) {
-        filtered.sort((a, b) => {
-          const va = a[orderByField];
-          const vb = b[orderByField];
-          if (typeof va === 'number' && typeof vb === 'number') {
-            return orderDir === 'desc' ? vb - va : va - vb;
-          }
-          const sa = String(va ?? '');
-          const sb = String(vb ?? '');
-          return orderDir === 'desc' ? sb.localeCompare(sa) : sa.localeCompare(sb);
-        });
-      }
-
-      // 3. Limit
-      if (typeof limitVal === 'number') {
-        filtered = filtered.slice(0, limitVal);
-      }
-
-      // 4. Projection
-      const fields = selectClause === '*' ? null : selectClause.split(',').map(f => f.trim());
-      const projected = fields
-        ? filtered.map(row => Object.fromEntries(fields.filter(f => f in row).map(f => [f, row[f]])))
-        : filtered;
-
-      setRowsResult(projected);
-      setRawOutput(JSON.stringify(projected, null, 2));
+  const runQueryWith = (sourceData: string, sourceQuery: string) => {
+    setErrorMsg('');
+    try {
+      const parsed = parseDatasetInput(sourceData);
+      const res = executeSqlQuery(parsed.rows, sourceQuery);
+      setRowsResult(res.rows);
+      setRawOutput(JSON.stringify(res.rows, null, 2));
+      setElapsedMs(res.elapsedMs);
     } catch (e) {
       setRowsResult([]);
-      setRawOutput(e instanceof Error ? e.message : t('err_sql_exec', 'Error executing query.'));
+      setElapsedMs(null);
+      const msg = e instanceof Error ? e.message : t('err_sql_exec', 'Error executing query.');
+      setErrorMsg(msg);
+      setRawOutput(msg);
     }
+  };
+
+  const executeSql = () => {
+    runQueryWith(data, query);
   };
 
   useEffect(() => {
     const piped = consumePendingToolPipe('sql-playground');
     if (piped) {
       if (piped.kind === 'text' && typeof piped.text === 'string') {
+        const nextQuery = 'SELECT * FROM data LIMIT 50';
         setData(piped.text);
-        setQuery('SELECT * FROM data LIMIT 20');
-      } else if (piped.kind === 'file' && piped.file) {
-        piped.file.text().then(txt => {
+        setQuery(nextQuery);
+        runQueryWith(piped.text, nextQuery);
+        return;
+      }
+      if (piped.kind === 'file' && piped.file) {
+        void piped.file.text().then(txt => {
+          const nextQuery = 'SELECT * FROM data LIMIT 50';
           setData(txt);
-          setQuery('SELECT * FROM data LIMIT 20');
+          setQuery(nextQuery);
+          runQueryWith(txt, nextQuery);
         });
+        return;
       }
     }
-    executeSql();
+    runQueryWith(data, query);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const loadPreset = (nextData: string, nextQuery: string) => {
+    setData(nextData);
+    setQuery(nextQuery);
+    runQueryWith(nextData, nextQuery);
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    void file.text().then(txt => {
+      const nextQuery = 'SELECT * FROM data LIMIT 50';
+      setData(txt);
+      setQuery(nextQuery);
+      runQueryWith(txt, nextQuery);
+    });
+  };
 
   const exportCsv = () => {
     if (!rowsResult.length) return;
-    const headers = Object.keys(rowsResult[0]);
-    const csvLines = [headers.join(';')];
-    rowsResult.forEach(row => {
-      csvLines.push(headers.map(h => JSON.stringify(row[h] ?? '')).join(';'));
-    });
-    void saveTextWithDialog('query-result.csv', csvLines.join('\n'), [{ name: 'CSV (*.csv)', extensions: ['csv'] }], t('save_csv', 'Save CSV'));
+    const csv = formatRowsAsCsv(rowsResult);
+    void saveTextWithDialog('query-result.csv', csv, [{ name: 'CSV (*.csv)', extensions: ['csv'] }], t('save_csv', 'Save CSV'));
+  };
+
+  const handleCopy = () => {
+    if (!rawOutput) return;
+    void navigator.clipboard.writeText(rawOutput);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1500);
   };
 
   return (
     <div className="space-y-5">
-      <ToolHeader title="SQL Playground" description={t('sql_playground_desc', 'Query JSON data locally with SELECT ... FROM data syntax and table view.')} />
-      <div className="grid md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <label className="text-xs text-slate-300 font-medium block">
-              {t('json_data_source', 'Input JSON Table (data):')}
+      <ToolHeader
+        title="SQL Playground"
+        description={t('sql_playground_desc', 'Query JSON or CSV/TSV tables locally with WHERE (AND/OR/IN/LIKE/BETWEEN), GROUP BY, HAVING, aggregates, ORDER BY, and LIMIT/OFFSET.')}
+      />
+
+      <div className="grid lg:grid-cols-2 gap-4">
+        <div className="space-y-2.5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <label className="text-xs text-slate-300 font-medium">
+              {t('json_data_source', 'Input Table (JSON / CSV / TSV):')}{' '}
+              <span className="text-slate-500 font-mono">
+                ({datasetMeta.format.toUpperCase()} · {datasetMeta.totalRows} {t('sql_rows', 'rows')})
+              </span>
             </label>
             <div className="flex flex-wrap gap-1.5">
               <button
                 type="button"
                 className="text-[11px] px-2 py-0.5 rounded bg-indigo-600/20 hover:bg-indigo-600/35 border border-indigo-500/30 text-indigo-300 font-medium"
-                onClick={() => {
-                  setData(JSON.stringify(SQL_DATASETS.employees, null, 2));
-                  setQuery("SELECT name, role, salary FROM data WHERE city = 'Prague' ORDER BY salary DESC");
-                }}
+                onClick={() =>
+                  loadPreset(
+                    JSON.stringify(SQL_DATASETS.employees, null, 2),
+                    "SELECT department, COUNT(*) AS headcount, AVG(salary) AS avg_salary FROM data GROUP BY department ORDER BY avg_salary DESC"
+                  )
+                }
               >
-                {t('load_sample_btn', 'Load Sample')}
+                {t('sql_preset_group_by', 'GROUP BY Sample')}
               </button>
               <button
                 type="button"
                 className="text-[11px] px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-indigo-400"
-                onClick={() => {
-                  setData(JSON.stringify(SQL_DATASETS.employees, null, 2));
-                  setQuery("SELECT name, role, salary FROM data WHERE salary > 60000 ORDER BY salary DESC");
-                }}
+                onClick={() =>
+                  loadPreset(
+                    JSON.stringify(SQL_DATASETS.employees, null, 2),
+                    "SELECT name, role, salary FROM data WHERE city IN ('Prague', 'Brno') AND salary >= 65000 ORDER BY salary DESC"
+                  )
+                }
               >
                 {t('table_employees', 'Employees')}
               </button>
               <button
                 type="button"
                 className="text-[11px] px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-indigo-400"
-                onClick={() => {
-                  setData(JSON.stringify(SQL_DATASETS.orders, null, 2));
-                  setQuery("SELECT orderId, customer, price, status FROM data WHERE price > 2000");
-                }}
+                onClick={() =>
+                  loadPreset(
+                    JSON.stringify(SQL_DATASETS.orders, null, 2),
+                    "SELECT category, COUNT(*) AS orders, SUM(price) AS total_sales FROM data WHERE status != 'Processing' GROUP BY category ORDER BY total_sales DESC"
+                  )
+                }
               >
                 {t('table_orders', 'Orders')}
               </button>
+              <button
+                type="button"
+                className="text-[11px] px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-emerald-400"
+                onClick={() =>
+                  loadPreset(
+                    SQL_DATASETS.csvSample,
+                    "SELECT region, SUM(units) AS total_units, SUM(revenue) AS total_revenue FROM data GROUP BY region ORDER BY total_revenue DESC"
+                  )
+                }
+              >
+                CSV
+              </button>
             </div>
           </div>
-          <textarea className={input + ' min-h-72 font-mono text-xs'} value={data} onChange={e => setData(e.target.value)} />
+
+          <textarea
+            className={input + ' min-h-72 font-mono text-xs leading-relaxed'}
+            value={data}
+            onChange={e => setData(e.target.value)}
+            placeholder={t('sql_data_placeholder', 'Paste a JSON array of objects, CSV, or TSV…')}
+          />
+
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <FilePicker
+              id="sql-dataset-upload"
+              label={t('sql_import_file', 'Import .json / .csv')}
+              accept=".json,.csv,.tsv,text/csv,application/json,text/plain"
+              onChange={handleFileUpload}
+            />
+          </div>
+
+          {datasetMeta.columns.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1 text-[11px]">
+              <span className="text-slate-500 mr-1">{t('sql_columns', 'Columns:')}</span>
+              {datasetMeta.columns.map(col => (
+                <button
+                  key={col}
+                  type="button"
+                  onClick={() => setQuery(q => `${q} ${col}`)}
+                  className="px-1.5 py-0.5 rounded bg-slate-950 border border-slate-800 hover:border-indigo-500 text-slate-300 font-mono"
+                  title={t('sql_click_insert_col', 'Click to append column to query')}
+                >
+                  {col}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="space-y-3">
           <div>
-            <label className="text-xs text-slate-300 font-medium block mb-1">
-              {t('sql_query', 'SQL Query:')}
-            </label>
-            <div className="flex gap-2">
-              <input className={input + ' font-mono text-xs'} value={query} onChange={e => setQuery(e.target.value)} onKeyDown={e => e.key === 'Enter' && executeSql()} />
-              <button className={button} onClick={executeSql}>
-                <Play className="inline w-3.5 h-3.5 mr-1" /> {t('run_query', 'Run')}
-              </button>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-xs text-slate-300 font-medium">{t('sql_query', 'SQL Query:')}</label>
+              {elapsedMs !== null && (
+                <span className="text-[11px] font-mono text-emerald-400">
+                  {rowsResult.length} {t('sql_rows', 'rows')} · {elapsedMs} ms
+                </span>
+              )}
+            </div>
+            <div className="space-y-2">
+              <textarea
+                className={input + ' min-h-20 font-mono text-xs leading-relaxed'}
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+                onKeyDown={e => {
+                  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                    e.preventDefault();
+                    executeSql();
+                  }
+                }}
+              />
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="text-[11px] text-slate-500">
+                  {t('sql_syntax_hint', 'Supports SELECT [DISTINCT], AS, COUNT/SUM/AVG/MIN/MAX, WHERE (AND/OR/IN/LIKE/BETWEEN), GROUP BY, HAVING, ORDER BY, LIMIT, OFFSET')}
+                </span>
+                <button type="button" className={button} onClick={executeSql}>
+                  <Play className="inline w-3.5 h-3.5 mr-1" /> {t('run_query', 'Run')}
+                </button>
+              </div>
             </div>
           </div>
 
+          {errorMsg && (
+            <div className="p-2.5 bg-rose-950/40 border border-rose-800 text-rose-300 text-xs rounded-lg flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+              <span className="font-mono break-words">{errorMsg}</span>
+            </div>
+          )}
+
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800">
                 <button
                   type="button"
@@ -225,15 +306,20 @@ export const SqlPlaygroundTool: React.FC = () => {
               </div>
 
               {rowsResult.length > 0 && (
-                <div className="flex gap-2">
-                  <button className={secondary} onClick={() => navigator.clipboard.writeText(rawOutput)}>
+                <div className="flex flex-wrap gap-2">
+                  <button type="button" className={secondary} onClick={handleCopy}>
                     <Copy className="inline w-3.5 h-3.5 mr-1" />
-                    {t('copy', 'Copy')}
+                    {copied ? t('copied', 'Copied!') : t('copy', 'Copy')}
                   </button>
-                  <button className={secondary} onClick={exportCsv}>
+                  <button type="button" className={secondary} onClick={exportCsv}>
                     <Download className="inline w-3.5 h-3.5 mr-1" />
                     CSV
                   </button>
+                  <SendToToolButton
+                    sourceToolId="sql-playground"
+                    kind="text"
+                    getText={() => rawOutput}
+                  />
                 </div>
               )}
             </div>
@@ -256,7 +342,7 @@ export const SqlPlaygroundTool: React.FC = () => {
                         <tr key={idx} className="border-b border-slate-800/60 hover:bg-slate-800/40">
                           {Object.values(row).map((val, cidx) => (
                             <td key={cidx} className="p-2.5 text-slate-300 font-mono">
-                              {String(val ?? '')}
+                              {val === null || val === undefined ? 'NULL' : String(val)}
                             </td>
                           ))}
                         </tr>

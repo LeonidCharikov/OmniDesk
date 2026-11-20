@@ -17,7 +17,7 @@ export const WORKSPACE_PRESETS: WorkspacePreset[] = [
     defaultName: 'Developer Workstation',
     descKey: 'preset_developer_desc',
     defaultDesc: 'Pins JSON, Diff, Regex, Hash, Cron & API tools with quick notes, tasks, calculator, and system gauge widgets.',
-    favorites: ['json-formatter', 'text-diff', 'hash-checksum-suite', 'regex-encoder', 'api-tester', 'encoding-suite'],
+    favorites: ['json-formatter', 'text-diff', 'hash-checksum-suite', 'regex-builder', 'api-tester', 'encoding-suite'],
     enabledWidgets: ['clock', 'notes', 'tasks', 'calc', 'system'],
   } as WorkspacePreset,
   {

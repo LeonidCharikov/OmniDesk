@@ -56,6 +56,67 @@ export const NumberBaseConverterTool: React.FC = () => {
   const [bwShift, setBwShift] = useState(2);
   const [bwBase, setBwBase] = useState<2 | 10 | 16>(16);
 
+  // UTF-8 Text <-> Bytes converter state (absorbed from Binary & Hex Converter)
+  const [utf8Text, setUtf8Text] = useState('OmniDesk');
+  const [utf8Hex, setUtf8Hex] = useState('4f 6d 6e 69 44 65 73 6b');
+  const [utf8Bin, setUtf8Bin] = useState('01001111 01101101 01101110 01101001 01000100 01100101 01110011 01101011');
+  const [utf8Dec, setUtf8Dec] = useState('79 109 110 105 68 101 115 107');
+  const [utf8B64, setUtf8B64] = useState('T21uaURlc2s=');
+
+  const syncFromBytes = (bytes: Uint8Array, source: 'text' | 'hex' | 'bin' | 'b64') => {
+    if (source !== 'text') setUtf8Text(new TextDecoder('utf-8', { fatal: false }).decode(bytes));
+    if (source !== 'hex') setUtf8Hex(Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join(' '));
+    if (source !== 'bin') setUtf8Bin(Array.from(bytes).map(b => b.toString(2).padStart(8, '0')).join(' '));
+    setUtf8Dec(Array.from(bytes).map(b => b.toString(10)).join(' '));
+    if (source !== 'b64') {
+      try {
+        let binStrLocal = '';
+        for (let i = 0; i < bytes.length; i++) binStrLocal += String.fromCharCode(bytes[i]);
+        setUtf8B64(btoa(binStrLocal));
+      } catch {
+        setUtf8B64('');
+      }
+    }
+  };
+
+  const handleUtf8TextChange = (val: string) => {
+    setUtf8Text(val);
+    syncFromBytes(new TextEncoder().encode(val), 'text');
+  };
+
+  const handleUtf8HexChange = (val: string) => {
+    setUtf8Hex(val);
+    const clean = val.replace(/[^0-9a-fA-F]/g, '');
+    const out: number[] = [];
+    for (let i = 0; i + 1 < clean.length; i += 2) {
+      out.push(parseInt(clean.slice(i, i + 2), 16));
+    }
+    syncFromBytes(new Uint8Array(out), 'hex');
+  };
+
+  const handleUtf8BinChange = (val: string) => {
+    setUtf8Bin(val);
+    const tokens = val.trim().split(/\s+/).filter(Boolean);
+    const out: number[] = [];
+    for (const tok of tokens) {
+      const n = parseInt(tok, 2);
+      if (!Number.isNaN(n)) out.push(n & 0xff);
+    }
+    syncFromBytes(new Uint8Array(out), 'bin');
+  };
+
+  const handleUtf8B64Change = (val: string) => {
+    setUtf8B64(val);
+    try {
+      const raw = atob(val.trim());
+      const bytes = new Uint8Array(raw.length);
+      for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+      syncFromBytes(bytes, 'b64');
+    } catch {
+      // ignore partial base64 while typing
+    }
+  };
+
   const decId = useId();
   const binId = useId();
   const octId = useId();
@@ -365,6 +426,98 @@ export const NumberBaseConverterTool: React.FC = () => {
         ) : (
           <p className="text-xs text-rose-400">{t('num_bw_invalid', 'Enter valid numbers (supports 0x, 0b, 0o prefixes).')}</p>
         )}
+      </div>
+
+      {/* UTF-8 Text <-> Bytes (Hex / Bin / Dec / Base64) */}
+      <div className="p-5 rounded-2xl bg-slate-900/40 border border-slate-800 space-y-4">
+        <div>
+          <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+            {t('num_utf8_bytes_title', 'UTF-8 Text ↔ Byte Representations (HEX / BIN / DEC / Base64)')}
+          </h3>
+        </div>
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-slate-300 font-medium">{t('bin_hex_section_text', 'Text (UTF-8)')}</span>
+              <button type="button" onClick={() => copyVal('utf8_text', utf8Text)} className="text-indigo-400 hover:text-indigo-300 inline-flex items-center gap-1">
+                {copiedKey === 'utf8_text' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                {copiedKey === 'utf8_text' ? t('copied', 'Copied') : t('copy', 'Copy')}
+              </button>
+            </div>
+            <textarea
+              rows={2}
+              value={utf8Text}
+              onChange={e => handleUtf8TextChange(e.target.value)}
+              className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono text-slate-200 focus:outline-none focus:border-indigo-500"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-slate-300 font-medium">{t('bin_hex_section_hex', 'Hexadecimal (HEX)')}</span>
+                <button type="button" onClick={() => copyVal('utf8_hex', utf8Hex)} className="text-indigo-400 hover:text-indigo-300 inline-flex items-center gap-1">
+                  {copiedKey === 'utf8_hex' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedKey === 'utf8_hex' ? t('copied', 'Copied') : t('copy', 'Copy')}
+                </button>
+              </div>
+              <textarea
+                rows={2}
+                value={utf8Hex}
+                onChange={e => handleUtf8HexChange(e.target.value)}
+                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono text-amber-300 focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-slate-300 font-medium">{t('bin_hex_section_bin', 'Binary (BIN)')}</span>
+                <button type="button" onClick={() => copyVal('utf8_bin', utf8Bin)} className="text-indigo-400 hover:text-indigo-300 inline-flex items-center gap-1">
+                  {copiedKey === 'utf8_bin' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedKey === 'utf8_bin' ? t('copied', 'Copied') : t('copy', 'Copy')}
+                </button>
+              </div>
+              <textarea
+                rows={2}
+                value={utf8Bin}
+                onChange={e => handleUtf8BinChange(e.target.value)}
+                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono text-emerald-300 focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-slate-300 font-medium">{t('bin_hex_section_ascii', 'Decimal Bytes (0–255)')}</span>
+                <button type="button" onClick={() => copyVal('utf8_dec', utf8Dec)} className="text-indigo-400 hover:text-indigo-300 inline-flex items-center gap-1">
+                  {copiedKey === 'utf8_dec' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedKey === 'utf8_dec' ? t('copied', 'Copied') : t('copy', 'Copy')}
+                </button>
+              </div>
+              <input
+                type="text"
+                readOnly
+                value={utf8Dec}
+                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono text-sky-300"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-slate-300 font-medium">{t('bin_hex_section_base64', 'Base64')}</span>
+                <button type="button" onClick={() => copyVal('utf8_b64', utf8B64)} className="text-indigo-400 hover:text-indigo-300 inline-flex items-center gap-1">
+                  {copiedKey === 'utf8_b64' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedKey === 'utf8_b64' ? t('copied', 'Copied') : t('copy', 'Copy')}
+                </button>
+              </div>
+              <input
+                type="text"
+                value={utf8B64}
+                onChange={e => handleUtf8B64Change(e.target.value)}
+                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono text-purple-300 focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

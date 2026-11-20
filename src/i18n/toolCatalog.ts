@@ -3,22 +3,6 @@ import { SupportedLanguage } from './context';
 type CatalogText = Record<SupportedLanguage, string>;
 
 const catalog: Record<string, { title: CatalogText; desc: CatalogText }> = {
-  'regex-encoder': {
-    title: {
-      cs: 'RegEx Tester & Base64 / URL',
-      en: 'RegEx Tester & Base64 / URL',
-      de: 'RegEx-Tester & Base64 / URL',
-      es: 'Probador de RegEx y Base64 / URL',
-      ru: 'Тестер RegEx и Base64 / URL',
-    },
-    desc: {
-      cs: 'Testování regulárních výrazů se skupinami a obousměrné kódování Base64 i URL.',
-      en: 'Test regular expressions with capture groups and encode/decode Base64 or URL strings.',
-      de: 'Reguläre Ausdrücke mit Erfassungsgruppen testen sowie Base64 und URLs kodieren/dekodieren.',
-      es: 'Prueba expresiones regulares con grupos de captura y codifica/decodifica Base64 o URL.',
-      ru: 'Тестирование регулярных выражений с группами захвата и кодирование Base64 / URL.',
-    },
-  },
   'json-formatter': {
     title: {
       cs: 'JSON Formátovač & Validátor',
@@ -141,10 +125,6 @@ const catalog: Record<string, { title: CatalogText; desc: CatalogText }> = {
     title: { cs: 'Generátor faktur', en: 'Invoice Generator', de: 'Rechnungsgenerator', es: 'Generador de facturas', ru: 'Генератор счетов' },
     desc: { cs: 'Vytvořte HTML fakturu s údaji dodavatele, odběratele a položkami.', en: 'Create an HTML invoice with supplier, customer, and line-item details.', de: 'HTML-Rechnung mit Lieferanten-, Kunden- und Positionsdaten erstellen.', es: 'Crea una factura HTML con datos del proveedor, cliente y partidas.', ru: 'Создавайте HTML-счет с данными поставщика, клиента и позициями.' },
   },
-  'file-crypto': {
-    title: { cs: 'Hashování a šifrování souborů', en: 'File Hashing & Encryption', de: 'Datei-Hashing und Verschlüsselung', es: 'Hash y cifrado de archivos', ru: 'Хеширование и шифрование файлов' },
-    desc: { cs: 'Vypočítejte SHA-256 nebo zašifrujte text či soubor heslem pomocí AES-GCM.', en: 'Calculate SHA-256 or encrypt text or file content with password-derived AES-GCM.', de: 'SHA-256 berechnen oder Text bzw. Dateiinhalte mit passwortbasiertem AES-GCM verschlüsseln.', es: 'Calcula SHA-256 o cifra texto o archivos con AES-GCM derivado de contraseña.', ru: 'Вычисляйте SHA-256 или шифруйте текст и файлы с помощью AES-GCM и пароля.' },
-  },
   'jwt-decoder': {
     title: { cs: 'Dekodér JWT', en: 'JWT Decoder', de: 'JWT-Dekodierer', es: 'Decodificador JWT', ru: 'Декодер JWT' },
     desc: { cs: 'Lokálně dekódujte hlavičku a obsah JWT; podpis se neověřuje.', en: 'Decode JWT header and payload locally; the signature is not verified.', de: 'JWT-Header und Payload lokal dekodieren; die Signatur wird nicht verifiziert.', es: 'Decodifica localmente el encabezado y payload JWT; la firma no se verifica.', ru: 'Локально декодируйте заголовок и полезную нагрузку JWT; подпись не проверяется.' },
@@ -180,26 +160,6 @@ const catalog: Record<string, { title: CatalogText; desc: CatalogText }> = {
   'geo-gps': {
     title: { cs: 'Geografický a GPS převodník', en: 'Geographic & GPS Converter', de: 'Geografischer und GPS-Konverter', es: 'Convertidor geográfico y GPS', ru: 'Географический и GPS-конвертер' },
     desc: { cs: 'Převeďte desetinnou šířku a délku na zápis ve stupních, minutách a sekundách.', en: 'Convert decimal latitude and longitude to degrees, minutes, and seconds notation.', de: 'Dezimale Breiten- und Längengrade in Grad-, Minuten- und Sekundenformat umwandeln.', es: 'Convierte latitud y longitud decimales a grados, minutos y segundos.', ru: 'Преобразуйте десятичные координаты широты и долготы в градусы, минуты и секунды.' },
-  },
-  'periodic-finance': {
-    title: { cs: 'Periodický finanční kalkulátor', en: 'Periodic Finance Calculator', de: 'Periodischer Finanzrechner', es: 'Calculadora financiera periódica', ru: 'Периодический финансовый калькулятор' },
-    desc: { cs: 'Vypočítejte složené úročení z jistiny, roční sazby a počtu úročení.', en: 'Calculate compound interest from principal, annual rate, and compounding periods.', de: 'Zinseszins aus Kapital, Jahreszins und Verzinsungsperioden berechnen.', es: 'Calcula el interés compuesto a partir del capital, tasa anual y periodos.', ru: 'Рассчитайте сложный процент по сумме, годовой ставке и периодам начисления.' },
-  },
-  'binary-hex': {
-    title: { cs: 'Binární a hexadecimální převodník', en: 'Binary & Hex Converter', de: 'Binär- und Hex-Konverter', es: 'Convertidor binario y hexadecimal', ru: 'Двоичный и шестнадцатеричный конвертер' },
-    desc: { cs: 'Převeďte text UTF-8 na bajtový hexadecimální a binární výstup.', en: 'Convert UTF-8 text into byte-level hexadecimal and binary output.', de: 'UTF-8-Text in byteweise Hexadezimal- und Binärausgabe umwandeln.', es: 'Convierte texto UTF-8 a salida hexadecimal y binaria por bytes.', ru: 'Преобразуйте текст UTF-8 в побайтовый шестнадцатеричный и двоичный вид.' },
-  },
-  'time-tracker': {
-    title: { cs: 'Sledování času', en: 'Time Tracker', de: 'Zeiterfassung', es: 'Registro de tiempo', ru: 'Учет времени' },
-    desc: { cs: 'Sledujte čas více aktivit současně; data zůstávají v této relaci.', en: 'Track multiple activities at once; data remains in this session.', de: 'Mehrere Aktivitäten gleichzeitig verfolgen; die Daten bleiben in dieser Sitzung.', es: 'Registra varias actividades a la vez; los datos permanecen en esta sesión.', ru: 'Отслеживайте несколько действий одновременно; данные остаются в текущем сеансе.' },
-  },
-  'recurring-events': {
-    title: { cs: 'Opakované události', en: 'Recurring Events', de: 'Wiederkehrende Ereignisse', es: 'Eventos recurrentes', ru: 'Повторяющиеся события' },
-    desc: { cs: 'Naplánujte týdenní událost a zobrazte její následující výskyty.', en: 'Schedule a weekly event and display its upcoming occurrences.', de: 'Ein wöchentliches Ereignis planen und kommende Vorkommen anzeigen.', es: 'Programa un evento semanal y muestra sus próximas apariciones.', ru: 'Запланируйте еженедельное событие и просмотрите следующие вхождения.' },
-  },
-  'workday-calculator': {
-    title: { cs: 'Pracovní dny a dovolená', en: 'Workdays & Vacation', de: 'Arbeitstage und Urlaub', es: 'Días laborables y vacaciones', ru: 'Рабочие дни и отпуск' },
-    desc: { cs: 'Přičtěte pracovní dny k datu a ignorujte víkendy.', en: 'Add workdays to a date while ignoring weekends.', de: 'Arbeitstage zu einem Datum addieren und Wochenenden ignorieren.', es: 'Añade días laborables a una fecha ignorando los fines de semana.', ru: 'Добавляйте рабочие дни к дате, не учитывая выходные.' },
   },
   'hash-checksum-suite': {
     title: {
@@ -855,6 +815,118 @@ const catalog: Record<string, { title: CatalogText; desc: CatalogText }> = {
       de: 'Klassischer HSV-Farbwähler, interaktiver Farbkreis, Tailwind-/Material-/Web-Safe-Tabellen, Harmonien & RGB <-> Hex-Konverter.',
       es: 'Selector HSV clásico, rueda de color interactiva, tablas Tailwind/Material/Web-Safe, armonías y conversor RGB <-> Hex.',
       ru: 'Классический HSV-выбор, интерактивный цветовой круг, таблицы Tailwind/Material/Web-Safe, гармонии и конвертер RGB <-> Hex.',
+    },
+  },
+  'csv-editor': {
+    title: {
+      cs: 'CSV & Spreadsheet Grid Editor',
+      en: 'CSV & Spreadsheet Grid Editor',
+      de: 'CSV & Spreadsheet Grid Editor',
+      es: 'CSV & Spreadsheet Grid Editor',
+      ru: 'CSV & Spreadsheet Grid Editor',
+    },
+    desc: {
+      cs: 'Inspect, edit, filter, sort, deduplicate, and compute column stats for CSV/TSV files with JSON & Markdown export.',
+      en: 'Inspect, edit, filter, sort, deduplicate, and compute column stats for CSV/TSV files with JSON & Markdown export.',
+      de: 'Inspect, edit, filter, sort, deduplicate, and compute column stats for CSV/TSV files with JSON & Markdown export.',
+      es: 'Inspect, edit, filter, sort, deduplicate, and compute column stats for CSV/TSV files with JSON & Markdown export.',
+      ru: 'Inspect, edit, filter, sort, deduplicate, and compute column stats for CSV/TSV files with JSON & Markdown export.',
+    },
+  },
+  'svg-optimizer': {
+    title: {
+      cs: 'SVG Inspector & Optimizer',
+      en: 'SVG Inspector & Optimizer',
+      de: 'SVG Inspector & Optimizer',
+      es: 'SVG Inspector & Optimizer',
+      ru: 'SVG Inspector & Optimizer',
+    },
+    desc: {
+      cs: 'Sanitize and minify SVG markup, recolor fills/strokes, preview safely, and convert to React TSX or PNG.',
+      en: 'Sanitize and minify SVG markup, recolor fills/strokes, preview safely, and convert to React TSX or PNG.',
+      de: 'Sanitize and minify SVG markup, recolor fills/strokes, preview safely, and convert to React TSX or PNG.',
+      es: 'Sanitize and minify SVG markup, recolor fills/strokes, preview safely, and convert to React TSX or PNG.',
+      ru: 'Sanitize and minify SVG markup, recolor fills/strokes, preview safely, and convert to React TSX or PNG.',
+    },
+  },
+  'css-visual-studio': {
+    title: {
+      cs: 'CSS Visual Generator Studio',
+      en: 'CSS Visual Generator Studio',
+      de: 'CSS Visual Generator Studio',
+      es: 'CSS Visual Generator Studio',
+      ru: 'CSS Visual Generator Studio',
+    },
+    desc: {
+      cs: 'Interactive visual builder for CSS gradients, layered box shadows, glassmorphism, border radius, and grid layouts.',
+      en: 'Interactive visual builder for CSS gradients, layered box shadows, glassmorphism, border radius, and grid layouts.',
+      de: 'Interactive visual builder for CSS gradients, layered box shadows, glassmorphism, border radius, and grid layouts.',
+      es: 'Interactive visual builder for CSS gradients, layered box shadows, glassmorphism, border radius, and grid layouts.',
+      ru: 'Interactive visual builder for CSS gradients, layered box shadows, glassmorphism, border radius, and grid layouts.',
+    },
+  },
+  'mock-data-generator': {
+    title: {
+      cs: 'Mock Data & Test Dataset Generator',
+      en: 'Mock Data & Test Dataset Generator',
+      de: 'Mock Data & Test Dataset Generator',
+      es: 'Mock Data & Test Dataset Generator',
+      ru: 'Mock Data & Test Dataset Generator',
+    },
+    desc: {
+      cs: 'Generate deterministic seeded JSON, CSV, or SQL INSERT test datasets locally with custom schemas.',
+      en: 'Generate deterministic seeded JSON, CSV, or SQL INSERT test datasets locally with custom schemas.',
+      de: 'Generate deterministic seeded JSON, CSV, or SQL INSERT test datasets locally with custom schemas.',
+      es: 'Generate deterministic seeded JSON, CSV, or SQL INSERT test datasets locally with custom schemas.',
+      ru: 'Generate deterministic seeded JSON, CSV, or SQL INSERT test datasets locally with custom schemas.',
+    },
+  },
+  'snippet-vault': {
+    title: {
+      cs: 'Local Code & Shell Snippet Vault',
+      en: 'Local Code & Shell Snippet Vault',
+      de: 'Local Code & Shell Snippet Vault',
+      es: 'Local Code & Shell Snippet Vault',
+      ru: 'Local Code & Shell Snippet Vault',
+    },
+    desc: {
+      cs: 'Organize reusable shell commands, SQL queries, and code templates locally with fillable {{variable}} placeholders.',
+      en: 'Organize reusable shell commands, SQL queries, and code templates locally with fillable {{variable}} placeholders.',
+      de: 'Organize reusable shell commands, SQL queries, and code templates locally with fillable {{variable}} placeholders.',
+      es: 'Organize reusable shell commands, SQL queries, and code templates locally with fillable {{variable}} placeholders.',
+      ru: 'Organize reusable shell commands, SQL queries, and code templates locally with fillable {{variable}} placeholders.',
+    },
+  },
+  'resume-builder': {
+    title: {
+      cs: 'Offline Resume / CV Builder',
+      en: 'Offline Resume / CV Builder',
+      de: 'Offline Resume / CV Builder',
+      es: 'Offline Resume / CV Builder',
+      ru: 'Offline Resume / CV Builder',
+    },
+    desc: {
+      cs: 'Build ATS-friendly resumes privately with live templates, print-to-PDF, standalone HTML, and JSON backups.',
+      en: 'Build ATS-friendly resumes privately with live templates, print-to-PDF, standalone HTML, and JSON backups.',
+      de: 'Build ATS-friendly resumes privately with live templates, print-to-PDF, standalone HTML, and JSON backups.',
+      es: 'Build ATS-friendly resumes privately with live templates, print-to-PDF, standalone HTML, and JSON backups.',
+      ru: 'Build ATS-friendly resumes privately with live templates, print-to-PDF, standalone HTML, and JSON backups.',
+    },
+  },
+  'lorem-ipsum': {
+    title: {
+      cs: 'Lorem Ipsum & Placeholder Text Generator',
+      en: 'Lorem Ipsum & Placeholder Text Generator',
+      de: 'Lorem Ipsum & Placeholder Text Generator',
+      es: 'Lorem Ipsum & Placeholder Text Generator',
+      ru: 'Lorem Ipsum & Placeholder Text Generator',
+    },
+    desc: {
+      cs: 'Generate Classic Latin, Tech, or Business placeholder paragraphs, sentences, words, or lists in plain text, HTML, or Markdown.',
+      en: 'Generate Classic Latin, Tech, or Business placeholder paragraphs, sentences, words, or lists in plain text, HTML, or Markdown.',
+      de: 'Generate Classic Latin, Tech, or Business placeholder paragraphs, sentences, words, or lists in plain text, HTML, or Markdown.',
+      es: 'Generate Classic Latin, Tech, or Business placeholder paragraphs, sentences, words, or lists in plain text, HTML, or Markdown.',
+      ru: 'Generate Classic Latin, Tech, or Business placeholder paragraphs, sentences, words, or lists in plain text, HTML, or Markdown.',
     },
   },
 };

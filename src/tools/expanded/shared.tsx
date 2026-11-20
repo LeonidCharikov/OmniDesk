@@ -68,7 +68,6 @@ const TOOL_TRANSLATIONS: Record<string, [string, string]> = {
   'Expense Tracker & Budget': ['budget_tracker_title', 'Expense Tracker & Budget'],
   'Investment Calculator': ['investment_calculator_title', 'Investment Calculator'],
   'Invoice Generator': ['invoice_generator_title', 'Invoice Generator'],
-  'File Hashing & Encryption': ['file_crypto_title', 'File Hashing & Encryption'],
   'JWT Decoder': ['jwt_decoder_title', 'JWT Decoder'],
   'XML Formatter & Validator': ['xml_formatter_title', 'XML Formatter & Validator'],
   'YAML Formatter & Validator': ['yaml_formatter_title', 'YAML Formatter & Validator'],
@@ -78,8 +77,6 @@ const TOOL_TRANSLATIONS: Record<string, [string, string]> = {
   'Image Color Picker': ['color_picker_title', 'Image Color Picker'],
   'Screenshot Annotator': ['screenshot_annotator_title', 'Screenshot Annotator'],
   'Geographic & GPS Converter': ['geo_gps_title', 'Geographic & GPS Converter'],
-  'Periodic Finance Calculator': ['periodic_finance_title', 'Periodic Finance Calculator'],
-  'Binary & Hex Converter': ['binary_hex_title', 'Binary & Hex Converter'],
 };
 
 const TOOL_DESCRIPTIONS: Record<string, string> = {
@@ -96,7 +93,6 @@ const TOOL_DESCRIPTIONS: Record<string, string> = {
   'Expense Tracker & Budget': 'Record expense descriptions and amounts and see the running total for the current session.',
   'Investment Calculator': 'Estimate compound growth from an initial deposit, monthly contributions, annual return, and time horizon.',
   'Invoice Generator': 'Create an HTML invoice with supplier, customer, and line-item details.',
-  'File Hashing & Encryption': 'Calculate SHA-256, SHA-1, SHA-512 or encrypt/decrypt text and files with AES-GCM.',
   'JWT Decoder': 'Decode JWT header and payload locally with expiration validation.',
   'XML Formatter & Validator': 'Format, minify, validate XML or convert it to JSON locally.',
   'YAML Formatter & Validator': 'Normalize YAML structure and convert seamlessly to JSON.',
@@ -105,9 +101,7 @@ const TOOL_DESCRIPTIONS: Record<string, string> = {
   'Regex Builder': 'Interactive regular expression builder and tester with live match inspection.',
   'Image Color Picker': 'Open an image, click a canvas pixel, and read its HEX, RGB, and HSL color.',
   'Screenshot Annotator': 'Draw boxes, arrows, text, and freehand marks on screenshots and export PNG.',
-  'Geographic & GPS Converter': 'Convert decimal latitude and longitude to DMS notation, compute distance, and view map links.',
-  'Periodic Finance Calculator': 'Calculate compound interest from initial lump sum, regular contributions, and period.',
-  'Binary & Hex Converter': 'Bidirectional converter between UTF-8 text, HEX, binary, decimal bytes, and Base64.',
+  'Geographic & GPS Converter': 'Convert decimal latitude and longitude to DMS notation, compute distance, bearing, midpoint, and view map links.',
 };
 
 export function ToolHeader({ title, description }: { title: string; description: string }) {

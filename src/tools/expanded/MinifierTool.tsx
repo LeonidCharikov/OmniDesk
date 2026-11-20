@@ -1,127 +1,179 @@
 import React, { useState } from 'react';
-import { Copy } from 'lucide-react';
+import { Copy, Download, AlertCircle } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
-import { btn, secondary, input, box, Header } from './shared';
+import { SendToToolButton } from '../../components/ui/SendToToolButton';
+import { beautifyCode, minifyCode, type CodeKind } from '../../utils/toolUpgrades.logic';
+import { btn, secondary, input, box, Header, FilePicker, downloadText } from './shared';
 
 /* ─────────────────────────────────────────────────────────────
-   MINIFIER TOOL (CSS / HTML / JS / JSON, Beautify, Size savings)
+   MINIFIER & BEAUTIFIER TOOL (String-safe CSS / HTML / JS / JSON)
    ───────────────────────────────────────────────────────────── */
+const SAMPLES: Record<CodeKind, string> = {
+  css: `/* OmniDesk Main Stylesheet */
+.header-container {
+  display: flex;
+  justify-content: space-between;
+  padding: 16px 24px;
+  background-color: #0f172a;
+  border-bottom: 1px solid #1e293b;
+}
+
+.header-title {
+  font-size: 1.25rem;
+  color: #ffffff;
+  font-weight: 700;
+}`,
+  html: `<!-- Hero Card -->
+<section class="card">
+  <h2>OmniDesk Workstation</h2>
+  <p>100% offline-first local developer tools.</p>
+</section>`,
+  js: `// Preserves URLs & string literals safely
+function greetUser(name) {
+  const endpoint = "https://omnidesk.app/api/v1"; // inline comment
+  return \`Hello \${name} — \${endpoint}\`;
+}`,
+  json: `{
+  "app": "OmniDesk",
+  "offlineFirst": true,
+  "themes": ["light", "dark", "oled", "nord"]
+}`,
+};
+
 export const MinifierTool: React.FC = () => {
   const { t } = useI18n();
-  const [kind, setKind] = useState<'css' | 'html' | 'js' | 'json'>('css');
-  const [value, setValue] = useState(
-    '/* OmniDesk Main Stylesheet */\n.header-container {\n  display: flex;\n  justify-content: space-between;\n  padding: 16px 24px;\n  background-color: #0f172a;\n  border-bottom: 1px solid #1e293b;\n}\n\n.header-title {\n  font-size: 1.25rem;\n  color: #ffffff;\n  font-weight: 700;\n}\n'
-  );
+  const [kind, setKind] = useState<CodeKind>('css');
+  const [indent, setIndent] = useState<2 | 4>(2);
+  const [value, setValue] = useState(SAMPLES.css);
   const [result, setResult] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
   const [origSize, setOrigSize] = useState<number>(0);
-  const [minSize, setMinSize] = useState<number>(0);
+  const [outSize, setOutSize] = useState<number>(0);
+  const [copied, setCopied] = useState(false);
 
-  const minify = () => {
-    const originalBytes = new TextEncoder().encode(value).length;
-    setOrigSize(originalBytes);
-
-    let output = '';
-    if (kind === 'html') {
-      output = value
-        .replace(/<!--[\s\S]*?-->/g, '')
-        .replace(/>\s+</g, '><')
-        .replace(/\s{2,}/g, ' ')
-        .trim();
-    } else if (kind === 'css') {
-      output = value
-        .replace(/\/\*[\s\S]*?\*\//g, '')
-        .replace(/\s+/g, ' ')
-        .replace(/\s*([{}:;,])\s*/g, '$1')
-        .replace(/;\}/g, '}')
-        .trim();
-    } else if (kind === 'json') {
-      try {
-        output = JSON.stringify(JSON.parse(value));
-      } catch {
-        output = value.replace(/\s+/g, ' ').trim();
-      }
-    } else {
-      // JavaScript
-      output = value
-        .replace(/\/\*[\s\S]*?\*\//g, '')
-        .replace(/(^|[^:])\/\/[^\n]*/g, '$1')
-        .replace(/\s+/g, ' ')
-        .replace(/\s*([=+\-*\/%{}();,:<>|&!])\s*/g, '$1')
-        .trim();
-    }
-
-    setResult(output);
-    setMinSize(new TextEncoder().encode(output).length);
-  };
-
-  const beautify = () => {
-    if (kind === 'json') {
-      try {
-        setResult(JSON.stringify(JSON.parse(value), null, 2));
-      } catch {
-        setResult(t('err_invalid_json', 'Error: Invalid JSON.'));
-      }
-    } else if (kind === 'css') {
-      let formatted = '';
-      let indent = 0;
-      const clean = value.replace(/\s+/g, ' ').replace(/\/\*[\s\S]*?\*\//g, '');
-      for (const char of clean) {
-        if (char === '{') {
-          indent++;
-          formatted += ' {\n' + '  '.repeat(indent);
-        } else if (char === '}') {
-          indent = Math.max(0, indent - 1);
-          formatted += '\n' + '  '.repeat(indent) + '}\n\n' + '  '.repeat(indent);
-        } else if (char === ';') {
-          formatted += ';\n' + '  '.repeat(indent);
-        } else {
-          formatted += char;
-        }
-      }
-      setResult(formatted.trim());
-    } else {
-      setResult(value);
+  const handleKindChange = (nextKind: CodeKind) => {
+    setKind(nextKind);
+    setErrorMsg('');
+    if (Object.values(SAMPLES).includes(value)) {
+      setValue(SAMPLES[nextKind]);
+      setResult('');
+      setOrigSize(0);
+      setOutSize(0);
     }
   };
+
+  const runMinify = () => {
+    setErrorMsg('');
+    try {
+      const originalBytes = new TextEncoder().encode(value).length;
+      const output = minifyCode(value, kind);
+      setOrigSize(originalBytes);
+      setResult(output);
+      setOutSize(new TextEncoder().encode(output).length);
+    } catch (e) {
+      setErrorMsg(e instanceof Error ? e.message : t('err_invalid_json', 'Syntax error while processing input.'));
+    }
+  };
+
+  const runBeautify = () => {
+    setErrorMsg('');
+    try {
+      const originalBytes = new TextEncoder().encode(value).length;
+      const output = beautifyCode(value, kind, indent);
+      setOrigSize(originalBytes);
+      setResult(output);
+      setOutSize(new TextEncoder().encode(output).length);
+    } catch (e) {
+      setErrorMsg(e instanceof Error ? e.message : t('err_invalid_json', 'Syntax error while processing input.'));
+    }
+  };
+
+  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const ext = file.name.split('.').pop()?.toLowerCase();
+    if (ext === 'css' || ext === 'html' || ext === 'js' || ext === 'json') {
+      setKind(ext);
+    }
+    void file.text().then(txt => {
+      setValue(txt);
+      setErrorMsg('');
+    });
+  };
+
+  const handleCopy = () => {
+    if (!result) return;
+    void navigator.clipboard.writeText(result);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1500);
+  };
+
+  const savedBytes = origSize - outSize;
+  const savedPct = origSize > 0 ? Math.round((savedBytes / origSize) * 100) : 0;
 
   return (
     <div className="space-y-5">
       <Header
         title="CSS/HTML/JavaScript Minifier"
-        desc={t('minifier_desc', 'Minify or beautify CSS, HTML, JS, and JSON code with byte-savings statistics.')}
+        desc={t('minifier_desc', 'String-safe minifier and beautifier for CSS, HTML, JavaScript, and JSON with byte-savings metrics.')}
       />
-      <div className={box + ' space-y-3'}>
+      <div className={box + ' space-y-4'}>
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <select
               className={input + ' w-36 font-semibold'}
               value={kind}
-              onChange={e => setKind(e.target.value as typeof kind)}
+              onChange={e => handleKindChange(e.target.value as CodeKind)}
             >
               <option value="css">CSS</option>
               <option value="html">HTML</option>
               <option value="js">JavaScript</option>
               <option value="json">JSON</option>
             </select>
-            <button className={btn} onClick={minify}>
+            <button type="button" className={btn} onClick={runMinify}>
               {t('minify', 'Minify')}
             </button>
-            <button className={secondary} onClick={beautify}>
+            <button type="button" className={secondary} onClick={runBeautify}>
               {t('beautify', 'Beautify')}
             </button>
+            <label className="inline-flex items-center gap-1.5 text-xs text-slate-400 ml-1">
+              <span>{t('indent_spaces', 'Indent:')}</span>
+              <select
+                className="px-2 py-1 rounded bg-slate-950 border border-slate-800 text-xs text-slate-200"
+                value={indent}
+                onChange={e => setIndent(Number(e.target.value) as 2 | 4)}
+              >
+                <option value={2}>2</option>
+                <option value={4}>4</option>
+              </select>
+            </label>
           </div>
 
-          {origSize > 0 && minSize > 0 && (
+          {origSize > 0 && outSize > 0 && (
             <div className="text-xs font-mono text-slate-300">
               {t('minifier_savings', 'Original: {orig} B → Output: {min} B (Saved {saved} B / {percent}%)', {
                 orig: origSize,
-                min: minSize,
-                saved: origSize - minSize,
-                percent: Math.round((1 - minSize / origSize) * 100)
+                min: outSize,
+                saved: savedBytes,
+                percent: savedPct,
               })}
             </div>
           )}
         </div>
+
+        <FilePicker
+          id="minifier-file-upload"
+          label={t('minifier_load_file', 'Load .css / .html / .js / .json file')}
+          accept=".css,.html,.htm,.js,.json,text/plain"
+          onChange={handleFile}
+        />
+
+        {errorMsg && (
+          <div className="p-2.5 bg-rose-950/40 border border-rose-800 text-rose-300 text-xs rounded-lg flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span>{errorMsg}</span>
+          </div>
+        )}
 
         <div className="grid md:grid-cols-2 gap-4">
           <textarea
@@ -138,10 +190,21 @@ export const MinifierTool: React.FC = () => {
               placeholder={t('result_placeholder', 'Output will appear here…')}
             />
             {result && (
-              <button className={secondary} onClick={() => navigator.clipboard.writeText(result)}>
-                <Copy className="w-3.5 h-3.5 inline mr-1" />
-                {t('copy_result', 'Copy result')}
-              </button>
+              <div className="flex flex-wrap gap-2">
+                <button type="button" className={secondary} onClick={handleCopy}>
+                  <Copy className="w-3.5 h-3.5 inline mr-1" />
+                  {copied ? t('copied', 'Copied!') : t('copy_result', 'Copy result')}
+                </button>
+                <button
+                  type="button"
+                  className={secondary}
+                  onClick={() => downloadText(`output.min.${kind}`, result, kind, t('download_result', 'Save output'))}
+                >
+                  <Download className="w-3.5 h-3.5 inline mr-1" />
+                  {t('download', 'Download')} .{kind}
+                </button>
+                <SendToToolButton sourceToolId="web-minifier" kind="text" getText={() => result} />
+              </div>
             )}
           </div>
         </div>

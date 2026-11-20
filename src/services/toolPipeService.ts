@@ -24,6 +24,8 @@ export const PIPE_TARGET_OPTIONS: PipeTargetOption[] = [
   { toolId: 'hash-checksum-suite', labelKey: 'pipe_target_hash_suite', defaultLabel: 'Hash & Checksum Suite', acceptedKinds: ['text'] },
   { toolId: 'encoding-suite', labelKey: 'pipe_target_encoding_suite', defaultLabel: 'Encoding Suite', acceptedKinds: ['text'] },
   { toolId: 'case-converter', labelKey: 'pipe_target_case_converter', defaultLabel: 'Case Converter', acceptedKinds: ['text'] },
+  { toolId: 'csv-editor', labelKey: 'pipe_target_csv_editor', defaultLabel: 'CSV & Spreadsheet Grid Editor', acceptedKinds: ['text'] },
+  { toolId: 'snippet-vault', labelKey: 'pipe_target_snippet_vault', defaultLabel: 'Snippet Vault', acceptedKinds: ['text'] },
   { toolId: 'color-studio', labelKey: 'pipe_target_color_studio', defaultLabel: 'Color Picker & Studio', acceptedKinds: ['color'] },
   { toolId: 'wcag-validator', labelKey: 'pipe_target_wcag_contrast', defaultLabel: 'WCAG Contrast Validator', acceptedKinds: ['color'] },
 ];
@@ -67,7 +69,10 @@ export function getMatchingToolIdsForFile(fileName: string, mimeType = ''): stri
   if (['mp4', 'mov', 'm4v', 'ogv'].includes(ext) || mime.startsWith('video/')) {
     return ['multi-converter', 'file-inspector', 'hash-checksum-suite'];
   }
-  if (['png', 'jpg', 'jpeg', 'webp', 'bmp', 'gif', 'avif', 'svg', 'ico'].includes(ext) || mime.startsWith('image/')) {
+  if (ext === 'svg' || mime === 'image/svg+xml') {
+    return ['svg-optimizer', 'multi-converter', 'image-editor', 'text-editor', 'file-inspector'];
+  }
+  if (['png', 'jpg', 'jpeg', 'webp', 'bmp', 'gif', 'avif', 'ico'].includes(ext) || mime.startsWith('image/')) {
     return ['multi-converter', 'image-editor', 'photo-compressor', 'ocr-scanner', 'color-picker', 'qr-barcode-reader', 'file-inspector'];
   }
   if (['xlsx', 'xls', 'ods'].includes(ext)) {
@@ -80,7 +85,7 @@ export function getMatchingToolIdsForFile(fileName: string, mimeType = ''): stri
     return ['json-formatter', 'multi-converter', 'jsonpath-explorer', 'data-converter', 'text-diff', 'text-editor'];
   }
   if (['csv', 'tsv'].includes(ext) || mime === 'text/csv') {
-    return ['multi-converter', 'data-converter', 'sql-playground', 'text-editor'];
+    return ['csv-editor', 'multi-converter', 'data-converter', 'sql-playground', 'text-editor'];
   }
   if (['yaml', 'yml'].includes(ext)) {
     return ['yaml-formatter', 'multi-converter', 'data-converter', 'text-editor', 'text-diff'];
@@ -98,5 +103,5 @@ export function getMatchingToolIdsForFile(fileName: string, mimeType = ''): stri
     return ['text-editor', 'multi-converter', 'word-counter-cleaner', 'text-diff', 'hash-checksum-suite', 'file-inspector'];
   }
 
-  return ['file-inspector', 'hash-checksum-suite', 'file-crypto'];
+  return ['file-inspector', 'hash-checksum-suite', 'aes-cipher-studio'];
 }

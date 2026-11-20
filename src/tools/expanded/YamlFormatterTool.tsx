@@ -1,79 +1,53 @@
 import React, { useEffect, useState } from 'react';
-import { Copy, AlertCircle } from 'lucide-react';
+import * as yaml from 'js-yaml';
+import { Copy, AlertCircle, CheckCircle2, Download, ArrowLeftRight } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
 import { consumePendingToolPipe } from '../../services/toolPipeService';
-import { btn, secondary, input, box, Header, innerPanel as panel } from './shared';
+import { SendToToolButton } from '../../components/ui/SendToToolButton';
+import { btn, secondary, input, box, Header, innerPanel as panel, FilePicker, downloadText } from './shared';
 
 /* ─────────────────────────────────────────────────────────────
-   YAML FORMATTER & VALIDATOR (Syntax checking, YAML <-> JSON)
+   YAML FORMATTER & VALIDATOR (Powered by js-yaml: Format, Validate, YAML <-> JSON)
    ───────────────────────────────────────────────────────────── */
-function simpleYamlToJson(yaml: string): Record<string, unknown> {
-  const lines = yaml.split('\n');
-  const root: Record<string, unknown> = {};
-  const stack: { indent: number; obj: Record<string, unknown> }[] = [{ indent: -1, obj: root }];
+const SAMPLE_YAML = `app:
+  name: OmniDesk
+  version: 2.4
+  production: true
+server:
+  host: 0.0.0.0
+  port: 3000
+  cors:
+    - http://localhost:3000
+    - https://omnidesk.app
+features:
+  encryption: true
+  offlineFirst: true
+notes: |
+  Multi-line YAML blocks, lists,
+  and nested objects are preserved accurately.
+`;
 
-  for (let line of lines) {
-    line = line.replace(/#.*$/, ''); // strip comments
-    if (!line.trim()) continue;
-
-    const indent = line.search(/\S/);
-    const content = line.trim();
-
-    while (stack.length > 1 && stack[stack.length - 1].indent >= indent) {
-      stack.pop();
-    }
-    const current = stack[stack.length - 1].obj;
-
-    const colonIdx = content.indexOf(':');
-    if (colonIdx > -1) {
-      const key = content.slice(0, colonIdx).trim().replace(/^['"]|['"]$/g, '');
-      const valStr = content.slice(colonIdx + 1).trim();
-
-      if (!valStr) {
-        // Child object
-        const newObj: Record<string, unknown> = {};
-        current[key] = newObj;
-        stack.push({ indent, obj: newObj });
-      } else {
-        // Primitive
-        let parsedVal: unknown = valStr.replace(/^['"]|['"]$/g, '');
-        if (valStr === 'true') parsedVal = true;
-        else if (valStr === 'false') parsedVal = false;
-        else if (valStr === 'null') parsedVal = null;
-        else if (!isNaN(Number(valStr)) && valStr !== '') parsedVal = Number(valStr);
-        current[key] = parsedVal;
-      }
-    }
+function formatYamlError(err: unknown, fallback: string): string {
+  if (err && typeof err === 'object' && 'mark' in err) {
+    const yamlErr = err as { reason?: string; message?: string; mark?: { line?: number; column?: number } };
+    const line = typeof yamlErr.mark?.line === 'number' ? yamlErr.mark.line + 1 : undefined;
+    const col = typeof yamlErr.mark?.column === 'number' ? yamlErr.mark.column + 1 : undefined;
+    const loc = line !== undefined ? ` (line ${line}${col !== undefined ? `, col ${col}` : ''})` : '';
+    return `${yamlErr.reason || yamlErr.message || fallback}${loc}`;
   }
-  return root;
-}
-
-function jsonToYaml(obj: unknown, indent = 0): string {
-  const pad = '  '.repeat(indent);
-  if (obj === null || obj === undefined) return 'null';
-  if (typeof obj !== 'object') return String(obj);
-
-  if (Array.isArray(obj)) {
-    return obj.map(item => `${pad}- ${jsonToYaml(item, indent + 1).trim()}`).join('\n');
-  }
-
-  return Object.entries(obj as Record<string, unknown>)
-    .map(([k, v]) => {
-      if (typeof v === 'object' && v !== null) {
-        return `${pad}${k}:\n${jsonToYaml(v, indent + 1)}`;
-      }
-      return `${pad}${k}: ${String(v)}`;
-    })
-    .join('\n');
+  return err instanceof Error ? err.message : fallback;
 }
 
 export const YamlFormatterTool: React.FC = () => {
   const { t } = useI18n();
-  const [value, setValue] = useState(
-    'app:\n  name: OmniDesk\n  version: 2.1\n  production: true\nserver:\n  host: 0.0.0.0\n  port: 3000\nfeatures:\n  encryption: true\n  darkMode: true\n'
-  );
+  const [value, setValue] = useState(SAMPLE_YAML);
   const [result, setResult] = useState('');
+  const [resultFormat, setResultFormat] = useState<'yaml' | 'json'>('yaml');
   const [errorMsg, setErrorMsg] = useState('');
+  const [validMsg, setValidMsg] = useState('');
+  const [indent, setIndent] = useState<2 | 4>(2);
+  const [sortKeys, setSortKeys] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     const piped = consumePendingToolPipe('yaml-formatter');
@@ -81,69 +55,195 @@ export const YamlFormatterTool: React.FC = () => {
     if (piped.kind === 'text' && typeof piped.text === 'string') {
       setValue(piped.text);
     } else if (piped.kind === 'file' && piped.file) {
-      piped.file.text().then(txt => setValue(txt));
+      void piped.file.text().then(txt => setValue(txt));
     }
   }, []);
 
+  const parseAllDocuments = (src: string): unknown[] => {
+    const docs: unknown[] = [];
+    yaml.loadAll(src, doc => {
+      docs.push(doc);
+    });
+    return docs;
+  };
+
   const formatYaml = () => {
     setErrorMsg('');
+    setValidMsg('');
     try {
-      const parsed = simpleYamlToJson(value);
-      setResult(jsonToYaml(parsed));
+      const docs = parseAllDocuments(value);
+      const formatted = docs
+        .map(doc =>
+          yaml.dump(doc, {
+            indent,
+            sortKeys,
+            lineWidth: 100,
+            noRefs: true,
+          })
+        )
+        .join('---\n')
+        .trim();
+      setResult(formatted);
+      setResultFormat('yaml');
+      setValidMsg(
+        docs.length > 1
+          ? t('yaml_valid_multi', 'Valid YAML ({count} documents)', { count: docs.length })
+          : t('yaml_valid_ok', 'Valid YAML syntax')
+      );
     } catch (e) {
-      setErrorMsg(e instanceof Error ? e.message : t('invalid_yaml', 'Invalid YAML.'));
+      setErrorMsg(formatYamlError(e, t('invalid_yaml', 'Invalid YAML.')));
     }
   };
 
   const convertToJson = () => {
     setErrorMsg('');
+    setValidMsg('');
     try {
-      const parsed = simpleYamlToJson(value);
-      setResult(JSON.stringify(parsed, null, 2));
+      const docs = parseAllDocuments(value);
+      const payload = docs.length <= 1 ? docs[0] ?? null : docs;
+      setResult(JSON.stringify(payload, null, indent));
+      setResultFormat('json');
+      setValidMsg(t('yaml_converted_json', 'Converted YAML to JSON'));
     } catch (e) {
-      setErrorMsg(e instanceof Error ? e.message : t('err_json_convert', 'Conversion to JSON failed.'));
+      setErrorMsg(formatYamlError(e, t('err_json_convert', 'Conversion to JSON failed.')));
     }
+  };
+
+  const convertJsonToYaml = () => {
+    setErrorMsg('');
+    setValidMsg('');
+    try {
+      const parsed: unknown = JSON.parse(value);
+      const out = yaml.dump(parsed, {
+        indent,
+        sortKeys,
+        lineWidth: 100,
+        noRefs: true,
+      });
+      setResult(out.trim());
+      setResultFormat('yaml');
+      setValidMsg(t('json_converted_yaml', 'Converted JSON to YAML'));
+    } catch (e) {
+      setErrorMsg(e instanceof Error ? e.message : t('err_invalid_json', 'Error: Invalid JSON.'));
+    }
+  };
+
+  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    void file.text().then(txt => {
+      setValue(txt);
+      setErrorMsg('');
+      setValidMsg('');
+    });
+  };
+
+  const handleCopy = () => {
+    if (!result) return;
+    void navigator.clipboard.writeText(result);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1600);
+  };
+
+  const handleDownload = () => {
+    if (!result) return;
+    const ext = resultFormat === 'json' ? 'json' : 'yaml';
+    void downloadText(`formatted.${ext}`, result, ext, t('download_result', 'Save output'));
   };
 
   return (
     <div className="space-y-5">
       <Header
         title="YAML Formatter & Validator"
-        desc={t('yaml_formatter_desc', 'Normalize YAML structure and convert seamlessly to JSON.')}
+        desc={t('yaml_formatter_desc', 'Validate, format, and convert YAML (including arrays, multiline blocks, and multi-doc) ↔ JSON locally.')}
       />
-      <div className={box + ' space-y-3'}>
-        <div className="flex flex-wrap gap-2">
-          <button className={btn} onClick={formatYaml}>
-            {t('normalize_yaml', 'Normalize YAML')}
-          </button>
-          <button className={secondary} onClick={convertToJson}>
-            {t('yaml_to_json', 'YAML → JSON')}
-          </button>
+      <div className={box + ' space-y-4'}>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <button type="button" className={btn} onClick={formatYaml}>
+              {t('normalize_yaml', 'Format & Validate YAML')}
+            </button>
+            <button type="button" className={secondary} onClick={convertToJson}>
+              <ArrowLeftRight className="w-3.5 h-3.5 inline mr-1" />
+              {t('yaml_to_json', 'YAML → JSON')}
+            </button>
+            <button type="button" className={secondary} onClick={convertJsonToYaml}>
+              {t('json_to_yaml', 'JSON → YAML')}
+            </button>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3 text-xs text-slate-300">
+            <label className="flex items-center gap-1.5">
+              <span className="text-slate-400">{t('indent_spaces', 'Indent:')}</span>
+              <select
+                className="px-2 py-1 rounded bg-slate-950 border border-slate-800 text-xs text-slate-200"
+                value={indent}
+                onChange={e => setIndent(Number(e.target.value) as 2 | 4)}
+              >
+                <option value={2}>2</option>
+                <option value={4}>4</option>
+              </select>
+            </label>
+            <label className="flex items-center gap-1.5 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={sortKeys}
+                onChange={e => setSortKeys(e.target.checked)}
+                className="rounded bg-slate-950 border-slate-700"
+              />
+              <span>{t('sort_keys', 'Sort keys')}</span>
+            </label>
+          </div>
         </div>
+
+        <FilePicker
+          id="yaml-file-upload"
+          label={t('load_yaml_json_file', 'Load .yaml / .yml / .json file')}
+          accept=".yaml,.yml,.json,text/yaml,application/json,text/plain"
+          onChange={handleFile}
+        />
+
+        {validMsg && !errorMsg && (
+          <div className="p-2.5 bg-emerald-950/30 border border-emerald-800/50 text-emerald-300 text-xs rounded-lg flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 shrink-0" />
+            <span>{validMsg}</span>
+          </div>
+        )}
 
         <div className="grid md:grid-cols-2 gap-4">
           <textarea
-            className={input + ' min-h-64 font-mono text-xs leading-relaxed'}
+            className={input + ' min-h-72 font-mono text-xs leading-relaxed'}
             value={value}
             onChange={e => setValue(e.target.value)}
-            placeholder={t('insert_yaml_placeholder', 'Paste YAML here…')}
+            placeholder={t('insert_yaml_placeholder', 'Paste YAML or JSON here…')}
           />
           <div className="space-y-2">
             {errorMsg ? (
-              <div className="p-3 bg-rose-950/40 border border-rose-800 text-rose-300 text-xs rounded-lg flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0" />
-                <span>{errorMsg}</span>
+              <div className="p-3 bg-rose-950/40 border border-rose-800 text-rose-300 text-xs rounded-lg flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                <span className="font-mono break-words">{errorMsg}</span>
               </div>
             ) : (
-              <pre className={panel + ' min-h-64 max-h-96 overflow-auto font-mono text-xs text-slate-200'}>
+              <pre className={panel + ' min-h-72 max-h-96 overflow-auto font-mono text-xs text-slate-200 whitespace-pre'}>
                 {result || t('result_placeholder', 'Output will appear here…')}
               </pre>
             )}
             {result && (
-              <button className={secondary} onClick={() => navigator.clipboard.writeText(result)}>
-                <Copy className="w-3.5 h-3.5 inline mr-1" />
-                {t('copy_result', 'Copy result')}
-              </button>
+              <div className="flex flex-wrap gap-2">
+                <button type="button" className={secondary} onClick={handleCopy}>
+                  <Copy className="w-3.5 h-3.5 inline mr-1" />
+                  {copied ? t('copied', 'Copied!') : t('copy_result', 'Copy result')}
+                </button>
+                <button type="button" className={secondary} onClick={handleDownload}>
+                  <Download className="w-3.5 h-3.5 inline mr-1" />
+                  {t('download', 'Download')} .{resultFormat}
+                </button>
+                <SendToToolButton
+                  sourceToolId="yaml-formatter"
+                  kind="text"
+                  getText={() => result}
+                />
+              </div>
             )}
           </div>
         </div>

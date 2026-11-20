@@ -4,7 +4,7 @@ import { useI18n } from '../../i18n/context';
 import { loadToolJson, saveToolJson } from '../../services/idbStorage';
 import { useAppCurrency, getCurrencySymbol, formatCurrency } from '../../services/currencyService';
 import { AppCurrencyBadge } from '../../components/ui/AppCurrencyBadge';
-import { btn, secondary, input, box, Header } from './shared';
+import { btn, secondary, danger, input, box, Header } from './shared';
 
 /* ─────────────────────────────────────────────────────────────
    EXPENSES & BUDGET
@@ -32,6 +32,7 @@ export const BudgetTool: React.FC = () => {
   const [label, setLabel] = useState('');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('food');
+  const [confirmClear, setConfirmClear] = useState(false);
   const hydratedRef = useRef(false);
   const modifiedRef = useRef(false);
 
@@ -73,10 +74,9 @@ export const BudgetTool: React.FC = () => {
   };
 
   const clearAll = () => {
-    if (confirm(t('confirm_clear_expenses', 'Opravdu si přejete smazat všechny položky rozpočtu?'))) {
-      modifiedRef.current = true;
-      setItems([]);
-    }
+    modifiedRef.current = true;
+    setItems([]);
+    setConfirmClear(false);
   };
 
   const total = items.reduce((sum, item) => sum + item.amount, 0);
@@ -132,11 +132,21 @@ export const BudgetTool: React.FC = () => {
           <Plus className="inline w-4 h-4 mr-1" />
           {t('add', 'Přidat')}
         </button>
-        {items.length > 0 && (
-          <button className={secondary} onClick={clearAll}>
-            {t('clear_all', 'Vymazat vše')}
-          </button>
-        )}
+        {items.length > 0 &&
+          (confirmClear ? (
+            <div className="inline-flex items-center gap-1.5">
+              <button type="button" className={danger} onClick={clearAll}>
+                {t('confirm_delete_btn', 'Confirm clear')}
+              </button>
+              <button type="button" className={secondary} onClick={() => setConfirmClear(false)}>
+                {t('cancel', 'Cancel')}
+              </button>
+            </div>
+          ) : (
+            <button type="button" className={secondary} onClick={() => setConfirmClear(true)}>
+              {t('clear_all', 'Vymazat vše')}
+            </button>
+          ))}
       </div>
 
       <div className="grid sm:grid-cols-2 gap-4">
