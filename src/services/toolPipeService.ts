@@ -62,7 +62,7 @@ export function getMatchingToolIdsForFile(fileName: string, mimeType = ''): stri
     return ['pdf-editor', 'pdf-toolkit', 'multi-converter', 'file-inspector', 'hash-checksum-suite'];
   }
   if (ext === 'docx' || ext === 'rtf' || mime.includes('wordprocessingml')) {
-    return ['multi-converter', 'docx-to-pdf', 'file-inspector'];
+    return ['multi-converter', 'file-inspector'];
   }
   if (['mp4', 'mov', 'm4v', 'ogv'].includes(ext) || mime.startsWith('video/')) {
     return ['multi-converter', 'file-inspector', 'hash-checksum-suite'];

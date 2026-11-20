@@ -76,6 +76,14 @@ export const THEMES: ThemeMeta[] = [
     previewAccent: '#f59e0b',
   },
   {
+    id: 'rose',
+    nameKey: 'theme_rose',
+    defaultName: 'Crimson Velvet',
+    previewBg: '#12080d',
+    previewBorder: '#432232',
+    previewAccent: '#f43f5e',
+  },
+  {
     id: 'light',
     nameKey: 'theme_light',
     defaultName: 'Clean Light',
@@ -91,6 +99,15 @@ export const THEMES: ThemeMeta[] = [
     previewBg: '#f6f1e7',
     previewBorder: '#ddd3c0',
     previewAccent: '#b45309',
+    isLight: true,
+  },
+  {
+    id: 'mint',
+    nameKey: 'theme_mint',
+    defaultName: 'Soft Sage',
+    previewBg: '#eff5f1',
+    previewBorder: '#c5dbc9',
+    previewAccent: '#059669',
     isLight: true,
   },
 ];

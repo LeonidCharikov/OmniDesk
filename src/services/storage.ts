@@ -47,7 +47,7 @@ export const DEFAULT_DESKTOP: DesktopBehaviorConfig = {
 
 export const DEFAULT_CONFIG: UserConfig = {
   version: 2,
-  favorites: ['text-editor', 'docx-to-pdf', 'unit-converter', 'currency-crypto', 'pomodoro-timer'],
+  favorites: ['text-editor', 'multi-converter', 'unit-converter', 'currency-crypto', 'pomodoro-timer'],
   recentToolIds: ['text-editor'],
   simulatedOffline: false,
   theme: 'dark',

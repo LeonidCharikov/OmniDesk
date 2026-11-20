@@ -12,8 +12,8 @@ const VALID_CATEGORIES = new Set([
 ]);
 
 describe('TOOLS_REGISTRY', () => {
-  it('contains all 99 tools with unique IDs and valid categories', () => {
-    expect(TOOLS_REGISTRY.length).toBe(99);
+  it('contains all 98 tools with unique IDs and valid categories', () => {
+    expect(TOOLS_REGISTRY.length).toBe(98);
 
     const ids = new Set<string>();
     for (const tool of TOOLS_REGISTRY) {

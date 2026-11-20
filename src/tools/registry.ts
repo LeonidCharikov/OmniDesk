@@ -11,7 +11,6 @@ function lazyTool<TModule extends Record<string, unknown>>(
 
 const TextEditorTool = lazyTool(() => import('./files/TextEditorTool'), 'TextEditorTool');
 const PdfEditorTool = lazyTool(() => import('./files/PdfEditorTool'), 'PdfEditorTool');
-const DocxToPdfTool = lazyTool(() => import('./files/DocxToPdfTool'), 'DocxToPdfTool');
 const MultiFormatConverterTool = lazyTool(() => import('./files/MultiFormatConverterTool'), 'MultiFormatConverterTool');
 const FileInspectorTool = lazyTool(() => import('./files/FileInspectorTool'), 'FileInspectorTool');
 const TextDiffTool = lazyTool(() => import('./files/TextDiffTool'), 'TextDiffTool');
@@ -181,16 +180,6 @@ export const TOOLS_REGISTRY: ToolDefinition[] = [
     isBasic: true,
     component: PdfEditorTool,
     tags: ['pdf', 'editor', 'stranky', 'vodoznak', 'podpis', 'slouceni', 'split', 'otocit', 'uprava', 'dokument'],
-  },
-  {
-    id: 'docx-to-pdf',
-    title: 'DOCX do PDF Konvertor',
-    shortDesc: 'Offline převod Word dokumentů do PDF přímo v paměti zařízení.',
-    category: 'files',
-    icon: 'FileText',
-    requiresOnline: false,
-    component: DocxToPdfTool,
-    tags: ['word', 'docx', 'pdf', 'konverze', 'dokumenty', 'tisk'],
   },
   {
     id: 'voice-recorder',

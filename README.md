@@ -3,7 +3,7 @@
   <h1>OmniDesk</h1>
   <p><strong>The 100% Offline-First Desktop & Web Multi-Tool Workstation</strong></p>
   <p>
-    99 integrated utilities for files, code, math, science, finance, planning, and everyday tasks — running locally in memory or natively via Tauri v2 with zero server telemetry.
+    98 integrated utilities for files, code, math, science, finance, planning, and everyday tasks — running locally in memory or natively via Tauri v2 with zero server telemetry.
   </p>
 
   <p>
@@ -13,7 +13,7 @@
     <a href="https://leonidcharikov.github.io/omnidesk.html">
       <img src="https://img.shields.io/badge/Website-Presentation-8B5CF6?style=for-the-badge&logo=githubpages&logoColor=white" alt="OmniDesk Presentation Website" />
     </a>
-    <img src="https://img.shields.io/badge/Tools-99%20Integrated-6366f1?style=for-the-badge" alt="99 Tools" />
+    <img src="https://img.shields.io/badge/Tools-98%20Integrated-6366f1?style=for-the-badge" alt="98 Tools" />
     <img src="https://img.shields.io/badge/Tauri-v2-24C8DB?style=for-the-badge&logo=tauri&logoColor=white" alt="Tauri v2" />
     <img src="https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React 19" />
     <img src="https://img.shields.io/badge/TypeScript-7.0-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
@@ -34,7 +34,7 @@
     <a href="https://github.com/LeonidCharikov/OmniDesk">GitHub Repo</a> •
     <a href="#-visual-showcase">Visual Showcase</a> •
     <a href="#-key-highlights">Key Highlights</a> •
-    <a href="#-complete-tool-catalog-99-tools">Tool Catalog (99)</a> •
+    <a href="#-complete-tool-catalog-98-tools">Tool Catalog (98)</a> •
     <a href="#-themes-widgets--localization">Themes & Widgets</a> •
     <a href="#-quick-start">Quick Start</a> •
     <a href="#-project-structure">Project Structure</a>
@@ -45,10 +45,10 @@
 
 <div align="center">
   <a href="docs/videos/all-tools.webp">
-    <img src="docs/videos/all-tools.webp" alt="OmniDesk Main Workspace — All 99 Tools" width="100%" />
+    <img src="docs/videos/all-tools.webp" alt="OmniDesk Main Workspace — All 98 Tools" width="100%" />
   </a>
   <br />
-  <sub><strong>Main Workspace:</strong> Categorized 99-tool grid with instant search, favorites, recently used tools, language switcher, and local offline sandbox status.</sub>
+  <sub><strong>Main Workspace:</strong> Categorized 98-tool grid with instant search, favorites, recently used tools, language switcher, and local offline sandbox status.</sub>
 </div>
 
 ---
@@ -60,11 +60,11 @@
 | 🔒 **Privacy, Storage Audit & Full Workspace Backup** | Every file edit, hash, PDF edit, QR scan, image compression, and color conversion runs 100% locally — installable as an offline-first PWA. On the **Tauri Desktop** build, also includes **Full Workspace Backup** (settings + Calendar, Kanban, Notes, Expenses, Habits, Shopping List, Flashcards) and **AES-256-GCM encrypted bundles** (stripped on Web so browser users stay focused on individual tools). |
 | ⚡ **Dual Runtime (Tauri v2 + Web/PWA), Workers & Auto-Updater** | Native **Tauri v2** desktop app (with **signed GitHub Releases Auto-Updater**, multi-monitor-safe **persistent window geometry**, double-click titlebar maximize/restore, `sysinfo` hardware telemetry, OS tray mode, file associations & quick Web/GitHub links) or streamlined offline browser PWA. Heavy dependencies (`pdf-lib`, `tesseract.js`, MCP client), **Web Workers** (batch photo compression & cryptographic hashing), and **IndexedDB** tool storage keep the UI responsive with minimal RAM usage. |
 | 🖨️ **Built-In Document & Media Printing** | Print directly via native OS print dialogs without popup blockers from **PDF Studio**, **Image Editor**, **Text & Markdown Editor**, **Markdown Preview**, **Notes**, **Diagram Editor**, **Invoice Generator**, **Screenshot Annotator**, **Sketchpad**, and **QR Code Generator**. |
-| 🧭 **Extended Command Palette & Customizable Shortcuts** | Press `Ctrl+K` (`⌘K`) to search across **99 tools**, saved **Notes**, **Calendar events**, **Settings tabs**, and **Themes**. Rebind built-in actions or assign custom keyboard shortcuts to any tool in **Settings → Shortcuts** (press `Shift+?` for cheat sheet). |
+| 🧭 **Extended Command Palette & Customizable Shortcuts** | Press `Ctrl+K` (`⌘K`) to search across **98 tools**, saved **Notes**, **Calendar events**, **Settings tabs**, and **Themes**. Rebind built-in actions or assign custom keyboard shortcuts to any tool in **Settings → Shortcuts** (press `Shift+?` for cheat sheet). |
 | 🔄 **Offline Multi-Format Converter Hub** | CloudConvert-style **Offline Format Catalog** & **multi-file batch queue** covering **6 categories** 100% locally in memory: **Video** (`MP4`/`WebM`/`MOV` → `WebM`, animated `GIF`, `WAV` audio, frame capture), **Audio** (`MP3`/`WAV`/`OGG`/`FLAC`/`M4A`/`AAC` → `WAV`/`AIFF`/`WebM`), **Images** (`PNG`/`JPG`/`WebP`/`AVIF`/`GIF`/`BMP`/`SVG`/`ICO` → `WebP`/`PNG`/`JPG`/`GIF`/`BMP`/`ICO`/`PDF`/`SVG`), **Documents** (`DOCX`/`PDF`/`MD`/`HTML`/`TXT`/`RTF`), **Spreadsheets & Data** (`XLSX`/`XLS`/`ODS`/`CSV`/`TSV`/`JSON`/`YAML`/`XML`/`MD`/`HTML`), and **Archives** (`ZIP` ↔ `TAR` ↔ `TAR.GZ` ↔ `GZ` with extraction & batch ZIP download). |
 | 🔗 **Cross-Tool Piping & Smart Drag-and-Drop** | Pipe outputs directly between compatible tools with **Send to...** (`toolPipeService`), or drag & drop any file anywhere on the window to launch the **Smart Drop Router** with matching tools and 1-click **Load Sample** demos. |
 | 💱 **Universal Multi-Currency Engine & Starter Presets** | Configure a global default currency across 13+ world currencies (`CZK`, `EUR`, `USD`, `GBP`, `CHF`, `PLN`, `JPY`, etc.) synced across finance tools, plus 1-click **Workspace Starter Presets** (*Developer*, *Student & Science*, *Finance & Daily*). |
-| 🎨 **10 Themes & Adaptive Mini-Widgets *(Desktop)*** | Switch seamlessly between **8 curated dark palettes** and **2 light palettes** (*Clean Light* & *Warm Paper*) across both Desktop and Web, while the **Tauri Desktop** app adds 7 sidebar mini-widgets with automatic **compact tabbed mode** on smaller screens and subtle non-blocking **Toast notifications**. |
+| 🎨 **12 Themes & Adaptive Mini-Widgets *(Desktop)*** | Switch seamlessly between **9 curated dark palettes** and **3 light palettes** (*Clean Light*, *Warm Paper* & *Soft Sage*) across both Desktop and Web, while the **Tauri Desktop** app adds 7 sidebar mini-widgets with automatic **compact tabbed mode** on smaller screens and subtle non-blocking **Toast notifications**. |
 | 🤖 **MCP Bridge *(Desktop App Only)*** | Exclusive to the **Tauri Desktop** build (stripped from the Web/PWA version): connect AI assistants (Claude Desktop, Cursor, VS Code, Windsurf) via WebSocket or Tauri `stdio` IPC to Calendar, Tasks, Notes, System Telemetry, Tool Navigation, and Clipboard Sync with **Connected Tools**, **MCP Log**, and interactive setup tutorial. |
 | 🌍 **5 Built-In Languages with Crisp SVG Flags** | Instant localization across **English** (`en`, default), **Čeština** (`cs`), **Deutsch** (`de`), **Español** (`es`), and **Русский** (`ru`) with cross-platform inline SVG flag icons (rendered identically on Windows, macOS, Linux, and web) and automated i18n checks. |
 
@@ -138,12 +138,12 @@ Full IUPAC periodic table with state &amp; orbital filters, molar mass parser &a
 
 <br />
 
-### 🎨 10 Live Themes & Starter Presets
-Instant switching across 8 curated dark palettes and 2 daylight palettes (*Clean Light* &amp; *Warm Paper*) plus 1-click workspace presets.
+### 🎨 12 Live Themes & Starter Presets
+Instant switching across 9 curated dark palettes and 3 daylight palettes (*Clean Light*, *Warm Paper* &amp; *Soft Sage*) plus 1-click workspace presets.
 
 <div align="center">
   <a href="docs/videos/themes.webp">
-    <img src="docs/videos/themes.webp" alt="10 Live Themes & Starter Presets" width="100%" />
+    <img src="docs/videos/themes.webp" alt="12 Live Themes & Starter Presets" width="100%" />
   </a>
 </div>
 
@@ -160,27 +160,26 @@ Configure default currency, sidebar mini-widgets, privacy audit, MCP Bridge, cus
 
 ---
 
-## 🛠️ Complete Tool Catalog (99 Tools)
+## 🛠️ Complete Tool Catalog (98 Tools)
 
-OmniDesk organizes **99 specialized tools** into **7 primary categories**, plus the **Everyday Basics** (`38` tools) quick filter for daily workflows.
+OmniDesk organizes **98 specialized tools** into **7 primary categories**, plus the **Everyday Basics** (`38` tools) quick filter for daily workflows.
 
 <details open>
-<summary><strong>📁 1. Files, Media &amp; Documents (14 Tools)</strong></summary>
+<summary><strong>📁 1. Files, Media &amp; Documents (13 Tools)</strong></summary>
 
 1. **Text & Markdown Editor (`.txt` / `.md`)** — Selective font sizing, headings, alignment, regex search & replace, direct printing, and local file saving.
 2. **PDF Studio & Visual Editor** — Direct PDF text editing, image embedding, whiteout, redaction, highlighters, freehand pen, signatures, watermarks, multi-page printing & page tools.
 3. **PDF Toolkit** — Merge multiple PDFs or rotate pages locally.
-4. **DOCX to PDF Converter** — Convert Word `.docx` files to PDF completely in memory.
-5. **Multi-Format Converter (Offline Hub)** — CloudConvert-style format catalog & multi-file batch queue with inline previews, per-file settings, ZIP bundling, and 1-click sample demos across **Video** (`MP4`/`WebM`/`MOV` → `WebM`, animated `GIF`, `WAV`, `PNG`/`JPG`/`WebP` frames), **Audio** (`MP3`/`WAV`/`OGG`/`FLAC`/`M4A`/`AAC`/`OPUS` → `WAV`/`AIFF`/`WebM`), **Images** (`PNG`/`JPG`/`WebP`/`AVIF`/`GIF`/`BMP`/`ICO`/`SVG` → `WebP`/`PNG`/`JPG`/`GIF`/`BMP`/`ICO`/`PDF`/`SVG`), **Documents** (`DOCX`/`PDF`/`MD`/`HTML`/`TXT`/`RTF` + `PDF → PNG/JPG` pages), **Spreadsheets & Data** (`XLSX`/`XLS`/`ODS`/`CSV`/`TSV`/`JSON`/`YAML`/`XML` + Markdown/HTML tables), and **Archives** (`ZIP` ↔ `TAR` ↔ `TAR.GZ` ↔ `GZ` + file extraction).
-6. **OCR Scanner** — Extract editable text from images locally using Tesseract.js.
-7. **Image Editor** — Automatic full-image **Fit View** canvas scaling (no viewport clipping), crop, resize, rotate, brightness/contrast filters, watermarks, printing & export.
-8. **Photo Compressor & EXIF Stripper** — Batch compress photos by quality or target KB while stripping GPS/camera EXIF metadata.
-9. **Screenshot Annotator** — Add text callouts and annotations to screenshots with PNG export and direct printing.
-10. **Quick Sketchpad & Signature Pad** — HTML5 canvas drawing, brush controls, baseline guide, transparent PNG export & printing.
-11. **Audio Editor & Trimmer** — Interactive waveform trimming, cutting, silence insertion, fade in/out, normalization, speed & reverse.
-12. **Offline Voice Recorder & Audio Memos** — Record microphone audio with live visualizer and WebM export.
-13. **Screen & Webcam Recorder** — Local screen or webcam capture with optional microphone audio and WebM download.
-14. **Markdown Preview & Export** — Live Markdown rendering with one-click HTML export and clean paper printing.
+4. **Multi-Format Converter (Offline Hub)** — CloudConvert-style format catalog & multi-file batch queue with inline previews, per-file settings, ZIP bundling, and 1-click sample demos across **Video** (`MP4`/`WebM`/`MOV` → `WebM`, animated `GIF`, `WAV`, `PNG`/`JPG`/`WebP` frames), **Audio** (`MP3`/`WAV`/`OGG`/`FLAC`/`M4A`/`AAC`/`OPUS` → `WAV`/`AIFF`/`WebM`), **Images** (`PNG`/`JPG`/`WebP`/`AVIF`/`GIF`/`BMP`/`ICO`/`SVG` → `WebP`/`PNG`/`JPG`/`GIF`/`BMP`/`ICO`/`PDF`/`SVG`), **Documents** (`DOCX`/`PDF`/`MD`/`HTML`/`TXT`/`RTF` + `PDF → PNG/JPG` pages), **Spreadsheets & Data** (`XLSX`/`XLS`/`ODS`/`CSV`/`TSV`/`JSON`/`YAML`/`XML` + Markdown/HTML tables), and **Archives** (`ZIP` ↔ `TAR` ↔ `TAR.GZ` ↔ `GZ` + file extraction).
+5. **OCR Scanner** — Extract editable text from images locally using Tesseract.js.
+6. **Image Editor** — Automatic full-image **Fit View** canvas scaling (no viewport clipping), crop, resize, rotate, brightness/contrast filters, watermarks, printing & export.
+7. **Photo Compressor & EXIF Stripper** — Batch compress photos by quality or target KB while stripping GPS/camera EXIF metadata.
+8. **Screenshot Annotator** — Add text callouts and annotations to screenshots with PNG export and direct printing.
+9. **Quick Sketchpad & Signature Pad** — HTML5 canvas drawing, brush controls, baseline guide, transparent PNG export & printing.
+10. **Audio Editor & Trimmer** — Interactive waveform trimming, cutting, silence insertion, fade in/out, normalization, speed & reverse.
+11. **Offline Voice Recorder & Audio Memos** — Record microphone audio with live visualizer and WebM export.
+12. **Screen & Webcam Recorder** — Local screen or webcam capture with optional microphone audio and WebM download.
+13. **Markdown Preview & Export** — Live Markdown rendering with one-click HTML export and clean paper printing.
 
 </details>
 
@@ -312,7 +311,7 @@ OmniDesk organizes **99 specialized tools** into **7 primary categories**, plus 
 <details>
 <summary><strong>Visual Palettes, Sidebar Mini-Widgets, Languages &amp; Profile Backup</strong></summary>
 
-### 10 Color Palettes (8 Dark + 2 Light)
+### 12 Color Palettes (9 Dark + 3 Light)
 - **Midnight Navy** — Deep navy workspace with indigo accents *(default)*
 - **OLED Black** — True `#000000` pitch-black dark mode
 - **Charcoal Graphite** — Matte neutral developer grey
@@ -321,8 +320,10 @@ OmniDesk organizes **99 specialized tools** into **7 primary categories**, plus 
 - **Cyber Emerald** — Dark terminal forest green palette
 - **Royal Twilight** — Deep amethyst & violet tones
 - **Amber Ember** — Warm espresso obsidian with terracotta & amber tones
+- **Crimson Velvet** — Deep obsidian-burgundy dark palette with rose accents
 - **Clean Light** — Crisp daylight theme with clean white surfaces
 - **Warm Paper** — Soft parchment/sepia daylight theme for long reading sessions
+- **Soft Sage** — Calm botanical pale-green daylight theme for low eye strain
 
 ### 7 Adaptive Sidebar Mini-Widgets *(Desktop Only)*
 In the **Tauri Desktop** build, on smaller viewports (`< 1024px` wide or `< 880px` tall), mini-widgets automatically switch into a **collapsible compact tabbed bar** inside the shared scrollable sidebar so tool categories always stay visible and reachable, with a one-click toggle between compact and stacked views *(hidden in the Web/PWA build so browser users can focus purely on individual tools)*:
@@ -357,7 +358,7 @@ OmniDesk includes full end-to-end MCP support across the lazy-loaded desktop Rea
 - **Dual Native & WebSocket Transports**:
   - **WebSocket Bridge (`ws://127.0.0.1:3847/bridge`)**: Connects with exponential backoff auto-reconnect to `docs/mcp-server-template/server.mjs` (also provides `omnidesk_bridge_status` + scoped `OMNIDESK_WORKSPACE_DIR` file tools and `notifications/tools/list_changed`).
   - **Native Tauri `stdio` IPC (`--mcp-stdio`) & Background Clipboard**: Rust `stdin`/`stdout` JSON-RPC bridge (`mcp_stdio_ready`, `mcp_stdio_tx`) with startup line buffering and `tauri-plugin-clipboard-manager` (`mcp_read_clipboard`, `mcp_write_clipboard`).
-- **In-App Tutorial, Connected Tools & Live MCP Log**: Built directly into **Settings → MCP Bridge** — includes an interactive **Setup Tutorial** (`McpSetupTutorialPanel`) with copyable config snippets for Claude Desktop / Cursor / VS Code / Windsurf, a **Connected Tools** capability matrix (`McpConnectedToolsPanel`) with a searchable 99-tool catalog, and a live **MCP Log** (`McpLogPanel`) with JSON-RPC payload inspection.
+- **In-App Tutorial, Connected Tools & Live MCP Log**: Built directly into **Settings → MCP Bridge** — includes an interactive **Setup Tutorial** (`McpSetupTutorialPanel`) with copyable config snippets for Claude Desktop / Cursor / VS Code / Windsurf, a **Connected Tools** capability matrix (`McpConnectedToolsPanel`) with a searchable 98-tool catalog, and a live **MCP Log** (`McpLogPanel`) with JSON-RPC payload inspection.
 - **Security Controls**: Loopback-only (`127.0.0.1` / `localhost`) WebSocket validation, optional `OMNIDESK_MCP_TOKEN` handshake, and `readonly` vs `readwrite` permission enforcement.
 
 ### 🔌 Tutorial: How to Connect Any Desktop AI to OmniDesk
@@ -499,13 +500,13 @@ npm run tauri dev
 │   │   ├── finance/           # Currency/Crypto, Loans, Fuel/EV Trip, FIRE, Portfolio, NPV/IRR
 │   │   ├── utilities/         # Color Studio, Random Picker, QR Reader, Recipe Scaler, Noise Mixer...
 │   │   ├── expanded/          # Additional & More workspace utilities
-│   │   └── registry.ts        # Central 99-tool lazy registry & Everyday Basics metadata
+│   │   └── registry.ts        # Central 98-tool lazy registry & Everyday Basics metadata
 │   ├── utils/                 # colorMath, safeMathParser & pure calculation helpers
 │   ├── workers/               # Dedicated ES module Web Workers (photoCompress.worker, hashSuite.worker)
 │   ├── __tests__/             # Vitest unit, storage & registry test suites
 │   ├── types/                 # Strict TypeScript tool & category interfaces
 │   ├── App.tsx                # Root workspace layout & category routing
-│   └── index.css              # Tailwind CSS v4 + 10 theme palettes
+│   └── index.css              # Tailwind CSS v4 + 12 theme palettes
 ├── playwright.config.ts
 ├── start.bat / start.sh       # One-click local launchers
 ├── package.json

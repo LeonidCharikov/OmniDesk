@@ -88,6 +88,17 @@
   --od-text: #fff7ed;
 }
 
+[data-theme="rose"] {
+  --od-bg: #12080d;
+  --od-sidebar: #1a0c13;
+  --od-header: rgba(26, 12, 19, 0.68);
+  --od-surface: #23111a;
+  --od-surface-elevated: #311824;
+  --od-border: #432232;
+  --od-border-subtle: rgba(67, 34, 50, 0.72);
+  --od-text: #fff1f2;
+}
+
 :is(
   [data-theme="oled"],
   [data-theme="graphite"],
@@ -95,7 +106,8 @@
   [data-theme="ocean"],
   [data-theme="emerald"],
   [data-theme="purple"],
-  [data-theme="sunset"]
+  [data-theme="sunset"],
+  [data-theme="rose"]
 ),
 :is(
   [data-theme="oled"],
@@ -104,7 +116,8 @@
   [data-theme="ocean"],
   [data-theme="emerald"],
   [data-theme="purple"],
-  [data-theme="sunset"]
+  [data-theme="sunset"],
+  [data-theme="rose"]
 ) body {
   background-color: var(--od-bg) !important;
   color: var(--od-text) !important;
@@ -117,7 +130,8 @@
   [data-theme="ocean"],
   [data-theme="emerald"],
   [data-theme="purple"],
-  [data-theme="sunset"]
+  [data-theme="sunset"],
+  [data-theme="rose"]
 ) :is(
   .bg-slate-950,
   .bg-slate-950\/20,
@@ -140,7 +154,8 @@
   [data-theme="ocean"],
   [data-theme="emerald"],
   [data-theme="purple"],
-  [data-theme="sunset"]
+  [data-theme="sunset"],
+  [data-theme="rose"]
 ) aside {
   background-color: var(--od-sidebar) !important;
   border-color: var(--od-border) !important;
@@ -153,7 +168,8 @@
   [data-theme="ocean"],
   [data-theme="emerald"],
   [data-theme="purple"],
-  [data-theme="sunset"]
+  [data-theme="sunset"],
+  [data-theme="rose"]
 ) header {
   background-color: var(--od-header) !important;
   backdrop-filter: blur(16px) !important;
@@ -168,7 +184,8 @@
   [data-theme="ocean"],
   [data-theme="emerald"],
   [data-theme="purple"],
-  [data-theme="sunset"]
+  [data-theme="sunset"],
+  [data-theme="rose"]
 ) :is(
   .bg-slate-900,
   .bg-slate-900\/20,
@@ -192,7 +209,8 @@
   [data-theme="ocean"],
   [data-theme="emerald"],
   [data-theme="purple"],
-  [data-theme="sunset"]
+  [data-theme="sunset"],
+  [data-theme="rose"]
 ) :is(
   .bg-slate-800,
   .bg-slate-800\/40,
@@ -212,7 +230,8 @@
   [data-theme="ocean"],
   [data-theme="emerald"],
   [data-theme="purple"],
-  [data-theme="sunset"]
+  [data-theme="sunset"],
+  [data-theme="rose"]
 ) :is(
   .border-slate-800,
   .border-slate-800\/40,
@@ -232,7 +251,8 @@
   [data-theme="ocean"],
   [data-theme="emerald"],
   [data-theme="purple"],
-  [data-theme="sunset"]
+  [data-theme="sunset"],
+  [data-theme="rose"]
 ) :is(.divide-slate-800, .divide-slate-800\/80) > :not(:first-child) {
   border-color: var(--od-border) !important;
 }
@@ -270,14 +290,29 @@
   --od-light-text-subtle: #78716c;
 }
 
-:is([data-theme="light"], [data-theme="sand"]),
-:is([data-theme="light"], [data-theme="sand"]) body {
+[data-theme="mint"] {
+  --od-light-bg: #eff5f1;
+  --od-light-sidebar: #f7fbf8;
+  --od-light-header: rgba(247, 251, 248, 0.78);
+  --od-light-surface: #ffffff;
+  --od-light-surface-muted: #e3efe7;
+  --od-light-surface-elevated: #d2e4d8;
+  --od-light-border: #c5dbc9;
+  --od-light-border-header: rgba(197, 219, 201, 0.82);
+  --od-light-text: #0f261c;
+  --od-light-text-body: #1f3b2e;
+  --od-light-text-muted: #3d5a4c;
+  --od-light-text-subtle: #5c786a;
+}
+
+:is([data-theme="light"], [data-theme="sand"], [data-theme="mint"]),
+:is([data-theme="light"], [data-theme="sand"], [data-theme="mint"]) body {
   background-color: var(--od-light-bg) !important;
   color: var(--od-light-text) !important;
   color-scheme: light;
 }
 
-:is([data-theme="light"], [data-theme="sand"]) :is(
+:is([data-theme="light"], [data-theme="sand"], [data-theme="mint"]) :is(
   .bg-slate-950,
   .bg-slate-950\/40,
   .bg-slate-950\/60,
@@ -287,19 +322,19 @@
   color: var(--od-light-text) !important;
 }
 
-:is([data-theme="light"], [data-theme="sand"]) aside {
+:is([data-theme="light"], [data-theme="sand"], [data-theme="mint"]) aside {
   background-color: var(--od-light-sidebar) !important;
   border-color: var(--od-light-border) !important;
 }
 
-:is([data-theme="light"], [data-theme="sand"]) header {
+:is([data-theme="light"], [data-theme="sand"], [data-theme="mint"]) header {
   background-color: var(--od-light-header) !important;
   backdrop-filter: blur(16px) !important;
   -webkit-backdrop-filter: blur(16px) !important;
   border-color: var(--od-light-border-header) !important;
 }
 
-:is([data-theme="light"], [data-theme="sand"]) :is(
+:is([data-theme="light"], [data-theme="sand"], [data-theme="mint"]) :is(
   .bg-slate-900,
   .bg-slate-900\/40,
   .bg-slate-900\/60,
@@ -310,7 +345,7 @@
   color: var(--od-light-text) !important;
 }
 
-:is([data-theme="light"], [data-theme="sand"]) :is(
+:is([data-theme="light"], [data-theme="sand"], [data-theme="mint"]) :is(
   .bg-slate-950\/20,
   .bg-slate-950\/30,
   .bg-slate-950\/50,
@@ -328,7 +363,7 @@
   color: var(--od-light-text) !important;
 }
 
-:is([data-theme="light"], [data-theme="sand"]) :is(
+:is([data-theme="light"], [data-theme="sand"], [data-theme="mint"]) :is(
   .bg-slate-800,
   .bg-slate-800\/40,
   .bg-slate-800\/50,
@@ -341,7 +376,7 @@
   color: var(--od-light-text) !important;
 }
 
-:is([data-theme="light"], [data-theme="sand"]) :is(
+:is([data-theme="light"], [data-theme="sand"], [data-theme="mint"]) :is(
   .border-slate-800,
   .border-slate-800\/40,
   .border-slate-800\/50,
@@ -353,47 +388,47 @@
   border-color: var(--od-light-border) !important;
 }
 
-:is([data-theme="light"], [data-theme="sand"]) :is(.divide-slate-800, .divide-slate-800\/80) > :not(:first-child) {
+:is([data-theme="light"], [data-theme="sand"], [data-theme="mint"]) :is(.divide-slate-800, .divide-slate-800\/80) > :not(:first-child) {
   border-color: var(--od-light-border) !important;
 }
 
-:is([data-theme="light"], [data-theme="sand"]) .text-white {
+:is([data-theme="light"], [data-theme="sand"], [data-theme="mint"]) .text-white {
   color: var(--od-light-text) !important;
 }
 
-:is([data-theme="light"], [data-theme="sand"]) :is(.text-slate-100, .text-slate-200, .text-slate-300) {
+:is([data-theme="light"], [data-theme="sand"], [data-theme="mint"]) :is(.text-slate-100, .text-slate-200, .text-slate-300) {
   color: var(--od-light-text-body) !important;
 }
 
-:is([data-theme="light"], [data-theme="sand"]) .text-slate-400 {
+:is([data-theme="light"], [data-theme="sand"], [data-theme="mint"]) .text-slate-400 {
   color: var(--od-light-text-muted) !important;
 }
 
-:is([data-theme="light"], [data-theme="sand"]) :is(.text-slate-500, .text-slate-600) {
+:is([data-theme="light"], [data-theme="sand"], [data-theme="mint"]) :is(.text-slate-500, .text-slate-600) {
   color: var(--od-light-text-subtle) !important;
 }
 
-:is([data-theme="light"], [data-theme="sand"]) :is(.text-indigo-300, .text-indigo-200) {
+:is([data-theme="light"], [data-theme="sand"], [data-theme="mint"]) :is(.text-indigo-300, .text-indigo-200) {
   color: #4338ca !important;
 }
 
-:is([data-theme="light"], [data-theme="sand"]) :is(.text-emerald-300, .text-emerald-200) {
+:is([data-theme="light"], [data-theme="sand"], [data-theme="mint"]) :is(.text-emerald-300, .text-emerald-200) {
   color: #047857 !important;
 }
 
-:is([data-theme="light"], [data-theme="sand"]) :is(.text-amber-300, .text-amber-200) {
+:is([data-theme="light"], [data-theme="sand"], [data-theme="mint"]) :is(.text-amber-300, .text-amber-200) {
   color: #b45309 !important;
 }
 
-:is([data-theme="light"], [data-theme="sand"]) :is(.text-rose-300, .text-rose-200) {
+:is([data-theme="light"], [data-theme="sand"], [data-theme="mint"]) :is(.text-rose-300, .text-rose-200) {
   color: #be123c !important;
 }
 
-:is([data-theme="light"], [data-theme="sand"]) :is(.text-sky-300, .text-sky-200) {
+:is([data-theme="light"], [data-theme="sand"], [data-theme="mint"]) :is(.text-sky-300, .text-sky-200) {
   color: #0369a1 !important;
 }
 
-:is([data-theme="light"], [data-theme="sand"]) :is(
+:is([data-theme="light"], [data-theme="sand"], [data-theme="mint"]) :is(
   .bg-indigo-950,
   .bg-indigo-950\/20,
   .bg-indigo-950\/30,
@@ -404,7 +439,7 @@
   color: #3730a3 !important;
 }
 
-:is([data-theme="light"], [data-theme="sand"]) :is(
+:is([data-theme="light"], [data-theme="sand"], [data-theme="mint"]) :is(
   .bg-emerald-950\/40,
   .bg-emerald-950\/50,
   .bg-emerald-950\/60,
@@ -415,7 +450,7 @@
   color: #065f46 !important;
 }
 
-:is([data-theme="light"], [data-theme="sand"]) :is(
+:is([data-theme="light"], [data-theme="sand"], [data-theme="mint"]) :is(
   .bg-amber-950\/50,
   .bg-amber-950\/60,
   .bg-amber-950\/95
@@ -424,7 +459,7 @@
   color: #92400e !important;
 }
 
-:is([data-theme="light"], [data-theme="sand"]) :is(
+:is([data-theme="light"], [data-theme="sand"], [data-theme="mint"]) :is(
   .bg-rose-950\/30,
   .bg-rose-950\/40,
   .bg-rose-950\/50,
@@ -435,12 +470,12 @@
   color: #9f1239 !important;
 }
 
-:is([data-theme="light"], [data-theme="sand"]) :is(.bg-sky-950\/50, .bg-sky-950\/70) {
+:is([data-theme="light"], [data-theme="sand"], [data-theme="mint"]) :is(.bg-sky-950\/50, .bg-sky-950\/70) {
   background-color: #f0f9ff !important;
 }
 
 /* Preserve crisp white foreground on solid primary / status buttons in Light & Warm Paper themes */
-:is([data-theme="light"], [data-theme="sand"]) :is(
+:is([data-theme="light"], [data-theme="sand"], [data-theme="mint"]) :is(
   .bg-indigo-600,
   .bg-indigo-600\/90,
   .bg-indigo-700,
@@ -451,7 +486,7 @@
   .bg-amber-600,
   .bg-sky-600
 ),
-:is([data-theme="light"], [data-theme="sand"]) :is(
+:is([data-theme="light"], [data-theme="sand"], [data-theme="mint"]) :is(
   .bg-indigo-600,
   .bg-indigo-600\/90,
   .bg-indigo-700,
@@ -509,11 +544,11 @@ textarea:focus-visible,
   background: rgba(148, 163, 184, 0.38);
 }
 
-:is([data-theme="light"], [data-theme="sand"]) ::-webkit-scrollbar-thumb {
+:is([data-theme="light"], [data-theme="sand"], [data-theme="mint"]) ::-webkit-scrollbar-thumb {
   background: rgba(15, 23, 42, 0.18);
 }
 
-:is([data-theme="light"], [data-theme="sand"]) ::-webkit-scrollbar-thumb:hover,
-:is([data-theme="light"], [data-theme="sand"]) ::-webkit-scrollbar-thumb:active {
+:is([data-theme="light"], [data-theme="sand"], [data-theme="mint"]) ::-webkit-scrollbar-thumb:hover,
+:is([data-theme="light"], [data-theme="sand"], [data-theme="mint"]) ::-webkit-scrollbar-thumb:active {
   background: rgba(15, 23, 42, 0.34);
 }

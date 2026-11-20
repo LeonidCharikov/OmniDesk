@@ -238,7 +238,7 @@ export async function saveConvertedFile(targetPath: string, data: Uint8Array): P
 │   └── tools/                 # Modular tools (each in its own directory)
 │       ├── registry.ts        # Central tool registry
 │       ├── files/
-│       │   ├── docx-to-pdf/   # Local DOCX to PDF converter
+│       │   ├── multi-converter/ # Local multi-format converter hub
 │       │   └── file-inspector/# Hashing & binary inspection
 │       ├── science/
 │       │   └── unit-converter/# Unit converter (SI, imperial, physics)

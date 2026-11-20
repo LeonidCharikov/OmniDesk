@@ -358,7 +358,7 @@ export default function App() {
     const unregisterTauriDrop = registerTauriDropListener(files => {
       if (files.length === 0) return;
       const activeId = selectedToolIdRef.current;
-      if (activeId && (activeId === 'docx-to-pdf' || activeId === 'image-editor')) {
+      if (activeId && (activeId === 'multi-converter' || activeId === 'image-editor')) {
         return;
       }
       setDroppedFile(files[0]);

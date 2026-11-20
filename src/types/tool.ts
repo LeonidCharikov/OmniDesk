@@ -34,8 +34,10 @@ export type ThemeId =
   | 'nord'
   | 'sunset'
   | 'ocean'
+  | 'rose'
   | 'light'
-  | 'sand';
+  | 'sand'
+  | 'mint';
 
 export interface DailyTask {
   id: string;
