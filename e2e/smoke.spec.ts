@@ -133,13 +133,17 @@ test.describe('OmniDesk Web E2E Smoke Suite', () => {
       { id: 'purple', label: 'Royal Twilight' },
       { id: 'sunset', label: 'Amber Ember' },
       { id: 'rose', label: 'Crimson Velvet' },
-      { id: 'light', label: 'Clean Light' },
+      { id: 'light', label: 'Light' },
       { id: 'sand', label: 'Warm Paper' },
       { id: 'mint', label: 'Soft Sage' },
     ];
 
     for (const theme of themes) {
-      await dialog.getByText(theme.label, { exact: true }).click();
+      const themeBtn = dialog.locator(`button[data-theme-id="${theme.id}"]`);
+      await expect(themeBtn).toBeVisible();
+      await expect(themeBtn).toContainText(theme.label);
+      await themeBtn.click();
+      await expect(themeBtn).toHaveAttribute('aria-pressed', 'true');
       await expect(page.locator(`html[data-theme="${theme.id}"]`)).toBeVisible();
 
       const colors = await page.evaluate(() => {
@@ -218,7 +222,9 @@ test.describe('OmniDesk Web E2E Smoke Suite', () => {
     const palette = page.getByRole('dialog');
     await expect(palette).toBeVisible();
     await palette.locator('input[type="text"]').fill('Hybrid Translator');
-    await expect(palette.getByText(/Hybrid Translator/i)).toHaveCount(0);
+    await expect(palette.getByRole('button', { name: /Hybrid Translator/i })).toHaveCount(0);
+    await expect(palette.getByText(/No tool matches/i)).toBeVisible();
+    await expect(palette.getByText('0 tools found')).toBeVisible();
   });
 });
 

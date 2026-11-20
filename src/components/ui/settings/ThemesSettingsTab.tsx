@@ -46,6 +46,7 @@ export const ThemesSettingsTab: React.FC<ThemesSettingsTabProps> = ({
             <button
               key={th.id}
               type="button"
+              data-theme-id={th.id}
               onClick={() => handleSelectTheme(th.id)}
               aria-pressed={isSelected}
               className={`cursor-pointer p-3 rounded-xl border transition-all relative group flex flex-col justify-between text-left ${
