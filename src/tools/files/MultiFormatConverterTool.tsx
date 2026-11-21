@@ -20,12 +20,14 @@ import {
   Play,
   Sparkles,
   FileDown,
+  ExternalLink,
 } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
-import { saveBinaryWithDialog } from '../../services/fileSystemService';
-import { consumePendingToolPipe } from '../../services/toolPipeService';
+import { registerTauriDropListener, saveBinaryWithDialog } from '../../services/fileSystemService';
+import { consumePendingToolPipe, setPendingToolPipe } from '../../services/toolPipeService';
 import { toastService } from '../../services/toastService';
 import { SendToToolButton } from '../../components/ui/SendToToolButton';
+import { PdfBlobPreview } from './PdfBlobPreview';
 import {
   ConverterCategoryId,
   FORMAT_CATALOG,
@@ -149,6 +151,27 @@ export const MultiFormatConverterTool: React.FC = () => {
     }
   }, [enqueueFiles]);
 
+  // Native Tauri desktop drag & drop (WebView intercepts HTML5 onDrop when dragDropEnabled=true)
+  useEffect(() => {
+    return registerTauriDropListener(
+      files => {
+        if (files.length > 0) {
+          enqueueFiles(files);
+        }
+      },
+      {
+        onDragStateChange: setIsDragging,
+        onError: message => {
+          toastService.show({
+            type: 'error',
+            title: t('conv_drop_error', 'Could not read dropped file'),
+            message,
+          });
+        },
+      }
+    );
+  }, [enqueueFiles, t]);
+
   const updateItem = useCallback((id: string, updater: (item: QueueItem) => QueueItem) => {
     setQueue(prev => prev.map(item => (item.id === id ? updater(item) : item)));
   }, []);
@@ -212,7 +235,8 @@ export const MultiFormatConverterTool: React.FC = () => {
               result.previewKind === 'image' ||
               result.previewKind === 'audio' ||
               result.previewKind === 'video' ||
-              result.previewKind === 'archive',
+              result.previewKind === 'archive' ||
+              result.previewKind === 'pdf',
           };
         });
       } catch (err: unknown) {
@@ -262,6 +286,16 @@ export const MultiFormatConverterTool: React.FC = () => {
     },
     [t]
   );
+
+  const handleOpenInPdfEditor = useCallback((result: ConversionResult) => {
+    const pdfFile = new File([result.blob], result.fileName, { type: 'application/pdf' });
+    setPendingToolPipe('pdf-editor', {
+      kind: 'file',
+      file: pdfFile,
+      sourceToolId: 'multi-converter',
+    });
+    window.dispatchEvent(new CustomEvent('omnidesk-open-tool', { detail: { toolId: 'pdf-editor' } }));
+  }, []);
 
   const handleSaveArchiveEntry = useCallback(
     async (entry: ArchiveEntry) => {
@@ -366,6 +400,7 @@ export const MultiFormatConverterTool: React.FC = () => {
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsDragging(false);
     const droppedFiles = Array.from(e.dataTransfer.files);
     if (droppedFiles.length > 0) {
@@ -554,6 +589,7 @@ export const MultiFormatConverterTool: React.FC = () => {
       <div
         onDragOver={e => {
           e.preventDefault();
+          e.stopPropagation();
           setIsDragging(true);
         }}
         onDragLeave={() => setIsDragging(false)}
@@ -802,6 +838,17 @@ export const MultiFormatConverterTool: React.FC = () => {
                               kind="text"
                               getText={() => item.result?.textPreview || ''}
                             />
+                          )}
+
+                          {item.result.previewKind === 'pdf' && (
+                            <button
+                              type="button"
+                              onClick={() => handleOpenInPdfEditor(item.result!)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs text-slate-200 transition-colors whitespace-nowrap shrink-0"
+                            >
+                              <ExternalLink className="w-3.5 h-3.5 text-indigo-400" />
+                              <span>{t('conv_open_in_pdf_editor', 'Open in PDF Editor')}</span>
+                            </button>
                           )}
 
                           <button
@@ -1211,10 +1258,9 @@ export const MultiFormatConverterTool: React.FC = () => {
                       )}
 
                       {item.result.previewKind === 'pdf' && (
-                        <iframe
-                          src={item.resultUrl}
-                          title={item.result.fileName}
-                          className="w-full h-72 rounded-lg bg-slate-900"
+                        <PdfBlobPreview
+                          blob={item.result.blob}
+                          fileName={item.result.fileName}
                         />
                       )}
 

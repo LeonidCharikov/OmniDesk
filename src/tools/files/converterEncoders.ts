@@ -94,7 +94,8 @@ export function encodeWavPcm16(
   for (let i = 0; i < numFrames; i++) {
     for (let c = 0; c < numChannels; c++) {
       const sample = Math.max(-1, Math.min(1, channels[c][i] ?? 0));
-      view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true);
+      const int16 = Math.max(-32768, Math.min(32767, Math.round(sample < 0 ? sample * 0x8000 : sample * 0x7fff)));
+      view.setInt16(offset, int16, true);
       offset += 2;
     }
   }
@@ -155,7 +156,8 @@ export function encodeAiffPcm16(
   for (let i = 0; i < numFrames; i++) {
     for (let c = 0; c < numChannels; c++) {
       const sample = Math.max(-1, Math.min(1, channels[c][i] ?? 0));
-      view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7fff, false);
+      const int16 = Math.max(-32768, Math.min(32767, Math.round(sample < 0 ? sample * 0x8000 : sample * 0x7fff)));
+      view.setInt16(offset, int16, false);
       offset += 2;
     }
   }
@@ -247,33 +249,228 @@ export function encodeIcoFromPng(
 // 3. DOCUMENT CONVERSION HELPERS (RTF, HTML <-> Markdown, Minimal DOCX)
 // ---------------------------------------------------------------------------
 
-export function stripRtfToText(rtf: string): string {
-  let out = rtf
-    .replace(/\\par[d]?/g, '\n')
-    .replace(/\\line/g, '\n')
-    .replace(/\\tab/g, '\t')
-    .replace(/\\~|\\_/g, ' ')
-    .replace(/\\'([0-9a-fA-F]{2})/g, (_, hex: string) =>
-      String.fromCharCode(parseInt(hex, 16))
-    )
-    .replace(/\\u(-?\d+)\??/g, (_, code: string) => {
-      const n = parseInt(code, 10);
-      return String.fromCharCode(n < 0 ? n + 65536 : n);
-    });
+const RTF_IGNORABLE_DESTINATIONS = new Set([
+  'fonttbl',
+  'colortbl',
+  'stylesheet',
+  'info',
+  'pict',
+  'header',
+  'headerl',
+  'headerr',
+  'headerf',
+  'footer',
+  'footerl',
+  'footerr',
+  'footerf',
+  'generator',
+  'themedata',
+  'colorschememapping',
+  'datastore',
+  'latentstyles',
+  'listtable',
+  'listoverridetable',
+  'rsidtbl',
+  'mmathPr',
+  'fldinst',
+  'object',
+  'objdata',
+  'xmlnstbl',
+]);
 
-  // Remove header groups like fonttbl, colortbl, stylesheet, info (replace with space so preceding control words don't fuse with text)
-  out = out.replace(
-    /\{\\\*?(?:fonttbl|colortbl|stylesheet|info|pict|header|footer|generator)[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/g,
-    ' '
-  );
-  // Remove remaining control words & braces
-  out = out
-    .replace(/\\[a-zA-Z]+-?\d* ?/g, '')
-    .replace(/[{}]/g, '')
+function decodeCodepageBytes(bytes: number[], codepage: number): string {
+  const encodingMap: Record<number, string> = {
+    1250: 'windows-1250',
+    1251: 'windows-1251',
+    1252: 'windows-1252',
+    1253: 'windows-1253',
+    1254: 'windows-1254',
+    1255: 'windows-1255',
+    1256: 'windows-1256',
+    1257: 'windows-1257',
+    1258: 'windows-1258',
+    65001: 'utf-8',
+  };
+  const label = encodingMap[codepage] || 'windows-1252';
+  try {
+    return new TextDecoder(label).decode(new Uint8Array(bytes));
+  } catch {
+    return String.fromCharCode(...bytes);
+  }
+}
+
+export function stripRtfToText(rtf: string): string {
+  const cpgMatch = /\\ansicpg(\d+)/.exec(rtf);
+  const codepage = cpgMatch ? parseInt(cpgMatch[1], 10) : 1252;
+
+  const stack: Array<{ uc: number; skip: boolean }> = [{ uc: 1, skip: false }];
+  let out = '';
+  let hexBuffer: number[] = [];
+
+  const flushHex = () => {
+    if (hexBuffer.length > 0) {
+      out += decodeCodepageBytes(hexBuffer, codepage);
+      hexBuffer = [];
+    }
+  };
+
+  let i = 0;
+  const len = rtf.length;
+
+  while (i < len) {
+    const ch = rtf[i];
+    const current = stack[stack.length - 1];
+
+    if (ch === '{') {
+      flushHex();
+      stack.push({ uc: current.uc, skip: current.skip });
+      i++;
+      continue;
+    }
+
+    if (ch === '}') {
+      flushHex();
+      if (stack.length > 1) stack.pop();
+      i++;
+      continue;
+    }
+
+    if (ch === '\r' || ch === '\n') {
+      i++;
+      continue;
+    }
+
+    if (ch === '\\') {
+      i++;
+      if (i >= len) break;
+      const next = rtf[i];
+
+      // Hex-encoded byte \'xx
+      if (next === "'") {
+        const hex = rtf.slice(i + 1, i + 3);
+        if (/^[0-9a-fA-F]{2}$/.test(hex)) {
+          if (!current.skip) {
+            hexBuffer.push(parseInt(hex, 16));
+          }
+          i += 3;
+          continue;
+        }
+      }
+
+      flushHex();
+
+      if (next === '*') {
+        current.skip = true;
+        i++;
+        continue;
+      }
+
+      if (next === '\\' || next === '{' || next === '}') {
+        if (!current.skip) out += next;
+        i++;
+        continue;
+      }
+
+      if (next === '~') {
+        if (!current.skip) out += ' ';
+        i++;
+        continue;
+      }
+
+      if (next === '_') {
+        if (!current.skip) out += '-';
+        i++;
+        continue;
+      }
+
+      if (next === '-') {
+        i++;
+        continue;
+      }
+
+      if (next === '\n' || next === '\r') {
+        if (!current.skip) out += '\n';
+        i++;
+        continue;
+      }
+
+      // Control word: letters + optional signed integer + optional single space delimiter
+      const wordMatch = /^([a-zA-Z]+)(-?\d+)? ?/.exec(rtf.slice(i));
+      if (wordMatch) {
+        const word = wordMatch[1];
+        const param = wordMatch[2] !== undefined ? parseInt(wordMatch[2], 10) : undefined;
+        i += wordMatch[0].length;
+
+        if (RTF_IGNORABLE_DESTINATIONS.has(word)) {
+          current.skip = true;
+          continue;
+        }
+
+        if (word === 'uc' && param !== undefined) {
+          current.uc = Math.max(0, param);
+          continue;
+        }
+
+        if (current.skip) continue;
+
+        if (word === 'u' && param !== undefined) {
+          const codeUnit = param < 0 ? param + 65536 : param;
+          out += String.fromCharCode(codeUnit);
+          // Skip `uc` fallback replacement characters (either \'xx or a single char)
+          let toSkip = current.uc;
+          while (toSkip > 0 && i < len) {
+            if (rtf[i] === '\\' && rtf[i + 1] === "'" && /^[0-9a-fA-F]{2}$/.test(rtf.slice(i + 2, i + 4))) {
+              i += 4;
+            } else if (rtf[i] !== '{' && rtf[i] !== '}') {
+              i++;
+            } else {
+              break;
+            }
+            toSkip--;
+          }
+          continue;
+        }
+
+        if (word === 'par' || word === 'line') {
+          out += '\n';
+        } else if (word === 'tab') {
+          out += '\t';
+        } else if (word === 'emdash') {
+          out += '—';
+        } else if (word === 'endash') {
+          out += '–';
+        } else if (word === 'lquote') {
+          out += '‘';
+        } else if (word === 'rquote') {
+          out += '’';
+        } else if (word === 'ldblquote') {
+          out += '“';
+        } else if (word === 'rdblquote') {
+          out += '”';
+        } else if (word === 'bullet') {
+          out += '•';
+        }
+        continue;
+      }
+
+      i++;
+      continue;
+    }
+
+    flushHex();
+    if (!current.skip) {
+      out += ch;
+    }
+    i++;
+  }
+
+  flushHex();
+
+  return out
     .replace(/\r\n/g, '\n')
+    .replace(/[ \t]+\n/g, '\n')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
-  return out;
 }
 
 export function escapeHtml(text: string): string {
@@ -384,29 +581,85 @@ ${htmlLines.join('\n')}
 </html>`;
 }
 
+function decodeHtmlEntities(str: string): string {
+  return str
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex: string) => {
+      const cp = parseInt(hex, 16);
+      return Number.isFinite(cp) ? String.fromCodePoint(cp) : '';
+    })
+    .replace(/&#(\d+);/g, (_, dec: string) => {
+      const cp = parseInt(dec, 10);
+      return Number.isFinite(cp) ? String.fromCodePoint(cp) : '';
+    });
+}
+
+function convertHtmlTablesToMarkdown(html: string): string {
+  return html.replace(/<table[^>]*>([\s\S]*?)<\/table>/gi, (_, tableInner: string) => {
+    const rowMatches = tableInner.match(/<tr[^>]*>[\s\S]*?<\/tr>/gi);
+    if (!rowMatches || rowMatches.length === 0) return '';
+
+    const parsedRows: string[][] = [];
+    for (const tr of rowMatches) {
+      const cellMatches = tr.match(/<t[hd][^>]*>[\s\S]*?<\/t[hd]>/gi) ?? [];
+      const cells = cellMatches.map(cell =>
+        decodeHtmlEntities(
+          cell
+            .replace(/<br\s*\/?>/gi, ' ')
+            .replace(/<[^>]+>/g, '')
+            .replace(/\s+/g, ' ')
+            .trim()
+        ).replace(/\|/g, '\\|')
+      );
+      if (cells.length > 0) parsedRows.push(cells);
+    }
+
+    if (parsedRows.length === 0) return '';
+    const colCount = Math.max(...parsedRows.map(r => r.length));
+    const padRow = (r: string[]) =>
+      Array.from({ length: colCount }, (_, i) => r[i] ?? '');
+    const header = padRow(parsedRows[0]);
+    const sep = Array.from({ length: colCount }, () => '---');
+    const body = parsedRows.slice(1).map(padRow);
+
+    const lines = [
+      `| ${header.join(' | ')} |`,
+      `| ${sep.join(' | ')} |`,
+      ...body.map(r => `| ${r.join(' | ')} |`),
+    ];
+    return `\n\n${lines.join('\n')}\n\n`;
+  });
+}
+
 export function htmlToMarkdown(html: string): string {
-  const cleaned = html
-    .replace(/<script[\s\S]*?<\/script>/gi, '')
-    .replace(/<style[\s\S]*?<\/style>/gi, '')
-    .replace(/<h1[^>]*>([\s\S]*?)<\/h1>/gi, '\n# $1\n\n')
-    .replace(/<h2[^>]*>([\s\S]*?)<\/h2>/gi, '\n## $1\n\n')
-    .replace(/<h3[^>]*>([\s\S]*?)<\/h3>/gi, '\n### $1\n\n')
-    .replace(/<h[4-6][^>]*>([\s\S]*?)<\/h[4-6]>/gi, '\n#### $1\n\n')
-    .replace(/<(strong|b)[^>]*>([\s\S]*?)<\/\1>/gi, '**$2**')
-    .replace(/<(em|i)[^>]*>([\s\S]*?)<\/\1>/gi, '*$2*')
-    .replace(/<code[^>]*>([\s\S]*?)<\/code>/gi, '`$1`')
-    .replace(/<a[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi, '[$2]($1)')
-    .replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, '- $1\n')
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/p>/gi, '\n\n')
-    .replace(/<\/div>/gi, '\n')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'");
+  const withTables = convertHtmlTablesToMarkdown(
+    html
+      .replace(/<script[\s\S]*?<\/script>/gi, '')
+      .replace(/<style[\s\S]*?<\/style>/gi, '')
+  );
+
+  const cleaned = decodeHtmlEntities(
+    withTables
+      .replace(/<hr\s*\/?>/gi, '\n---\n\n')
+      .replace(/<h1[^>]*>([\s\S]*?)<\/h1>/gi, '\n# $1\n\n')
+      .replace(/<h2[^>]*>([\s\S]*?)<\/h2>/gi, '\n## $1\n\n')
+      .replace(/<h3[^>]*>([\s\S]*?)<\/h3>/gi, '\n### $1\n\n')
+      .replace(/<h[4-6][^>]*>([\s\S]*?)<\/h[4-6]>/gi, '\n#### $1\n\n')
+      .replace(/<(strong|b)[^>]*>([\s\S]*?)<\/\1>/gi, '**$2**')
+      .replace(/<(em|i)[^>]*>([\s\S]*?)<\/\1>/gi, '*$2*')
+      .replace(/<code[^>]*>([\s\S]*?)<\/code>/gi, '`$1`')
+      .replace(/<a[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi, '[$2]($1)')
+      .replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, '- $1\n')
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<\/p>/gi, '\n\n')
+      .replace(/<\/div>/gi, '\n')
+      .replace(/<[^>]+>/g, '')
+  );
 
   return cleaned
     .split('\n')
@@ -435,36 +688,151 @@ function escapeXmlText(str: string): string {
     .replace(/'/g, '&apos;');
 }
 
+function buildDocxInlineRunsXml(text: string): string {
+  // Parse simple inline **bold**, *italic*, and `code` tokens into OOXML <w:r> nodes
+  const tokenRegex = /(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g;
+  const parts = text.split(tokenRegex).filter(p => p.length > 0);
+  if (parts.length === 0) return '<w:r><w:t xml:space="preserve"></w:t></w:r>';
+
+  return parts
+    .map(part => {
+      if (part.startsWith('**') && part.endsWith('**') && part.length > 4) {
+        return `<w:r><w:rPr><w:b/></w:rPr><w:t xml:space="preserve">${escapeXmlText(part.slice(2, -2))}</w:t></w:r>`;
+      }
+      if (part.startsWith('*') && part.endsWith('*') && part.length > 2) {
+        return `<w:r><w:rPr><w:i/></w:rPr><w:t xml:space="preserve">${escapeXmlText(part.slice(1, -1))}</w:t></w:r>`;
+      }
+      if (part.startsWith('`') && part.endsWith('`') && part.length > 2) {
+        return `<w:r><w:rPr><w:rFonts w:ascii="Courier New" w:hAnsi="Courier New"/><w:sz w:val="20"/></w:rPr><w:t xml:space="preserve">${escapeXmlText(part.slice(1, -1))}</w:t></w:r>`;
+      }
+      return `<w:r><w:t xml:space="preserve">${escapeXmlText(part)}</w:t></w:r>`;
+    })
+    .join('');
+}
+
 /**
- * Generates a valid, standards-compliant minimal OOXML (.docx) archive locally using fflate.
+ * Generates a valid, standards-compliant OOXML (.docx) archive locally using fflate,
+ * supporting headings, inline bold/italic/code, bullet lists, and Markdown tables.
  */
 export function buildMinimalDocx(plainText: string): Uint8Array {
   const enc = new TextEncoder();
-  const paragraphs = plainText.replace(/\r\n/g, '\n').split('\n');
+  const lines = plainText.replace(/\r\n/g, '\n').split('\n');
+  const bodyChunks: string[] = [];
 
-  const bodyXml = paragraphs
-    .map(line => {
-      const trimmed = line.trim();
-      const headingMatch = /^(#{1,3})\s+(.*)$/.exec(trimmed);
-      if (headingMatch) {
-        const sizeHalfPt = headingMatch[1].length === 1 ? 32 : headingMatch[1].length === 2 ? 26 : 22;
-        return `<w:p><w:r><w:rPr><w:b/><w:sz w:val="${sizeHalfPt}"/></w:rPr><w:t xml:space="preserve">${escapeXmlText(headingMatch[2])}</w:t></w:r></w:p>`;
+  let idx = 0;
+  while (idx < lines.length) {
+    const line = lines[idx];
+    const trimmed = line.trim();
+
+    // Detect Markdown table block
+    if (
+      trimmed.startsWith('|') &&
+      trimmed.endsWith('|') &&
+      idx + 1 < lines.length &&
+      /^\|[\s:|-]+\|$/.test(lines[idx + 1].trim())
+    ) {
+      const tableLines: string[] = [trimmed];
+      idx += 2; // Skip separator row
+      while (idx < lines.length && lines[idx].trim().startsWith('|') && lines[idx].trim().endsWith('|')) {
+        tableLines.push(lines[idx].trim());
+        idx++;
       }
-      return `<w:p><w:r><w:t xml:space="preserve">${escapeXmlText(line)}</w:t></w:r></w:p>`;
-    })
-    .join('');
+
+      const parsedRows = tableLines.map(rowLine =>
+        rowLine
+          .slice(1, -1)
+          .split('|')
+          .map(cell => cell.trim())
+      );
+
+      const rowsXml = parsedRows
+        .map((cells, rIdx) => {
+          const cellsXml = cells
+            .map(cell => {
+              const shd = rIdx === 0 ? '<w:shd w:val="clear" w:color="auto" w:fill="F1F5F9"/>' : '';
+              const rPr = rIdx === 0 ? '<w:rPr><w:b/></w:rPr>' : '';
+              return `<w:tc><w:tcPr>${shd}</w:tcPr><w:p><w:r>${rPr}<w:t xml:space="preserve">${escapeXmlText(cell)}</w:t></w:r></w:p></w:tc>`;
+            })
+            .join('');
+          return `<w:tr>${cellsXml}</w:tr>`;
+        })
+        .join('');
+
+      bodyChunks.push(
+        `<w:tbl><w:tblPr><w:tblBorders><w:top w:val="single" w:sz="4" w:color="CBD5E1"/><w:left w:val="single" w:sz="4" w:color="CBD5E1"/><w:bottom w:val="single" w:sz="4" w:color="CBD5E1"/><w:right w:val="single" w:sz="4" w:color="CBD5E1"/><w:insideH w:val="single" w:sz="4" w:color="CBD5E1"/><w:insideV w:val="single" w:sz="4" w:color="CBD5E1"/></w:tblBorders></w:tblPr>${rowsXml}</w:tbl>`
+      );
+      continue;
+    }
+
+    const headingMatch = /^(#{1,3})\s+(.*)$/.exec(trimmed);
+    if (headingMatch) {
+      const level = headingMatch[1].length;
+      const sizeHalfPt = level === 1 ? 32 : level === 2 ? 26 : 22;
+      bodyChunks.push(
+        `<w:p><w:pPr><w:spacing w:before="200" w:after="100"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="${sizeHalfPt}"/></w:rPr><w:t xml:space="preserve">${escapeXmlText(headingMatch[2])}</w:t></w:r></w:p>`
+      );
+      idx++;
+      continue;
+    }
+
+    if (/^[-*+]\s+/.test(trimmed)) {
+      const bulletText = trimmed.replace(/^[-*+]\s+/, '');
+      bodyChunks.push(
+        `<w:p><w:pPr><w:ind w:left="360"/><w:spacing w:after="60"/></w:pPr><w:r><w:t xml:space="preserve">• </w:t></w:r>${buildDocxInlineRunsXml(bulletText)}</w:p>`
+      );
+      idx++;
+      continue;
+    }
+
+    if (trimmed === '---' || trimmed === '***') {
+      bodyChunks.push(
+        `<w:p><w:pPr><w:pBdr><w:bottom w:val="single" w:sz="6" w:space="4" w:color="CBD5E1"/></w:pBdr></w:pPr></w:p>`
+      );
+      idx++;
+      continue;
+    }
+
+    bodyChunks.push(`<w:p>${buildDocxInlineRunsXml(line)}</w:p>`);
+    idx++;
+  }
+
+  const bodyXml = bodyChunks.join('');
 
   const contentTypes = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
   <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
   <Default Extension="xml" ContentType="application/xml"/>
   <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+  <Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>
 </Types>`;
 
   const rootRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
   <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
 </Relationships>`;
+
+  const docRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+</Relationships>`;
+
+  const stylesXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:docDefaults>
+    <w:rPrDefault>
+      <w:rPr>
+        <w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/>
+        <w:sz w:val="22"/>
+        <w:szCs w:val="22"/>
+      </w:rPr>
+    </w:rPrDefault>
+    <w:pPrDefault>
+      <w:pPr>
+        <w:spacing w:after="120" w:line="276" w:lineRule="auto"/>
+      </w:pPr>
+    </w:pPrDefault>
+  </w:docDefaults>
+</w:styles>`;
 
   const documentXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
@@ -477,6 +845,8 @@ export function buildMinimalDocx(plainText: string): Uint8Array {
   return zipSync({
     '[Content_Types].xml': enc.encode(contentTypes),
     '_rels/.rels': enc.encode(rootRels),
+    'word/_rels/document.xml.rels': enc.encode(docRels),
+    'word/styles.xml': enc.encode(stylesXml),
     'word/document.xml': enc.encode(documentXml),
   });
 }
@@ -493,7 +863,7 @@ export function parseDelimitedText(
   let currentRow: string[] = [];
   let currentVal = '';
   let inQuotes = false;
-  const input = text.replace(/\r\n/g, '\n');
+  const input = text.replace(/^\uFEFF/, '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
 
   for (let i = 0; i < input.length; i++) {
     const ch = input[i];
@@ -564,11 +934,17 @@ export function serializeDelimitedRows(
   return lines.join('\n');
 }
 
+function stringifyCellValue(v: unknown): string {
+  if (v === undefined || v === null) return '';
+  if (typeof v === 'object') return JSON.stringify(v);
+  return String(v);
+}
+
 export function rowsToMarkdownTable(rows: Record<string, unknown>[]): string {
   if (rows.length === 0) return '';
   const keys = Array.from(new Set(rows.flatMap(r => Object.keys(r))));
   const esc = (v: unknown): string =>
-    (v === undefined || v === null ? '' : String(v)).replace(/\|/g, '\\|').replace(/\n/g, ' ');
+    stringifyCellValue(v).replace(/\|/g, '\\|').replace(/\n/g, ' ');
   const headerLine = `| ${keys.map(esc).join(' | ')} |`;
   const sepLine = `| ${keys.map(() => '---').join(' | ')} |`;
   const bodyLines = rows.map(row => `| ${keys.map(k => esc(row[k])).join(' | ')} |`);
@@ -582,7 +958,7 @@ export function rowsToHtmlTable(rows: Record<string, unknown>[], title = 'Data T
     .map(
       row =>
         `<tr>${keys
-          .map(k => `<td>${escapeHtml(row[k] === undefined || row[k] === null ? '' : String(row[k]))}</td>`)
+          .map(k => `<td>${escapeHtml(stringifyCellValue(row[k]))}</td>`)
           .join('')}</tr>`
     )
     .join('\n');
@@ -666,7 +1042,7 @@ export function parseSimpleXmlToRows(xmlText: string): Record<string, string | n
     const obj: Record<string, string | number | boolean> = {};
     let m: RegExpExecArray | null;
     while ((m = fieldRegex.exec(inner)) !== null) {
-      const raw = m[2].trim();
+      const raw = decodeHtmlEntities(m[2].trim());
       if (raw === 'true') obj[m[1]] = true;
       else if (raw === 'false') obj[m[1]] = false;
       else if (raw !== '' && !Number.isNaN(Number(raw))) obj[m[1]] = Number(raw);
@@ -709,8 +1085,19 @@ export function createTarArchive(entries: ArchiveEntry[]): Uint8Array {
 
   for (const entry of entries) {
     const header = new Uint8Array(512);
-    const cleanName = entry.name.replace(/^\/+/, '').slice(0, 99);
-    writeTarString(header, 0, 100, cleanName);
+    const cleanFull = entry.name.replace(/^\/+/, '');
+    const encBytes = new TextEncoder().encode(cleanFull);
+    if (encBytes.length <= 99) {
+      writeTarString(header, 0, 100, cleanFull);
+    } else {
+      const slashIdx = cleanFull.lastIndexOf('/');
+      if (slashIdx > 0) {
+        writeTarString(header, 345, 155, cleanFull.slice(0, slashIdx));
+        writeTarString(header, 0, 100, cleanFull.slice(slashIdx + 1));
+      } else {
+        writeTarString(header, 0, 99, cleanFull);
+      }
+    }
     writeOctal(header, 100, 8, 0o644); // mode
     writeOctal(header, 108, 8, 0); // uid
     writeOctal(header, 116, 8, 0); // gid
@@ -754,6 +1141,7 @@ export function createTarArchive(entries: ArchiveEntry[]): Uint8Array {
 export function parseTarArchive(bytes: Uint8Array): ArchiveEntry[] {
   const entries: ArchiveEntry[] = [];
   let offset = 0;
+  let pendingLongName: string | null = null;
 
   while (offset + 512 <= bytes.length) {
     const header = bytes.subarray(offset, offset + 512);
@@ -762,7 +1150,9 @@ export function parseTarArchive(bytes: Uint8Array): ArchiveEntry[] {
 
     const name = readTarString(header, 0, 100);
     const prefix = readTarString(header, 345, 155);
-    const fullName = prefix ? `${prefix}/${name}` : name;
+    const fullName = pendingLongName ?? (prefix ? `${prefix}/${name}` : name);
+    pendingLongName = null;
+
     const sizeOct = readTarString(header, 124, 12).trim();
     const size = parseInt(sizeOct, 8) || 0;
     const typeFlag = header[156];
@@ -770,8 +1160,12 @@ export function parseTarArchive(bytes: Uint8Array): ArchiveEntry[] {
     offset += 512;
     if (offset + size > bytes.length) break;
 
-    // Include regular files ('0' or '\0')
-    if ((typeFlag === 0 || typeFlag === 48) && fullName && !fullName.endsWith('/')) {
+    // Handle GNU LongLink ('L' = 76) extended filename entries
+    if (typeFlag === 76) {
+      pendingLongName = new TextDecoder()
+        .decode(bytes.subarray(offset, offset + size))
+        .replace(/\0+$/, '');
+    } else if ((typeFlag === 0 || typeFlag === 48) && fullName && !fullName.endsWith('/')) {
       const data = bytes.slice(offset, offset + size);
       entries.push({ name: fullName, data, size: data.length });
     }

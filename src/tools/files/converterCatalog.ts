@@ -207,7 +207,7 @@ export function detectCategoryForFile(fileName: string, mimeType = ''): Converte
   if (ext === 'webm' && mime.startsWith('audio/')) {
     return 'audio';
   }
-  if (['mp4', 'webm', 'mov', 'm4v', 'ogv'].includes(ext) || mime.startsWith('video/')) {
+  if (['mp4', 'webm', 'mov', 'm4v', 'ogv', 'mkv', 'avi'].includes(ext) || mime.startsWith('video/')) {
     return 'video';
   }
   if (['mp3', 'wav', 'ogg', 'flac', 'm4a', 'aac', 'opus', 'aiff'].includes(ext) || mime.startsWith('audio/')) {
@@ -280,6 +280,7 @@ export function getTargetFormatsForInput(
           { ext: 'txt', label: 'TXT (Plain Text)', group: 'primary' },
           { ext: 'md', label: 'Markdown (.md)', group: 'primary' },
           { ext: 'html', label: 'HTML Document', group: 'primary' },
+          { ext: 'docx', label: 'DOCX (Word)', group: 'primary' },
           { ext: 'png', label: 'PNG (Pages)', group: 'extract' },
           { ext: 'jpg', label: 'JPG (Pages)', group: 'extract' },
         ];
@@ -303,6 +304,7 @@ export function getTargetFormatsForInput(
         { ext: 'json', label: 'JSON', group: 'primary' },
         { ext: 'yaml', label: 'YAML', group: 'primary' },
         { ext: 'xml', label: 'XML', group: 'primary' },
+        { ext: 'pdf', label: 'PDF (Table)', group: 'extract' },
         { ext: 'md', label: 'Markdown Table (.md)', group: 'extract' },
         { ext: 'html', label: 'HTML Table', group: 'extract' },
       ];

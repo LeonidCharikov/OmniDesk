@@ -1,4 +1,8 @@
-import { describe, it, expect } from 'vitest';
+// @vitest-environment jsdom
+import fs from 'node:fs';
+import path from 'node:path';
+import { describe, it, expect, beforeAll } from 'vitest';
+import { PDFDocument } from 'pdf-lib';
 import {
   FORMAT_CATALOG,
   TOTAL_SUPPORTED_FORMATS,
@@ -31,6 +35,91 @@ import {
   serializeDelimitedRows,
   stripRtfToText,
 } from '../tools/files/converterEncoders';
+import {
+  createPdfBlobFromDocx,
+  createPdfBlobFromHtml,
+  createPdfBlobFromPlainText,
+  createPdfBlobFromTableRows,
+  parseDocxToLayoutModel,
+  setDocumentPdfFontBundle,
+} from '../tools/files/documentPdfEngine';
+
+function buildCzechPowerOfAttorneyDocx(): ArrayBuffer {
+  const enc = new TextEncoder();
+  const contentTypes = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+  <Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>
+</Types>`;
+
+  const rootRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+</Relationships>`;
+
+  const docRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+</Relationships>`;
+
+  const stylesXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:docDefaults>
+    <w:rPrDefault><w:rPr><w:sz w:val="22"/></w:rPr></w:rPrDefault>
+    <w:pPrDefault><w:pPr><w:spacing w:after="120" w:line="276" w:lineRule="auto"/></w:pPr></w:pPrDefault>
+  </w:docDefaults>
+  <w:style w:type="paragraph" w:styleId="Title">
+    <w:name w:val="Title"/>
+    <w:pPr><w:jc w:val="center"/><w:spacing w:after="240"/></w:pPr>
+    <w:rPr><w:b/><w:sz w:val="36"/><w:color w:val="1E293B"/></w:rPr>
+  </w:style>
+</w:styles>`;
+
+  const documentXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:body>
+    <w:p>
+      <w:pPr><w:pStyle w:val="Title"/></w:pPr>
+      <w:r><w:t>PLNÁ MOC</w:t></w:r>
+    </w:p>
+    <w:p>
+      <w:pPr><w:jc w:val="both"/></w:pPr>
+      <w:r><w:t xml:space="preserve">Já níže podepsaný </w:t></w:r>
+      <w:r><w:rPr><w:b/></w:rPr><w:t>Leonid Čarikov</w:t></w:r>
+      <w:r><w:t xml:space="preserve">, bytem Praha, tímto zmocňuji (neuvedeno – dovoz USA) k převzetí vozidla a vyřízení veškerých úkonů. Кириллица: Привет!</w:t></w:r>
+    </w:p>
+    <w:tbl>
+      <w:tblGrid><w:gridCol w:w="3000"/><w:gridCol w:w="6000"/></w:tblGrid>
+      <w:tr>
+        <w:tc><w:tcPr><w:shd w:fill="E2E8F0"/></w:tcPr><w:p><w:r><w:rPr><w:b/></w:rPr><w:t>Zmocnitel</w:t></w:r></w:p></w:tc>
+        <w:tc><w:p><w:r><w:t>Leonid Čarikov</w:t></w:r></w:p></w:tc>
+      </w:tr>
+      <w:tr>
+        <w:tc><w:tcPr><w:shd w:fill="E2E8F0"/></w:tcPr><w:p><w:r><w:rPr><w:b/></w:rPr><w:t>Poznámka</w:t></w:r></w:p></w:tc>
+        <w:tc><w:p><w:r><w:rPr><w:i/><w:u w:val="single"/></w:rPr><w:t>neuvedeno – dovoz USA</w:t></w:r></w:p></w:tc>
+      </w:tr>
+    </w:tbl>
+    <w:sectPr>
+      <w:pgSz w:w="11906" w:h="16838"/>
+      <w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440"/>
+    </w:sectPr>
+  </w:body>
+</w:document>`;
+
+  const bytes = createZipArchive([
+    { name: '[Content_Types].xml', data: enc.encode(contentTypes), size: contentTypes.length },
+    { name: '_rels/.rels', data: enc.encode(rootRels), size: rootRels.length },
+    { name: 'word/_rels/document.xml.rels', data: enc.encode(docRels), size: docRels.length },
+    { name: 'word/styles.xml', data: enc.encode(stylesXml), size: stylesXml.length },
+    { name: 'word/document.xml', data: enc.encode(documentXml), size: documentXml.length },
+  ]);
+
+  const out = new Uint8Array(bytes.byteLength);
+  out.set(bytes);
+  return out.buffer;
+}
 
 describe('converterCatalog', () => {
   it('exposes 6 categories and 30+ formats', () => {
@@ -41,6 +130,7 @@ describe('converterCatalog', () => {
   it('detects file extensions and categories accurately', () => {
     expect(detectFileExtension('clip.mp4')).toBe('mp4');
     expect(detectCategoryForFile('clip.mp4', 'video/mp4')).toBe('video');
+    expect(detectCategoryForFile('movie.mkv')).toBe('video');
 
     expect(detectFileExtension('backup.tar.gz')).toBe('tar.gz');
     expect(detectCategoryForFile('backup.tar.gz')).toBe('archives');
@@ -64,9 +154,15 @@ describe('converterCatalog', () => {
     expect(getDefaultTargetFormat('mp4', 'video')).toBe('webm');
     expect(getDefaultTargetFormat('webm', 'video')).toBe('gif');
 
+    const pdfTargets = getTargetFormatsForInput('pdf', 'documents').map(t => t.ext);
+    expect(pdfTargets).toContain('txt');
+    expect(pdfTargets).toContain('docx');
+    expect(pdfTargets).toContain('png');
+
     const xlsxTargets = getTargetFormatsForInput('xlsx', 'spreadsheets').map(t => t.ext);
     expect(xlsxTargets).toContain('csv');
     expect(xlsxTargets).toContain('json');
+    expect(xlsxTargets).toContain('pdf');
     expect(xlsxTargets).not.toContain('xlsx');
   });
 });
@@ -115,26 +211,48 @@ describe('converterEncoders binary codecs', () => {
 });
 
 describe('converterEncoders documents, data, and archives', () => {
-  it('converts RTF, Markdown, HTML, and generates valid minimal DOCX ZIP archives', () => {
-    const rtf = '{\\rtf1\\ansi{\\fonttbl\\f0 Arial;}Hello \\b World\\b0\\par Second line}';
-    expect(stripRtfToText(rtf)).toContain('Hello');
-    expect(stripRtfToText(rtf)).toContain('Second line');
+  it('parses RTF with Czech Windows-1250 hex escapes, Unicode escapes, and skips ignorable groups', () => {
+    const rtf =
+      '{\\rtf1\\ansi\\ansicpg1250{\\fonttbl\\f0 Arial;}{\\*\\themedata 01020304AABBCC}' +
+      '\\uc1 Pln\\\'e1 moc: \\b Leonid \\u268?arikov\\b0\\par (neuvedeno \\u8211? dovoz USA)}';
+    const text = stripRtfToText(rtf);
+    expect(text).toContain('Plná moc:');
+    expect(text).toContain('Leonid Čarikov');
+    expect(text).toContain('neuvedeno – dovoz USA');
+    expect(text).not.toContain('01020304AABBCC');
+    expect(text).not.toContain('?');
+  });
 
+  it('converts Markdown, HTML tables, and generates rich DOCX ZIP archives with styles & tables', () => {
     const html = markdownToHtml('# Heading\n\nSome **bold** text\n\n- Item A', 'Test');
     expect(html).toContain('<h1>Heading</h1>');
     expect(html).toContain('<strong>bold</strong>');
     expect(htmlToMarkdown(html)).toContain('# Heading');
     expect(htmlToMarkdown(html)).toContain('**bold**');
 
-    const docxBytes = buildMinimalDocx('# Title\n\nParagraph text');
+    const tableHtml =
+      '<table><thead><tr><th>Name</th><th>Note</th></tr></thead>' +
+      '<tbody><tr><td>Čarikov</td><td>USA &#8211; Import</td></tr></tbody></table>';
+    const mdFromTable = htmlToMarkdown(tableHtml);
+    expect(mdFromTable).toContain('| Name | Note |');
+    expect(mdFromTable).toContain('| Čarikov | USA – Import |');
+
+    const docxBytes = buildMinimalDocx('# Title\n\nSome **bold** and *italic* text\n\n| A | B |\n| --- | --- |\n| 1 | 2 |');
     const entries = parseZipArchive(docxBytes);
     const names = entries.map(e => e.name);
     expect(names).toContain('[Content_Types].xml');
     expect(names).toContain('word/document.xml');
+    expect(names).toContain('word/styles.xml');
+    expect(names).toContain('word/_rels/document.xml.rels');
+
+    const docXml = new TextDecoder().decode(entries.find(e => e.name === 'word/document.xml')!.data);
+    expect(docXml).toContain('<w:b/>');
+    expect(docXml).toContain('<w:i/>');
+    expect(docXml).toContain('<w:tbl>');
   });
 
-  it('roundtrips CSV, XML, Markdown table, and HTML table cleanly', () => {
-    const csv = 'Name,Price,Active\n"Widget, Pro",49.5,true\nLamp,19,false';
+  it('roundtrips CSV (with UTF-8 BOM), XML (with entities), nested JSON, Markdown table, and HTML table cleanly', () => {
+    const csv = '\uFEFFName,Price,Active\r\n"Widget, Pro",49.5,true\r\nLamp & Bulb,19,false';
     const rows = parseDelimitedText(csv, ',');
     expect(rows).toHaveLength(2);
     expect(rows[0].Name).toBe('Widget, Pro');
@@ -149,31 +267,130 @@ describe('converterEncoders documents, data, and archives', () => {
     const parsedXml = parseSimpleXmlToRows(xml);
     expect(parsedXml).toHaveLength(2);
     expect(parsedXml[0].Price).toBe(49.5);
+    expect(parsedXml[1].Name).toBe('Lamp & Bulb');
 
-    const mdTable = rowsToMarkdownTable(rows);
-    expect(mdTable).toContain('| Name | Price | Active |');
-    expect(rowsToHtmlTable(rows)).toContain('<table>');
+    const nestedRows = [{ item: 'Kit', meta: { count: 2 } }];
+    const mdTable = rowsToMarkdownTable(nestedRows);
+    expect(mdTable).toContain('{"count":2}');
+    expect(mdTable).not.toContain('[object Object]');
+    const htmlTable = rowsToHtmlTable(nestedRows);
+    expect(htmlTable).toContain('<table>');
+    expect(htmlTable).not.toContain('[object Object]');
   });
 
-  it('roundtrips ZIP, TAR, and GZIP archives losslessly', () => {
+  it('roundtrips ZIP, TAR (including long filenames >100 chars), and GZIP archives losslessly', () => {
     const enc = new TextEncoder();
     const dec = new TextDecoder();
+    const longPath =
+      'deeply/nested/folder/structure/for/testing/ustar/and/gnu/longlink/filenames/very_long_document_name_over_hundred_chars.txt';
+    expect(longPath.length).toBeGreaterThan(100);
+
     const input = [
       { name: 'hello.txt', data: enc.encode('Hello OmniDesk'), size: 14 },
       { name: 'nested/data.json', data: enc.encode('{"ok":true}'), size: 11 },
+      { name: longPath, data: enc.encode('Long path content'), size: 17 },
     ];
 
     const tarBytes = createTarArchive(input);
     const tarGzBytes = compressGzip(tarBytes);
     const unzippedTar = decompressGzip(tarGzBytes);
     const parsedTar = parseTarArchive(unzippedTar);
-    expect(parsedTar).toHaveLength(2);
+    expect(parsedTar).toHaveLength(3);
     expect(dec.decode(parsedTar[0].data)).toBe('Hello OmniDesk');
     expect(parsedTar[1].name).toBe('nested/data.json');
+    expect(parsedTar[2].name).toBe(longPath);
+    expect(dec.decode(parsedTar[2].data)).toBe('Long path content');
 
     const zipBytes = createZipArchive(parsedTar);
     const parsedZip = parseZipArchive(zipBytes);
-    expect(parsedZip).toHaveLength(2);
+    expect(parsedZip).toHaveLength(3);
     expect(dec.decode(parsedZip[1].data)).toBe('{"ok":true}');
+  });
+});
+
+describe('documentPdfEngine full-Unicode OOXML & PDF generation', () => {
+  beforeAll(() => {
+    const fontsDir = path.resolve(process.cwd(), 'src/assets/fonts');
+    setDocumentPdfFontBundle({
+      regular: new Uint8Array(fs.readFileSync(path.join(fontsDir, 'LiberationSans-Regular.ttf'))),
+      bold: new Uint8Array(fs.readFileSync(path.join(fontsDir, 'LiberationSans-Bold.ttf'))),
+      italic: new Uint8Array(fs.readFileSync(path.join(fontsDir, 'LiberationSans-Italic.ttf'))),
+      boldItalic: new Uint8Array(fs.readFileSync(path.join(fontsDir, 'LiberationSans-BoldItalic.ttf'))),
+      mono: new Uint8Array(fs.readFileSync(path.join(fontsDir, 'LiberationMono-Regular.ttf'))),
+    });
+  });
+
+  it('parses Czech & Cyrillic DOCX OOXML preserving alignment, styles, diacritics, and tables', () => {
+    const docxBuffer = buildCzechPowerOfAttorneyDocx();
+    const model = parseDocxToLayoutModel(docxBuffer);
+
+    expect(model.blocks.length).toBe(3);
+
+    const title = model.blocks[0];
+    expect(title.kind).toBe('paragraph');
+    if (title.kind === 'paragraph') {
+      expect(title.align).toBe('center');
+      expect(title.runs[0].text).toBe('PLNÁ MOC');
+      expect(title.runs[0].bold).toBe(true);
+      expect(title.runs[0].fontSize).toBe(18);
+    }
+
+    const body = model.blocks[1];
+    expect(body.kind).toBe('paragraph');
+    if (body.kind === 'paragraph') {
+      expect(body.align).toBe('justify');
+      const fullText = body.runs.map(r => r.text).join('');
+      expect(fullText).toContain('Já níže podepsaný');
+      expect(fullText).toContain('Leonid Čarikov');
+      expect(fullText).toContain('neuvedeno – dovoz USA');
+      expect(fullText).toContain('Кириллица: Привет!');
+    }
+
+    const table = model.blocks[2];
+    expect(table.kind).toBe('table');
+    if (table.kind === 'table') {
+      expect(table.rows).toHaveLength(2);
+      expect(table.rows[0].cells[0].backgroundColor).toBeDefined();
+      expect(table.rows[1].cells[1].paragraphs[0].runs[0].underline).toBe(true);
+    }
+  });
+
+  it('generates valid vector PDF from DOCX with Unicode fonts and no artificial OmniDesk header', async () => {
+    const docxBuffer = buildCzechPowerOfAttorneyDocx();
+    const blob = await createPdfBlobFromDocx(docxBuffer);
+    expect(blob.type).toBe('application/pdf');
+    expect(blob.size).toBeGreaterThan(2000);
+
+    const bytes = new Uint8Array(await blob.arrayBuffer());
+    expect(new TextDecoder('latin1').decode(bytes.subarray(0, 5))).toBe('%PDF-');
+    expect(new TextDecoder('latin1').decode(bytes)).not.toContain('(OmniDesk)');
+
+    const pdfDoc = await PDFDocument.load(bytes);
+    expect(pdfDoc.getPageCount()).toBeGreaterThanOrEqual(1);
+    const { width, height } = pdfDoc.getPage(0).getSize();
+    expect(Math.round(width)).toBe(595); // A4 width from w:pgSz 11906 twips
+    expect(Math.round(height)).toBe(842); // A4 height from w:pgSz 16838 twips
+  });
+
+  it('generates valid Unicode PDFs from HTML, Plain Text, and Spreadsheet Table Rows', async () => {
+    const htmlBlob = await createPdfBlobFromHtml(
+      '<h1>Přehled smlouvy</h1><p>Cena: <strong>12 500 €</strong> – schváleno.</p>'
+    );
+    const htmlDoc = await PDFDocument.load(new Uint8Array(await htmlBlob.arrayBuffer()));
+    expect(htmlDoc.getPageCount()).toBe(1);
+
+    const txtBlob = await createPdfBlobFromPlainText('Příliš žluťoučký kůň úpěl ďábelské ódy.\nПривет мир!');
+    const txtDoc = await PDFDocument.load(new Uint8Array(await txtBlob.arrayBuffer()));
+    expect(txtDoc.getPageCount()).toBe(1);
+
+    const tableBlob = await createPdfBlobFromTableRows(
+      [
+        { Jméno: 'Leonid Čarikov', Poznámka: 'neuvedeno – dovoz USA', Částka: 1500 },
+        { Jméno: 'Jana Nováková', Poznámka: 'Schváleno', Částka: 2400 },
+      ],
+      'Seznam klientů'
+    );
+    const tableDoc = await PDFDocument.load(new Uint8Array(await tableBlob.arrayBuffer()));
+    expect(tableDoc.getPageCount()).toBe(1);
   });
 });

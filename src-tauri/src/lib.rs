@@ -13,6 +13,8 @@ use tauri_plugin_clipboard_manager::ClipboardExt;
 const MAX_CLIPBOARD_CHARS: usize = 100_000;
 const MAX_PENDING_STDIO_LINES: usize = 128;
 const MAX_CLI_OPEN_FILE_BYTES: u64 = 25 * 1024 * 1024;
+const MAX_DROPPED_FILE_BYTES: u64 = 512 * 1024 * 1024;
+const MAX_TRACKED_DROPPED_PATHS: usize = 256;
 const WINDOW_STATE_FILE: &str = "window-state.json";
 const MIN_SAVED_WINDOW_WIDTH: u32 = 900;
 const MIN_SAVED_WINDOW_HEIGHT: u32 = 600;
@@ -28,6 +30,8 @@ struct McpStdioState {
 struct CloseToTrayState(AtomicBool);
 
 struct OpenedCliFileState(Mutex<Option<String>>);
+
+struct DroppedFilesAllowlist(Mutex<VecDeque<PathBuf>>);
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 struct PersistedWindowState {
@@ -307,6 +311,40 @@ fn take_opened_cli_file(
     Ok(Some(CliOpenedFilePayload { name, bytes }))
 }
 
+fn normalize_drop_path(path: &Path) -> PathBuf {
+    std::fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf())
+}
+
+#[tauri::command]
+fn read_dropped_file(
+    path: String,
+    state: State<'_, DroppedFilesAllowlist>,
+) -> Result<tauri::ipc::Response, String> {
+    let raw_path = PathBuf::from(&path);
+    let canonical = normalize_drop_path(&raw_path);
+
+    let is_allowed = {
+        let guard = state.0.lock().map_err(|e| e.to_string())?;
+        guard.iter().any(|allowed| allowed == &canonical || allowed == &raw_path)
+    };
+
+    if !is_allowed {
+        return Err("File path was not dropped onto the application window.".to_string());
+    }
+
+    if !canonical.is_file() {
+        return Err("Dropped item is not a readable file.".to_string());
+    }
+
+    let meta = std::fs::metadata(&canonical).map_err(|e| e.to_string())?;
+    if meta.len() > MAX_DROPPED_FILE_BYTES {
+        return Err("Dropped file exceeds the 512 MB desktop import limit.".to_string());
+    }
+
+    let bytes = std::fs::read(&canonical).map_err(|e| e.to_string())?;
+    Ok(tauri::ipc::Response::new(bytes))
+}
+
 fn has_valid_updater_pubkey(app: &AppHandle) -> bool {
     app.config()
         .plugins
@@ -424,6 +462,7 @@ pub fn run() {
         .manage(Mutex::new(McpStdioState::default()))
         .manage(CloseToTrayState(AtomicBool::new(false)))
         .manage(OpenedCliFileState(Mutex::new(None)))
+        .manage(DroppedFilesAllowlist(Mutex::new(VecDeque::new())))
         .manage(WindowGeometryState(Mutex::new(None)))
         .invoke_handler(tauri::generate_handler![
             get_system_telemetry,
@@ -433,6 +472,7 @@ pub fn run() {
             mcp_stdio_tx,
             set_close_to_tray,
             take_opened_cli_file,
+            read_dropped_file,
             is_updater_configured,
             open_external_url
         ])
@@ -561,6 +601,22 @@ pub fn run() {
                 if close_to_tray {
                     api.prevent_close();
                     let _ = window.hide();
+                }
+            }
+            WindowEvent::DragDrop(tauri::DragDropEvent::Drop { paths, .. }) => {
+                let allowlist = window.app_handle().state::<DroppedFilesAllowlist>();
+                if let Ok(mut guard) = allowlist.0.lock() {
+                    for p in paths {
+                        if p.is_file() {
+                            let normalized = normalize_drop_path(p);
+                            if !guard.iter().any(|existing| existing == &normalized) {
+                                if guard.len() >= MAX_TRACKED_DROPPED_PATHS {
+                                    guard.pop_front();
+                                }
+                                guard.push_back(normalized);
+                            }
+                        }
+                    }
                 }
             }
             _ => {}

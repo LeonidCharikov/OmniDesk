@@ -506,11 +506,90 @@ export async function openExternalUrl(url: string): Promise<void> {
   }
 }
 
+export interface TauriDropListenerOptions {
+  onDragStateChange?: (isDragging: boolean) => void;
+  onError?: (message: string) => void;
+}
+
+const DROPPED_FILE_MIME_MAP: Record<string, string> = {
+  // Images
+  png: 'image/png',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  webp: 'image/webp',
+  avif: 'image/avif',
+  gif: 'image/gif',
+  svg: 'image/svg+xml',
+  bmp: 'image/bmp',
+  ico: 'image/x-icon',
+  // Video
+  mp4: 'video/mp4',
+  webm: 'video/webm',
+  mov: 'video/quicktime',
+  m4v: 'video/x-m4v',
+  ogv: 'video/ogg',
+  mkv: 'video/x-matroska',
+  avi: 'video/x-msvideo',
+  // Audio
+  mp3: 'audio/mpeg',
+  wav: 'audio/wav',
+  ogg: 'audio/ogg',
+  flac: 'audio/flac',
+  m4a: 'audio/mp4',
+  aac: 'audio/aac',
+  opus: 'audio/opus',
+  aiff: 'audio/aiff',
+  aif: 'audio/aiff',
+  // Documents
+  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  pdf: 'application/pdf',
+  md: 'text/markdown',
+  markdown: 'text/markdown',
+  html: 'text/html',
+  htm: 'text/html',
+  txt: 'text/plain',
+  rtf: 'application/rtf',
+  // Spreadsheets & Data
+  xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  xls: 'application/vnd.ms-excel',
+  ods: 'application/vnd.oasis.opendocument.spreadsheet',
+  csv: 'text/csv',
+  tsv: 'text/tab-separated-values',
+  json: 'application/json',
+  yaml: 'text/yaml',
+  yml: 'text/yaml',
+  xml: 'application/xml',
+  // Archives
+  zip: 'application/zip',
+  tar: 'application/x-tar',
+  gz: 'application/gzip',
+  tgz: 'application/gzip',
+};
+
+async function readDroppedFileBytes(filePath: string): Promise<Uint8Array> {
+  try {
+    const raw = await invoke<ArrayBuffer | Uint8Array | number[]>('read_dropped_file', {
+      path: filePath,
+    });
+    if (raw instanceof Uint8Array) return raw;
+    if (raw instanceof ArrayBuffer) return new Uint8Array(raw);
+    if (Array.isArray(raw)) return new Uint8Array(raw);
+  } catch {
+    // Fall back to plugin-fs when running against an older binary or scoped directory
+  }
+
+  const { readFile } = await import('@tauri-apps/plugin-fs');
+  return await readFile(filePath);
+}
+
 /**
  * Zaregistruje posluchač pro nativní Tauri drag-and-drop události z operačního systému.
- * Slouží jako fallback pro případ, kdy desktopová aplikace běží s výchozím dragDropEnabled: true.
+ * Slouží pro desktopovou aplikaci běžící s dragDropEnabled: true.
  */
-export function registerTauriDropListener(onFiles: (files: File[]) => void): () => void {
+export function registerTauriDropListener(
+  onFiles: (files: File[]) => void,
+  options?: TauriDropListenerOptions
+): () => void {
   if (!isTauri()) {
     return () => {};
   }
@@ -522,39 +601,54 @@ export function registerTauriDropListener(onFiles: (files: File[]) => void): () 
     .then(({ getCurrentWebview }) => {
       if (!isActive) return;
       return getCurrentWebview().onDragDropEvent(async event => {
-        if (!isActive || event.payload.type !== 'drop' || !event.payload.paths?.length) return;
+        if (!isActive) return;
+
+        const payloadType = event.payload.type;
+        if (payloadType === 'enter' || payloadType === 'over') {
+          options?.onDragStateChange?.(true);
+          return;
+        }
+        if (payloadType === 'leave') {
+          options?.onDragStateChange?.(false);
+          return;
+        }
+        if (payloadType !== 'drop') return;
+
+        options?.onDragStateChange?.(false);
+        const paths = event.payload.paths;
+        if (!paths || paths.length === 0) return;
 
         try {
-          const { readFile } = await import('@tauri-apps/plugin-fs');
-          const filePromises = event.payload.paths.map(async (filePath: string) => {
-            const bytes = await readFile(filePath);
-            const filename = filePath.split(/[/\\]/).pop() || 'dropped-file';
-            const ext = filename.split('.').pop()?.toLowerCase() || '';
-            const mimeMap: Record<string, string> = {
-              png: 'image/png',
-              jpg: 'image/jpeg',
-              jpeg: 'image/jpeg',
-              webp: 'image/webp',
-              gif: 'image/gif',
-              svg: 'image/svg+xml',
-              bmp: 'image/bmp',
-              ico: 'image/x-icon',
-              docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-              pdf: 'application/pdf',
-              txt: 'text/plain',
-              json: 'application/json',
-              csv: 'text/csv',
-            };
-            const mime = mimeMap[ext] || 'application/octet-stream';
-            return new File([bytes], filename, { type: mime });
-          });
+          const loadedFiles: File[] = [];
+          const errors: string[] = [];
 
-          const files = await Promise.all(filePromises);
-          if (files.length > 0) {
-            onFiles(files);
+          for (const filePath of paths) {
+            try {
+              const bytes = await readDroppedFileBytes(filePath);
+              const filename = filePath.split(/[/\\]/).pop() || 'dropped-file';
+              const lower = filename.toLowerCase();
+              const ext = lower.endsWith('.tar.gz')
+                ? 'gz'
+                : lower.includes('.')
+                ? lower.split('.').pop() || ''
+                : '';
+              const mime = DROPPED_FILE_MIME_MAP[ext] || 'application/octet-stream';
+              loadedFiles.push(new File([bytes as unknown as BlobPart], filename, { type: mime }));
+            } catch (fileErr) {
+              const msg = fileErr instanceof Error ? fileErr.message : String(fileErr);
+              errors.push(msg);
+            }
+          }
+
+          if (loadedFiles.length > 0) {
+            onFiles(loadedFiles);
+          } else if (errors.length > 0) {
+            options?.onError?.(errors[0]);
           }
         } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
           console.warn('registerTauriDropListener: Failed to read dropped files:', err);
+          options?.onError?.(msg);
         }
       });
     })
@@ -573,6 +667,7 @@ export function registerTauriDropListener(onFiles: (files: File[]) => void): () 
 
   return () => {
     isActive = false;
+    options?.onDragStateChange?.(false);
     if (unlistenFn) {
       unlistenFn();
     }

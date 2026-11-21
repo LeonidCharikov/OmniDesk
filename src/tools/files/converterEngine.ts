@@ -1,7 +1,7 @@
 import mammoth from 'mammoth';
 import DOMPurify from 'dompurify';
 import { load as yamlLoad, dump as yamlDump } from 'js-yaml';
-import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+import { PDFDocument } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.js?url';
 import { GIFEncoder, quantize, applyPalette } from 'gifenc';
@@ -21,6 +21,7 @@ import {
   encodeBmp24,
   encodeIcoFromPng,
   encodeWavPcm16,
+  escapeHtml,
   htmlToMarkdown,
   htmlToPlainText,
   markdownToHtml,
@@ -35,6 +36,12 @@ import {
   serializeDelimitedRows,
   stripRtfToText,
 } from './converterEncoders';
+import {
+  createPdfBlobFromDocx,
+  createPdfBlobFromHtml,
+  createPdfBlobFromPlainText,
+  createPdfBlobFromTableRows,
+} from './documentPdfEngine';
 
 if (typeof window !== 'undefined' && pdfjsLib.GlobalWorkerOptions) {
   pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
@@ -89,13 +96,6 @@ export interface ConversionResult {
 
 export type ProgressCallback = (percent: number, stage?: string) => void;
 
-function makeWinAnsiSafe(text: string): string {
-  return text
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^\x20-\x7E\xA0-\xFF]/g, '?');
-}
-
 function toBlobPart(bytes: Uint8Array): BlobPart {
   return bytes as unknown as BlobPart;
 }
@@ -115,6 +115,18 @@ function canvasToBlob(
       quality
     );
   });
+}
+
+function parseSvgIntrinsicSize(svgText: string): { width: number; height: number } | null {
+  const vbMatch = /viewBox\s*=\s*["']\s*[\d.-]+\s+[\d.-]+\s+([\d.]+)\s+([\d.]+)\s*["']/i.exec(svgText);
+  const wMatch = /<svg[^>]*\bwidth\s*=\s*["']\s*([\d.]+)(?:px)?\s*["']/i.exec(svgText);
+  const hMatch = /<svg[^>]*\bheight\s*=\s*["']\s*([\d.]+)(?:px)?\s*["']/i.exec(svgText);
+  const w = wMatch ? Number(wMatch[1]) : vbMatch ? Number(vbMatch[1]) : 0;
+  const h = hMatch ? Number(hMatch[1]) : vbMatch ? Number(vbMatch[2]) : 0;
+  if (w > 0 && h > 0 && Number.isFinite(w) && Number.isFinite(h)) {
+    return { width: Math.round(w), height: Math.round(h) };
+  }
+  return null;
 }
 
 function loadImageFromFile(file: File): Promise<{ img: HTMLImageElement; cleanup: () => void }> {
@@ -155,7 +167,8 @@ function loadVideoMetadata(file: File): Promise<{ video: HTMLVideoElement; clean
 
 function seekVideoTo(video: HTMLVideoElement, timeSec: number): Promise<void> {
   return new Promise((resolve, reject) => {
-    const clamped = Math.max(0, Math.min(timeSec, Math.max(0, (video.duration || 0) - 0.01)));
+    const finiteDuration = Number.isFinite(video.duration) && video.duration > 0 ? video.duration : Math.max(timeSec + 0.1, 2);
+    const clamped = Math.max(0, Math.min(timeSec, Math.max(0, finiteDuration - 0.01)));
     if (Math.abs(video.currentTime - clamped) < 0.005) {
       resolve();
       return;
@@ -178,80 +191,50 @@ function seekVideoTo(video: HTMLVideoElement, timeSec: number): Promise<void> {
   });
 }
 
-async function createTextPdfBlob(textContent: string, headerLabel: string): Promise<Blob> {
-  const pdfDoc = await PDFDocument.create();
-  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-  const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-
-  const pageWidth = 595.28;
-  const pageHeight = 841.89;
-  const margin = 50;
-  const fontSize = 10;
-  const lineHeight = 14;
-  const maxLineWidth = pageWidth - margin * 2;
-
-  const paragraphs = textContent.replace(/\r\n/g, '\n').split('\n');
+function extractLinesFromPdfTextItems(
+  items: Array<{ str?: string; hasEOL?: boolean; transform?: number[] }>
+): string {
   const lines: string[] = [];
+  let currentLine = '';
+  let lastY: number | null = null;
+  let lastHeight = 12;
 
-  for (const rawP of paragraphs) {
-    const safeP = makeWinAnsiSafe(rawP);
-    if (!safeP.trim()) {
-      lines.push('');
-      continue;
-    }
-    const words = safeP.split(/\s+/);
-    let currentLine = '';
-    for (const w of words) {
-      const test = currentLine ? `${currentLine} ${w}` : w;
-      if (font.widthOfTextAtSize(test, fontSize) > maxLineWidth && currentLine) {
-        lines.push(currentLine);
-        currentLine = w;
-      } else {
-        currentLine = test;
+  for (const rawItem of items) {
+    if (!('str' in rawItem) || typeof rawItem.str !== 'string') continue;
+    const text = rawItem.str;
+    const y = Array.isArray(rawItem.transform) ? rawItem.transform[5] : null;
+    const h = Array.isArray(rawItem.transform) ? Math.abs(rawItem.transform[3] || rawItem.transform[0] || 12) : 12;
+
+    if (lastY !== null && y !== null && Math.abs(y - lastY) > Math.max(4, lastHeight * 0.6)) {
+      lines.push(currentLine.trimEnd());
+      // Insert blank line on clear paragraph vertical gap
+      if (Math.abs(y - lastY) > Math.max(18, lastHeight * 1.65)) {
+        lines.push('');
       }
+      currentLine = '';
     }
-    if (currentLine) lines.push(currentLine);
+
+    if (currentLine && text && !currentLine.endsWith(' ') && !text.startsWith(' ')) {
+      currentLine += ' ';
+    }
+    currentLine += text;
+    if (y !== null) {
+      lastY = y;
+      lastHeight = h > 2 ? h : lastHeight;
+    }
+
+    if (rawItem.hasEOL) {
+      lines.push(currentLine.trimEnd());
+      currentLine = '';
+      lastY = null;
+    }
   }
 
-  const linesPerPage = Math.floor((pageHeight - margin * 2 - 30) / lineHeight);
-  const totalPages = Math.max(1, Math.ceil(lines.length / linesPerPage));
-
-  for (let p = 0; p < totalPages; p++) {
-    const page = pdfDoc.addPage([pageWidth, pageHeight]);
-    page.drawText(`${makeWinAnsiSafe(headerLabel)} (OmniDesk)`, {
-      x: margin,
-      y: pageHeight - margin + 12,
-      size: 8,
-      font: fontBold,
-      color: rgb(0.35, 0.38, 0.45),
-    });
-
-    const pLines = lines.slice(p * linesPerPage, (p + 1) * linesPerPage);
-    let y = pageHeight - margin - 15;
-    for (const line of pLines) {
-      if (line) {
-        page.drawText(line, {
-          x: margin,
-          y,
-          size: fontSize,
-          font,
-          color: rgb(0.12, 0.14, 0.18),
-        });
-      }
-      y -= lineHeight;
-    }
-
-    page.drawText(`${p + 1} / ${totalPages}`, {
-      x: pageWidth - margin - 40,
-      y: margin - 15,
-      size: 8,
-      font,
-      color: rgb(0.5, 0.5, 0.5),
-    });
+  if (currentLine.trim().length > 0) {
+    lines.push(currentLine.trimEnd());
   }
 
-  const pdfBytes = await pdfDoc.save();
-  return new Blob([toBlobPart(pdfBytes)], { type: 'application/pdf' });
+  return lines.join('\n').replace(/\n{3,}/g, '\n\n').trim();
 }
 
 // ---------------------------------------------------------------------------
@@ -272,7 +255,12 @@ async function convertVideo(
     const audioCtx = new AudioCtx();
     try {
       const arrayBuf = await file.arrayBuffer();
-      const decoded = await audioCtx.decodeAudioData(arrayBuf.slice(0));
+      let decoded: AudioBuffer;
+      try {
+        decoded = await audioCtx.decodeAudioData(arrayBuf.slice(0));
+      } catch {
+        throw new Error('No decodable audio track found in this video file.');
+      }
       onProgress?.(60, 'Encoding WAV PCM');
       const channels: Float32Array[] = [];
       for (let c = 0; c < decoded.numberOfChannels; c++) {
@@ -312,6 +300,10 @@ async function convertVideo(
       canvas.height = Math.max(1, Math.round(srcH * scale));
       const ctx = canvas.getContext('2d');
       if (!ctx) throw new Error('Canvas 2D context unavailable.');
+      if (targetExt === 'jpg') {
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
       const mime = targetExt === 'png' ? 'image/png' : targetExt === 'jpg' ? 'image/jpeg' : 'image/webp';
       const blob = await canvasToBlob(canvas, mime, options.imageQuality / 100);
@@ -386,38 +378,61 @@ async function convertVideo(
       if (!ctx) throw new Error('Canvas 2D context unavailable.');
 
       const canvasStream = canvas.captureStream(30);
-      const combinedTracks: MediaStreamTrack[] = [...canvasStream.getVideoTracks()];
+      const videoTracks = [...canvasStream.getVideoTracks()];
+      const audioSupportedMimes = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'];
+      const videoOnlyMimes = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'];
 
-      // Route audio silently into the recording stream if possible
-      let audioCtx: AudioContext | null = null;
-      try {
-        const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-        audioCtx = new AudioCtx();
-        const source = audioCtx.createMediaElementSource(video);
-        const dest = audioCtx.createMediaStreamDestination();
-        source.connect(dest);
-        video.muted = false;
-        const audioTrack = dest.stream.getAudioTracks()[0];
-        if (audioTrack) combinedTracks.push(audioTrack);
-      } catch {
-        video.muted = true;
+      const chosenAudioMime = audioSupportedMimes.find(m => MediaRecorder.isTypeSupported(m));
+      const chosenVideoMime = videoOnlyMimes.find(m => MediaRecorder.isTypeSupported(m));
+      if (!chosenAudioMime && !chosenVideoMime) {
+        throw new Error('WebM video recording is not supported by this browser engine.');
       }
 
-      const combinedStream = new MediaStream(combinedTracks);
-      const preferredMimes = [
-        'video/webm;codecs=vp9,opus',
-        'video/webm;codecs=vp8,opus',
-        'video/webm;codecs=vp9',
-        'video/webm;codecs=vp8',
-        'video/webm',
-      ];
-      const chosenMime = preferredMimes.find(m => MediaRecorder.isTypeSupported(m)) || 'video/webm';
+      // Route audio silently into the recording stream if codec supports Opus audio
+      let audioCtx: AudioContext | null = null;
+      let combinedTracks: MediaStreamTrack[] = [...videoTracks];
+      let chosenMime = chosenVideoMime || 'video/webm';
+
+      if (chosenAudioMime) {
+        try {
+          const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+          audioCtx = new AudioCtx();
+          if (audioCtx.state === 'suspended') {
+            await audioCtx.resume().catch(() => {});
+          }
+          const source = audioCtx.createMediaElementSource(video);
+          const dest = audioCtx.createMediaStreamDestination();
+          source.connect(dest);
+          video.muted = false;
+          const audioTrack = dest.stream.getAudioTracks()[0];
+          if (audioTrack) {
+            combinedTracks = [...videoTracks, audioTrack];
+            chosenMime = chosenAudioMime;
+          }
+        } catch {
+          video.muted = true;
+          combinedTracks = [...videoTracks];
+        }
+      }
+
+      let combinedStream = new MediaStream(combinedTracks);
+      let recorder: MediaRecorder;
+      try {
+        recorder = new MediaRecorder(combinedStream, {
+          mimeType: chosenMime,
+          videoBitsPerSecond: 2_500_000,
+        });
+      } catch {
+        // Fallback to video-only stream if audio+video codec combination is rejected
+        video.muted = true;
+        combinedStream = new MediaStream(videoTracks);
+        recorder = new MediaRecorder(combinedStream, {
+          mimeType: chosenVideoMime || 'video/webm',
+          videoBitsPerSecond: 2_500_000,
+        });
+      }
 
       const chunks: Blob[] = [];
-      const recorder = new MediaRecorder(combinedStream, {
-        mimeType: chosenMime,
-        videoBitsPerSecond: 2_500_000,
-      });
 
       const recordedBlob = await new Promise<Blob>((resolve, reject) => {
         recorder.ondataavailable = e => {
@@ -492,6 +507,9 @@ async function convertAudio(
     onProgress?.(20, 'Decoding audio');
     const arrayBuf = await file.arrayBuffer();
     const decoded = await audioCtx.decodeAudioData(arrayBuf.slice(0));
+    if (decoded.length === 0) {
+      throw new Error('Decoded audio stream is empty.');
+    }
 
     if (targetExt === 'wav' || targetExt === 'aiff') {
       onProgress?.(65, `Encoding ${targetExt.toUpperCase()}`);
@@ -511,12 +529,15 @@ async function convertAudio(
           ? encodeWavPcm16(processed, options.audioSampleRate)
           : encodeAiffPcm16(processed, options.audioSampleRate);
       const mime = targetExt === 'wav' ? 'audio/wav' : 'audio/aiff';
+      const canPreview =
+        targetExt === 'wav' ||
+        (typeof document !== 'undefined' && Boolean(document.createElement('audio').canPlayType('audio/aiff')));
       onProgress?.(100);
       return {
         blob: new Blob([toBlobPart(bytes)], { type: mime }),
         fileName: `${baseName}.${targetExt}`,
         mime,
-        previewKind: 'audio',
+        previewKind: canPreview ? 'audio' : 'none',
         note: `${(options.audioSampleRate / 1000).toFixed(1)} kHz · ${options.audioChannels === 1 ? 'Mono' : 'Stereo'} · 16-bit`,
       };
     }
@@ -525,13 +546,19 @@ async function convertAudio(
       if (typeof MediaRecorder === 'undefined') {
         throw new Error('MediaRecorder is unavailable in this browser.');
       }
+      const preferred = ['audio/webm;codecs=opus', 'audio/webm'];
+      const mime = preferred.find(m => MediaRecorder.isTypeSupported(m));
+      if (!mime) {
+        throw new Error('WebM Opus audio recording is not supported on this platform. Export to WAV or AIFF instead.');
+      }
+      if (audioCtx.state === 'suspended') {
+        await audioCtx.resume().catch(() => {});
+      }
       const dest = audioCtx.createMediaStreamDestination();
       const source = audioCtx.createBufferSource();
       source.buffer = decoded;
       source.connect(dest);
 
-      const preferred = ['audio/webm;codecs=opus', 'audio/webm'];
-      const mime = preferred.find(m => MediaRecorder.isTypeSupported(m)) || 'audio/webm';
       const chunks: Blob[] = [];
       const recorder = new MediaRecorder(dest.stream, { mimeType: mime });
 
@@ -542,27 +569,30 @@ async function convertAudio(
         onProgress?.(pct, 'Encoding WebM Opus');
       }, 150);
 
-      const blob = await new Promise<Blob>((resolve, reject) => {
-        recorder.ondataavailable = e => {
-          if (e.data.size > 0) chunks.push(e.data);
-        };
-        recorder.onerror = () => reject(new Error('Audio WebM encoding failed.'));
-        recorder.onstop = () => resolve(new Blob(chunks, { type: 'audio/webm' }));
-        source.onended = () => {
-          if (recorder.state !== 'inactive') recorder.stop();
-        };
-        recorder.start(200);
-        source.start(0);
-      });
+      try {
+        const blob = await new Promise<Blob>((resolve, reject) => {
+          recorder.ondataavailable = e => {
+            if (e.data.size > 0) chunks.push(e.data);
+          };
+          recorder.onerror = () => reject(new Error('Audio WebM encoding failed.'));
+          recorder.onstop = () => resolve(new Blob(chunks, { type: 'audio/webm' }));
+          source.onended = () => {
+            if (recorder.state !== 'inactive') recorder.stop();
+          };
+          recorder.start(200);
+          source.start(0);
+        });
 
-      window.clearInterval(interval);
-      onProgress?.(100);
-      return {
-        blob,
-        fileName: `${baseName}.webm`,
-        mime: 'audio/webm',
-        previewKind: 'audio',
-      };
+        onProgress?.(100);
+        return {
+          blob,
+          fileName: `${baseName}.webm`,
+          mime: 'audio/webm',
+          previewKind: 'audio',
+        };
+      } finally {
+        window.clearInterval(interval);
+      }
     }
 
     throw new Error(`Unsupported audio target format: .${targetExt}`);
@@ -582,19 +612,32 @@ async function convertImage(
   onProgress?: ProgressCallback
 ): Promise<Omit<ConversionResult, 'originalSize' | 'newSize' | 'durationMs'>> {
   const baseName = stripExtension(file.name);
+  const inputExt = detectFileExtension(file.name, file.type);
   onProgress?.(20, 'Decoding image');
+
+  let svgFallbackSize: { width: number; height: number } | null = null;
+  if (inputExt === 'svg') {
+    try {
+      svgFallbackSize = parseSvgIntrinsicSize(await file.text());
+    } catch {
+      svgFallbackSize = null;
+    }
+  }
+
   const { img, cleanup } = await loadImageFromFile(file);
 
   try {
     const scaleFactor = options.imageScale / 100;
+    const baseW = img.naturalWidth || img.width || svgFallbackSize?.width || 512;
+    const baseH = img.naturalHeight || img.height || svgFallbackSize?.height || 512;
     const width =
       targetExt === 'ico'
         ? options.icoSize
-        : Math.max(1, Math.round((img.naturalWidth || img.width || 512) * scaleFactor));
+        : Math.max(1, Math.round(baseW * scaleFactor));
     const height =
       targetExt === 'ico'
         ? options.icoSize
-        : Math.max(1, Math.round((img.naturalHeight || img.height || 512) * scaleFactor));
+        : Math.max(1, Math.round(baseH * scaleFactor));
 
     const canvas = document.createElement('canvas');
     canvas.width = width;
@@ -609,8 +652,8 @@ async function convertImage(
 
     if (targetExt === 'ico') {
       // Aspect-fit centered inside square ICO canvas
-      const srcW = img.naturalWidth || img.width || 1;
-      const srcH = img.naturalHeight || img.height || 1;
+      const srcW = baseW || 1;
+      const srcH = baseH || 1;
       const ratio = Math.min(width / srcW, height / srcH);
       const drawW = Math.round(srcW * ratio);
       const drawH = Math.round(srcH * ratio);
@@ -624,6 +667,9 @@ async function convertImage(
     if (targetExt === 'png' || targetExt === 'jpg' || targetExt === 'webp') {
       const mime = targetExt === 'png' ? 'image/png' : targetExt === 'jpg' ? 'image/jpeg' : 'image/webp';
       const blob = await canvasToBlob(canvas, mime, options.imageQuality / 100);
+      if (targetExt === 'webp' && blob.type && blob.type !== 'image/webp') {
+        throw new Error('WebP encoding is not supported by this browser engine. Try PNG or JPG.');
+      }
       onProgress?.(100);
       return {
         blob,
@@ -663,10 +709,28 @@ async function convertImage(
 
     if (targetExt === 'gif') {
       const imgData = ctx.getImageData(0, 0, width, height);
-      const palette = quantize(imgData.data, 256);
-      const index = applyPalette(imgData.data, palette);
+      let hasTransparency = false;
+      for (let i = 3; i < imgData.data.length; i += 4) {
+        if (imgData.data[i] < 250) {
+          hasTransparency = true;
+          break;
+        }
+      }
       const gif = GIFEncoder();
-      gif.writeFrame(index, width, height, { palette });
+      if (hasTransparency) {
+        const palette = quantize(imgData.data, 256, { format: 'rgba4444', oneBitAlpha: true });
+        const index = applyPalette(imgData.data, palette, 'rgba4444');
+        const transparentIndex = palette.findIndex(c => (c[3] ?? 255) === 0);
+        gif.writeFrame(index, width, height, {
+          palette,
+          transparent: transparentIndex >= 0,
+          transparentIndex: transparentIndex >= 0 ? transparentIndex : 0,
+        });
+      } else {
+        const palette = quantize(imgData.data, 256);
+        const index = applyPalette(imgData.data, palette);
+        gif.writeFrame(index, width, height, { palette });
+      }
       gif.finish();
       const bytes = gif.bytes();
       onProgress?.(100);
@@ -680,12 +744,46 @@ async function convertImage(
     }
 
     if (targetExt === 'pdf') {
-      const pngBlob = await canvasToBlob(canvas, 'image/png');
-      const pngBytes = new Uint8Array(await pngBlob.arrayBuffer());
+      // Detect alpha to pick JPEG (smaller) vs PNG (lossless transparency)
+      const imgData = ctx.getImageData(0, 0, width, height);
+      let hasAlpha = false;
+      for (let i = 3; i < imgData.data.length; i += 4) {
+        if (imgData.data[i] < 255) {
+          hasAlpha = true;
+          break;
+        }
+      }
+
       const pdfDoc = await PDFDocument.create();
-      const embedded = await pdfDoc.embedPng(pngBytes);
-      const page = pdfDoc.addPage([width, height]);
-      page.drawImage(embedded, { x: 0, y: 0, width, height });
+      let embedded;
+      if (hasAlpha) {
+        const pngBlob = await canvasToBlob(canvas, 'image/png');
+        const pngBytes = new Uint8Array(await pngBlob.arrayBuffer());
+        embedded = await pdfDoc.embedPng(pngBytes);
+      } else {
+        const jpgBlob = await canvasToBlob(canvas, 'image/jpeg', Math.max(0.82, options.imageQuality / 100));
+        const jpgBytes = new Uint8Array(await jpgBlob.arrayBuffer());
+        embedded = await pdfDoc.embedJpg(jpgBytes);
+      }
+
+      // Fit cleanly on printable A4 (portrait or landscape matching image aspect ratio)
+      const isLandscape = width > height;
+      const pageW = isLandscape ? 841.89 : 595.28;
+      const pageH = isLandscape ? 595.28 : 841.89;
+      const margin = 24;
+      const maxW = pageW - margin * 2;
+      const maxH = pageH - margin * 2;
+      const fitRatio = Math.min(maxW / width, maxH / height);
+      const drawW = width * fitRatio;
+      const drawH = height * fitRatio;
+
+      const page = pdfDoc.addPage([pageW, pageH]);
+      page.drawImage(embedded, {
+        x: (pageW - drawW) / 2,
+        y: (pageH - drawH) / 2,
+        width: drawW,
+        height: drawH,
+      });
       const pdfBytes = await pdfDoc.save();
       onProgress?.(100);
       return {
@@ -693,7 +791,7 @@ async function convertImage(
         fileName: `${baseName}.pdf`,
         mime: 'application/pdf',
         previewKind: 'pdf',
-        note: `${width}×${height} pt`,
+        note: `A4 ${isLandscape ? 'Landscape' : 'Portrait'} · ${width}×${height} px`,
       };
     }
 
@@ -736,106 +834,166 @@ async function convertDocument(
   if (inputExt === 'pdf') {
     onProgress?.(15, 'Loading PDF');
     const buffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
-    const numPages = pdf.numPages;
+    const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(buffer.slice(0)) }).promise;
 
-    if (targetExt === 'png' || targetExt === 'jpg') {
-      const mime = targetExt === 'png' ? 'image/png' : 'image/jpeg';
-      const maxPages = Math.min(numPages, 25);
-      const renderedEntries: ArchiveEntry[] = [];
+    try {
+      const numPages = pdf.numPages;
 
-      for (let p = 1; p <= maxPages; p++) {
-        const page = await pdf.getPage(p);
-        const viewport = page.getViewport({ scale: options.pdfRenderScale });
-        const canvas = document.createElement('canvas');
-        canvas.width = Math.ceil(viewport.width);
-        canvas.height = Math.ceil(viewport.height);
-        const ctx = canvas.getContext('2d');
-        if (!ctx) throw new Error('Canvas 2D context unavailable.');
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        await page.render({ canvasContext: ctx, viewport }).promise;
-        const pageBlob = await canvasToBlob(canvas, mime, options.imageQuality / 100);
-        const bytes = new Uint8Array(await pageBlob.arrayBuffer());
-        renderedEntries.push({
-          name: `${baseName}_page_${String(p).padStart(2, '0')}.${targetExt}`,
-          data: bytes,
-          size: bytes.length,
-        });
-        onProgress?.(Math.round((p / maxPages) * 95), `Rendering page ${p}/${maxPages}`);
-      }
+      if (targetExt === 'png' || targetExt === 'jpg') {
+        const mime = targetExt === 'png' ? 'image/png' : 'image/jpeg';
+        const maxPages = Math.min(numPages, 25);
+        const renderedEntries: ArchiveEntry[] = [];
 
-      onProgress?.(100);
-      if (renderedEntries.length === 1) {
+        for (let p = 1; p <= maxPages; p++) {
+          const page = await pdf.getPage(p);
+          const viewport = page.getViewport({ scale: options.pdfRenderScale });
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.ceil(viewport.width);
+          canvas.height = Math.ceil(viewport.height);
+          const ctx = canvas.getContext('2d');
+          if (!ctx) throw new Error('Canvas 2D context unavailable.');
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          await page.render({ canvasContext: ctx, viewport }).promise;
+          const pageBlob = await canvasToBlob(canvas, mime, options.imageQuality / 100);
+          const bytes = new Uint8Array(await pageBlob.arrayBuffer());
+          renderedEntries.push({
+            name: `${baseName}_page_${String(p).padStart(2, '0')}.${targetExt}`,
+            data: bytes,
+            size: bytes.length,
+          });
+          onProgress?.(Math.round((p / maxPages) * 95), `Rendering page ${p}/${maxPages}`);
+        }
+
+        onProgress?.(100);
+        if (renderedEntries.length === 1) {
+          return {
+            blob: new Blob([toBlobPart(renderedEntries[0].data)], { type: mime }),
+            fileName: renderedEntries[0].name,
+            mime,
+            previewKind: 'image',
+            note: `1 page rendered`,
+          };
+        }
+        const zipBytes = createZipArchive(renderedEntries);
         return {
-          blob: new Blob([toBlobPart(renderedEntries[0].data)], { type: mime }),
-          fileName: renderedEntries[0].name,
-          mime,
-          previewKind: 'image',
-          note: `1 page rendered`,
+          blob: new Blob([toBlobPart(zipBytes)], { type: 'application/zip' }),
+          fileName: `${baseName}_pages.zip`,
+          mime: 'application/zip',
+          previewKind: 'archive',
+          archiveEntries: renderedEntries,
+          note: `${renderedEntries.length} pages packed in ZIP`,
         };
       }
-      const zipBytes = createZipArchive(renderedEntries);
-      return {
-        blob: new Blob([toBlobPart(zipBytes)], { type: 'application/zip' }),
-        fileName: `${baseName}_pages.zip`,
-        mime: 'application/zip',
-        previewKind: 'archive',
-        archiveEntries: renderedEntries,
-        note: `${renderedEntries.length} pages packed in ZIP`,
-      };
-    }
 
-    // Extract text from all PDF pages
-    const pageTexts: string[] = [];
-    for (let p = 1; p <= numPages; p++) {
-      const page = await pdf.getPage(p);
-      const textContent = await page.getTextContent();
-      const strings = textContent.items
-        .map(item => ('str' in item ? item.str : ''))
-        .join(' ');
-      pageTexts.push(strings.trim());
-      onProgress?.(Math.round((p / numPages) * 90), `Extracting page ${p}/${numPages}`);
-    }
-    const combinedText = pageTexts.join('\n\n');
-    onProgress?.(100);
+      // Extract layout-preserving text lines from all PDF pages
+      const pageTexts: string[] = [];
+      for (let p = 1; p <= numPages; p++) {
+        const page = await pdf.getPage(p);
+        const textContent = await page.getTextContent();
+        const extracted = extractLinesFromPdfTextItems(
+          textContent.items as Array<{ str?: string; hasEOL?: boolean; transform?: number[] }>
+        );
+        pageTexts.push(extracted);
+        onProgress?.(Math.round((p / numPages) * 90), `Extracting page ${p}/${numPages}`);
+      }
+      const combinedText = pageTexts.filter(Boolean).join('\n\n');
+      onProgress?.(100);
 
-    if (targetExt === 'txt') {
-      return {
-        blob: new Blob([combinedText], { type: 'text/plain;charset=utf-8' }),
-        fileName: `${baseName}.txt`,
-        mime: 'text/plain',
-        previewKind: 'text',
-        textPreview: combinedText.slice(0, 4000),
-      };
-    }
-    if (targetExt === 'md') {
-      const md = pageTexts.map((t, idx) => `## Page ${idx + 1}\n\n${t}`).join('\n\n---\n\n');
-      return {
-        blob: new Blob([md], { type: 'text/markdown;charset=utf-8' }),
-        fileName: `${baseName}.md`,
-        mime: 'text/markdown',
-        previewKind: 'text',
-        textPreview: md.slice(0, 4000),
-      };
-    }
-    if (targetExt === 'html') {
-      const html = markdownToHtml(
-        pageTexts.map((t, idx) => `## Page ${idx + 1}\n\n${t}`).join('\n\n'),
-        baseName
-      );
-      return {
-        blob: new Blob([html], { type: 'text/html;charset=utf-8' }),
-        fileName: `${baseName}.html`,
-        mime: 'text/html',
-        previewKind: 'text',
-        textPreview: html.slice(0, 4000),
-      };
+      if (targetExt === 'txt') {
+        return {
+          blob: new Blob([combinedText], { type: 'text/plain;charset=utf-8' }),
+          fileName: `${baseName}.txt`,
+          mime: 'text/plain',
+          previewKind: 'text',
+          textPreview: combinedText.slice(0, 4000),
+          note: `${numPages} page(s)`,
+        };
+      }
+      if (targetExt === 'md') {
+        const md = pageTexts
+          .map((pageText, idx) => (numPages > 1 ? `## Page ${idx + 1}\n\n${pageText}` : pageText))
+          .join('\n\n---\n\n');
+        return {
+          blob: new Blob([md], { type: 'text/markdown;charset=utf-8' }),
+          fileName: `${baseName}.md`,
+          mime: 'text/markdown',
+          previewKind: 'text',
+          textPreview: md.slice(0, 4000),
+          note: `${numPages} page(s)`,
+        };
+      }
+      if (targetExt === 'html') {
+        const bodyHtml = pageTexts
+          .map(
+            (pageText, idx) =>
+              `${numPages > 1 ? `<h2>Page ${idx + 1}</h2>\n` : ''}${pageText
+                .split(/\n{2,}/)
+                .map(para => `<p>${escapeHtml(para).replace(/\n/g, '<br />')}</p>`)
+                .join('\n')}`
+          )
+          .join('\n<hr />\n');
+        const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>${escapeHtml(baseName)}</title>
+  <style>
+    body { font-family: system-ui, -apple-system, sans-serif; max-width: 780px; margin: 2rem auto; padding: 0 1.25rem; line-height: 1.65; color: #1e293b; }
+    h2 { color: #0f172a; margin-top: 1.5rem; }
+    hr { border: 0; border-top: 1px solid #cbd5e1; margin: 1.5rem 0; }
+  </style>
+</head>
+<body>
+${bodyHtml}
+</body>
+</html>`;
+        return {
+          blob: new Blob([html], { type: 'text/html;charset=utf-8' }),
+          fileName: `${baseName}.html`,
+          mime: 'text/html',
+          previewKind: 'text',
+          textPreview: html.slice(0, 4000),
+          note: `${numPages} page(s)`,
+        };
+      }
+      if (targetExt === 'docx') {
+        const docxBytes = buildMinimalDocx(combinedText);
+        return {
+          blob: new Blob([toBlobPart(docxBytes)], {
+            type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          }),
+          fileName: `${baseName}.docx`,
+          mime: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          previewKind: 'none',
+          note: `OOXML Word · ${numPages} page(s)`,
+        };
+      }
+
+      throw new Error(`Unsupported PDF target format: .${targetExt}`);
+    } finally {
+      await pdf.destroy().catch(() => {});
     }
   }
 
   // Non-PDF document inputs: DOCX, MD, HTML, TXT, RTF
   onProgress?.(25, 'Reading document');
+
+  if (inputExt === 'docx' && targetExt === 'pdf') {
+    const ab = await file.arrayBuffer();
+    onProgress?.(60, 'Rendering Unicode PDF');
+    const blob = await createPdfBlobFromDocx(ab);
+    onProgress?.(100);
+    return {
+      blob,
+      fileName: `${baseName}.pdf`,
+      mime: 'application/pdf',
+      previewKind: 'pdf',
+      note: 'Unicode OOXML → PDF',
+    };
+  }
+
   let plainText = '';
   let markdown = '';
   let html = '';
@@ -845,7 +1003,25 @@ async function convertDocument(
     const htmlRes = await mammoth.convertToHtml({ arrayBuffer: ab });
     const rawRes = await mammoth.extractRawText({ arrayBuffer: ab });
     const safeHtml = DOMPurify.sanitize(htmlRes.value);
-    html = `<!DOCTYPE html>\n<html lang="en">\n<head><meta charset="UTF-8" /><title>${baseName}</title></head>\n<body>\n${safeHtml}\n</body>\n</html>`;
+    html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>${escapeHtml(baseName)}</title>
+  <style>
+    body { font-family: system-ui, -apple-system, sans-serif; max-width: 780px; margin: 2rem auto; padding: 0 1.25rem; line-height: 1.65; color: #1e293b; }
+    h1, h2, h3 { color: #0f172a; margin-top: 1.5rem; }
+    table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+    th, td { border: 1px solid #cbd5e1; padding: 0.5rem 0.75rem; text-align: left; }
+    th { background: #f8fafc; }
+    img { max-width: 100%; height: auto; }
+  </style>
+</head>
+<body>
+${safeHtml}
+</body>
+</html>`;
     markdown = htmlToMarkdown(safeHtml);
     plainText = rawRes.value.trim() || htmlToPlainText(safeHtml);
   } else if (inputExt === 'html') {
@@ -872,13 +1048,17 @@ async function convertDocument(
   onProgress?.(70, `Generating ${targetExt.toUpperCase()}`);
 
   if (targetExt === 'pdf') {
-    const blob = await createTextPdfBlob(plainText || markdown, file.name);
+    const blob =
+      inputExt === 'html' || inputExt === 'md'
+        ? await createPdfBlobFromHtml(html)
+        : await createPdfBlobFromPlainText(plainText);
     onProgress?.(100);
     return {
       blob,
       fileName: `${baseName}.pdf`,
       mime: 'application/pdf',
       previewKind: 'pdf',
+      note: 'Unicode PDF',
     };
   }
   if (targetExt === 'html') {
@@ -973,15 +1153,17 @@ async function convertSpreadsheetOrData(
   } else if (inputExt === 'yaml') {
     const text = await file.text();
     const parsed: unknown = yamlLoad(text);
-    rawData = parsed;
+    rawData = parsed ?? [];
     if (Array.isArray(parsed)) {
       rows = parsed.map(item =>
         item && typeof item === 'object' ? (item as Record<string, unknown>) : { value: item }
       );
     } else if (parsed && typeof parsed === 'object') {
       rows = [parsed as Record<string, unknown>];
-    } else {
+    } else if (parsed !== undefined && parsed !== null) {
       rows = [{ value: parsed }];
+    } else {
+      rows = [];
     }
   } else if (inputExt === 'xml') {
     const text = await file.text();
@@ -995,7 +1177,14 @@ async function convertSpreadsheetOrData(
 
   if (targetExt === 'xlsx' || targetExt === 'ods') {
     const XLSX = await import('xlsx');
-    const worksheet = XLSX.utils.json_to_sheet(rows.length > 0 ? rows : [{}]);
+    const normalizedRows = rows.map(row => {
+      const flat: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(row)) {
+        flat[k] = v !== null && typeof v === 'object' ? JSON.stringify(v) : v;
+      }
+      return flat;
+    });
+    const worksheet = XLSX.utils.json_to_sheet(normalizedRows.length > 0 ? normalizedRows : [{}]);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
     const bookType = targetExt === 'ods' ? 'ods' : 'xlsx';
@@ -1011,6 +1200,18 @@ async function convertSpreadsheetOrData(
       mime,
       previewKind: 'none',
       note: `${rows.length} rows exported`,
+    };
+  }
+
+  if (targetExt === 'pdf') {
+    const blob = await createPdfBlobFromTableRows(rows, baseName);
+    onProgress?.(100);
+    return {
+      blob,
+      fileName: `${baseName}.pdf`,
+      mime: 'application/pdf',
+      previewKind: 'pdf',
+      note: `${rows.length} rows`,
     };
   }
 
@@ -1106,19 +1307,25 @@ async function convertArchive(
   const bytes = new Uint8Array(await file.arrayBuffer());
 
   let entries: ArchiveEntry[] = [];
-  if (inputExt === 'zip') {
-    entries = parseZipArchive(bytes);
-  } else if (inputExt === 'tar') {
-    entries = parseTarArchive(bytes);
-  } else if (inputExt === 'tar.gz') {
-    const untarred = decompressGzip(bytes);
-    entries = parseTarArchive(untarred);
-  } else if (inputExt === 'gz') {
-    const decompressed = decompressGzip(bytes);
-    const innerName = baseName || 'extracted.bin';
-    entries = [{ name: innerName, data: decompressed, size: decompressed.length }];
-  } else {
-    entries = [{ name: file.name, data: bytes, size: bytes.length }];
+  try {
+    if (inputExt === 'zip') {
+      entries = parseZipArchive(bytes);
+    } else if (inputExt === 'tar') {
+      entries = parseTarArchive(bytes);
+    } else if (inputExt === 'tar.gz') {
+      const untarred = decompressGzip(bytes);
+      entries = parseTarArchive(untarred);
+    } else if (inputExt === 'gz') {
+      const decompressed = decompressGzip(bytes);
+      const innerName = baseName || 'extracted.bin';
+      entries = [{ name: innerName, data: decompressed, size: decompressed.length }];
+    } else {
+      entries = [{ name: file.name, data: bytes, size: bytes.length }];
+    }
+  } catch (err) {
+    throw new Error(
+      `Unable to unpack .${inputExt} archive (${err instanceof Error ? err.message : 'corrupted or unsupported compression'}).`
+    );
   }
 
   onProgress?.(65, `Packing ${targetExt.toUpperCase()}`);
