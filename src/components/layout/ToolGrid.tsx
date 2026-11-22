@@ -87,6 +87,10 @@ import {
   Moon,
   Wind,
   History,
+  Sigma,
+  Orbit,
+  Triangle,
+  Divide,
 } from 'lucide-react';
 import { ToolDefinition, ToolCategory } from '../../types/tool';
 import { useI18n } from '../../i18n/context';
@@ -184,6 +188,10 @@ const ICON_MAP: Record<string, React.ReactNode> = {
   Volume2: <Volume2 className="w-5 h-5 text-sky-400" />,
   Moon: <Moon className="w-5 h-5 text-indigo-400" />,
   Wind: <Wind className="w-5 h-5 text-emerald-400" />,
+  Sigma: <Sigma className="w-5 h-5 text-indigo-400" />,
+  Orbit: <Orbit className="w-5 h-5 text-indigo-400" />,
+  Triangle: <Triangle className="w-5 h-5 text-indigo-400" />,
+  Divide: <Divide className="w-5 h-5 text-indigo-400" />,
 };
 
 export const ToolGrid: React.FC<ToolGridProps> = ({

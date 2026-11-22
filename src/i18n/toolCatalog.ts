@@ -929,6 +929,94 @@ const catalog: Record<string, { title: CatalogText; desc: CatalogText }> = {
       ru: 'Generate Classic Latin, Tech, or Business placeholder paragraphs, sentences, words, or lists in plain text, HTML, or Markdown.',
     },
   },
+  'equation-solver': {
+    title: { cs: 'Equation & System Solver', en: 'Equation & System Solver', de: 'Equation & System Solver', es: 'Equation & System Solver', ru: 'Equation & System Solver' },
+    desc: { cs: 'Solve polynomials (real & complex roots), linear systems Ax = b with row steps, and numerical f(x) = 0 roots.', en: 'Solve polynomials (real & complex roots), linear systems Ax = b with row steps, and numerical f(x) = 0 roots.', de: 'Solve polynomials (real & complex roots), linear systems Ax = b with row steps, and numerical f(x) = 0 roots.', es: 'Solve polynomials (real & complex roots), linear systems Ax = b with row steps, and numerical f(x) = 0 roots.', ru: 'Solve polynomials (real & complex roots), linear systems Ax = b with row steps, and numerical f(x) = 0 roots.' },
+  },
+  'calculus-workbench': {
+    title: { cs: 'Calculus Workbench', en: 'Calculus Workbench', de: 'Calculus Workbench', es: 'Calculus Workbench', ru: 'Calculus Workbench' },
+    desc: { cs: 'Derivatives, definite integrals with shaded area, limits, and Taylor polynomial approximations.', en: 'Derivatives, definite integrals with shaded area, limits, and Taylor polynomial approximations.', de: 'Derivatives, definite integrals with shaded area, limits, and Taylor polynomial approximations.', es: 'Derivatives, definite integrals with shaded area, limits, and Taylor polynomial approximations.', ru: 'Derivatives, definite integrals with shaded area, limits, and Taylor polynomial approximations.' },
+  },
+  'probability-stats': {
+    title: { cs: 'Probability Distributions & Hypothesis Testing', en: 'Probability Distributions & Hypothesis Testing', de: 'Probability Distributions & Hypothesis Testing', es: 'Probability Distributions & Hypothesis Testing', ru: 'Probability Distributions & Hypothesis Testing' },
+    desc: { cs: 'Normal, Student-t, Chi-Square, Binomial & Poisson PDF/CDF curves plus A/B hypothesis testing.', en: 'Normal, Student-t, Chi-Square, Binomial & Poisson PDF/CDF curves plus A/B hypothesis testing.', de: 'Normal, Student-t, Chi-Square, Binomial & Poisson PDF/CDF curves plus A/B hypothesis testing.', es: 'Normal, Student-t, Chi-Square, Binomial & Poisson PDF/CDF curves plus A/B hypothesis testing.', ru: 'Normal, Student-t, Chi-Square, Binomial & Poisson PDF/CDF curves plus A/B hypothesis testing.' },
+  },
+  'curve-fitting': {
+    title: { cs: 'Regression & Curve Fitting', en: 'Regression & Curve Fitting', de: 'Regression & Curve Fitting', es: 'Regression & Curve Fitting', ru: 'Regression & Curve Fitting' },
+    desc: { cs: 'Fit linear, polynomial, exponential, logarithmic, or power models to X/Y data with R² and residuals.', en: 'Fit linear, polynomial, exponential, logarithmic, or power models to X/Y data with R² and residuals.', de: 'Fit linear, polynomial, exponential, logarithmic, or power models to X/Y data with R² and residuals.', es: 'Fit linear, polynomial, exponential, logarithmic, or power models to X/Y data with R² and residuals.', ru: 'Fit linear, polynomial, exponential, logarithmic, or power models to X/Y data with R² and residuals.' },
+  },
+  'vector-geometry': {
+    title: { cs: 'Vector & 3D Geometry Calculator', en: 'Vector & 3D Geometry Calculator', de: 'Vector & 3D Geometry Calculator', es: 'Vector & 3D Geometry Calculator', ru: 'Vector & 3D Geometry Calculator' },
+    desc: { cs: 'Dot & cross products, angle, projection, unit vectors, 3-point plane equations, and isometric 3D view.', en: 'Dot & cross products, angle, projection, unit vectors, 3-point plane equations, and isometric 3D view.', de: 'Dot & cross products, angle, projection, unit vectors, 3-point plane equations, and isometric 3D view.', es: 'Dot & cross products, angle, projection, unit vectors, 3-point plane equations, and isometric 3D view.', ru: 'Dot & cross products, angle, projection, unit vectors, 3-point plane equations, and isometric 3D view.' },
+  },
+  'complex-numbers': {
+    title: { cs: 'Complex Numbers & Polar Form Studio', en: 'Complex Numbers & Polar Form Studio', de: 'Complex Numbers & Polar Form Studio', es: 'Complex Numbers & Polar Form Studio', ru: 'Complex Numbers & Polar Form Studio' },
+    desc: { cs: 'Arithmetic, rectangular ↔ polar conversion, De Moivre powers/roots, and Argand plane plot.', en: 'Arithmetic, rectangular ↔ polar conversion, De Moivre powers/roots, and Argand plane plot.', de: 'Arithmetic, rectangular ↔ polar conversion, De Moivre powers/roots, and Argand plane plot.', es: 'Arithmetic, rectangular ↔ polar conversion, De Moivre powers/roots, and Argand plane plot.', ru: 'Arithmetic, rectangular ↔ polar conversion, De Moivre powers/roots, and Argand plane plot.' },
+  },
+  'geometry-trig': {
+    title: { cs: 'Geometry & Trigonometry Solver', en: 'Geometry & Trigonometry Solver', de: 'Geometry & Trigonometry Solver', es: 'Geometry & Trigonometry Solver', ru: 'Geometry & Trigonometry Solver' },
+    desc: { cs: 'Solve SSS/SAS/ASA/AAS triangles with Law of Sines/Cosines and compute 2D/3D areas and volumes.', en: 'Solve SSS/SAS/ASA/AAS triangles with Law of Sines/Cosines and compute 2D/3D areas and volumes.', de: 'Solve SSS/SAS/ASA/AAS triangles with Law of Sines/Cosines and compute 2D/3D areas and volumes.', es: 'Solve SSS/SAS/ASA/AAS triangles with Law of Sines/Cosines and compute 2D/3D areas and volumes.', ru: 'Solve SSS/SAS/ASA/AAS triangles with Law of Sines/Cosines and compute 2D/3D areas and volumes.' },
+  },
+  'fraction-calc': {
+    title: { cs: 'Exact Fraction & Rational Calculator', en: 'Exact Fraction & Rational Calculator', de: 'Exact Fraction & Rational Calculator', es: 'Exact Fraction & Rational Calculator', ru: 'Exact Fraction & Rational Calculator' },
+    desc: { cs: 'Arbitrary-precision BigInt fraction arithmetic, mixed numbers, repeating decimal conversion, and continued fractions.', en: 'Arbitrary-precision BigInt fraction arithmetic, mixed numbers, repeating decimal conversion, and continued fractions.', de: 'Arbitrary-precision BigInt fraction arithmetic, mixed numbers, repeating decimal conversion, and continued fractions.', es: 'Arbitrary-precision BigInt fraction arithmetic, mixed numbers, repeating decimal conversion, and continued fractions.', ru: 'Arbitrary-precision BigInt fraction arithmetic, mixed numbers, repeating decimal conversion, and continued fractions.' },
+  },
+  'boolean-algebra': {
+    title: { cs: 'Boolean Algebra & Truth Table Studio', en: 'Boolean Algebra & Truth Table Studio', de: 'Boolean Algebra & Truth Table Studio', es: 'Boolean Algebra & Truth Table Studio', ru: 'Boolean Algebra & Truth Table Studio' },
+    desc: { cs: 'Generate truth tables, 2–4 variable Karnaugh maps, canonical SOP/POS, and simplified expressions.', en: 'Generate truth tables, 2–4 variable Karnaugh maps, canonical SOP/POS, and simplified expressions.', de: 'Generate truth tables, 2–4 variable Karnaugh maps, canonical SOP/POS, and simplified expressions.', es: 'Generate truth tables, 2–4 variable Karnaugh maps, canonical SOP/POS, and simplified expressions.', ru: 'Generate truth tables, 2–4 variable Karnaugh maps, canonical SOP/POS, and simplified expressions.' },
+  },
+  'formula-pad': {
+    title: { cs: 'Unit-Aware Formula Scratchpad', en: 'Unit-Aware Formula Scratchpad', de: 'Unit-Aware Formula Scratchpad', es: 'Unit-Aware Formula Scratchpad', ru: 'Unit-Aware Formula Scratchpad' },
+    desc: { cs: 'Multi-line live math notepad where variables flow line-to-line with automatic unit conversions.', en: 'Multi-line live math notepad where variables flow line-to-line with automatic unit conversions.', de: 'Multi-line live math notepad where variables flow line-to-line with automatic unit conversions.', es: 'Multi-line live math notepad where variables flow line-to-line with automatic unit conversions.', ru: 'Multi-line live math notepad where variables flow line-to-line with automatic unit conversions.' },
+  },
+  'error-propagation': {
+    title: { cs: 'Error Propagation & Significant Figures', en: 'Error Propagation & Significant Figures', de: 'Error Propagation & Significant Figures', es: 'Error Propagation & Significant Figures', ru: 'Error Propagation & Significant Figures' },
+    desc: { cs: 'Compute combined measurement uncertainty δf via numerical partial derivatives and analyze significant digits.', en: 'Compute combined measurement uncertainty δf via numerical partial derivatives and analyze significant digits.', de: 'Compute combined measurement uncertainty δf via numerical partial derivatives and analyze significant digits.', es: 'Compute combined measurement uncertainty δf via numerical partial derivatives and analyze significant digits.', ru: 'Compute combined measurement uncertainty δf via numerical partial derivatives and analyze significant digits.' },
+  },
+  'ph-titration': {
+    title: { cs: 'pH, Buffers & Titration Curve Simulator', en: 'pH, Buffers & Titration Curve Simulator', de: 'pH, Buffers & Titration Curve Simulator', es: 'pH, Buffers & Titration Curve Simulator', ru: 'pH, Buffers & Titration Curve Simulator' },
+    desc: { cs: 'Calculate strong/weak acid-base pH, Henderson-Hasselbalch buffers, and live titration curves.', en: 'Calculate strong/weak acid-base pH, Henderson-Hasselbalch buffers, and live titration curves.', de: 'Calculate strong/weak acid-base pH, Henderson-Hasselbalch buffers, and live titration curves.', es: 'Calculate strong/weak acid-base pH, Henderson-Hasselbalch buffers, and live titration curves.', ru: 'Calculate strong/weak acid-base pH, Henderson-Hasselbalch buffers, and live titration curves.' },
+  },
+  'solution-dilution': {
+    title: { cs: 'Solution Dilution & Serial Dilution Planner', en: 'Solution Dilution & Serial Dilution Planner', de: 'Solution Dilution & Serial Dilution Planner', es: 'Solution Dilution & Serial Dilution Planner', ru: 'Solution Dilution & Serial Dilution Planner' },
+    desc: { cs: 'C₁V₁ = C₂V₂ calculator, multi-step serial dilution tables, ppm/M/% converters, and printable lab sheets.', en: 'C₁V₁ = C₂V₂ calculator, multi-step serial dilution tables, ppm/M/% converters, and printable lab sheets.', de: 'C₁V₁ = C₂V₂ calculator, multi-step serial dilution tables, ppm/M/% converters, and printable lab sheets.', es: 'C₁V₁ = C₂V₂ calculator, multi-step serial dilution tables, ppm/M/% converters, and printable lab sheets.', ru: 'C₁V₁ = C₂V₂ calculator, multi-step serial dilution tables, ppm/M/% converters, and printable lab sheets.' },
+  },
+  'molecular-vsepr': {
+    title: { cs: 'Molecular Geometry & VSEPR Explorer', en: 'Molecular Geometry & VSEPR Explorer', de: 'Molecular Geometry & VSEPR Explorer', es: 'Molecular Geometry & VSEPR Explorer', ru: 'Molecular Geometry & VSEPR Explorer' },
+    desc: { cs: 'Predict VSEPR shapes, hybridization, bond angles, polarity, and browse organic functional groups.', en: 'Predict VSEPR shapes, hybridization, bond angles, polarity, and browse organic functional groups.', de: 'Predict VSEPR shapes, hybridization, bond angles, polarity, and browse organic functional groups.', es: 'Predict VSEPR shapes, hybridization, bond angles, polarity, and browse organic functional groups.', ru: 'Predict VSEPR shapes, hybridization, bond angles, polarity, and browse organic functional groups.' },
+  },
+  'thermochemistry-eq': {
+    title: { cs: 'Thermochemistry & Chemical Equilibrium', en: 'Thermochemistry & Chemical Equilibrium', de: 'Thermochemistry & Chemical Equilibrium', es: 'Thermochemistry & Chemical Equilibrium', ru: 'Thermochemistry & Chemical Equilibrium' },
+    desc: { cs: 'Gibbs free energy (ΔG = ΔH − TΔS), spontaneity threshold, ICE equilibrium solver, and ΔH°f/S° table.', en: 'Gibbs free energy (ΔG = ΔH − TΔS), spontaneity threshold, ICE equilibrium solver, and ΔH°f/S° table.', de: 'Gibbs free energy (ΔG = ΔH − TΔS), spontaneity threshold, ICE equilibrium solver, and ΔH°f/S° table.', es: 'Gibbs free energy (ΔG = ΔH − TΔS), spontaneity threshold, ICE equilibrium solver, and ΔH°f/S° table.', ru: 'Gibbs free energy (ΔG = ΔH − TΔS), spontaneity threshold, ICE equilibrium solver, and ΔH°f/S° table.' },
+  },
+  'electrochemistry-redox': {
+    title: { cs: 'Electrochemistry & Redox Studio', en: 'Electrochemistry & Redox Studio', de: 'Electrochemistry & Redox Studio', es: 'Electrochemistry & Redox Studio', ru: 'Electrochemistry & Redox Studio' },
+    desc: { cs: 'Standard reduction potentials (E°), galvanic cell voltage, Nernst equation, and Faraday electrolysis.', en: 'Standard reduction potentials (E°), galvanic cell voltage, Nernst equation, and Faraday electrolysis.', de: 'Standard reduction potentials (E°), galvanic cell voltage, Nernst equation, and Faraday electrolysis.', es: 'Standard reduction potentials (E°), galvanic cell voltage, Nernst equation, and Faraday electrolysis.', ru: 'Standard reduction potentials (E°), galvanic cell voltage, Nernst equation, and Faraday electrolysis.' },
+  },
+  'isotope-decay': {
+    title: { cs: 'Isotope & Radioactive Decay Calculator', en: 'Isotope & Radioactive Decay Calculator', de: 'Isotope & Radioactive Decay Calculator', es: 'Isotope & Radioactive Decay Calculator', ru: 'Isotope & Radioactive Decay Calculator' },
+    desc: { cs: 'Half-life, decay constant λ, remaining sample mass/activity, radiocarbon dating, and decay curve.', en: 'Half-life, decay constant λ, remaining sample mass/activity, radiocarbon dating, and decay curve.', de: 'Half-life, decay constant λ, remaining sample mass/activity, radiocarbon dating, and decay curve.', es: 'Half-life, decay constant λ, remaining sample mass/activity, radiocarbon dating, and decay curve.', ru: 'Half-life, decay constant λ, remaining sample mass/activity, radiocarbon dating, and decay curve.' },
+  },
+  'optics-ray-sim': {
+    title: { cs: 'Optics & Lens / Snell Ray Simulator', en: 'Optics & Lens / Snell Ray Simulator', de: 'Optics & Lens / Snell Ray Simulator', es: 'Optics & Lens / Snell Ray Simulator', ru: 'Optics & Lens / Snell Ray Simulator' },
+    desc: { cs: 'Thin-lens equation with live 3-ray SVG diagram, magnification, Snell refraction, TIR & Brewster angle.', en: 'Thin-lens equation with live 3-ray SVG diagram, magnification, Snell refraction, TIR & Brewster angle.', de: 'Thin-lens equation with live 3-ray SVG diagram, magnification, Snell refraction, TIR & Brewster angle.', es: 'Thin-lens equation with live 3-ray SVG diagram, magnification, Snell refraction, TIR & Brewster angle.', ru: 'Thin-lens equation with live 3-ray SVG diagram, magnification, Snell refraction, TIR & Brewster angle.' },
+  },
+  'signal-wave-lab': {
+    title: { cs: 'Signal & Wave Lab (Fourier / Bode / Doppler)', en: 'Signal & Wave Lab (Fourier / Bode / Doppler)', de: 'Signal & Wave Lab (Fourier / Bode / Doppler)', es: 'Signal & Wave Lab (Fourier / Bode / Doppler)', ru: 'Signal & Wave Lab (Fourier / Bode / Doppler)' },
+    desc: { cs: 'Synthesize Fourier harmonic waves, inspect RC filter Bode plots, and compute acoustic Doppler shift.', en: 'Synthesize Fourier harmonic waves, inspect RC filter Bode plots, and compute acoustic Doppler shift.', de: 'Synthesize Fourier harmonic waves, inspect RC filter Bode plots, and compute acoustic Doppler shift.', es: 'Synthesize Fourier harmonic waves, inspect RC filter Bode plots, and compute acoustic Doppler shift.', ru: 'Synthesize Fourier harmonic waves, inspect RC filter Bode plots, and compute acoustic Doppler shift.' },
+  },
+  'orbital-mechanics': {
+    title: { cs: 'Astrophysics & Orbital Mechanics', en: 'Astrophysics & Orbital Mechanics', de: 'Astrophysics & Orbital Mechanics', es: 'Astrophysics & Orbital Mechanics', ru: 'Astrophysics & Orbital Mechanics' },
+    desc: { cs: 'Circular & escape velocity, Kepler orbital periods, Hohmann transfer Δv, and Schwarzschild radius.', en: 'Circular & escape velocity, Kepler orbital periods, Hohmann transfer Δv, and Schwarzschild radius.', de: 'Circular & escape velocity, Kepler orbital periods, Hohmann transfer Δv, and Schwarzschild radius.', es: 'Circular & escape velocity, Kepler orbital periods, Hohmann transfer Δv, and Schwarzschild radius.', ru: 'Circular & escape velocity, Kepler orbital periods, Hohmann transfer Δv, and Schwarzschild radius.' },
+  },
+  'lab-bio-pcr': {
+    title: { cs: 'Microbiology & PCR / Lab Bio Calculator', en: 'Microbiology & PCR / Lab Bio Calculator', de: 'Microbiology & PCR / Lab Bio Calculator', es: 'Microbiology & PCR / Lab Bio Calculator', ru: 'Microbiology & PCR / Lab Bio Calculator' },
+    desc: { cs: 'PCR primer Tm & annealing temp, restriction enzyme site scanner, ng/µL ↔ nM converter, and ligation ratio.', en: 'PCR primer Tm & annealing temp, restriction enzyme site scanner, ng/µL ↔ nM converter, and ligation ratio.', de: 'PCR primer Tm & annealing temp, restriction enzyme site scanner, ng/µL ↔ nM converter, and ligation ratio.', es: 'PCR primer Tm & annealing temp, restriction enzyme site scanner, ng/µL ↔ nM converter, and ligation ratio.', ru: 'PCR primer Tm & annealing temp, restriction enzyme site scanner, ng/µL ↔ nM converter, and ligation ratio.' },
+  },
+  'materials-mechanics': {
+    title: { cs: 'Materials, Structural Mechanics & CODATA', en: 'Materials, Structural Mechanics & CODATA', de: 'Materials, Structural Mechanics & CODATA', es: 'Materials, Structural Mechanics & CODATA', ru: 'Materials, Structural Mechanics & CODATA' },
+    desc: { cs: 'Beam deflection & bending moment, pipe Reynolds flow regime, material properties, and CODATA constants.', en: 'Beam deflection & bending moment, pipe Reynolds flow regime, material properties, and CODATA constants.', de: 'Beam deflection & bending moment, pipe Reynolds flow regime, material properties, and CODATA constants.', es: 'Beam deflection & bending moment, pipe Reynolds flow regime, material properties, and CODATA constants.', ru: 'Beam deflection & bending moment, pipe Reynolds flow regime, material properties, and CODATA constants.' },
+  },
 };
 
 export function getToolCatalogText(id: string, field: 'title' | 'desc', language: SupportedLanguage, fallback: string) {

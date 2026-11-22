@@ -112,6 +112,28 @@ const MockDataGeneratorTool = lazyTool(() => import('./programming/MockDataGener
 const SnippetVaultTool = lazyTool(() => import('./programming/SnippetVaultTool'), 'SnippetVaultTool');
 const ResumeBuilderTool = lazyTool(() => import('./files/ResumeBuilderTool'), 'ResumeBuilderTool');
 const LoremIpsumTool = lazyTool(() => import('./utilities/LoremIpsumTool'), 'LoremIpsumTool');
+const EquationSolverTool = lazyTool(() => import('./math/EquationSolverTool'), 'EquationSolverTool');
+const CalculusWorkbenchTool = lazyTool(() => import('./math/CalculusWorkbenchTool'), 'CalculusWorkbenchTool');
+const ProbabilityDistributionsTool = lazyTool(() => import('./math/ProbabilityDistributionsTool'), 'ProbabilityDistributionsTool');
+const CurveFittingTool = lazyTool(() => import('./math/CurveFittingTool'), 'CurveFittingTool');
+const VectorGeometryTool = lazyTool(() => import('./math/VectorGeometryTool'), 'VectorGeometryTool');
+const ComplexNumbersTool = lazyTool(() => import('./math/ComplexNumbersTool'), 'ComplexNumbersTool');
+const GeometryTrigTool = lazyTool(() => import('./math/GeometryTrigTool'), 'GeometryTrigTool');
+const FractionCalcTool = lazyTool(() => import('./math/FractionCalcTool'), 'FractionCalcTool');
+const BooleanAlgebraTool = lazyTool(() => import('./math/BooleanAlgebraTool'), 'BooleanAlgebraTool');
+const FormulaPadTool = lazyTool(() => import('./math/FormulaPadTool'), 'FormulaPadTool');
+const ErrorPropagationTool = lazyTool(() => import('./math/ErrorPropagationTool'), 'ErrorPropagationTool');
+const PhTitrationTool = lazyTool(() => import('./science/PhTitrationTool'), 'PhTitrationTool');
+const SolutionDilutionTool = lazyTool(() => import('./science/SolutionDilutionTool'), 'SolutionDilutionTool');
+const MolecularVseprTool = lazyTool(() => import('./science/MolecularVseprTool'), 'MolecularVseprTool');
+const ThermochemistryTool = lazyTool(() => import('./science/ThermochemistryTool'), 'ThermochemistryTool');
+const ElectrochemistryTool = lazyTool(() => import('./science/ElectrochemistryTool'), 'ElectrochemistryTool');
+const IsotopeDecayTool = lazyTool(() => import('./science/IsotopeDecayTool'), 'IsotopeDecayTool');
+const OpticsRaySimTool = lazyTool(() => import('./science/OpticsRaySimTool'), 'OpticsRaySimTool');
+const SignalWaveLabTool = lazyTool(() => import('./science/SignalWaveLabTool'), 'SignalWaveLabTool');
+const OrbitalMechanicsTool = lazyTool(() => import('./science/OrbitalMechanicsTool'), 'OrbitalMechanicsTool');
+const LabBioPcrTool = lazyTool(() => import('./science/LabBioPcrTool'), 'LabBioPcrTool');
+const MaterialsMechanicsTool = lazyTool(() => import('./science/MaterialsMechanicsTool'), 'MaterialsMechanicsTool');
 
 
 export const TOOLS_REGISTRY: ToolDefinition[] = [
@@ -1095,4 +1117,228 @@ export const TOOLS_REGISTRY: ToolDefinition[] = [
     component: LoremIpsumTool,
     tags: ['lorem', 'ipsum', 'placeholder', 'dummy', 'text', 'copy', 'design', 'typography', 'basic'],
   },
+  {
+    id: 'equation-solver',
+    title: 'Equation & System Solver',
+    shortDesc: 'Solve quadratic/cubic/quartic polynomials (real & complex roots), linear systems Ax = b with row steps, and numerical f(x) = 0 roots.',
+    category: 'math',
+    icon: 'Sigma',
+    requiresOnline: false,
+    component: EquationSolverTool,
+    tags: ['equation', 'polynomial', 'roots', 'linear', 'system', 'gaussian', 'newton', 'algebra', 'math'],
+  },
+  {
+    id: 'calculus-workbench',
+    title: 'Calculus Workbench',
+    shortDesc: 'Numerical derivatives, definite integrals with shaded SVG area, two-sided limits, and Taylor polynomial approximations.',
+    category: 'math',
+    icon: 'LineChart',
+    requiresOnline: false,
+    component: CalculusWorkbenchTool,
+    tags: ['calculus', 'derivative', 'integral', 'simpson', 'taylor', 'limit', 'series', 'math'],
+  },
+  {
+    id: 'probability-stats',
+    title: 'Probability Distributions & Hypothesis Testing',
+    shortDesc: 'Normal, Student-t, Chi-Square, Binomial & Poisson PDF/CDF curves plus two-proportion A/B significance testing.',
+    category: 'math',
+    icon: 'BarChart3',
+    requiresOnline: false,
+    component: ProbabilityDistributionsTool,
+    tags: ['probability', 'normal', 'student', 'chi-square', 'binomial', 'poisson', 'ab-test', 'p-value', 'statistics'],
+  },
+  {
+    id: 'curve-fitting',
+    title: 'Regression & Curve Fitting',
+    shortDesc: 'Fit linear, polynomial, exponential, logarithmic, or power models to X/Y data with R², RMSE, and scatter plot.',
+    category: 'math',
+    icon: 'TrendingUp',
+    requiresOnline: false,
+    component: CurveFittingTool,
+    tags: ['regression', 'curve', 'fitting', 'least-squares', 'polynomial', 'r2', 'data', 'math'],
+  },
+  {
+    id: 'vector-geometry',
+    title: 'Vector & 3D Geometry Calculator',
+    shortDesc: '2D/3D vector dot & cross products, angles, projections, 3-point plane equations, and isometric 3D preview.',
+    category: 'math',
+    icon: 'Compass',
+    requiresOnline: false,
+    component: VectorGeometryTool,
+    tags: ['vector', '3d', 'dot', 'cross', 'plane', 'projection', 'geometry', 'linear-algebra'],
+  },
+  {
+    id: 'complex-numbers',
+    title: 'Complex Numbers & Polar Form Studio',
+    shortDesc: 'Complex arithmetic, rectangular ↔ polar form, De Moivre powers & n-th roots, and interactive Argand plane.',
+    category: 'math',
+    icon: 'Orbit',
+    requiresOnline: false,
+    component: ComplexNumbersTool,
+    tags: ['complex', 'imaginary', 'polar', 'argand', 'phasor', 'roots', 'math'],
+  },
+  {
+    id: 'geometry-trig',
+    title: 'Geometry & Trigonometry Solver',
+    shortDesc: 'Solve SSS/SAS/ASA/AAS triangles with Law of Sines & Cosines plus 2D/3D shape area and volume calculators.',
+    category: 'math',
+    icon: 'Triangle',
+    requiresOnline: false,
+    isBasic: true,
+    component: GeometryTrigTool,
+    tags: ['geometry', 'trigonometry', 'triangle', 'volume', 'surface', 'area', 'circle', 'cylinder', 'cone'],
+  },
+  {
+    id: 'fraction-calc',
+    title: 'Exact Fraction & Rational Calculator',
+    shortDesc: 'Arbitrary-precision BigInt fraction arithmetic, mixed numbers, repeating decimal conversion, and continued fractions.',
+    category: 'math',
+    icon: 'Divide',
+    requiresOnline: false,
+    isBasic: true,
+    component: FractionCalcTool,
+    tags: ['fraction', 'rational', 'mixed-number', 'decimal', 'continued-fraction', 'exact', 'calculator'],
+  },
+  {
+    id: 'boolean-algebra',
+    title: 'Boolean Algebra & Truth Table Studio',
+    shortDesc: 'Parse logic expressions, generate truth tables, 2–4 variable Karnaugh maps, and Quine-McCluskey simplified SOP.',
+    category: 'math',
+    icon: 'Binary',
+    requiresOnline: false,
+    component: BooleanAlgebraTool,
+    tags: ['boolean', 'logic', 'truth-table', 'kmap', 'karnaugh', 'sop', 'pos', 'digital'],
+  },
+  {
+    id: 'formula-pad',
+    title: 'Unit-Aware Formula Scratchpad',
+    shortDesc: 'Multi-line live-evaluating math notepad where variables flow line-to-line with automatic unit conversions.',
+    category: 'math',
+    icon: 'NotebookPen',
+    requiresOnline: false,
+    isBasic: true,
+    component: FormulaPadTool,
+    tags: ['scratchpad', 'notepad', 'calculator', 'units', 'variables', 'formulas', 'math'],
+  },
+  {
+    id: 'error-propagation',
+    title: 'Error Propagation & Significant Figures',
+    shortDesc: 'Compute combined lab measurement uncertainty δf via partial derivatives and analyze/round significant figures.',
+    category: 'math',
+    icon: 'Scale',
+    requiresOnline: false,
+    component: ErrorPropagationTool,
+    tags: ['error', 'uncertainty', 'propagation', 'sig-figs', 'lab', 'measurement', 'physics', 'chemistry'],
+  },
+  {
+    id: 'ph-titration',
+    title: 'pH, Buffers & Titration Curve Simulator',
+    shortDesc: 'Strong/weak acid-base pH calculator, Henderson-Hasselbalch buffer designer, and live SVG titration curves.',
+    category: 'science',
+    icon: 'FlaskConical',
+    requiresOnline: false,
+    component: PhTitrationTool,
+    tags: ['ph', 'pka', 'acid', 'base', 'buffer', 'titration', 'chemistry'],
+  },
+  {
+    id: 'solution-dilution',
+    title: 'Solution Dilution & Serial Dilution Planner',
+    shortDesc: 'C₁V₁ = C₂V₂ stock dilution, multi-step serial dilution tables, ppm/ppb/%/Molarity converter, and printable lab sheets.',
+    category: 'science',
+    icon: 'FlaskConical',
+    requiresOnline: false,
+    component: SolutionDilutionTool,
+    tags: ['dilution', 'c1v1', 'serial-dilution', 'molarity', 'ppm', 'solution', 'lab', 'chemistry'],
+  },
+  {
+    id: 'molecular-vsepr',
+    title: 'Molecular Geometry & VSEPR Explorer',
+    shortDesc: 'Predict VSEPR shapes, hybridization, bond angles, polarity with SVG schematics, and organic functional groups.',
+    category: 'science',
+    icon: 'Atom',
+    requiresOnline: false,
+    component: MolecularVseprTool,
+    tags: ['vsepr', 'molecule', 'geometry', 'hybridization', 'lewis', 'functional-groups', 'chemistry'],
+  },
+  {
+    id: 'thermochemistry-eq',
+    title: 'Thermochemistry & Chemical Equilibrium',
+    shortDesc: 'Gibbs free energy (ΔG = ΔH − TΔS), spontaneity temperature, ICE equilibrium table solver, and ΔH°f/S° database.',
+    category: 'science',
+    icon: 'Flame',
+    requiresOnline: false,
+    component: ThermochemistryTool,
+    tags: ['thermochemistry', 'enthalpy', 'entropy', 'gibbs', 'equilibrium', 'ice-table', 'chemistry'],
+  },
+  {
+    id: 'electrochemistry-redox',
+    title: 'Electrochemistry & Redox Studio',
+    shortDesc: 'Standard reduction potential table (E°), galvanic cell voltage, Nernst equation, and Faraday electrolysis mass.',
+    category: 'science',
+    icon: 'Zap',
+    requiresOnline: false,
+    component: ElectrochemistryTool,
+    tags: ['electrochemistry', 'redox', 'nernst', 'galvanic', 'faraday', 'electrolysis', 'chemistry'],
+  },
+  {
+    id: 'isotope-decay',
+    title: 'Isotope & Radioactive Decay Calculator',
+    shortDesc: 'Half-life, decay constant λ, remaining sample mass/activity, radiometric dating, and exponential decay curve.',
+    category: 'science',
+    icon: 'Activity',
+    requiresOnline: false,
+    component: IsotopeDecayTool,
+    tags: ['isotope', 'radioactive', 'half-life', 'decay', 'carbon14', 'nuclear', 'physics', 'chemistry'],
+  },
+  {
+    id: 'optics-ray-sim',
+    title: 'Optics & Lens / Snell Ray Simulator',
+    shortDesc: 'Thin-lens equation with live 3-ray SVG diagram, magnification, Snell refraction, critical angle & Brewster angle.',
+    category: 'science',
+    icon: 'Eye',
+    requiresOnline: false,
+    component: OpticsRaySimTool,
+    tags: ['optics', 'lens', 'ray-diagram', 'snell', 'refraction', 'tir', 'physics'],
+  },
+  {
+    id: 'signal-wave-lab',
+    title: 'Signal & Wave Lab (Fourier / Bode / Doppler)',
+    shortDesc: 'Interactive Fourier harmonic wave synthesizer, RC filter Bode plot, and acoustic Doppler shift calculator.',
+    category: 'science',
+    icon: 'Activity',
+    requiresOnline: false,
+    component: SignalWaveLabTool,
+    tags: ['fourier', 'bode', 'signal', 'wave', 'harmonics', 'doppler', 'acoustics', 'physics'],
+  },
+  {
+    id: 'orbital-mechanics',
+    title: 'Astrophysics & Orbital Mechanics',
+    shortDesc: 'Circular & escape velocity, Kepler orbital periods, Hohmann transfer Δv diagram, and Schwarzschild radius.',
+    category: 'science',
+    icon: 'Orbit',
+    requiresOnline: false,
+    component: OrbitalMechanicsTool,
+    tags: ['orbit', 'astrophysics', 'hohmann', 'kepler', 'delta-v', 'escape-velocity', 'space', 'physics'],
+  },
+  {
+    id: 'lab-bio-pcr',
+    title: 'Microbiology & PCR / Lab Bio Calculator',
+    shortDesc: 'PCR primer Tm & annealing temp, restriction enzyme cut site scanner, ng/µL ↔ nM converter, and ligation ratio.',
+    category: 'science',
+    icon: 'Dna',
+    requiresOnline: false,
+    component: LabBioPcrTool,
+    tags: ['pcr', 'primer', 'tm', 'restriction-enzyme', 'ligation', 'dna', 'biology', 'lab'],
+  },
+  {
+    id: 'materials-mechanics',
+    title: 'Materials, Structural Mechanics & CODATA',
+    shortDesc: 'Beam bending deflection & max moment, pipe Reynolds flow regime, material presets, and CODATA constants table.',
+    category: 'science',
+    icon: 'Ruler',
+    requiresOnline: false,
+    component: MaterialsMechanicsTool,
+    tags: ['materials', 'beam', 'deflection', 'reynolds', 'fluid', 'codata', 'constants', 'engineering'],
+  },
 ];
+
