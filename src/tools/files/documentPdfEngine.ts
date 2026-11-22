@@ -31,8 +31,35 @@ export interface TextRunModel {
   mono: boolean;
   fontSize: number;
   color: RgbColor;
+  highlightColor?: RgbColor;
   isLineBreak?: boolean;
   isPageBreak?: boolean;
+  isColumnBreak?: boolean;
+  isTab?: boolean;
+}
+
+export interface TabStopDef {
+  posPt: number;
+  align: 'left' | 'center' | 'right';
+}
+
+export interface ColumnDef {
+  widthPt: number;
+  spaceAfterPt: number;
+}
+
+export interface SectionLayoutConfig {
+  pageWidth: number;
+  pageHeight: number;
+  marginTop: number;
+  marginRight: number;
+  marginBottom: number;
+  marginLeft: number;
+  columnCount: number;
+  columnGap: number;
+  columns?: ColumnDef[];
+  columnSeparator?: boolean;
+  breakType?: 'nextPage' | 'continuous';
 }
 
 export interface ImageBlockModel {
@@ -53,6 +80,8 @@ export interface ParagraphBlockModel {
   spaceBefore: number;
   spaceAfter: number;
   lineHeightMultiplier: number;
+  exactLineHeightPt?: number;
+  minLineHeightPt?: number;
   indentLeft: number;
   firstLineIndent: number;
   listMarker?: string;
@@ -60,6 +89,8 @@ export interface ParagraphBlockModel {
   bottomBorder?: boolean;
   backgroundColor?: RgbColor;
   leftBorderColor?: RgbColor;
+  tabStops?: TabStopDef[];
+  preserveLeadingSpaces?: boolean;
   defaultFontSize: number;
 }
 
@@ -89,6 +120,16 @@ export interface PageBreakBlockModel {
   kind: 'page-break';
 }
 
+export interface ColumnBreakBlockModel {
+  kind: 'column-break';
+}
+
+export interface SectionBreakBlockModel {
+  kind: 'section-break';
+  nextSection: SectionLayoutConfig;
+  breakType: 'nextPage' | 'continuous';
+}
+
 export interface HorizontalRuleBlockModel {
   kind: 'hr';
   spaceBefore: number;
@@ -100,6 +141,8 @@ export type DocumentBlock =
   | TableBlockModel
   | ImageBlockModel
   | PageBreakBlockModel
+  | ColumnBreakBlockModel
+  | SectionBreakBlockModel
   | HorizontalRuleBlockModel;
 
 export interface DocumentLayoutModel {
@@ -109,6 +152,9 @@ export interface DocumentLayoutModel {
   marginRight: number;
   marginBottom: number;
   marginLeft: number;
+  initialSection?: SectionLayoutConfig;
+  defaultTabStopPt?: number;
+  pageBackgroundColor?: RgbColor;
   blocks: DocumentBlock[];
 }
 
@@ -264,6 +310,91 @@ function sanitizeForFont(text: string, font: PDFFont, pack: EmbeddedFontPack): s
 // COLOR & XML HELPERS
 // ---------------------------------------------------------------------------
 
+const WORD_HIGHLIGHT_COLORS: Record<string, RgbColor> = {
+  yellow: { r: 1, g: 0.98, b: 0.35 },
+  green: { r: 0.25, g: 0.92, b: 0.32 },
+  cyan: { r: 0.3, g: 0.94, b: 0.98 },
+  magenta: { r: 0.96, g: 0.35, b: 0.92 },
+  blue: { r: 0.2, g: 0.45, b: 0.95 },
+  red: { r: 0.92, g: 0.22, b: 0.22 },
+  darkblue: { r: 0.08, g: 0.16, b: 0.52 },
+  darkcyan: { r: 0.08, g: 0.48, b: 0.52 },
+  darkgreen: { r: 0.1, g: 0.48, b: 0.16 },
+  darkmagenta: { r: 0.5, g: 0.1, b: 0.5 },
+  darkred: { r: 0.55, g: 0.1, b: 0.1 },
+  darkyellow: { r: 0.65, g: 0.56, b: 0.1 },
+  darkgray: { r: 0.68, g: 0.68, b: 0.7 },
+  darkgrey: { r: 0.68, g: 0.68, b: 0.7 },
+  lightgray: { r: 0.85, g: 0.86, b: 0.88 },
+  lightgrey: { r: 0.85, g: 0.86, b: 0.88 },
+  gray: { r: 0.8, g: 0.81, b: 0.83 },
+  grey: { r: 0.8, g: 0.81, b: 0.83 },
+  black: { r: 0.1, g: 0.1, b: 0.12 },
+  white: { r: 1, g: 1, b: 1 },
+};
+
+function parseWordHighlightColor(val: string | null | undefined): RgbColor | undefined {
+  if (!val) return undefined;
+  const key = val.trim().toLowerCase();
+  if (key === 'none' || key === 'auto' || key === 'transparent') return undefined;
+  return WORD_HIGHLIGHT_COLORS[key] ?? parseHexColor(val);
+}
+
+function parseShadingColor(shdEl: Element | null): RgbColor | undefined {
+  if (!shdEl) return undefined;
+  const shdVal = (getAttrByLocalName(shdEl, 'val') || '').toLowerCase();
+  if (shdVal === 'nil') return undefined;
+
+  if (shdVal === 'solid') {
+    const fg = parseHexColor(getAttrByLocalName(shdEl, 'color'));
+    if (fg) return fg;
+  }
+
+  const fill = parseHexColor(getAttrByLocalName(shdEl, 'fill'));
+  if (fill) return fill;
+
+  // Support percentage gray shading patterns when w:fill="auto"
+  const pctMatch = /^pct(\d+)$/.exec(shdVal);
+  if (pctMatch) {
+    const pct = Math.min(90, Math.max(5, Number(pctMatch[1])));
+    const shade = 1 - pct / 100;
+    return { r: shade, g: shade, b: shade };
+  }
+
+  // Fallback for Word themeFill when explicit hex w:fill is omitted or "auto"
+  const themeFill = (getAttrByLocalName(shdEl, 'themeFill') || '').toLowerCase();
+  if (themeFill) {
+    if (themeFill.includes('background2') || themeFill.includes('light2')) {
+      return { r: 0.87, g: 0.87, b: 0.89 };
+    }
+    if (themeFill.includes('background1') || themeFill.includes('light1')) {
+      const shadeHex = getAttrByLocalName(shdEl, 'themeFillShade');
+      if (shadeHex && /^[0-9a-fA-F]{2}$/.test(shadeHex)) {
+        const shade = Math.max(0.25, Math.min(0.95, parseInt(shadeHex, 16) / 255));
+        return { r: shade, g: shade, b: shade };
+      }
+    }
+    if (themeFill.includes('dark') || themeFill.includes('text')) {
+      return { r: 0.72, g: 0.73, b: 0.75 };
+    }
+  }
+
+  return undefined;
+}
+
+function colorLuminance(c: RgbColor): number {
+  return 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b;
+}
+
+function sameRgbColor(a?: RgbColor, b?: RgbColor): boolean {
+  if (!a || !b) return !a && !b;
+  return (
+    Math.abs(a.r - b.r) < 0.002 &&
+    Math.abs(a.g - b.g) < 0.002 &&
+    Math.abs(a.b - b.b) < 0.002
+  );
+}
+
 function parseHexColor(val: string | null | undefined, fallback?: RgbColor): RgbColor | undefined {
   if (!val) return fallback;
   const cleaned = val.trim().replace(/^#/, '');
@@ -284,7 +415,7 @@ function parseHexColor(val: string | null | undefined, fallback?: RgbColor): Rgb
       b: parseInt(cleaned[2] + cleaned[2], 16) / 255,
     };
   }
-  const rgbMatch = /^rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/i.exec(val.trim());
+  const rgbMatch = /^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)(?:\s*,\s*[\d.]+)?\s*\)$/i.exec(val.trim());
   if (rgbMatch) {
     return {
       r: Math.min(255, Number(rgbMatch[1])) / 255,
@@ -292,6 +423,8 @@ function parseHexColor(val: string | null | undefined, fallback?: RgbColor): Rgb
       b: Math.min(255, Number(rgbMatch[3])) / 255,
     };
   }
+  const named = WORD_HIGHLIGHT_COLORS[cleaned.toLowerCase()];
+  if (named) return named;
   return fallback;
 }
 
@@ -390,15 +523,19 @@ interface ResolvedStyleProps {
   mono?: boolean;
   fontSize?: number;
   color?: RgbColor;
+  highlightColor?: RgbColor;
   align?: TextAlign;
   spaceBefore?: number;
   spaceAfter?: number;
   lineHeightMultiplier?: number;
+  exactLineHeightPt?: number;
+  minLineHeightPt?: number;
   indentLeft?: number;
   firstLineIndent?: number;
   pageBreakBefore?: boolean;
   bottomBorder?: boolean;
   backgroundColor?: RgbColor;
+  tabStops?: TabStopDef[];
 }
 
 interface RawDocxStyle {
@@ -413,7 +550,7 @@ interface NumberingLevelDef {
   start: number;
 }
 
-function extractRunProps(rPr: Element | null): ResolvedStyleProps {
+function extractRunProps(rPr: Element | null, includeHighlight = true): ResolvedStyleProps {
   if (!rPr) return {};
   const props: ResolvedStyleProps = {};
 
@@ -445,6 +582,17 @@ function extractRunProps(rPr: Element | null): ResolvedStyleProps {
   const color = parseHexColor(getAttrByLocalName(colorEl, 'val'));
   if (color) props.color = color;
 
+  if (includeHighlight) {
+    const hlEl = getChildByLocalName(rPr, 'highlight');
+    const hlColor = parseWordHighlightColor(getAttrByLocalName(hlEl, 'val'));
+    const shdColor = parseShadingColor(getChildByLocalName(rPr, 'shd'));
+    if (hlColor) {
+      props.highlightColor = hlColor;
+    } else if (shdColor) {
+      props.highlightColor = shdColor;
+    }
+  }
+
   const rFonts = getChildByLocalName(rPr, 'rFonts');
   const asciiFont = (getAttrByLocalName(rFonts, 'ascii') || getAttrByLocalName(rFonts, 'hAnsi') || '').toLowerCase();
   if (asciiFont && /(courier|consolas|mono|menlo|fira code|jetbrains)/i.test(asciiFont)) {
@@ -472,9 +620,15 @@ function extractParaProps(pPr: Element | null): ResolvedStyleProps {
     if (before !== undefined) props.spaceBefore = Math.max(0, before);
     if (after !== undefined) props.spaceAfter = Math.max(0, after);
     const lineVal = Number(getAttrByLocalName(spacingEl, 'line'));
-    const lineRule = getAttrByLocalName(spacingEl, 'lineRule') || 'auto';
-    if (Number.isFinite(lineVal) && lineVal > 0 && lineRule === 'auto') {
-      props.lineHeightMultiplier = Math.max(1.05, Math.min(2.4, (lineVal / 240) * 1.15));
+    const lineRule = (getAttrByLocalName(spacingEl, 'lineRule') || 'auto').toLowerCase();
+    if (Number.isFinite(lineVal) && lineVal > 0) {
+      if (lineRule === 'exact') {
+        props.exactLineHeightPt = Math.max(7, lineVal / 20);
+      } else if (lineRule === 'atleast') {
+        props.minLineHeightPt = Math.max(7, lineVal / 20);
+      } else {
+        props.lineHeightMultiplier = Math.max(1.05, Math.min(2.4, (lineVal / 240) * 1.15));
+      }
     }
   }
 
@@ -502,14 +656,33 @@ function extractParaProps(pPr: Element | null): ResolvedStyleProps {
   }
 
   const shd = getChildByLocalName(pPr, 'shd');
-  if (shd) {
-    const bg = parseHexColor(getAttrByLocalName(shd, 'fill'));
-    if (bg) props.backgroundColor = bg;
+  const bg = parseShadingColor(shd);
+  if (bg) props.backgroundColor = bg;
+
+  const tabsEl = getChildByLocalName(pPr, 'tabs');
+  if (tabsEl) {
+    const stops: TabStopDef[] = [];
+    for (const tabEl of getChildrenByLocalName(tabsEl, 'tab')) {
+      const val = (getAttrByLocalName(tabEl, 'val') || 'left').toLowerCase();
+      if (val === 'clear' || val === 'bar') continue;
+      const posPt = twipsToPt(getAttrByLocalName(tabEl, 'pos'));
+      if (posPt !== undefined && posPt > 0) {
+        const align: TabStopDef['align'] =
+          val === 'center' ? 'center' : val === 'right' || val === 'decimal' ? 'right' : 'left';
+        stops.push({ posPt, align });
+      }
+    }
+    if (stops.length > 0) {
+      stops.sort((a, b) => a.posPt - b.posPt);
+      props.tabStops = stops;
+    }
   }
 
+  // Paragraph mark rPr gives default font size/styling for empty paragraphs,
+  // but should not bleed highlight/shading onto unhighlighted runs inside the paragraph.
   const rPr = getChildByLocalName(pPr, 'rPr');
   if (rPr) {
-    Object.assign(props, extractRunProps(rPr));
+    Object.assign(props, extractRunProps(rPr, false));
   }
 
   return props;
@@ -722,6 +895,111 @@ function formatListCounter(numFmt: string, count: number): string {
   return `${count}.`;
 }
 
+function parseDefaultTabStop(files: Record<string, Uint8Array>): number {
+  const settingsBytes = files['word/settings.xml'];
+  if (!settingsBytes) return 36;
+  const doc = parseXmlDocument(new TextDecoder().decode(settingsBytes));
+  if (!doc?.documentElement) return 36;
+  const tabStopEl = getChildByLocalName(doc.documentElement, 'defaultTabStop');
+  const pt = twipsToPt(getAttrByLocalName(tabStopEl, 'val'));
+  return pt && pt >= 8 && pt <= 144 ? pt : 36;
+}
+
+function parseSectPrConfig(sectPr: Element | null, fallback?: SectionLayoutConfig): SectionLayoutConfig {
+  let pageWidth = fallback?.pageWidth ?? A4_WIDTH;
+  let pageHeight = fallback?.pageHeight ?? A4_HEIGHT;
+  let marginTop = fallback?.marginTop ?? DEFAULT_MARGIN;
+  let marginRight = fallback?.marginRight ?? DEFAULT_MARGIN;
+  let marginBottom = fallback?.marginBottom ?? DEFAULT_MARGIN;
+  let marginLeft = fallback?.marginLeft ?? DEFAULT_MARGIN;
+  let columnCount = 1;
+  let columnGap = 36;
+  let columns: ColumnDef[] | undefined;
+  let columnSeparator = false;
+  let breakType: 'nextPage' | 'continuous' = 'nextPage';
+
+  if (sectPr) {
+    const pgSz = getChildByLocalName(sectPr, 'pgSz');
+    if (pgSz) {
+      let w = twipsToPt(getAttrByLocalName(pgSz, 'w'));
+      let h = twipsToPt(getAttrByLocalName(pgSz, 'h'));
+      const orient = (getAttrByLocalName(pgSz, 'orient') || '').toLowerCase();
+      if (orient === 'landscape' && w && h && w < h) {
+        const tmp = w;
+        w = h;
+        h = tmp;
+      }
+      if (w && w >= 200 && w <= 2000) pageWidth = w;
+      if (h && h >= 200 && h <= 2000) pageHeight = h;
+    }
+
+    const pgMar = getChildByLocalName(sectPr, 'pgMar');
+    if (pgMar) {
+      const top = twipsToPt(getAttrByLocalName(pgMar, 'top'));
+      const right = twipsToPt(getAttrByLocalName(pgMar, 'right'));
+      const bottom = twipsToPt(getAttrByLocalName(pgMar, 'bottom'));
+      const left = twipsToPt(getAttrByLocalName(pgMar, 'left'));
+      if (top !== undefined) marginTop = Math.max(12, Math.min(180, top));
+      if (right !== undefined) marginRight = Math.max(12, Math.min(180, right));
+      if (bottom !== undefined) marginBottom = Math.max(12, Math.min(180, bottom));
+      if (left !== undefined) marginLeft = Math.max(12, Math.min(180, left));
+    }
+
+    const colsEl = getChildByLocalName(sectPr, 'cols');
+    if (colsEl) {
+      const rawNum = Number(getAttrByLocalName(colsEl, 'num') ?? '0');
+      const rawSpace = twipsToPt(getAttrByLocalName(colsEl, 'space'));
+      if (rawSpace !== undefined && rawSpace >= 0 && rawSpace <= 144) {
+        columnGap = rawSpace;
+      }
+      const sepAttr = (getAttrByLocalName(colsEl, 'sep') || '').toLowerCase();
+      columnSeparator = sepAttr === '1' || sepAttr === 'true' || sepAttr === 'on';
+
+      const equalAttr = (getAttrByLocalName(colsEl, 'equalWidth') || '').toLowerCase();
+      const isEqualWidth = equalAttr !== '0' && equalAttr !== 'false';
+
+      const colChildren = getChildrenByLocalName(colsEl, 'col');
+      if (Number.isFinite(rawNum) && rawNum >= 1) {
+        columnCount = Math.min(6, Math.max(1, Math.floor(rawNum)));
+      } else if (colChildren.length > 1) {
+        columnCount = Math.min(6, colChildren.length);
+      }
+
+      if (!isEqualWidth && colChildren.length > 1) {
+        const parsedCols: ColumnDef[] = colChildren.map((c, idx) => ({
+          widthPt: Math.max(40, twipsToPt(getAttrByLocalName(c, 'w')) ?? 200),
+          spaceAfterPt:
+            idx < colChildren.length - 1
+              ? Math.max(0, twipsToPt(getAttrByLocalName(c, 'space')) ?? columnGap)
+              : 0,
+        }));
+        columnCount = Math.min(6, parsedCols.length);
+        columns = parsedCols.slice(0, columnCount);
+      }
+    }
+
+    const typeEl = getChildByLocalName(sectPr, 'type');
+    const typeVal = (getAttrByLocalName(typeEl, 'val') || '').toLowerCase();
+    if (typeVal === 'continuous') {
+      breakType = 'continuous';
+    }
+  }
+
+  return {
+    pageWidth,
+    pageHeight,
+    marginTop,
+    marginRight,
+    marginBottom,
+    marginLeft,
+    columnCount,
+    columnGap,
+    columns,
+    columnSeparator,
+    breakType,
+  };
+}
+
 export function parseDocxToLayoutModel(arrayBuffer: ArrayBuffer): DocumentLayoutModel {
   const files = unzipSync(new Uint8Array(arrayBuffer));
   const docXmlBytes = files['word/document.xml'];
@@ -742,43 +1020,68 @@ export function parseDocxToLayoutModel(arrayBuffer: ArrayBuffer): DocumentLayout
   const { resolveStyle } = parseDocxStyles(files);
   const numberingMap = parseDocxNumbering(files);
   const relsMap = parseDocxRels(files);
+  const defaultTabStopPt = parseDefaultTabStop(files);
   const listCounters = new Map<string, number>();
 
-  // Extract page size & margins from sectPr
-  let pageWidth = A4_WIDTH;
-  let pageHeight = A4_HEIGHT;
-  let marginTop = DEFAULT_MARGIN;
-  let marginRight = DEFAULT_MARGIN;
-  let marginBottom = DEFAULT_MARGIN;
-  let marginLeft = DEFAULT_MARGIN;
-
-  const sectPr = getChildByLocalName(body, 'sectPr') ?? getDescendantsByLocalName(body, 'sectPr')[0];
-  if (sectPr) {
-    const pgSz = getChildByLocalName(sectPr, 'pgSz');
-    if (pgSz) {
-      const w = twipsToPt(getAttrByLocalName(pgSz, 'w'));
-      const h = twipsToPt(getAttrByLocalName(pgSz, 'h'));
-      if (w && w >= 200 && w <= 2000) pageWidth = w;
-      if (h && h >= 200 && h <= 2000) pageHeight = h;
-    }
-    const pgMar = getChildByLocalName(sectPr, 'pgMar');
-    if (pgMar) {
-      const top = twipsToPt(getAttrByLocalName(pgMar, 'top'));
-      const right = twipsToPt(getAttrByLocalName(pgMar, 'right'));
-      const bottom = twipsToPt(getAttrByLocalName(pgMar, 'bottom'));
-      const left = twipsToPt(getAttrByLocalName(pgMar, 'left'));
-      if (top !== undefined) marginTop = Math.max(24, Math.min(144, top));
-      if (right !== undefined) marginRight = Math.max(24, Math.min(144, right));
-      if (bottom !== undefined) marginBottom = Math.max(24, Math.min(144, bottom));
-      if (left !== undefined) marginLeft = Math.max(24, Math.min(144, left));
+  // Optional explicit document page background (ignore white/auto)
+  let pageBackgroundColor: RgbColor | undefined;
+  const bgEl = getChildByLocalName(doc.documentElement, 'background');
+  if (bgEl) {
+    const parsedBg = parseHexColor(getAttrByLocalName(bgEl, 'color'));
+    if (parsedBg && !(parsedBg.r > 0.98 && parsedBg.g > 0.98 && parsedBg.b > 0.98)) {
+      pageBackgroundColor = parsedBg;
     }
   }
 
-  const contentWidth = pageWidth - marginLeft - marginRight;
+  // Group body children into OOXML sections (each section's sectPr lives at the end of that section)
+  interface RawSectionGroup {
+    elements: Element[];
+    sectPr: Element | null;
+  }
+
+  const sectionGroups: RawSectionGroup[] = [];
+  let currentGroupElements: Element[] = [];
+  let trailingSectPr: Element | null = null;
+
+  for (let i = 0; i < body.children.length; i++) {
+    const child = body.children[i];
+    const tag = localNameOf(child);
+    if (tag === 'sectPr') {
+      trailingSectPr = child;
+      continue;
+    }
+
+    currentGroupElements.push(child);
+
+    if (tag === 'p') {
+      const pPr = getChildByLocalName(child, 'pPr');
+      const inlineSectPr = getChildByLocalName(pPr, 'sectPr');
+      if (inlineSectPr) {
+        sectionGroups.push({ elements: currentGroupElements, sectPr: inlineSectPr });
+        currentGroupElements = [];
+      }
+    }
+  }
+
+  if (currentGroupElements.length > 0 || sectionGroups.length === 0) {
+    sectionGroups.push({ elements: currentGroupElements, sectPr: trailingSectPr });
+  } else if (trailingSectPr && sectionGroups.length > 0 && !sectionGroups[sectionGroups.length - 1].sectPr) {
+    sectionGroups[sectionGroups.length - 1].sectPr = trailingSectPr;
+  }
+
+  const parsedSections: SectionLayoutConfig[] = [];
+  for (let i = 0; i < sectionGroups.length; i++) {
+    const prev = i > 0 ? parsedSections[i - 1] : undefined;
+    parsedSections.push(parseSectPrConfig(sectionGroups[i].sectPr, prev));
+  }
+
+  const initialSection = parsedSections[0] ?? parseSectPrConfig(null);
+  const { pageWidth, pageHeight, marginTop, marginRight, marginBottom, marginLeft } = initialSection;
 
   const parseParagraphElement = (
     pEl: Element,
-    extractedImages: ImageBlockModel[]
+    extractedImages: ImageBlockModel[],
+    sectionContentWidth: number
   ): ParagraphBlockModel => {
     const pPr = getChildByLocalName(pEl, 'pPr');
     const pStyleId = getAttrByLocalName(getChildByLocalName(pPr, 'pStyle'), 'val');
@@ -821,8 +1124,17 @@ export function parseDocxToLayoutModel(arrayBuffer: ArrayBuffer): DocumentLayout
         const rPr = getChildByLocalName(child, 'rPr');
         const rStyleId = getAttrByLocalName(getChildByLocalName(rPr, 'rStyle'), 'val');
         const rStyleProps = rStyleId ? resolveStyle(rStyleId) : {};
-        const directRProps = extractRunProps(rPr);
+        const directRProps = extractRunProps(rPr, true);
         const finalR = mergeStyleProps(mergeStyleProps(mergedP, rStyleProps), directRProps);
+
+        let textColor =
+          finalR.color ?? (isHyperlink ? { r: 0.1, g: 0.32, b: 0.72 } : DEFAULT_TEXT_COLOR);
+        const highlightColor = finalR.highlightColor;
+
+        // Preserve legible contrast if a dark highlight (e.g. black/darkBlue) has default dark text
+        if (highlightColor && !directRProps.color && !rStyleProps.color && colorLuminance(highlightColor) < 0.25) {
+          textColor = { r: 0.98, g: 0.98, b: 0.98 };
+        }
 
         const baseRun: Omit<TextRunModel, 'text'> = {
           bold: Boolean(finalR.bold),
@@ -831,7 +1143,8 @@ export function parseDocxToLayoutModel(arrayBuffer: ArrayBuffer): DocumentLayout
           strike: Boolean(finalR.strike),
           mono: Boolean(finalR.mono),
           fontSize: finalR.fontSize ?? mergedP.fontSize ?? DEFAULT_FONT_SIZE,
-          color: finalR.color ?? (isHyperlink ? { r: 0.1, g: 0.32, b: 0.72 } : DEFAULT_TEXT_COLOR),
+          color: textColor,
+          highlightColor,
         };
 
         for (let j = 0; j < child.children.length; j++) {
@@ -844,11 +1157,13 @@ export function parseDocxToLayoutModel(arrayBuffer: ArrayBuffer): DocumentLayout
               runs.push({ ...baseRun, text });
             }
           } else if (rTag === 'tab') {
-            runs.push({ ...baseRun, text: '    ' });
+            runs.push({ ...baseRun, text: '', isTab: true });
           } else if (rTag === 'br' || rTag === 'cr') {
-            const brType = getAttrByLocalName(rChild, 'type');
+            const brType = (getAttrByLocalName(rChild, 'type') || '').toLowerCase();
             if (brType === 'page') {
               runs.push({ ...baseRun, text: '', isPageBreak: true });
+            } else if (brType === 'column') {
+              runs.push({ ...baseRun, text: '', isColumnBreak: true });
             } else {
               runs.push({ ...baseRun, text: '', isLineBreak: true });
             }
@@ -867,7 +1182,7 @@ export function parseDocxToLayoutModel(arrayBuffer: ArrayBuffer): DocumentLayout
               const cx = Number(getAttrByLocalName(extent, 'cx') ?? '0');
               const cy = Number(getAttrByLocalName(extent, 'cy') ?? '0');
               // 1 pt = 12700 EMU
-              const widthPt = cx > 0 ? cx / 12700 : contentWidth * 0.7;
+              const widthPt = cx > 0 ? cx / 12700 : sectionContentWidth * 0.7;
               const heightPt = cy > 0 ? cy / 12700 : 180;
 
               extractedImages.push({
@@ -894,18 +1209,22 @@ export function parseDocxToLayoutModel(arrayBuffer: ArrayBuffer): DocumentLayout
       align: mergedP.align ?? 'left',
       spaceBefore: mergedP.spaceBefore ?? 0,
       spaceAfter: mergedP.spaceAfter ?? 6,
-      lineHeightMultiplier: mergedP.lineHeightMultiplier ?? 1.28,
+      lineHeightMultiplier: mergedP.lineHeightMultiplier ?? 1.25,
+      exactLineHeightPt: mergedP.exactLineHeightPt,
+      minLineHeightPt: mergedP.minLineHeightPt,
       indentLeft: Math.max(mergedP.indentLeft ?? 0, extraIndent),
       firstLineIndent: mergedP.firstLineIndent ?? 0,
       listMarker,
       pageBreakBefore: mergedP.pageBreakBefore,
       bottomBorder: mergedP.bottomBorder,
       backgroundColor: mergedP.backgroundColor,
+      tabStops: mergedP.tabStops,
+      preserveLeadingSpaces: true,
       defaultFontSize: mergedP.fontSize ?? DEFAULT_FONT_SIZE,
     };
   };
 
-  const parseTableElement = (tblEl: Element): TableBlockModel => {
+  const parseTableElement = (tblEl: Element, sectionContentWidth: number): TableBlockModel => {
     const tblPr = getChildByLocalName(tblEl, 'tblPr');
     const tblBorders = getChildByLocalName(tblPr, 'tblBorders');
     let hasBorders = true;
@@ -938,13 +1257,13 @@ export function parseDocxToLayoutModel(arrayBuffer: ArrayBuffer): DocumentLayout
         rowCols += colSpan;
 
         const shd = getChildByLocalName(tcPr, 'shd');
-        const bg = parseHexColor(getAttrByLocalName(shd, 'fill'));
+        const bg = parseShadingColor(shd);
         const tcW = twipsToPt(getAttrByLocalName(getChildByLocalName(tcPr, 'tcW'), 'w'));
 
         const cellParas: ParagraphBlockModel[] = [];
         for (const pChild of getChildrenByLocalName(tc, 'p')) {
           const dummyImgs: ImageBlockModel[] = [];
-          const p = parseParagraphElement(pChild, dummyImgs);
+          const p = parseParagraphElement(pChild, dummyImgs, sectionContentWidth);
           p.spaceBefore = Math.min(p.spaceBefore, 2);
           p.spaceAfter = Math.min(p.spaceAfter, 3);
           cellParas.push(p);
@@ -967,11 +1286,11 @@ export function parseDocxToLayoutModel(arrayBuffer: ArrayBuffer): DocumentLayout
     let colWidthsPt = gridCols;
     if (colWidthsPt.length < maxCols) {
       const colCount = Math.max(1, maxCols);
-      colWidthsPt = Array.from({ length: colCount }, () => contentWidth / colCount);
+      colWidthsPt = Array.from({ length: colCount }, () => sectionContentWidth / colCount);
     } else if (colWidthsPt.length > 0) {
       const sum = colWidthsPt.reduce((a, b) => a + b, 0);
-      if (sum > contentWidth || sum < contentWidth * 0.4) {
-        const scale = contentWidth / Math.max(1, sum);
+      if (sum > sectionContentWidth || sum < sectionContentWidth * 0.4) {
+        const scale = sectionContentWidth / Math.max(1, sum);
         colWidthsPt = colWidthsPt.map(w => w * scale);
       }
     }
@@ -988,33 +1307,49 @@ export function parseDocxToLayoutModel(arrayBuffer: ArrayBuffer): DocumentLayout
 
   const blocks: DocumentBlock[] = [];
 
-  for (let i = 0; i < body.children.length; i++) {
-    const child = body.children[i];
-    const tag = localNameOf(child);
+  for (let sIdx = 0; sIdx < sectionGroups.length; sIdx++) {
+    const sec = parsedSections[sIdx];
+    const secContentW = sec.pageWidth - sec.marginLeft - sec.marginRight;
+    const activeColWidth =
+      sec.columnCount > 1
+        ? (secContentW - sec.columnGap * (sec.columnCount - 1)) / sec.columnCount
+        : secContentW;
 
-    if (tag === 'p') {
-      const extractedImages: ImageBlockModel[] = [];
-      const para = parseParagraphElement(child, extractedImages);
-      if (para.runs.length > 0 || extractedImages.length === 0) {
-        blocks.push(para);
-      }
-      for (const img of extractedImages) {
-        blocks.push(img);
-      }
-    } else if (tag === 'tbl') {
-      blocks.push(parseTableElement(child));
-    } else if (tag === 'sdt') {
-      const sdtContent = getChildByLocalName(child, 'sdtContent');
-      if (sdtContent) {
-        for (let j = 0; j < sdtContent.children.length; j++) {
-          const inner = sdtContent.children[j];
-          const innerTag = localNameOf(inner);
-          if (innerTag === 'p') {
-            const imgs: ImageBlockModel[] = [];
-            blocks.push(parseParagraphElement(inner, imgs));
-            imgs.forEach(img => blocks.push(img));
-          } else if (innerTag === 'tbl') {
-            blocks.push(parseTableElement(inner));
+    if (sIdx > 0) {
+      blocks.push({
+        kind: 'section-break',
+        nextSection: sec,
+        breakType: sec.breakType ?? 'nextPage',
+      });
+    }
+
+    for (const child of sectionGroups[sIdx].elements) {
+      const tag = localNameOf(child);
+
+      if (tag === 'p') {
+        const extractedImages: ImageBlockModel[] = [];
+        const para = parseParagraphElement(child, extractedImages, activeColWidth);
+        if (para.runs.length > 0 || extractedImages.length === 0) {
+          blocks.push(para);
+        }
+        for (const img of extractedImages) {
+          blocks.push(img);
+        }
+      } else if (tag === 'tbl') {
+        blocks.push(parseTableElement(child, activeColWidth));
+      } else if (tag === 'sdt') {
+        const sdtContent = getChildByLocalName(child, 'sdtContent');
+        if (sdtContent) {
+          for (let j = 0; j < sdtContent.children.length; j++) {
+            const inner = sdtContent.children[j];
+            const innerTag = localNameOf(inner);
+            if (innerTag === 'p') {
+              const imgs: ImageBlockModel[] = [];
+              blocks.push(parseParagraphElement(inner, imgs, activeColWidth));
+              imgs.forEach(img => blocks.push(img));
+            } else if (innerTag === 'tbl') {
+              blocks.push(parseTableElement(inner, activeColWidth));
+            }
           }
         }
       }
@@ -1028,6 +1363,9 @@ export function parseDocxToLayoutModel(arrayBuffer: ArrayBuffer): DocumentLayout
     marginRight,
     marginBottom,
     marginLeft,
+    initialSection,
+    defaultTabStopPt,
+    pageBackgroundColor,
     blocks,
   };
 }
@@ -1064,6 +1402,13 @@ function parseColorFromStyle(el: Element): RgbColor | undefined {
   return undefined;
 }
 
+function parseBgColorFromStyle(el: Element): RgbColor | undefined {
+  const style = el.getAttribute('style') || '';
+  const m = /(?:^|;)\s*background(?:-color)?\s*:\s*([^;]+)/i.exec(style);
+  if (m) return parseHexColor(m[1]);
+  return undefined;
+}
+
 export function parseHtmlToLayoutModel(rawHtml: string): DocumentLayoutModel {
   const safeHtml = DOMPurify.sanitize(rawHtml, {
     ADD_ATTR: ['style', 'align', 'colspan'],
@@ -1086,6 +1431,7 @@ export function parseHtmlToLayoutModel(rawHtml: string): DocumentLayoutModel {
     mono: boolean;
     fontSize: number;
     color: RgbColor;
+    highlightColor?: RgbColor;
   }
 
   const collectInlineRuns = (
@@ -1130,6 +1476,7 @@ export function parseHtmlToLayoutModel(rawHtml: string): DocumentLayoutModel {
       return;
     }
 
+    const inlineBg = parseBgColorFromStyle(el) ?? (tag === 'mark' ? WORD_HIGHLIGHT_COLORS.yellow : undefined);
     const next: InlineState = {
       ...state,
       bold: state.bold || tag === 'strong' || tag === 'b' || tag === 'th',
@@ -1138,6 +1485,7 @@ export function parseHtmlToLayoutModel(rawHtml: string): DocumentLayoutModel {
       strike: state.strike || tag === 's' || tag === 'del' || tag === 'strike',
       mono: state.mono || tag === 'code' || tag === 'kbd' || tag === 'samp',
       color: parseColorFromStyle(el) ?? (tag === 'a' ? { r: 0.1, g: 0.32, b: 0.72 } : state.color),
+      highlightColor: inlineBg ?? state.highlightColor,
     };
 
     for (let i = 0; i < el.childNodes.length; i++) {
@@ -1564,6 +1912,7 @@ export function parsePlainTextToLayoutModel(text: string): DocumentLayoutModel {
     lineHeightMultiplier: 1.32,
     indentLeft: 0,
     firstLineIndent: 0,
+    preserveLeadingSpaces: true,
     defaultFontSize: DEFAULT_FONT_SIZE,
   }));
 
@@ -1731,9 +2080,11 @@ interface StyledSegment {
   fontSize: number;
   width: number;
   color: RgbColor;
+  highlightColor?: RgbColor;
   underline: boolean;
   strike: boolean;
   isSpace: boolean;
+  isTab?: boolean;
 }
 
 interface WrappedLine {
@@ -1743,6 +2094,7 @@ interface WrappedLine {
   lineHeight: number;
   isLastInParagraph: boolean;
   isPageBreak?: boolean;
+  isColumnBreak?: boolean;
 }
 
 function measureSafeWidth(font: PDFFont, text: string, fontSize: number): number {
@@ -1775,10 +2127,38 @@ function splitLongToken(
   return parts;
 }
 
+function computeLineHeight(para: ParagraphBlockModel, maxFontSize: number): number {
+  if (para.exactLineHeightPt !== undefined) {
+    return para.exactLineHeightPt;
+  }
+  const natural = maxFontSize * para.lineHeightMultiplier;
+  if (para.minLineHeightPt !== undefined) {
+    return Math.max(para.minLineHeightPt, natural);
+  }
+  return natural;
+}
+
+function resolveNextTabWidth(
+  currentRelX: number,
+  tabStops: TabStopDef[] | undefined,
+  defaultTabStopPt: number
+): number {
+  if (tabStops && tabStops.length > 0) {
+    const nextExplicit = tabStops.find(s => s.posPt > currentRelX + 1);
+    if (nextExplicit) {
+      return Math.max(6, nextExplicit.posPt - currentRelX);
+    }
+  }
+  const grid = Math.max(12, defaultTabStopPt);
+  const nextGrid = (Math.floor((currentRelX + 0.5) / grid) + 1) * grid;
+  return Math.max(6, nextGrid - currentRelX);
+}
+
 function wrapParagraphRuns(
   para: ParagraphBlockModel,
   maxLineWidth: number,
-  pack: EmbeddedFontPack
+  pack: EmbeddedFontPack,
+  defaultTabStopPt = 36
 ): WrappedLine[] {
   const safeMaxWidth = Math.max(30, maxLineWidth);
   const lines: WrappedLine[] = [];
@@ -1789,7 +2169,7 @@ function wrapParagraphRuns(
         segments: [],
         width: 0,
         maxFontSize: para.defaultFontSize,
-        lineHeight: para.defaultFontSize * para.lineHeightMultiplier,
+        lineHeight: computeLineHeight(para, para.defaultFontSize),
         isLastInParagraph: true,
       },
     ];
@@ -1799,13 +2179,19 @@ function wrapParagraphRuns(
   let currentWidth = 0;
   let currentMaxSize = para.defaultFontSize;
   let isFirstLine = true;
+  let justAutoWrapped = false;
 
-  const getAvailableWidth = () =>
-    Math.max(30, safeMaxWidth - (isFirstLine ? Math.max(0, para.firstLineIndent) : 0));
+  const getFirstLineOffset = () => (isFirstLine ? Math.max(0, para.firstLineIndent) : 0);
+  const getAvailableWidth = () => Math.max(30, safeMaxWidth - getFirstLineOffset());
 
-  const flushLine = (isLast: boolean) => {
-    // Trim trailing whitespace on wrapped lines
-    while (currentSegments.length > 0 && currentSegments[currentSegments.length - 1].isSpace) {
+  const flushLine = (isLast: boolean, fromAutoWrap: boolean) => {
+    // Trim trailing unhighlighted regular spaces on wrapped lines
+    while (
+      currentSegments.length > 0 &&
+      currentSegments[currentSegments.length - 1].isSpace &&
+      !currentSegments[currentSegments.length - 1].isTab &&
+      !currentSegments[currentSegments.length - 1].highlightColor
+    ) {
       const removed = currentSegments.pop()!;
       currentWidth -= removed.width;
     }
@@ -1813,18 +2199,19 @@ function wrapParagraphRuns(
       segments: currentSegments,
       width: Math.max(0, currentWidth),
       maxFontSize: currentMaxSize,
-      lineHeight: currentMaxSize * para.lineHeightMultiplier,
+      lineHeight: computeLineHeight(para, currentMaxSize),
       isLastInParagraph: isLast,
     });
     currentSegments = [];
     currentWidth = 0;
     currentMaxSize = para.defaultFontSize;
     isFirstLine = false;
+    justAutoWrapped = fromAutoWrap;
   };
 
   for (const run of para.runs) {
     if (run.isPageBreak) {
-      if (currentSegments.length > 0) flushLine(true);
+      if (currentSegments.length > 0) flushLine(true, false);
       lines.push({
         segments: [],
         width: 0,
@@ -1833,15 +2220,58 @@ function wrapParagraphRuns(
         isLastInParagraph: true,
         isPageBreak: true,
       });
+      justAutoWrapped = false;
+      continue;
+    }
+
+    if (run.isColumnBreak) {
+      if (currentSegments.length > 0) flushLine(true, false);
+      lines.push({
+        segments: [],
+        width: 0,
+        maxFontSize: para.defaultFontSize,
+        lineHeight: 0,
+        isLastInParagraph: true,
+        isColumnBreak: true,
+      });
+      justAutoWrapped = false;
       continue;
     }
 
     if (run.isLineBreak) {
-      flushLine(true);
+      flushLine(true, false);
       continue;
     }
 
     const font = selectFont(pack, run);
+
+    if (run.isTab) {
+      const avail = getAvailableWidth();
+      const relX = getFirstLineOffset() + currentWidth;
+      let tabWidth = resolveNextTabWidth(relX, para.tabStops, defaultTabStopPt);
+      if (currentSegments.length > 0 && currentWidth + tabWidth > avail) {
+        flushLine(false, true);
+        tabWidth = resolveNextTabWidth(getFirstLineOffset(), para.tabStops, defaultTabStopPt);
+      }
+      const clampedTab = Math.min(tabWidth, getAvailableWidth());
+      currentSegments.push({
+        text: '',
+        font,
+        fontSize: run.fontSize,
+        width: clampedTab,
+        color: run.color,
+        highlightColor: run.highlightColor,
+        underline: run.underline,
+        strike: run.strike,
+        isSpace: true,
+        isTab: true,
+      });
+      currentWidth += clampedTab;
+      currentMaxSize = Math.max(currentMaxSize, run.fontSize);
+      justAutoWrapped = false;
+      continue;
+    }
+
     const safeText = sanitizeForFont(run.text, font, pack);
     if (!safeText) continue;
 
@@ -1849,8 +2279,13 @@ function wrapParagraphRuns(
     const tokens = safeText.match(/\S+|\s+/g) ?? [];
     for (const token of tokens) {
       const isSpace = /^\s+$/.test(token);
-      if (isSpace && currentSegments.length === 0 && !run.mono) {
-        // Skip leading spaces on newly wrapped lines
+      if (
+        isSpace &&
+        currentSegments.length === 0 &&
+        !run.mono &&
+        (justAutoWrapped || !para.preserveLeadingSpaces)
+      ) {
+        // Only drop accidental leading spaces caused by soft auto-wrapping (or collapsed HTML)
         continue;
       }
 
@@ -1858,7 +2293,7 @@ function wrapParagraphRuns(
       const avail = getAvailableWidth();
 
       if (!isSpace && currentSegments.length > 0 && currentWidth + tokWidth > avail) {
-        flushLine(false);
+        flushLine(false, true);
       }
 
       const availNow = getAvailableWidth();
@@ -1872,14 +2307,16 @@ function wrapParagraphRuns(
             fontSize: run.fontSize,
             width: w,
             color: run.color,
+            highlightColor: run.highlightColor,
             underline: run.underline,
             strike: run.strike,
             isSpace: false,
           });
           currentWidth += w;
           currentMaxSize = Math.max(currentMaxSize, run.fontSize);
+          justAutoWrapped = false;
           if (idx < chunks.length - 1) {
-            flushLine(false);
+            flushLine(false, true);
           }
         });
       } else {
@@ -1889,18 +2326,20 @@ function wrapParagraphRuns(
           fontSize: run.fontSize,
           width: tokWidth,
           color: run.color,
+          highlightColor: run.highlightColor,
           underline: run.underline,
           strike: run.strike,
           isSpace,
         });
         currentWidth += tokWidth;
         currentMaxSize = Math.max(currentMaxSize, run.fontSize);
+        justAutoWrapped = false;
       }
     }
   }
 
   if (currentSegments.length > 0 || lines.length === 0) {
-    flushLine(true);
+    flushLine(true, false);
   }
 
   return lines;
@@ -1924,18 +2363,62 @@ function drawWrappedLine(
   } else if (align === 'right') {
     startX = baseX + Math.max(0, maxWidth - line.width);
   } else if (align === 'justify' && !line.isLastInParagraph) {
-    const spaceCount = line.segments.filter(s => s.isSpace).length;
+    const spaceCount = line.segments.filter(s => s.isSpace && !s.isTab).length;
     const slack = maxWidth - line.width;
     if (spaceCount > 0 && slack > 0 && slack < maxWidth * 0.35) {
       extraSpacePerGap = slack / spaceCount;
     }
   }
 
+  // Precompute segment X positions & effective widths
+  const placed: Array<{ seg: StyledSegment; x: number; w: number }> = [];
   let cursorX = startX;
   for (const seg of line.segments) {
+    const w = seg.width + (seg.isSpace && !seg.isTab ? extraSpacePerGap : 0);
+    placed.push({ seg, x: cursorX, w });
+    cursorX += w;
+  }
+
+  // Pass 1: Draw merged inline highlight/shading rectangles behind text
+  let spanStartX = 0;
+  let spanEndX = 0;
+  let spanMaxSize = 0;
+  let spanColor: RgbColor | undefined;
+
+  const flushHighlightSpan = () => {
+    if (!spanColor || spanEndX <= spanStartX) return;
+    page.drawRectangle({
+      x: spanStartX - 1.2,
+      y: baselineY - spanMaxSize * 0.22,
+      width: spanEndX - spanStartX + 2.4,
+      height: spanMaxSize * 1.18,
+      color: rgb(spanColor.r, spanColor.g, spanColor.b),
+    });
+    spanColor = undefined;
+  };
+
+  for (const item of placed) {
+    const hl = item.seg.highlightColor;
+    if (hl && sameRgbColor(hl, spanColor)) {
+      spanEndX = item.x + item.w;
+      spanMaxSize = Math.max(spanMaxSize, item.seg.fontSize);
+    } else {
+      flushHighlightSpan();
+      if (hl) {
+        spanColor = hl;
+        spanStartX = item.x;
+        spanEndX = item.x + item.w;
+        spanMaxSize = item.seg.fontSize;
+      }
+    }
+  }
+  flushHighlightSpan();
+
+  // Pass 2: Draw text, underlines, and strikethroughs cleanly on top
+  for (const { seg, x } of placed) {
     if (seg.text.length > 0) {
       page.drawText(seg.text, {
-        x: cursorX,
+        x,
         y: baselineY,
         size: seg.fontSize,
         font: seg.font,
@@ -1944,45 +2427,132 @@ function drawWrappedLine(
 
       if (seg.underline && !seg.isSpace) {
         page.drawLine({
-          start: { x: cursorX, y: baselineY - seg.fontSize * 0.14 },
-          end: { x: cursorX + seg.width, y: baselineY - seg.fontSize * 0.14 },
+          start: { x, y: baselineY - seg.fontSize * 0.14 },
+          end: { x: x + seg.width, y: baselineY - seg.fontSize * 0.14 },
           thickness: Math.max(0.5, seg.fontSize * 0.06),
           color: rgb(seg.color.r, seg.color.g, seg.color.b),
         });
       }
       if (seg.strike && !seg.isSpace) {
         page.drawLine({
-          start: { x: cursorX, y: baselineY + seg.fontSize * 0.28 },
-          end: { x: cursorX + seg.width, y: baselineY + seg.fontSize * 0.28 },
+          start: { x, y: baselineY + seg.fontSize * 0.28 },
+          end: { x: x + seg.width, y: baselineY + seg.fontSize * 0.28 },
           thickness: Math.max(0.5, seg.fontSize * 0.06),
           color: rgb(seg.color.r, seg.color.g, seg.color.b),
         });
       }
     }
-
-    cursorX += seg.width + (seg.isSpace ? extraSpacePerGap : 0);
   }
+}
+
+function computeColumnBoxes(sec: SectionLayoutConfig): Array<{ x: number; width: number }> {
+  const totalContentW = Math.max(60, sec.pageWidth - sec.marginLeft - sec.marginRight);
+  const count = Math.max(1, sec.columnCount);
+  if (count === 1) {
+    return [{ x: sec.marginLeft, width: totalContentW }];
+  }
+
+  if (sec.columns && sec.columns.length === count) {
+    const rawTotal = sec.columns.reduce(
+      (sum, c, idx) => sum + c.widthPt + (idx < count - 1 ? c.spaceAfterPt : 0),
+      0
+    );
+    const scale = rawTotal > 0 ? totalContentW / rawTotal : 1;
+    const boxes: Array<{ x: number; width: number }> = [];
+    let x = sec.marginLeft;
+    sec.columns.forEach((c, idx) => {
+      const w = Math.max(30, c.widthPt * scale);
+      boxes.push({ x, width: w });
+      x += w + (idx < count - 1 ? c.spaceAfterPt * scale : 0);
+    });
+    return boxes;
+  }
+
+  const gap = Math.min(sec.columnGap, totalContentW * 0.25);
+  const colW = Math.max(40, (totalContentW - gap * (count - 1)) / count);
+  return Array.from({ length: count }, (_, idx) => ({
+    x: sec.marginLeft + idx * (colW + gap),
+    width: colW,
+  }));
 }
 
 export async function renderLayoutModelToPdfBytes(model: DocumentLayoutModel): Promise<Uint8Array> {
   const pdfDoc = await PDFDocument.create();
   const pack = await embedFontPack(pdfDoc);
+  const defaultTabStopPt = model.defaultTabStopPt ?? 36;
 
-  const { pageWidth, pageHeight, marginTop, marginRight, marginBottom, marginLeft } = model;
-  const contentWidth = pageWidth - marginLeft - marginRight;
-  const maxPageContentHeight = pageHeight - marginTop - marginBottom;
+  let activeSec: SectionLayoutConfig = model.initialSection ?? {
+    pageWidth: model.pageWidth,
+    pageHeight: model.pageHeight,
+    marginTop: model.marginTop,
+    marginRight: model.marginRight,
+    marginBottom: model.marginBottom,
+    marginLeft: model.marginLeft,
+    columnCount: 1,
+    columnGap: 36,
+  };
+  let colBoxes = computeColumnBoxes(activeSec);
+  let colIndex = 0;
 
-  let page = pdfDoc.addPage([pageWidth, pageHeight]);
-  let cursorY = pageHeight - marginTop;
+  const paintPageBackground = (p: PDFPage, sec: SectionLayoutConfig) => {
+    if (model.pageBackgroundColor) {
+      p.drawRectangle({
+        x: 0,
+        y: 0,
+        width: sec.pageWidth,
+        height: sec.pageHeight,
+        color: rgb(
+          model.pageBackgroundColor.r,
+          model.pageBackgroundColor.g,
+          model.pageBackgroundColor.b
+        ),
+      });
+    }
+  };
 
-  const startNewPage = () => {
-    page = pdfDoc.addPage([pageWidth, pageHeight]);
-    cursorY = pageHeight - marginTop;
+  let page = pdfDoc.addPage([activeSec.pageWidth, activeSec.pageHeight]);
+  paintPageBackground(page, activeSec);
+  let sectionTopY = activeSec.pageHeight - activeSec.marginTop;
+  let cursorY = sectionTopY;
+  let sectionLowestY = sectionTopY;
+
+  const getActiveCol = () => colBoxes[colIndex] ?? colBoxes[0];
+
+  const startNewPage = (sec: SectionLayoutConfig = activeSec) => {
+    activeSec = sec;
+    colBoxes = computeColumnBoxes(activeSec);
+    colIndex = 0;
+    page = pdfDoc.addPage([activeSec.pageWidth, activeSec.pageHeight]);
+    paintPageBackground(page, activeSec);
+    sectionTopY = activeSec.pageHeight - activeSec.marginTop;
+    cursorY = sectionTopY;
+    sectionLowestY = sectionTopY;
+  };
+
+  const advanceColumnOrPage = () => {
+    sectionLowestY = Math.min(sectionLowestY, cursorY);
+    if (colIndex + 1 < colBoxes.length) {
+      if (activeSec.columnSeparator) {
+        const prevCol = colBoxes[colIndex];
+        const nextCol = colBoxes[colIndex + 1];
+        const sepX = (prevCol.x + prevCol.width + nextCol.x) / 2;
+        page.drawLine({
+          start: { x: sepX, y: sectionTopY },
+          end: { x: sepX, y: activeSec.marginBottom },
+          thickness: 0.5,
+          color: rgb(0.75, 0.78, 0.84),
+        });
+      }
+      colIndex += 1;
+      cursorY = sectionTopY;
+    } else {
+      startNewPage(activeSec);
+    }
   };
 
   const ensureSpace = (heightNeeded: number) => {
-    if (cursorY - heightNeeded < marginBottom && cursorY < pageHeight - marginTop - 1) {
-      startNewPage();
+    if (cursorY - heightNeeded < activeSec.marginBottom && cursorY < sectionTopY - 1) {
+      advanceColumnOrPage();
     }
   };
 
@@ -1990,20 +2560,51 @@ export async function renderLayoutModelToPdfBytes(model: DocumentLayoutModel): P
 
   for (const block of model.blocks) {
     if (block.kind === 'page-break') {
-      startNewPage();
+      startNewPage(activeSec);
+      continue;
+    }
+
+    if (block.kind === 'column-break') {
+      advanceColumnOrPage();
+      continue;
+    }
+
+    if (block.kind === 'section-break') {
+      sectionLowestY = Math.min(sectionLowestY, cursorY);
+      const samePageSize =
+        Math.abs(block.nextSection.pageWidth - activeSec.pageWidth) < 1 &&
+        Math.abs(block.nextSection.pageHeight - activeSec.pageHeight) < 1;
+
+      if (block.breakType === 'continuous' && samePageSize) {
+        activeSec = block.nextSection;
+        colBoxes = computeColumnBoxes(activeSec);
+        colIndex = 0;
+        const nextTop = sectionLowestY - 4;
+        if (nextTop - 24 < activeSec.marginBottom) {
+          startNewPage(activeSec);
+        } else {
+          sectionTopY = nextTop;
+          cursorY = sectionTopY;
+          sectionLowestY = sectionTopY;
+        }
+      } else {
+        startNewPage(block.nextSection);
+      }
       continue;
     }
 
     if (block.kind === 'hr') {
       cursorY -= block.spaceBefore;
       ensureSpace(6);
+      const col = getActiveCol();
       page.drawLine({
-        start: { x: marginLeft, y: cursorY },
-        end: { x: pageWidth - marginRight, y: cursorY },
+        start: { x: col.x, y: cursorY },
+        end: { x: col.x + col.width, y: cursorY },
         thickness: 0.75,
         color: rgb(0.75, 0.78, 0.84),
       });
       cursorY -= block.spaceAfter;
+      sectionLowestY = Math.min(sectionLowestY, cursorY);
       continue;
     }
 
@@ -2018,29 +2619,31 @@ export async function renderLayoutModelToPdfBytes(model: DocumentLayoutModel): P
           imageCache.set(block.bytes, embedded);
         }
 
+        const col = getActiveCol();
+        const maxColContentH = activeSec.pageHeight - activeSec.marginTop - activeSec.marginBottom;
         const natW = embedded.width || block.widthPt || 200;
         const natH = embedded.height || block.heightPt || 150;
         let drawW = block.widthPt > 0 ? block.widthPt : natW;
         let drawH = block.heightPt > 0 ? block.heightPt : (natH / natW) * drawW;
 
-        // Clamp within page content box
-        if (drawW > contentWidth) {
-          const ratio = contentWidth / drawW;
+        if (drawW > col.width) {
+          const ratio = col.width / drawW;
           drawW *= ratio;
           drawH *= ratio;
         }
-        if (drawH > maxPageContentHeight * 0.9) {
-          const ratio = (maxPageContentHeight * 0.9) / drawH;
+        if (drawH > maxColContentH * 0.9) {
+          const ratio = (maxColContentH * 0.9) / drawH;
           drawW *= ratio;
           drawH *= ratio;
         }
 
         cursorY -= block.spaceBefore;
         ensureSpace(drawH);
+        const drawCol = getActiveCol();
 
-        let imgX = marginLeft;
-        if (block.align === 'center') imgX = marginLeft + (contentWidth - drawW) / 2;
-        else if (block.align === 'right') imgX = marginLeft + contentWidth - drawW;
+        let imgX = drawCol.x;
+        if (block.align === 'center') imgX = drawCol.x + (drawCol.width - drawW) / 2;
+        else if (block.align === 'right') imgX = drawCol.x + drawCol.width - drawW;
 
         page.drawImage(embedded, {
           x: imgX,
@@ -2049,6 +2652,7 @@ export async function renderLayoutModelToPdfBytes(model: DocumentLayoutModel): P
           height: drawH,
         });
         cursorY -= drawH + block.spaceAfter;
+        sectionLowestY = Math.min(sectionLowestY, cursorY);
       } catch {
         // Skip corrupt embedded image gracefully without breaking document export
       }
@@ -2056,41 +2660,48 @@ export async function renderLayoutModelToPdfBytes(model: DocumentLayoutModel): P
     }
 
     if (block.kind === 'paragraph') {
-      if (block.pageBreakBefore && cursorY < pageHeight - marginTop - 1) {
-        startNewPage();
+      if (block.pageBreakBefore && cursorY < sectionTopY - 1) {
+        startNewPage(activeSec);
       }
 
-      const paraBaseX = marginLeft + block.indentLeft;
-      const paraMaxWidth = Math.max(40, contentWidth - block.indentLeft);
-      const wrapped = wrapParagraphRuns(block, paraMaxWidth, pack);
+      const initialCol = getActiveCol();
+      const paraMaxWidth = Math.max(40, initialCol.width - block.indentLeft);
+      const wrapped = wrapParagraphRuns(block, paraMaxWidth, pack, defaultTabStopPt);
 
-      if (cursorY < pageHeight - marginTop - 1) {
+      if (cursorY < sectionTopY - 1) {
         cursorY -= block.spaceBefore;
       }
 
-      const firstNonBreakLine = wrapped.find(l => !l.isPageBreak);
-      if (firstNonBreakLine) {
-        ensureSpace(firstNonBreakLine.lineHeight);
+      const firstContentLine = wrapped.find(l => !l.isPageBreak && !l.isColumnBreak);
+      if (firstContentLine) {
+        ensureSpace(firstContentLine.lineHeight);
       }
 
       let drewMarker = false;
       for (let i = 0; i < wrapped.length; i++) {
         const line = wrapped[i];
         if (line.isPageBreak) {
-          startNewPage();
+          startNewPage(activeSec);
+          continue;
+        }
+        if (line.isColumnBreak) {
+          advanceColumnOrPage();
           continue;
         }
 
         ensureSpace(line.lineHeight);
+        const activeCol = getActiveCol();
+        const paraBaseX = activeCol.x + block.indentLeft;
+        const activeParaMaxW = Math.max(40, activeCol.width - block.indentLeft);
 
         const lineTopY = cursorY;
         const baselineY = lineTopY - line.maxFontSize * 0.85;
 
         if (block.backgroundColor) {
           page.drawRectangle({
-            x: paraBaseX - 6,
+            x: paraBaseX - 4,
             y: lineTopY - line.lineHeight,
-            width: paraMaxWidth + 12,
+            width: activeParaMaxW + 8,
             height: line.lineHeight,
             color: rgb(block.backgroundColor.r, block.backgroundColor.g, block.backgroundColor.b),
           });
@@ -2109,7 +2720,7 @@ export async function renderLayoutModelToPdfBytes(model: DocumentLayoutModel): P
         if (block.listMarker && !drewMarker) {
           const safeMarker = sanitizeForFont(block.listMarker, pack.regular, pack);
           page.drawText(safeMarker, {
-            x: Math.max(marginLeft, paraBaseX - 14),
+            x: Math.max(activeCol.x, paraBaseX - 14),
             y: baselineY,
             size: line.maxFontSize,
             font: pack.regular,
@@ -2124,51 +2735,64 @@ export async function renderLayoutModelToPdfBytes(model: DocumentLayoutModel): P
           line,
           paraBaseX + xOffset,
           baselineY,
-          Math.max(30, paraMaxWidth - xOffset),
+          Math.max(30, activeParaMaxW - xOffset),
           block.align
         );
 
         cursorY -= line.lineHeight;
+        sectionLowestY = Math.min(sectionLowestY, cursorY);
       }
 
       if (block.bottomBorder) {
+        const activeCol = getActiveCol();
         page.drawLine({
-          start: { x: marginLeft, y: cursorY + 2 },
-          end: { x: pageWidth - marginRight, y: cursorY + 2 },
+          start: { x: activeCol.x, y: cursorY + 2 },
+          end: { x: activeCol.x + activeCol.width, y: cursorY + 2 },
           thickness: 0.75,
           color: rgb(0.65, 0.7, 0.78),
         });
       }
 
       cursorY -= block.spaceAfter;
+      sectionLowestY = Math.min(sectionLowestY, cursorY);
       continue;
     }
 
     if (block.kind === 'table') {
       const cellPadX = 5;
       const cellPadY = 4;
-      const colWidths = block.colWidthsPt;
       const headerRow = block.rows[0]?.isHeader ? block.rows[0] : null;
 
       cursorY -= block.spaceBefore;
 
+      const getScaledColWidths = (colWidth: number): number[] => {
+        const rawSum = block.colWidthsPt.reduce((a, b) => a + b, 0);
+        if (rawSum > colWidth && rawSum > 0) {
+          const ratio = colWidth / rawSum;
+          return block.colWidthsPt.map(w => w * ratio);
+        }
+        return block.colWidthsPt;
+      };
+
       const measureAndPrepareRow = (row: TableRowModel) => {
+        const activeCol = getActiveCol();
+        const colWidths = getScaledColWidths(activeCol.width);
         let colIdx = 0;
         let maxRowHeight = 16;
         const preparedCells = row.cells.map(cell => {
           let cellWidth = 0;
           for (let c = 0; c < cell.colSpan; c++) {
-            cellWidth += colWidths[colIdx + c] ?? contentWidth / Math.max(1, colWidths.length);
+            cellWidth += colWidths[colIdx + c] ?? activeCol.width / Math.max(1, colWidths.length);
           }
           const cellX =
-            marginLeft +
+            activeCol.x +
             colWidths.slice(0, colIdx).reduce((sum, w) => sum + w, 0);
           colIdx += cell.colSpan;
 
           const innerWidth = Math.max(20, cellWidth - cellPadX * 2);
           const wrappedParas = cell.paragraphs.map(p => ({
             para: p,
-            lines: wrapParagraphRuns(p, innerWidth, pack),
+            lines: wrapParagraphRuns(p, innerWidth, pack, defaultTabStopPt),
           }));
 
           let totalH = cellPadY * 2;
@@ -2240,25 +2864,27 @@ export async function renderLayoutModelToPdfBytes(model: DocumentLayoutModel): P
         }
 
         cursorY = rowBottomY;
+        sectionLowestY = Math.min(sectionLowestY, cursorY);
       };
-
-      const preparedHeader = headerRow ? measureAndPrepareRow(headerRow) : null;
 
       for (let rIdx = 0; rIdx < block.rows.length; rIdx++) {
         const row = block.rows[rIdx];
-        const prepared = measureAndPrepareRow(row);
+        let prepared = measureAndPrepareRow(row);
 
-        if (cursorY - prepared.rowHeight < marginBottom && cursorY < pageHeight - marginTop - 1) {
-          startNewPage();
-          if (preparedHeader && rIdx > 0) {
-            drawPreparedRow(preparedHeader);
+        if (cursorY - prepared.rowHeight < activeSec.marginBottom && cursorY < sectionTopY - 1) {
+          advanceColumnOrPage();
+          if (headerRow && rIdx > 0) {
+            drawPreparedRow(measureAndPrepareRow(headerRow));
           }
+          // Recompute X coordinates for the new column
+          prepared = measureAndPrepareRow(row);
         }
 
         drawPreparedRow(prepared);
       }
 
       cursorY -= block.spaceAfter;
+      sectionLowestY = Math.min(sectionLowestY, cursorY);
     }
   }
 

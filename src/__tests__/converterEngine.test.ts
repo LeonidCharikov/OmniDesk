@@ -393,4 +393,91 @@ describe('documentPdfEngine full-Unicode OOXML & PDF generation', () => {
     const tableDoc = await PDFDocument.load(new Uint8Array(await tableBlob.arrayBuffer()));
     expect(tableDoc.getPageCount()).toBe(1);
   });
+
+  it('preserves two-column layout, column breaks, gray run highlights/shading, leading spaces, and tab stops in DOCX -> PDF', async () => {
+    const enc = new TextEncoder();
+    const contentTypes = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+</Types>`;
+    const rootRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+</Relationships>`;
+
+    const col1Lines = Array.from({ length: 28 }, (_, i) =>
+      `<w:p><w:pPr><w:spacing w:after="40"/></w:pPr><w:r><w:rPr><w:b/><w:u w:val="single"/></w:rPr><w:t>КУПЛЕТ ${i + 1}: </w:t></w:r><w:r><w:rPr><w:highlight w:val="lightGray"/></w:rPr><w:t>ВСЕ, АКЦЕНТЫ НА 1</w:t></w:r></w:p>`
+    ).join('\n');
+
+    const documentXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:body>
+    <w:p>
+      <w:r><w:rPr><w:sz w:val="28"/></w:rPr><w:t>БЛАГ НАШ ГОСПОДЬ</w:t></w:r>
+    </w:p>
+    ${col1Lines}
+    <w:p>
+      <w:pPr><w:tabs><w:tab w:val="left" w:pos="1440"/></w:tabs></w:pPr>
+      <w:r><w:br w:type="column"/></w:r>
+      <w:r><w:rPr><w:b/><w:u w:val="single"/></w:rPr><w:t>ПРИПЕВ:</w:t></w:r>
+      <w:r><w:rPr><w:shd w:val="clear" w:color="auto" w:fill="D9D9D9"/></w:rPr><w:t> ВСЕ, МОЩНО---2Х</w:t></w:r>
+    </w:p>
+    <w:p>
+      <w:r><w:t xml:space="preserve">        3-- АККАПЕЛЬНО</w:t></w:r>
+      <w:r><w:tab/><w:t>4--ВСЕ,МОЩНО</w:t></w:r>
+    </w:p>
+    <w:sectPr>
+      <w:pgSz w:w="11906" w:h="16838"/>
+      <w:pgMar w:top="720" w:right="720" w:bottom="720" w:left="720"/>
+      <w:cols w:num="2" w:space="720" w:sep="1"/>
+    </w:sectPr>
+  </w:body>
+</w:document>`;
+
+    const zipBytes = createZipArchive([
+      { name: '[Content_Types].xml', data: enc.encode(contentTypes), size: contentTypes.length },
+      { name: '_rels/.rels', data: enc.encode(rootRels), size: rootRels.length },
+      { name: 'word/document.xml', data: enc.encode(documentXml), size: documentXml.length },
+    ]);
+    const buf = new Uint8Array(zipBytes.byteLength);
+    buf.set(zipBytes);
+
+    const model = parseDocxToLayoutModel(buf.buffer);
+    expect(model.initialSection?.columnCount).toBe(2);
+    expect(model.initialSection?.columnSeparator).toBe(true);
+
+    // Check gray highlight on КУПЛЕТ run and NO highlight on bold label
+    const verseBlock = model.blocks[1];
+    expect(verseBlock.kind).toBe('paragraph');
+    if (verseBlock.kind === 'paragraph') {
+      expect(verseBlock.runs[0].highlightColor).toBeUndefined();
+      expect(verseBlock.runs[1].highlightColor).toBeDefined();
+      expect(verseBlock.runs[1].highlightColor!.r).toBeGreaterThan(0.8);
+    }
+
+    // Check column break + w:shd fill="D9D9D9" on ПРИПЕВ
+    const chorusBlock = model.blocks[model.blocks.length - 2];
+    expect(chorusBlock.kind).toBe('paragraph');
+    if (chorusBlock.kind === 'paragraph') {
+      expect(chorusBlock.runs[0].isColumnBreak).toBe(true);
+      expect(chorusBlock.runs[2].highlightColor).toBeDefined();
+      expect(chorusBlock.tabStops?.[0].posPt).toBe(72);
+    }
+
+    // Check leading spaces + tab preserved on indented line
+    const indentBlock = model.blocks[model.blocks.length - 1];
+    expect(indentBlock.kind).toBe('paragraph');
+    if (indentBlock.kind === 'paragraph') {
+      expect(indentBlock.preserveLeadingSpaces).toBe(true);
+      expect(indentBlock.runs[0].text.startsWith('        3--')).toBe(true);
+      expect(indentBlock.runs[1].isTab).toBe(true);
+    }
+
+    // All 28 lines + second column should fit cleanly onto 1 two-column page!
+    const pdfBlob = await createPdfBlobFromDocx(buf.buffer);
+    const pdfDoc = await PDFDocument.load(new Uint8Array(await pdfBlob.arrayBuffer()));
+    expect(pdfDoc.getPageCount()).toBe(1);
+  });
 });
