@@ -134,6 +134,18 @@ const SignalWaveLabTool = lazyTool(() => import('./science/SignalWaveLabTool'), 
 const OrbitalMechanicsTool = lazyTool(() => import('./science/OrbitalMechanicsTool'), 'OrbitalMechanicsTool');
 const LabBioPcrTool = lazyTool(() => import('./science/LabBioPcrTool'), 'LabBioPcrTool');
 const MaterialsMechanicsTool = lazyTool(() => import('./science/MaterialsMechanicsTool'), 'MaterialsMechanicsTool');
+const DebtPayoffTool = lazyTool(() => import('./finance/DebtPayoffTool'), 'DebtPayoffTool');
+const RentVsBuyTool = lazyTool(() => import('./finance/RentVsBuyTool'), 'RentVsBuyTool');
+const DividendDripTool = lazyTool(() => import('./finance/DividendDripTool'), 'DividendDripTool');
+const OptionsBlackScholesTool = lazyTool(() => import('./finance/OptionsBlackScholesTool'), 'OptionsBlackScholesTool');
+const BondYieldTool = lazyTool(() => import('./finance/BondYieldTool'), 'BondYieldTool');
+const ThermoHeatLabTool = lazyTool(() => import('./science/ThermoHeatLabTool'), 'ThermoHeatLabTool');
+const ChemicalKineticsTool = lazyTool(() => import('./science/ChemicalKineticsTool'), 'ChemicalKineticsTool');
+const SpectroscopyLabTool = lazyTool(() => import('./science/SpectroscopyLabTool'), 'SpectroscopyLabTool');
+const LinearProgrammingTool = lazyTool(() => import('./math/LinearProgrammingTool'), 'LinearProgrammingTool');
+const OdeSlopeFieldTool = lazyTool(() => import('./math/OdeSlopeFieldTool'), 'OdeSlopeFieldTool');
+const GraphTheoryLabTool = lazyTool(() => import('./math/GraphTheoryLabTool'), 'GraphTheoryLabTool');
+const SequencesSeriesTool = lazyTool(() => import('./math/SequencesSeriesTool'), 'SequencesSeriesTool');
 
 
 export const TOOLS_REGISTRY: ToolDefinition[] = [
@@ -370,13 +382,13 @@ export const TOOLS_REGISTRY: ToolDefinition[] = [
   },
   {
     id: 'combinatorics-tool',
-    title: 'Kombinatorika & Teorie Čísel',
-    shortDesc: 'Permutace, kombinace, variace, Eukleidův algoritmus (NSD a NSN) a prvočíselný rozklad.',
+    title: 'Combinatorics & Number Theory (Modular / CRT)',
+    shortDesc: 'Permutations, combinations, GCD/LCM, primes, modular exponentiation/inverse, Bézout identity, Euler totient & Chinese Remainder Theorem.',
     category: 'math',
     icon: 'Hash',
     requiresOnline: false,
     component: CombinatoricsTool,
-    tags: ['kombinatorika', 'permutace', 'variace', 'nsd', 'nsn', 'prvocisla'],
+    tags: ['kombinatorika', 'permutace', 'variace', 'nsd', 'nsn', 'prvocisla', 'modular', 'crt', 'totient', 'bezout', 'number-theory'],
   },
 
   // 5. Věda & Technika (science)
@@ -603,9 +615,9 @@ export const TOOLS_REGISTRY: ToolDefinition[] = [
     component: DiagramEditorTool,
     tags: ['diagram', 'flowchart', 'uml', 'svg', 'editor'],
   },
-  { id: 'budget-tracker', title: 'Výdajový tracker a rozpočet', shortDesc: 'Zaznamenávejte popisy a částky výdajů a sledujte průběžný součet aktuální relace.', category: 'finance', icon: 'Wallet', requiresOnline: false, component: BudgetTool, tags: ['expenses', 'budget', 'finance', 'money'] },
-  { id: 'investment-calculator', title: 'Investiční & Složené Úročení', shortDesc: 'Složené úročení s volbou periodicity, inflací, grafem růstu a ročním rozpisem.', category: 'finance', icon: 'ChartNoAxesCombined', requiresOnline: false, component: InvestmentCalculatorTool, tags: ['investment', 'return', 'compound', 'interest', 'period', 'inflation', 'finance'] },
-  { id: 'invoice-generator', title: 'Generátor faktur', shortDesc: 'Vytvořte HTML fakturu s údaji dodavatele, odběratele a položkami.', category: 'finance', icon: 'ReceiptText', requiresOnline: false, component: InvoiceGeneratorTool, tags: ['invoice', 'document', 'business', 'finance'] },
+  { id: 'budget-tracker', title: 'Expense Tracker, Budget & Subscriptions', shortDesc: 'Track categorized expenses, budgets, and recurring subscriptions with normalized monthly & yearly burn rates.', category: 'finance', icon: 'Wallet', requiresOnline: false, component: BudgetTool, tags: ['expenses', 'budget', 'subscriptions', 'recurring', 'finance', 'money'] },
+  { id: 'investment-calculator', title: 'Investment, Compound Interest & Inflation', shortDesc: 'Compound interest growth with periodic contributions plus dedicated Inflation & Purchasing Power erosion modeling.', category: 'finance', icon: 'ChartNoAxesCombined', requiresOnline: false, component: InvestmentCalculatorTool, tags: ['investment', 'return', 'compound', 'interest', 'period', 'inflation', 'purchasing-power', 'finance'] },
+  { id: 'invoice-generator', title: 'Generátor faktur', shortDesc: 'Create tax invoices with Unicode PDF, Word (.docx), CSV, HTML export, JSON drafts, and direct printing.', category: 'finance', icon: 'ReceiptText', requiresOnline: false, component: InvoiceGeneratorTool, tags: ['invoice', 'document', 'pdf', 'docx', 'csv', 'business', 'finance'] },
   { id: 'jwt-decoder', title: 'Dekodér JWT', shortDesc: 'Lokálně dekódujte hlavičku a obsah JWT; podpis se neověřuje.', category: 'programming', icon: 'KeyRound', requiresOnline: false, component: JwtDecoderTool, tags: ['jwt', 'token', 'json', 'web'] },
   { id: 'xml-formatter', title: 'Formátovač a validátor XML', shortDesc: 'Analyzujte XML parserem prohlížeče, oznamte chybný vstup a zobrazte čitelný výstup.', category: 'programming', icon: 'FileCode', requiresOnline: false, component: XmlFormatterTool, tags: ['xml', 'format', 'validation', 'code'] },
   { id: 'yaml-formatter', title: 'Formátovač a validátor YAML', shortDesc: 'Lokálně normalizujte základní konfigurační text YAML.', category: 'programming', icon: 'FileCode', requiresOnline: false, component: YamlFormatterTool, tags: ['yaml', 'format', 'validation', 'configuration'] },
@@ -747,13 +759,13 @@ export const TOOLS_REGISTRY: ToolDefinition[] = [
   },
   {
     id: 'electronics-calc',
-    title: 'Elektronika & Výpočty Obvodů',
-    shortDesc: 'Ohmův zákon, sériové/paralelní rezistory, dělič napětí, LED odpor a RC filtr.',
+    title: 'Electronics, Op-Amp, 555 & PCB Trace Lab',
+    shortDesc: "Ohm's law, resistors, voltage divider, LED, RC filter, Op-Amp gain, 555 timer, and IPC-2221 PCB trace width.",
     category: 'science',
     icon: 'Zap',
     requiresOnline: false,
     component: ElectronicsCalcTool,
-    tags: ['electronics', 'ohm', 'resistor', 'led', 'rc', 'circuit', 'voltage'],
+    tags: ['electronics', 'ohm', 'resistor', 'led', 'rc', 'op-amp', '555', 'pcb', 'ipc-2221', 'circuit', 'voltage'],
   },
   {
     id: 'physics-toolkit',
@@ -827,13 +839,13 @@ export const TOOLS_REGISTRY: ToolDefinition[] = [
   },
   {
     id: 'freelance-rate-calc',
-    title: 'Freelance Sazba & Převodník Mzdy',
-    shortDesc: 'Výpočet udržitelné hodinové a denní sazby se započtením daní, nákladů a dovolené.',
+    title: 'Freelance Rate & Progressive Salary Tax',
+    shortDesc: 'Sustainable hourly/day freelance rate plus progressive gross-to-net salary tax estimator (CZ/US/DE/UK presets).',
     category: 'finance',
     icon: 'BriefcaseBusiness',
     requiresOnline: false,
     component: FreelanceRateTool,
-    tags: ['freelance', 'hourly', 'rate', 'salary', 'contractor', 'taxes'],
+    tags: ['freelance', 'hourly', 'rate', 'salary', 'net-pay', 'tax-brackets', 'contractor', 'taxes'],
   },
   {
     id: 'bmi-calculator',
@@ -1339,6 +1351,126 @@ export const TOOLS_REGISTRY: ToolDefinition[] = [
     requiresOnline: false,
     component: MaterialsMechanicsTool,
     tags: ['materials', 'beam', 'deflection', 'reynolds', 'fluid', 'codata', 'constants', 'engineering'],
+  },
+  {
+    id: 'debt-payoff-planner',
+    title: 'Debt Payoff Planner (Snowball vs. Avalanche)',
+    shortDesc: 'Compare Debt Snowball and Debt Avalanche payoff timelines, interest saved, and balance curves with extra monthly payments.',
+    category: 'finance',
+    icon: 'CreditCard',
+    requiresOnline: false,
+    component: DebtPayoffTool,
+    tags: ['debt', 'snowball', 'avalanche', 'credit-card', 'payoff', 'interest', 'finance'],
+  },
+  {
+    id: 'rent-vs-buy',
+    title: 'Rent vs. Buy Home Calculator',
+    shortDesc: 'Compare long-term net worth of buying a home versus renting and investing the down payment and monthly difference.',
+    category: 'finance',
+    icon: 'Home',
+    requiresOnline: false,
+    component: RentVsBuyTool,
+    tags: ['rent', 'buy', 'home', 'real-estate', 'mortgage', 'net-worth', 'finance'],
+  },
+  {
+    id: 'dividend-drip',
+    title: 'Dividend & DRIP Income Simulator',
+    shortDesc: 'Project quarterly dividend reinvestment (DRIP), Yield-on-Cost, withholding taxes, and passive monthly income growth.',
+    category: 'finance',
+    icon: 'TrendingUp',
+    requiresOnline: false,
+    component: DividendDripTool,
+    tags: ['dividend', 'drip', 'passive-income', 'yield-on-cost', 'stocks', 'investing', 'finance'],
+  },
+  {
+    id: 'options-black-scholes',
+    title: 'Options (Black-Scholes), Greeks & Kelly Sizing',
+    shortDesc: 'European Call & Put option pricing, full Greeks (Delta, Gamma, Theta, Vega, Rho), payoff diagram, and Kelly sizing.',
+    category: 'finance',
+    icon: 'LineChart',
+    requiresOnline: false,
+    component: OptionsBlackScholesTool,
+    tags: ['options', 'black-scholes', 'greeks', 'delta', 'gamma', 'kelly', 'trading', 'finance'],
+  },
+  {
+    id: 'bond-yield-duration',
+    title: 'Bond Yield, YTM & Duration Calculator',
+    shortDesc: 'Compute Yield to Maturity (YTM), Current Yield, Macaulay & Modified Duration, Convexity, and Price-vs-Yield curve.',
+    category: 'finance',
+    icon: 'Landmark',
+    requiresOnline: false,
+    component: BondYieldTool,
+    tags: ['bond', 'ytm', 'yield', 'duration', 'convexity', 'fixed-income', 'finance'],
+  },
+  {
+    id: 'thermo-heat-lab',
+    title: 'Thermodynamics, Heat Transfer & Psychrometrics',
+    shortDesc: 'Composite wall R/U-value conduction, Stefan-Boltzmann radiation, Carnot/Otto cycles, Van der Waals real gas & dew point.',
+    category: 'science',
+    icon: 'Thermometer',
+    requiresOnline: false,
+    component: ThermoHeatLabTool,
+    tags: ['thermodynamics', 'heat-transfer', 'carnot', 'otto', 'van-der-waals', 'psychrometrics', 'dew-point', 'physics'],
+  },
+  {
+    id: 'chemical-kinetics',
+    title: 'Chemical Kinetics & Arrhenius Studio',
+    shortDesc: '0th, 1st & 2nd-order reaction decay curves, half-life markers, and Arrhenius activation energy rate scaling.',
+    category: 'science',
+    icon: 'Activity',
+    requiresOnline: false,
+    component: ChemicalKineticsTool,
+    tags: ['kinetics', 'arrhenius', 'rate-law', 'half-life', 'activation-energy', 'chemistry'],
+  },
+  {
+    id: 'spectroscopy-lab',
+    title: 'Spectroscopy & Beer-Lambert Lab',
+    shortDesc: 'UV-Vis absorbance & transmittance (A = ε·b·c) and photon wavelength/frequency/wavenumber/eV/kJ·mol⁻¹ conversions.',
+    category: 'science',
+    icon: 'Sun',
+    requiresOnline: false,
+    component: SpectroscopyLabTool,
+    tags: ['spectroscopy', 'beer-lambert', 'absorbance', 'transmittance', 'photon', 'wavelength', 'chemistry', 'physics'],
+  },
+  {
+    id: 'linear-programming',
+    title: 'Linear Programming 2D Feasible Region & Optimizer',
+    shortDesc: 'Maximize or minimize Z = c₁x + c₂y over linear constraints with an interactive feasible polygon and vertex table.',
+    category: 'math',
+    icon: 'Target',
+    requiresOnline: false,
+    component: LinearProgrammingTool,
+    tags: ['linear-programming', 'simplex', 'optimization', 'feasible-region', 'operations-research', 'math'],
+  },
+  {
+    id: 'ode-slope-field',
+    title: 'ODE Solver (RK4 vs. Euler) & Slope Field Studio',
+    shortDesc: "Numerically solve first-order ODEs y' = f(x, y) via 4th-order Runge-Kutta and Euler methods with a slope field plot.",
+    category: 'math',
+    icon: 'Compass',
+    requiresOnline: false,
+    component: OdeSlopeFieldTool,
+    tags: ['ode', 'differential-equations', 'rk4', 'euler', 'slope-field', 'calculus', 'math'],
+  },
+  {
+    id: 'graph-theory-lab',
+    title: 'Graph Theory & Shortest Path Playground',
+    shortDesc: 'Interactive weighted directed/undirected graphs with Dijkstra shortest path, Kruskal MST, BFS, and Topological Sort.',
+    category: 'math',
+    icon: 'Network',
+    requiresOnline: false,
+    component: GraphTheoryLabTool,
+    tags: ['graph', 'dijkstra', 'mst', 'kruskal', 'bfs', 'topological-sort', 'discrete-math', 'algorithms'],
+  },
+  {
+    id: 'sequences-series',
+    title: 'Sequences, Series & Convergence Explorer',
+    shortDesc: 'Explore Arithmetic, Geometric, Fibonacci, p-Series & custom a(n) formulas with partial sums and convergence tests.',
+    category: 'math',
+    icon: 'ListOrdered',
+    requiresOnline: false,
+    component: SequencesSeriesTool,
+    tags: ['sequences', 'series', 'convergence', 'geometric', 'arithmetic', 'fibonacci', 'calculus', 'math'],
   },
 ];
 

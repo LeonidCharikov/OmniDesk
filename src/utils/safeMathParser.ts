@@ -5,6 +5,7 @@
 
 export interface MathEvalScope {
   x?: number;
+  [varName: string]: number | undefined;
 }
 
 const CONSTANTS: Record<string, number> = {
@@ -241,8 +242,8 @@ class Parser {
         return fn(arg);
       }
 
-      if (name === 'x' && typeof this.scope.x === 'number') {
-        return this.scope.x;
+      if (Object.prototype.hasOwnProperty.call(this.scope, name) && typeof this.scope[name] === 'number') {
+        return this.scope[name] as number;
       }
 
       if (Object.prototype.hasOwnProperty.call(CONSTANTS, name)) {
@@ -268,6 +269,36 @@ export function compileSafeMathExpression(expr: string): (x?: number) => number 
   return (x = 0) => {
     try {
       const parser = new Parser(tokens, { x });
+      const val = parser.parse();
+      return typeof val === 'number' && !Number.isNaN(val) && Number.isFinite(val) ? val : NaN;
+    } catch {
+      return NaN;
+    }
+  };
+}
+
+export function compileSafeMultiVarExpression(
+  expr: string,
+  varNames: readonly string[]
+): (vars: Record<string, number>) => number {
+  const tokens = tokenize(expr);
+  if (tokens.length === 0) {
+    return () => NaN;
+  }
+  const probeScope: MathEvalScope = {};
+  for (const name of varNames) {
+    probeScope[name.toLowerCase()] = 1;
+  }
+  const validator = new Parser(tokens, probeScope);
+  validator.parse();
+
+  return (vars: Record<string, number>) => {
+    try {
+      const normalizedScope: MathEvalScope = {};
+      for (const [k, v] of Object.entries(vars)) {
+        normalizedScope[k.toLowerCase()] = v;
+      }
+      const parser = new Parser(tokens, normalizedScope);
       const val = parser.parse();
       return typeof val === 'number' && !Number.isNaN(val) && Number.isFinite(val) ? val : NaN;
     } catch {

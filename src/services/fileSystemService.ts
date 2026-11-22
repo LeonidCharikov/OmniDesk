@@ -111,21 +111,27 @@ export async function saveFileWithPicker(options: {
     try {
       let pickerTypes: Array<{ description: string; accept: Record<string, string[]> }> | undefined;
       
+      const cleanMime = mimeType.split(';')[0].trim() || 'application/octet-stream';
       if (options.filters && options.filters.length > 0) {
-        pickerTypes = options.filters.map(f => {
-          const acceptMap: Record<string, string[]> = {};
-          acceptMap[mimeType] = f.extensions.map(ext => ext.startsWith('.') ? ext : `.${ext}`);
-          return {
-            description: f.name,
-            accept: acceptMap,
-          };
-        });
+        pickerTypes = options.filters
+          .map(f => {
+            const exts = f.extensions
+              .filter(ext => ext && ext !== '*')
+              .map(ext => (ext.startsWith('.') ? ext : `.${ext}`));
+            if (exts.length === 0) return null;
+            return {
+              description: f.name,
+              accept: { [cleanMime]: exts },
+            };
+          })
+          .filter((item): item is { description: string; accept: Record<string, string[]> } => item !== null);
+        if (pickerTypes.length === 0) pickerTypes = undefined;
       } else {
         const ext = suggestedName.includes('.') ? `.${suggestedName.split('.').pop()}` : '';
         if (ext) {
           pickerTypes = [{
             description: options.title || 'File',
-            accept: { [mimeType]: [ext] }
+            accept: { [cleanMime]: [ext] }
           }];
         }
       }
@@ -233,6 +239,10 @@ export async function saveTextWithDialog(
     ? 'application/json;charset=utf-8'
     : ext === 'csv'
     ? 'text/csv;charset=utf-8'
+    : ext === 'html' || ext === 'htm'
+    ? 'text/html;charset=utf-8'
+    : ext === 'md'
+    ? 'text/markdown;charset=utf-8'
     : ext === 'svg'
     ? 'image/svg+xml;charset=utf-8'
     : 'text/plain;charset=utf-8';

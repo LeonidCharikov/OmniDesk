@@ -1,14 +1,15 @@
 import React, { useState, useMemo } from 'react';
 import { Zap } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
+import { compute555Timer, computeOpAmp, computePcbTraceWidthIpc2221 } from '../../utils/scienceMathExt.logic';
 
-type ElecTab = 'ohm' | 'network' | 'divider' | 'rc';
+type ElecTab = 'ohm' | 'network' | 'divider' | 'rc' | 'opamp555' | 'pcb';
 
 export const ElectronicsCalcTool: React.FC = () => {
   const { t } = useI18n();
   const [tab, setTab] = useState<ElecTab>('ohm');
 
-  // Ohm's law: pick 2 knowns
+  // Ohm's law
   const [ohmPair, setOhmPair] = useState<'vr' | 'vi' | 'ir' | 'pr'>('vr');
   const [voltage, setVoltage] = useState(12);
   const [current, setCurrent] = useState(0.5);
@@ -28,6 +29,19 @@ export const ElectronicsCalcTool: React.FC = () => {
   // RC circuit
   const [rcR, setRcR] = useState(10000);
   const [rcCuf, setRcCuf] = useState(10);
+
+  // Op-Amp & 555 Timer
+  const [opRin, setOpRin] = useState(1000);
+  const [opRf, setOpRf] = useState(10000);
+  const [opVin, setOpVin] = useState(0.5);
+  const [t555R1, setT555R1] = useState(1000);
+  const [t555R2, setT555R2] = useState(4700);
+  const [t555Cuf, setT555Cuf] = useState(10);
+
+  // PCB Trace Width (IPC-2221)
+  const [pcbCurrentA, setPcbCurrentA] = useState(2);
+  const [pcbTempRiseC, setPcbTempRiseC] = useState(10);
+  const [pcbCopperOz, setPcbCopperOz] = useState(1);
 
   const ohmResult = useMemo(() => {
     let v = voltage;
@@ -67,6 +81,11 @@ export const ElectronicsCalcTool: React.FC = () => {
   const tauSec = rcR * (rcCuf * 1e-6);
   const fcHz = tauSec > 0 ? 1 / (2 * Math.PI * tauSec) : 0;
 
+  const opAmp = useMemo(() => computeOpAmp(opRin, opRf, opVin), [opRin, opRf, opVin]);
+  const timer555 = useMemo(() => compute555Timer(t555R1, t555R2, t555Cuf), [t555R1, t555R2, t555Cuf]);
+  const pcbExt = useMemo(() => computePcbTraceWidthIpc2221(pcbCurrentA, pcbTempRiseC, pcbCopperOz, true), [pcbCurrentA, pcbTempRiseC, pcbCopperOz]);
+  const pcbInt = useMemo(() => computePcbTraceWidthIpc2221(pcbCurrentA, pcbTempRiseC, pcbCopperOz, false), [pcbCurrentA, pcbTempRiseC, pcbCopperOz]);
+
   return (
     <div className="space-y-6">
       <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800 flex flex-wrap items-center justify-between gap-4">
@@ -76,16 +95,18 @@ export const ElectronicsCalcTool: React.FC = () => {
             {t('tool_electronics_calc_title', 'Electronics & Circuit Calculator')}
           </h2>
           <p className="text-sm text-slate-400 mt-1">
-            {t('tool_electronics_calc_desc', 'Ohm\'s law, series/parallel networks, voltage dividers, LED resistors, and RC filter cutoff frequency.')}
+            {t('tool_electronics_calc_desc', 'Ohm’s law, resistor networks, dividers/LED, RC filter, Op-Amp & 555 timer, and IPC-2221 PCB trace width.')}
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-1 p-1 bg-slate-900 border border-slate-800 rounded-xl">
           {[
-            { id: 'ohm' as const, label: t('elec_tab_ohm', 'Ohm\'s Law') },
+            { id: 'ohm' as const, label: t('elec_tab_ohm', 'Ohm’s Law') },
             { id: 'network' as const, label: t('elec_tab_network', 'Series / Parallel') },
             { id: 'divider' as const, label: t('elec_tab_divider', 'Divider & LED') },
             { id: 'rc' as const, label: t('elec_tab_rc', 'RC Filter') },
+            { id: 'opamp555' as const, label: t('elec_tab_opamp555', 'Op-Amp & 555') },
+            { id: 'pcb' as const, label: t('elec_tab_pcb', 'PCB Trace') },
           ].map(tb => (
             <button
               key={tb.id}
@@ -264,6 +285,113 @@ export const ElectronicsCalcTool: React.FC = () => {
             <div className="p-4 rounded-xl bg-slate-950 border border-slate-800">
               <span className="text-xs text-slate-400 block">{t('elec_cutoff_freq', 'Cutoff Frequency fc (-3 dB)')}</span>
               <span className="text-2xl font-bold font-mono text-emerald-300 mt-1 block">{fcHz.toFixed(3)} Hz</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {tab === 'opamp555' && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="p-5 rounded-2xl bg-slate-900/40 border border-slate-800 space-y-3">
+            <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{t('elec_opamp_title', 'Op-Amp Gain Calculator')}</h3>
+            <div className="grid grid-cols-3 gap-2">
+              <label className="text-xs text-slate-400">
+                R_in (Ω)
+                <input type="number" value={opRin} onChange={e => setOpRin(Math.max(1, Number(e.target.value)))} className="mt-1 w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg font-mono text-xs text-white" />
+              </label>
+              <label className="text-xs text-slate-400">
+                R_f (Ω)
+                <input type="number" value={opRf} onChange={e => setOpRf(Math.max(0, Number(e.target.value)))} className="mt-1 w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg font-mono text-xs text-white" />
+              </label>
+              <label className="text-xs text-slate-400">
+                V_in (V)
+                <input type="number" step="0.1" value={opVin} onChange={e => setOpVin(Number(e.target.value))} className="mt-1 w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg font-mono text-xs text-white" />
+              </label>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
+                <span className="text-[11px] text-slate-400 block">{t('elec_inv_amp', 'Inverting (−Rf/Rin)')}</span>
+                <span className="text-lg font-bold font-mono text-indigo-300">{opAmp.invGain.toFixed(2)}× ({opAmp.invGainDb.toFixed(1)} dB)</span>
+                <span className="text-xs text-slate-400 block font-mono">Vout = {opAmp.invVout.toFixed(3)} V</span>
+              </div>
+              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
+                <span className="text-[11px] text-slate-400 block">{t('elec_noninv_amp', 'Non-Inverting (1 + Rf/Rin)')}</span>
+                <span className="text-lg font-bold font-mono text-emerald-300">{opAmp.nonInvGain.toFixed(2)}× ({opAmp.nonInvGainDb.toFixed(1)} dB)</span>
+                <span className="text-xs text-slate-400 block font-mono">Vout = {opAmp.nonInvVout.toFixed(3)} V</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-5 rounded-2xl bg-slate-900/40 border border-slate-800 space-y-3">
+            <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{t('elec_555_title', '555 Timer (Astable & Monostable)')}</h3>
+            <div className="grid grid-cols-3 gap-2">
+              <label className="text-xs text-slate-400">
+                R₁ (Ω)
+                <input type="number" value={t555R1} onChange={e => setT555R1(Math.max(1, Number(e.target.value)))} className="mt-1 w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg font-mono text-xs text-white" />
+              </label>
+              <label className="text-xs text-slate-400">
+                R₂ (Ω)
+                <input type="number" value={t555R2} onChange={e => setT555R2(Math.max(1, Number(e.target.value)))} className="mt-1 w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg font-mono text-xs text-white" />
+              </label>
+              <label className="text-xs text-slate-400">
+                C (µF)
+                <input type="number" step="0.1" value={t555Cuf} onChange={e => setT555Cuf(Math.max(0.0001, Number(e.target.value)))} className="mt-1 w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg font-mono text-xs text-white" />
+              </label>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
+                <span className="text-[11px] text-slate-400 block">{t('elec_555_freq', 'Astable Freq')}</span>
+                <span className="text-base font-bold font-mono text-indigo-300">{timer555.freqHz.toFixed(2)} Hz</span>
+              </div>
+              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
+                <span className="text-[11px] text-slate-400 block">{t('elec_555_duty', 'Duty Cycle')}</span>
+                <span className="text-base font-bold font-mono text-emerald-300">{timer555.dutyCyclePct.toFixed(1)}%</span>
+              </div>
+              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
+                <span className="text-[11px] text-slate-400 block">{t('elec_555_mono', 'Monostable T')}</span>
+                <span className="text-base font-bold font-mono text-amber-300">{(timer555.monostablePulseS * 1000).toFixed(2)} ms</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {tab === 'pcb' && (
+        <div className="p-5 rounded-2xl bg-slate-900/40 border border-slate-800 space-y-4">
+          <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+            {t('elec_pcb_title', 'IPC-2221 PCB Trace Width Calculator')}
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <label className="text-xs text-slate-400">
+              {t('elec_current_a', 'Current I (A)')}
+              <input type="number" step="0.1" value={pcbCurrentA} onChange={e => setPcbCurrentA(Math.max(0.01, Number(e.target.value)))} className="mt-1 w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl font-mono text-sm text-white" />
+            </label>
+            <label className="text-xs text-slate-400">
+              {t('elec_pcb_temp_rise', 'Allowed Temp Rise ΔT (°C)')}
+              <input type="number" step="1" value={pcbTempRiseC} onChange={e => setPcbTempRiseC(Math.max(1, Number(e.target.value)))} className="mt-1 w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl font-mono text-sm text-white" />
+            </label>
+            <label className="text-xs text-slate-400">
+              {t('elec_pcb_copper', 'Copper Weight (oz/ft²)')}
+              <select value={pcbCopperOz} onChange={e => setPcbCopperOz(Number(e.target.value))} className="mt-1 w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl font-mono text-sm text-white">
+                <option value={0.5}>0.5 oz (17.5 µm)</option>
+                <option value={1}>1.0 oz (35 µm)</option>
+                <option value={2}>2.0 oz (70 µm)</option>
+                <option value={3}>3.0 oz (105 µm)</option>
+              </select>
+            </label>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="p-4 rounded-xl bg-slate-950 border border-slate-800">
+              <span className="text-xs text-slate-400 block">{t('elec_pcb_ext', 'External Layer Width')}</span>
+              <span className="text-2xl font-bold font-mono text-emerald-300 mt-1 block">
+                {pcbExt.widthMm.toFixed(3)} mm ({pcbExt.widthMil.toFixed(1)} mil)
+              </span>
+            </div>
+            <div className="p-4 rounded-xl bg-slate-950 border border-slate-800">
+              <span className="text-xs text-slate-400 block">{t('elec_pcb_int', 'Internal Layer Width')}</span>
+              <span className="text-2xl font-bold font-mono text-amber-300 mt-1 block">
+                {pcbInt.widthMm.toFixed(3)} mm ({pcbInt.widthMil.toFixed(1)} mil)
+              </span>
             </div>
           </div>
         </div>

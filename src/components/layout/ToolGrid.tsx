@@ -91,6 +91,11 @@ import {
   Orbit,
   Triangle,
   Divide,
+  Home,
+  CreditCard,
+  Landmark,
+  Thermometer,
+  ListOrdered,
 } from 'lucide-react';
 import { ToolDefinition, ToolCategory } from '../../types/tool';
 import { useI18n } from '../../i18n/context';
@@ -192,6 +197,11 @@ const ICON_MAP: Record<string, React.ReactNode> = {
   Orbit: <Orbit className="w-5 h-5 text-indigo-400" />,
   Triangle: <Triangle className="w-5 h-5 text-indigo-400" />,
   Divide: <Divide className="w-5 h-5 text-indigo-400" />,
+  Home: <Home className="w-5 h-5 text-indigo-400" />,
+  CreditCard: <CreditCard className="w-5 h-5 text-rose-400" />,
+  Landmark: <Landmark className="w-5 h-5 text-amber-400" />,
+  Thermometer: <Thermometer className="w-5 h-5 text-amber-400" />,
+  ListOrdered: <ListOrdered className="w-5 h-5 text-indigo-400" />,
 };
 
 export const ToolGrid: React.FC<ToolGridProps> = ({

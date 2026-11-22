@@ -1017,6 +1017,54 @@ const catalog: Record<string, { title: CatalogText; desc: CatalogText }> = {
     title: { cs: 'Materials, Structural Mechanics & CODATA', en: 'Materials, Structural Mechanics & CODATA', de: 'Materials, Structural Mechanics & CODATA', es: 'Materials, Structural Mechanics & CODATA', ru: 'Materials, Structural Mechanics & CODATA' },
     desc: { cs: 'Beam deflection & bending moment, pipe Reynolds flow regime, material properties, and CODATA constants.', en: 'Beam deflection & bending moment, pipe Reynolds flow regime, material properties, and CODATA constants.', de: 'Beam deflection & bending moment, pipe Reynolds flow regime, material properties, and CODATA constants.', es: 'Beam deflection & bending moment, pipe Reynolds flow regime, material properties, and CODATA constants.', ru: 'Beam deflection & bending moment, pipe Reynolds flow regime, material properties, and CODATA constants.' },
   },
+  'debt-payoff-planner': {
+    title: { cs: 'Debt Payoff Planner (Snowball vs. Avalanche)', en: 'Debt Payoff Planner (Snowball vs. Avalanche)', de: 'Debt Payoff Planner (Snowball vs. Avalanche)', es: 'Debt Payoff Planner (Snowball vs. Avalanche)', ru: 'Debt Payoff Planner (Snowball vs. Avalanche)' },
+    desc: { cs: 'Compare Debt Snowball and Debt Avalanche payoff timelines, interest saved, and balance curves.', en: 'Compare Debt Snowball and Debt Avalanche payoff timelines, interest saved, and balance curves.', de: 'Compare Debt Snowball and Debt Avalanche payoff timelines, interest saved, and balance curves.', es: 'Compare Debt Snowball and Debt Avalanche payoff timelines, interest saved, and balance curves.', ru: 'Compare Debt Snowball and Debt Avalanche payoff timelines, interest saved, and balance curves.' },
+  },
+  'rent-vs-buy': {
+    title: { cs: 'Rent vs. Buy Home Calculator', en: 'Rent vs. Buy Home Calculator', de: 'Rent vs. Buy Home Calculator', es: 'Rent vs. Buy Home Calculator', ru: 'Rent vs. Buy Home Calculator' },
+    desc: { cs: 'Compare long-term net worth of buying a home versus renting and investing the down payment.', en: 'Compare long-term net worth of buying a home versus renting and investing the down payment.', de: 'Compare long-term net worth of buying a home versus renting and investing the down payment.', es: 'Compare long-term net worth of buying a home versus renting and investing the down payment.', ru: 'Compare long-term net worth of buying a home versus renting and investing the down payment.' },
+  },
+  'dividend-drip': {
+    title: { cs: 'Dividend & DRIP Income Simulator', en: 'Dividend & DRIP Income Simulator', de: 'Dividend & DRIP Income Simulator', es: 'Dividend & DRIP Income Simulator', ru: 'Dividend & DRIP Income Simulator' },
+    desc: { cs: 'Project quarterly dividend reinvestment (DRIP), Yield-on-Cost, dividend taxes, and passive income.', en: 'Project quarterly dividend reinvestment (DRIP), Yield-on-Cost, dividend taxes, and passive income.', de: 'Project quarterly dividend reinvestment (DRIP), Yield-on-Cost, dividend taxes, and passive income.', es: 'Project quarterly dividend reinvestment (DRIP), Yield-on-Cost, dividend taxes, and passive income.', ru: 'Project quarterly dividend reinvestment (DRIP), Yield-on-Cost, dividend taxes, and passive income.' },
+  },
+  'options-black-scholes': {
+    title: { cs: 'Options (Black-Scholes), Greeks & Kelly Sizing', en: 'Options (Black-Scholes), Greeks & Kelly Sizing', de: 'Options (Black-Scholes), Greeks & Kelly Sizing', es: 'Options (Black-Scholes), Greeks & Kelly Sizing', ru: 'Options (Black-Scholes), Greeks & Kelly Sizing' },
+    desc: { cs: 'European Call & Put pricing, full Greeks (Delta, Gamma, Theta, Vega, Rho), payoff curve, and Kelly sizing.', en: 'European Call & Put pricing, full Greeks (Delta, Gamma, Theta, Vega, Rho), payoff curve, and Kelly sizing.', de: 'European Call & Put pricing, full Greeks (Delta, Gamma, Theta, Vega, Rho), payoff curve, and Kelly sizing.', es: 'European Call & Put pricing, full Greeks (Delta, Gamma, Theta, Vega, Rho), payoff curve, and Kelly sizing.', ru: 'European Call & Put pricing, full Greeks (Delta, Gamma, Theta, Vega, Rho), payoff curve, and Kelly sizing.' },
+  },
+  'bond-yield-duration': {
+    title: { cs: 'Bond Yield, YTM & Duration Calculator', en: 'Bond Yield, YTM & Duration Calculator', de: 'Bond Yield, YTM & Duration Calculator', es: 'Bond Yield, YTM & Duration Calculator', ru: 'Bond Yield, YTM & Duration Calculator' },
+    desc: { cs: 'Compute Yield to Maturity (YTM), Current Yield, Macaulay & Modified Duration, and Convexity.', en: 'Compute Yield to Maturity (YTM), Current Yield, Macaulay & Modified Duration, and Convexity.', de: 'Compute Yield to Maturity (YTM), Current Yield, Macaulay & Modified Duration, and Convexity.', es: 'Compute Yield to Maturity (YTM), Current Yield, Macaulay & Modified Duration, and Convexity.', ru: 'Compute Yield to Maturity (YTM), Current Yield, Macaulay & Modified Duration, and Convexity.' },
+  },
+  'thermo-heat-lab': {
+    title: { cs: 'Thermodynamics, Heat Transfer & Psychrometrics', en: 'Thermodynamics, Heat Transfer & Psychrometrics', de: 'Thermodynamics, Heat Transfer & Psychrometrics', es: 'Thermodynamics, Heat Transfer & Psychrometrics', ru: 'Thermodynamics, Heat Transfer & Psychrometrics' },
+    desc: { cs: 'Wall conduction R/U-values, radiation, Carnot/Otto cycles, Van der Waals real gas & dew point.', en: 'Wall conduction R/U-values, radiation, Carnot/Otto cycles, Van der Waals real gas & dew point.', de: 'Wall conduction R/U-values, radiation, Carnot/Otto cycles, Van der Waals real gas & dew point.', es: 'Wall conduction R/U-values, radiation, Carnot/Otto cycles, Van der Waals real gas & dew point.', ru: 'Wall conduction R/U-values, radiation, Carnot/Otto cycles, Van der Waals real gas & dew point.' },
+  },
+  'chemical-kinetics': {
+    title: { cs: 'Chemical Kinetics & Arrhenius Studio', en: 'Chemical Kinetics & Arrhenius Studio', de: 'Chemical Kinetics & Arrhenius Studio', es: 'Chemical Kinetics & Arrhenius Studio', ru: 'Chemical Kinetics & Arrhenius Studio' },
+    desc: { cs: '0th, 1st & 2nd-order reaction decay curves, half-life, and Arrhenius activation energy scaling.', en: '0th, 1st & 2nd-order reaction decay curves, half-life, and Arrhenius activation energy scaling.', de: '0th, 1st & 2nd-order reaction decay curves, half-life, and Arrhenius activation energy scaling.', es: '0th, 1st & 2nd-order reaction decay curves, half-life, and Arrhenius activation energy scaling.', ru: '0th, 1st & 2nd-order reaction decay curves, half-life, and Arrhenius activation energy scaling.' },
+  },
+  'spectroscopy-lab': {
+    title: { cs: 'Spectroscopy & Beer-Lambert Lab', en: 'Spectroscopy & Beer-Lambert Lab', de: 'Spectroscopy & Beer-Lambert Lab', es: 'Spectroscopy & Beer-Lambert Lab', ru: 'Spectroscopy & Beer-Lambert Lab' },
+    desc: { cs: 'UV-Vis absorbance & transmittance (A = ε·b·c) and photon wavelength/energy EM spectrum conversions.', en: 'UV-Vis absorbance & transmittance (A = ε·b·c) and photon wavelength/energy EM spectrum conversions.', de: 'UV-Vis absorbance & transmittance (A = ε·b·c) and photon wavelength/energy EM spectrum conversions.', es: 'UV-Vis absorbance & transmittance (A = ε·b·c) and photon wavelength/energy EM spectrum conversions.', ru: 'UV-Vis absorbance & transmittance (A = ε·b·c) and photon wavelength/energy EM spectrum conversions.' },
+  },
+  'linear-programming': {
+    title: { cs: 'Linear Programming 2D Feasible Region & Optimizer', en: 'Linear Programming 2D Feasible Region & Optimizer', de: 'Linear Programming 2D Feasible Region & Optimizer', es: 'Linear Programming 2D Feasible Region & Optimizer', ru: 'Linear Programming 2D Feasible Region & Optimizer' },
+    desc: { cs: 'Maximize or minimize Z = c₁x + c₂y over linear constraints with feasible polygon and vertex table.', en: 'Maximize or minimize Z = c₁x + c₂y over linear constraints with feasible polygon and vertex table.', de: 'Maximize or minimize Z = c₁x + c₂y over linear constraints with feasible polygon and vertex table.', es: 'Maximize or minimize Z = c₁x + c₂y over linear constraints with feasible polygon and vertex table.', ru: 'Maximize or minimize Z = c₁x + c₂y over linear constraints with feasible polygon and vertex table.' },
+  },
+  'ode-slope-field': {
+    title: { cs: 'ODE Solver (RK4 vs. Euler) & Slope Field Studio', en: 'ODE Solver (RK4 vs. Euler) & Slope Field Studio', de: 'ODE Solver (RK4 vs. Euler) & Slope Field Studio', es: 'ODE Solver (RK4 vs. Euler) & Slope Field Studio', ru: 'ODE Solver (RK4 vs. Euler) & Slope Field Studio' },
+    desc: { cs: "Solve first-order ODEs y' = f(x, y) via RK4 and Euler methods with a direction slope field.", en: "Solve first-order ODEs y' = f(x, y) via RK4 and Euler methods with a direction slope field.", de: "Solve first-order ODEs y' = f(x, y) via RK4 and Euler methods with a direction slope field.", es: "Solve first-order ODEs y' = f(x, y) via RK4 and Euler methods with a direction slope field.", ru: "Solve first-order ODEs y' = f(x, y) via RK4 and Euler methods with a direction slope field." },
+  },
+  'graph-theory-lab': {
+    title: { cs: 'Graph Theory & Shortest Path Playground', en: 'Graph Theory & Shortest Path Playground', de: 'Graph Theory & Shortest Path Playground', es: 'Graph Theory & Shortest Path Playground', ru: 'Graph Theory & Shortest Path Playground' },
+    desc: { cs: 'Interactive weighted graphs with Dijkstra shortest path, Kruskal MST, BFS, and Topological Sort.', en: 'Interactive weighted graphs with Dijkstra shortest path, Kruskal MST, BFS, and Topological Sort.', de: 'Interactive weighted graphs with Dijkstra shortest path, Kruskal MST, BFS, and Topological Sort.', es: 'Interactive weighted graphs with Dijkstra shortest path, Kruskal MST, BFS, and Topological Sort.', ru: 'Interactive weighted graphs with Dijkstra shortest path, Kruskal MST, BFS, and Topological Sort.' },
+  },
+  'sequences-series': {
+    title: { cs: 'Sequences, Series & Convergence Explorer', en: 'Sequences, Series & Convergence Explorer', de: 'Sequences, Series & Convergence Explorer', es: 'Sequences, Series & Convergence Explorer', ru: 'Sequences, Series & Convergence Explorer' },
+    desc: { cs: 'Explore Arithmetic, Geometric, Fibonacci, p-Series & custom a(n) formulas with partial sums and convergence.', en: 'Explore Arithmetic, Geometric, Fibonacci, p-Series & custom a(n) formulas with partial sums and convergence.', de: 'Explore Arithmetic, Geometric, Fibonacci, p-Series & custom a(n) formulas with partial sums and convergence.', es: 'Explore Arithmetic, Geometric, Fibonacci, p-Series & custom a(n) formulas with partial sums and convergence.', ru: 'Explore Arithmetic, Geometric, Fibonacci, p-Series & custom a(n) formulas with partial sums and convergence.' },
+  },
 };
 
 export function getToolCatalogText(id: string, field: 'title' | 'desc', language: SupportedLanguage, fallback: string) {
