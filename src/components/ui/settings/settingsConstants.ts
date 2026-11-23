@@ -28,6 +28,7 @@ export const ALL_CURRENCIES = [
   { code: 'NOK', name: 'Norská koruna', flag: '🇳🇴', symbol: 'kr' },
   { code: 'DKK', name: 'Dánská koruna', flag: '🇩🇰', symbol: 'kr' },
   { code: 'RUB', name: 'Ruský rubl', flag: '🇷🇺', symbol: '₽' },
+  { code: 'CNY', name: 'Čínský jüan', flag: '🇨🇳', symbol: '¥' },
 ];
 
 export const CITIES = [
@@ -67,6 +68,7 @@ export const FIATS = [
   { code: 'CHF', name: 'Švýcarský frank (CHF)' },
   { code: 'PLN', name: 'Polský zlotý (PLN)' },
   { code: 'JPY', name: 'Japonský jen (JPY)' },
+  { code: 'CNY', name: 'Čínský jüan (CNY)' },
 ];
 
 export const CURRENCY_NAMES: Record<string, Record<'cs' | 'en' | 'de' | 'es' | 'ru', string>> = {
@@ -84,6 +86,7 @@ export const CURRENCY_NAMES: Record<string, Record<'cs' | 'en' | 'de' | 'es' | '
   NOK: { cs: 'Norská koruna', en: 'Norwegian krone', de: 'Norwegische Krone', es: 'Corona noruega', ru: 'Норвежская крона' },
   DKK: { cs: 'Dánská koruna', en: 'Danish krone', de: 'Dänische Krone', es: 'Corona danesa', ru: 'Датская крона' },
   RUB: { cs: 'Ruský rubl', en: 'Russian ruble', de: 'Russischer Rubel', es: 'Rublo ruso', ru: 'Российский рубль' },
+  CNY: { cs: 'Čínský jüan', en: 'Chinese yuan', de: 'Chinesischer Yuan', es: 'Yuan chino', ru: 'Китайский юань' },
 };
 
 export const CRYPTOS = [

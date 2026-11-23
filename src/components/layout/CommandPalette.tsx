@@ -174,7 +174,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 
     const settingsItems: Array<{ tab: ConfigTabId; title: string; keywords: string }> = [
       { tab: 'themes', title: t('tab_themes', 'Themes & Colors'), keywords: 'theme colors dark light preset' },
-      { tab: 'currency', title: t('tab_currency', 'Default Currency'), keywords: 'currency fiat czk eur usd' },
+      { tab: 'currency', title: t('tab_currency', 'Default Currency'), keywords: 'currency fiat czk eur usd cny rmb yuan' },
       ...(runningInTauri
         ? [{ tab: 'widgets' as ConfigTabId, title: t('tab_widgets', 'Sidebar Widgets'), keywords: 'widgets clock timer crypto tasks calc' }]
         : []),

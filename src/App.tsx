@@ -53,9 +53,13 @@ const VALID_CATEGORIES = new Set<ToolCategory>([
   'programming',
   'planning',
   'math',
+  'chemistry',
   'science',
   'finance',
+  'design',
+  'health',
   'utilities',
+  'desktop',
   'architecture',
 ]);
 
@@ -66,18 +70,23 @@ function readLocationState(): { category: ToolCategory; toolId: string | null } 
   const params = new URLSearchParams(rawHash);
   const toolParam = params.get('tool');
   const catParam = params.get('cat') as ToolCategory | null;
+  const inDesktop = isTauri();
 
   if (toolParam) {
     const found = TOOLS_REGISTRY.find(t => t.id === toolParam);
-    if (found) {
+    if (found && (!found.desktopOnly || inDesktop)) {
+      const resolvedCat =
+        catParam && VALID_CATEGORIES.has(catParam) && (catParam !== 'desktop' || inDesktop)
+          ? catParam
+          : found.category;
       return {
-        category: catParam && VALID_CATEGORIES.has(catParam) ? catParam : found.category,
+        category: resolvedCat,
         toolId: found.id,
       };
     }
   }
 
-  if (catParam && VALID_CATEGORIES.has(catParam)) {
+  if (catParam && VALID_CATEGORIES.has(catParam) && (catParam !== 'desktop' || inDesktop)) {
     return { category: catParam, toolId: null };
   }
 
@@ -102,6 +111,10 @@ export default function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isToolInfoOpen, setIsToolInfoOpen] = useState(false);
   const runningInTauri = isTauri();
+  const availableTools = React.useMemo(
+    () => TOOLS_REGISTRY.filter(tool => !tool.desktopOnly || runningInTauri),
+    [runningInTauri]
+  );
   const [mcpStatus, setMcpStatus] = useState<McpConnectionStatus>('disconnected');
   const [mcpError, setMcpError] = useState<string | undefined>(undefined);
   const [mcpLogs, setMcpLogs] = useState<McpLogEntry[]>([]);
@@ -189,7 +202,7 @@ export default function App() {
         const hasModifier = e.ctrlKey || e.metaKey || e.altKey;
         if (!hasModifier && isTypingTarget(e.target)) continue;
 
-        const targetTool = TOOLS_REGISTRY.find(tool => tool.id === binding.toolId);
+        const targetTool = availableTools.find(tool => tool.id === binding.toolId);
         if (targetTool) {
           e.preventDefault();
           setActiveCategory(targetTool.category);
@@ -208,6 +221,7 @@ export default function App() {
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
   }, [
+    availableTools,
     config.shortcuts,
     config.customToolShortcuts,
     isConfigOpen,
@@ -294,7 +308,7 @@ export default function App() {
     const handleOpenToolEvent = (event: Event) => {
       const toolId = (event as CustomEvent<{ toolId?: string }>).detail?.toolId;
       if (!toolId) return;
-      const target = TOOLS_REGISTRY.find(tool => tool.id === toolId);
+      const target = availableTools.find(tool => tool.id === toolId);
       if (target) {
         setActiveCategory(target.category);
         handleSelectTool(target.id);
@@ -313,7 +327,7 @@ export default function App() {
       window.removeEventListener('omnidesk-open-tool', handleOpenToolEvent);
       window.removeEventListener('omnidesk-open-settings', handleOpenSettingsEvent);
     };
-  }, [handleSelectTool]);
+  }, [availableTools, handleSelectTool]);
 
   // Global drag-and-drop file router (ignores events already handled by an active tool)
   useEffect(() => {
@@ -619,14 +633,17 @@ export default function App() {
   const isEffectiveOffline = !isBrowserOnline || Boolean(config.simulatedOffline);
 
   // Filter tools based on active category
-  const filteredTools = TOOLS_REGISTRY.filter(tool => {
+  const filteredTools = availableTools.filter(tool => {
     if (activeCategory === 'all') return true;
     if (activeCategory === 'basic') return Boolean(tool.isBasic);
     if (activeCategory === 'favorites') return config.favorites.includes(tool.id);
     return tool.category === activeCategory;
   });
 
-  const activeTool = selectedToolId ? TOOLS_REGISTRY.find(t => t.id === selectedToolId) || null : null;
+  const activeTool = selectedToolId ? availableTools.find(t => t.id === selectedToolId) || null : null;
+  const visibleFavoritesCount = config.favorites.filter(id =>
+    availableTools.some(tool => tool.id === id)
+  ).length;
 
   const handleUpdateConfig = (newConfig: UserConfig) => {
     updateConfig(newConfig);
@@ -718,9 +735,13 @@ export default function App() {
       case 'programming': return t('cat_programming', 'Programming & Code');
       case 'planning': return t('cat_planning', 'Planning & Productivity');
       case 'math': return t('cat_math', 'Mathematics & Calculators');
-      case 'science': return t('cat_science', 'Science & Chemistry');
+      case 'chemistry': return t('cat_chemistry', 'Chemistry & Biology');
+      case 'science': return t('cat_science', 'Physics & Engineering');
       case 'finance': return t('cat_finance', 'Finance & Crypto');
+      case 'design': return t('cat_design', 'Design & Colors');
+      case 'health': return t('cat_health', 'Health & Wellness');
       case 'utilities': return t('cat_utilities', 'Utilities & Tools');
+      case 'desktop': return t('cat_desktop', 'Desktop & Automation');
       case 'architecture': return t('cat_architecture', 'Tauri & Code');
       default: return t('catalog', 'Catalog');
     }
@@ -750,7 +771,7 @@ export default function App() {
           setSelectedToolId(null);
           closeSidebarOnMobile();
         }}
-        favoritesCount={config.favorites.length}
+        favoritesCount={visibleFavoritesCount}
         onOpenConfig={() => setIsConfigOpen(true)}
         selectedToolId={selectedToolId}
         onBackToOverview={() => { setSelectedToolId(null); closeSidebarOnMobile(); }}
@@ -864,13 +885,13 @@ export default function App() {
       <CommandPalette
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
-        tools={TOOLS_REGISTRY}
+        tools={availableTools}
         favorites={config.favorites}
         recentToolIds={config.recentToolIds || []}
         customToolShortcuts={config.customToolShortcuts || []}
         onSelectTool={id => {
           handleSelectTool(id);
-          const tool = TOOLS_REGISTRY.find(t => t.id === id);
+          const tool = availableTools.find(t => t.id === id);
           if (tool) setActiveCategory(tool.category);
         }}
         onOpenSettingsTab={(tab: ConfigTabId) => {
@@ -928,7 +949,7 @@ export default function App() {
         onLaunchWithFile={(toolId, file) => {
           setPendingToolPipe(toolId, { kind: 'file', file });
           setDroppedFile(null);
-          const target = TOOLS_REGISTRY.find(item => item.id === toolId);
+          const target = availableTools.find(item => item.id === toolId);
           if (target) {
             setActiveCategory(target.category);
             handleSelectTool(target.id);

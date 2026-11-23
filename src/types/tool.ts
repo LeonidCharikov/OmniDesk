@@ -8,18 +8,34 @@ export type ToolCategory =
   | 'programming'
   | 'planning'
   | 'math'
+  | 'chemistry'
   | 'science'
   | 'finance'
+  | 'design'
+  | 'health'
   | 'utilities'
+  | 'desktop'
   | 'architecture';
 
 export interface ToolDefinition {
   id: string;
   title: string;
   shortDesc: string;
-  category: 'files' | 'programming' | 'planning' | 'math' | 'science' | 'finance' | 'utilities';
+  category:
+    | 'files'
+    | 'programming'
+    | 'planning'
+    | 'math'
+    | 'chemistry'
+    | 'science'
+    | 'finance'
+    | 'design'
+    | 'health'
+    | 'utilities'
+    | 'desktop';
   icon: string;
   requiresOnline?: boolean;
+  desktopOnly?: boolean;
   isBasic?: boolean;
   component: React.ComponentType | React.LazyExoticComponent<React.ComponentType>;
   tags: string[];

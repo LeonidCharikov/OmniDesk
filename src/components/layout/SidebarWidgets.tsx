@@ -77,14 +77,15 @@ function evaluateMiniCalc(input: string): string | null {
     if (from === 'c' && to === 'f') return `${((val * 9) / 5 + 32).toFixed(1)} °F`;
     if (from === 'f' && to === 'c') return `${(((val - 32) * 5) / 9).toFixed(1)} °C`;
 
-    if (from === 'eur' && to === 'czk') return `${(val * 25.18).toFixed(1)} CZK`;
-    if (from === 'czk' && to === 'eur') return `${(val / 25.18).toFixed(2)} EUR`;
-    if (from === 'usd' && to === 'czk') return `${(val * 23.45).toFixed(1)} CZK`;
-    if (from === 'czk' && to === 'usd') return `${(val / 23.45).toFixed(2)} USD`;
-    if (from === 'usd' && to === 'rub') return `${(val * 94.2).toFixed(1)} RUB`;
-    if (from === 'rub' && to === 'usd') return `${(val / 94.2).toFixed(2)} USD`;
-    if (from === 'eur' && to === 'usd') return `${(val * 1.08).toFixed(2)} USD`;
-    if (from === 'usd' && to === 'eur') return `${(val * 0.92).toFixed(2)} EUR`;
+    const normalizeCode = (c: string) => (c === 'rmb' ? 'CNY' : c.toUpperCase());
+    const fromCode = normalizeCode(from);
+    const toCode = normalizeCode(to);
+    const { fiat } = getSavedRates();
+    if (fiat[fromCode] && fiat[toCode]) {
+      const converted = (val * fiat[fromCode].rate) / fiat[toCode].rate;
+      const decimals = converted >= 100 ? 1 : 2;
+      return `${converted.toFixed(decimals)} ${toCode}`;
+    }
   }
 
   // 2. Percentage: "20% of 500"

@@ -10,6 +10,16 @@ use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent}
 use tauri::{AppHandle, Emitter, Manager, PhysicalPosition, PhysicalSize, State, WebviewWindow, WindowEvent};
 use tauri_plugin_clipboard_manager::ClipboardExt;
 
+mod desktop_tools;
+use desktop_tools::{
+    AutoClickerState, KeepAwakeState, desktop_autoclicker_set_hotkey, desktop_autoclicker_start,
+    desktop_autoclicker_status, desktop_autoclicker_stop, desktop_cursor_position,
+    desktop_keepawake_start, desktop_keepawake_status, desktop_keepawake_stop,
+    desktop_kill_process, desktop_list_ports, desktop_list_processes, desktop_net_dns_lookup,
+    desktop_net_interfaces, desktop_net_ping, desktop_net_tcp_check, desktop_net_wol,
+    shutdown_desktop_workers, spawn_global_hotkey_watcher,
+};
+
 const MAX_CLIPBOARD_CHARS: usize = 100_000;
 const MAX_PENDING_STDIO_LINES: usize = 128;
 const MAX_CLI_OPEN_FILE_BYTES: u64 = 25 * 1024 * 1024;
@@ -464,6 +474,8 @@ pub fn run() {
         .manage(OpenedCliFileState(Mutex::new(None)))
         .manage(DroppedFilesAllowlist(Mutex::new(VecDeque::new())))
         .manage(WindowGeometryState(Mutex::new(None)))
+        .manage(AutoClickerState::default())
+        .manage(KeepAwakeState::default())
         .invoke_handler(tauri::generate_handler![
             get_system_telemetry,
             mcp_read_clipboard,
@@ -474,7 +486,23 @@ pub fn run() {
             take_opened_cli_file,
             read_dropped_file,
             is_updater_configured,
-            open_external_url
+            open_external_url,
+            desktop_list_processes,
+            desktop_list_ports,
+            desktop_kill_process,
+            desktop_net_ping,
+            desktop_net_tcp_check,
+            desktop_net_dns_lookup,
+            desktop_net_interfaces,
+            desktop_net_wol,
+            desktop_autoclicker_start,
+            desktop_autoclicker_stop,
+            desktop_autoclicker_status,
+            desktop_autoclicker_set_hotkey,
+            desktop_cursor_position,
+            desktop_keepawake_start,
+            desktop_keepawake_stop,
+            desktop_keepawake_status
         ])
         .setup(|app| {
             #[cfg(desktop)]
@@ -550,6 +578,7 @@ pub fn run() {
                             }
                         }
                         "quit" => {
+                            shutdown_desktop_workers(app);
                             flush_window_state(app);
                             app.exit(0);
                         }
@@ -578,6 +607,8 @@ pub fn run() {
                 tray_builder.build(app)?;
             }
 
+            let ac_state = app.state::<AutoClickerState>();
+            spawn_global_hotkey_watcher(std::sync::Arc::clone(&ac_state.0));
             spawn_mcp_stdio_reader(app.handle().clone());
             Ok(())
         })
@@ -601,6 +632,8 @@ pub fn run() {
                 if close_to_tray {
                     api.prevent_close();
                     let _ = window.hide();
+                } else {
+                    shutdown_desktop_workers(window.app_handle());
                 }
             }
             WindowEvent::DragDrop(tauri::DragDropEvent::Drop { paths, .. }) => {

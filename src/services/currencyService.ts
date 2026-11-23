@@ -55,6 +55,7 @@ export const SUPPORTED_FIAT_CURRENCIES: Array<{ code: string; name: string; flag
   { code: 'NOK', name: 'Norwegian Krone', flag: '🇳🇴', symbol: 'kr' },
   { code: 'DKK', name: 'Danish Krone', flag: '🇩🇰', symbol: 'kr' },
   { code: 'RUB', name: 'Russian Ruble', flag: '🇷🇺', symbol: '₽' },
+  { code: 'CNY', name: 'Chinese Yuan', flag: '🇨🇳', symbol: '¥' },
 ];
 
 export function getCurrencySymbol(code?: string): string {

@@ -96,6 +96,11 @@ import {
   Landmark,
   Thermometer,
   ListOrdered,
+  MonitorCog,
+  MousePointerClick,
+  Coffee,
+  Radar,
+  Server,
 } from 'lucide-react';
 import { ToolDefinition, ToolCategory } from '../../types/tool';
 import { useI18n } from '../../i18n/context';
@@ -202,6 +207,11 @@ const ICON_MAP: Record<string, React.ReactNode> = {
   Landmark: <Landmark className="w-5 h-5 text-amber-400" />,
   Thermometer: <Thermometer className="w-5 h-5 text-amber-400" />,
   ListOrdered: <ListOrdered className="w-5 h-5 text-indigo-400" />,
+  MonitorCog: <MonitorCog className="w-5 h-5 text-cyan-400" />,
+  MousePointerClick: <MousePointerClick className="w-5 h-5 text-cyan-400" />,
+  Coffee: <Coffee className="w-5 h-5 text-amber-400" />,
+  Radar: <Radar className="w-5 h-5 text-emerald-400" />,
+  Server: <Server className="w-5 h-5 text-indigo-400" />,
 };
 
 export const ToolGrid: React.FC<ToolGridProps> = ({
@@ -246,10 +256,22 @@ export const ToolGrid: React.FC<ToolGridProps> = ({
       desc: t('desc_cat_math', 'Scientific math, arbitrary-size matrices, 2D function grapher, and LaTeX'),
     },
     {
+      id: 'chemistry',
+      label: t('cat_chemistry', 'Chemistry & Biology'),
+      icon: <FlaskConical className="w-4 h-4 text-emerald-400" />,
+      desc: t(
+        'desc_cat_chemistry',
+        '118-element periodic table, stoichiometry, pH/titration, VSEPR, kinetics, DNA, and PCR lab tools'
+      ),
+    },
+    {
       id: 'science',
-      label: t('cat_science', 'Science & Chemistry'),
-      icon: <FlaskConical className="w-4 h-4 text-purple-400" />,
-      desc: t('desc_cat_science', 'Official 118-element periodic table, molar mass, and scientific conversions'),
+      label: t('cat_science', 'Physics & Engineering'),
+      icon: <Atom className="w-4 h-4 text-purple-400" />,
+      desc: t(
+        'desc_cat_science',
+        'Physics, electronics, optics, thermodynamics, orbital mechanics, GPS, and unit conversions'
+      ),
     },
     {
       id: 'finance',
@@ -258,10 +280,40 @@ export const ToolGrid: React.FC<ToolGridProps> = ({
       desc: t('desc_cat_finance', 'Currency converter, live & custom crypto rates, and mortgage calculator'),
     },
     {
+      id: 'design',
+      label: t('cat_design', 'Design & Colors'),
+      icon: <Palette className="w-4 h-4 text-pink-400" />,
+      desc: t(
+        'desc_cat_design',
+        'Color picker & harmonies, WCAG contrast, SVG optimizer, CSS visual builder, and UML diagrams'
+      ),
+    },
+    {
+      id: 'health',
+      label: t('cat_health', 'Health & Wellness'),
+      icon: <HeartPulse className="w-4 h-4 text-rose-400" />,
+      desc: t(
+        'desc_cat_health',
+        'BMI & body composition, calories & macros, sleep cycles, guided breathing, and ambient sound'
+      ),
+    },
+    {
       id: 'utilities',
       label: t('cat_utilities', 'Utilities & Tools'),
       icon: <Wrench className="w-4 h-4 text-cyan-400" />,
-      desc: t('desc_cat_util', 'Password generator, QR codes, colors, contrast validator, and system monitor'),
+      desc: t(
+        'desc_cat_util',
+        'Secure password generator, QR codes, text utilities, recipe scaler, random picker, and system monitor'
+      ),
+    },
+    {
+      id: 'desktop',
+      label: t('cat_desktop', 'Desktop & Automation'),
+      icon: <MonitorCog className="w-4 h-4 text-cyan-400" />,
+      desc: t(
+        'desc_cat_desktop',
+        'Native OS desktop tools: Port & Process Manager, Network Diagnostics & Wake-on-LAN, Auto-Clicker, and Keep-Awake'
+      ),
     },
   ];
 
@@ -325,7 +377,13 @@ export const ToolGrid: React.FC<ToolGridProps> = ({
               {t(`cat_${tool.category}`, tool.category)}
             </span>
             <span aria-hidden="true">·</span>
-            <span>{tool.requiresOnline ? t('online_badge', 'Online') : t('offline_badge', 'Offline')}</span>
+            <span>
+              {tool.desktopOnly
+                ? t('desktop_only_badge', 'Desktop Only')
+                : tool.requiresOnline
+                  ? t('online_badge', 'Online')
+                  : t('offline_badge', 'Offline')}
+            </span>
           </div>
           <span className="font-mono text-slate-600 group-hover:text-slate-400 transition-colors">
             {t('open', 'Open')} &rarr;
@@ -456,7 +514,8 @@ export const ToolGrid: React.FC<ToolGridProps> = ({
         <p className="text-xs text-slate-400">
           {activeCategory === 'favorites'
             ? t('subtitle_fav', 'Quick access to tools pinned with a star.')
-            : t(`desc_cat_${activeCategory}`, 'Tools in this category.')}
+            : CATEGORIES_METADATA.find(c => c.id === activeCategory)?.desc ||
+              t(`desc_cat_${activeCategory}`, 'Tools in this category.')}
         </p>
       </div>
 

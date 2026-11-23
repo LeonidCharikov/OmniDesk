@@ -3,7 +3,7 @@
   <h1>OmniDesk</h1>
   <p><strong>The 100% Offline-First Desktop & Web Multi-Tool Workstation</strong></p>
   <p>
-    134 integrated utilities for files, code, math, science, finance, planning, and everyday tasks — running locally in memory or natively via Tauri v2 with zero server telemetry.
+    138 integrated utilities (134 cross-platform + 4 native Desktop-Only tools) for files, code, math, science, finance, planning, and OS automation — running locally in memory or natively via Tauri v2 with zero server telemetry.
   </p>
 
   <p>
@@ -13,7 +13,7 @@
     <a href="https://leonidcharikov.github.io/omnidesk.html">
       <img src="https://img.shields.io/badge/Website-Presentation-8B5CF6?style=for-the-badge&logo=githubpages&logoColor=white" alt="OmniDesk Presentation Website" />
     </a>
-    <img src="https://img.shields.io/badge/Tools-134%20Integrated-6366f1?style=for-the-badge" alt="134 Tools" />
+    <img src="https://img.shields.io/badge/Tools-138%20Integrated-6366f1?style=for-the-badge" alt="138 Tools" />
     <img src="https://img.shields.io/badge/Tauri-v2-24C8DB?style=for-the-badge&logo=tauri&logoColor=white" alt="Tauri v2" />
     <img src="https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React 19" />
     <img src="https://img.shields.io/badge/TypeScript-7.0-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
@@ -34,7 +34,7 @@
     <a href="https://github.com/LeonidCharikov/OmniDesk">GitHub Repo</a> •
     <a href="#-visual-showcase">Visual Showcase</a> •
     <a href="#-key-highlights">Key Highlights</a> •
-    <a href="#-complete-tool-catalog-134-tools">Tool Catalog (134)</a> •
+    <a href="#-complete-tool-catalog-138-tools">Tool Catalog (138)</a> •
     <a href="#-themes-widgets--localization">Themes & Widgets</a> •
     <a href="#-quick-start">Quick Start</a> •
     <a href="#-project-structure">Project Structure</a>
@@ -45,10 +45,10 @@
 
 <div align="center">
   <a href="docs/videos/all-tools.webp">
-    <img src="docs/videos/all-tools.webp" alt="OmniDesk Main Workspace — All 134 Tools" width="100%" />
+    <img src="docs/videos/all-tools.webp" alt="OmniDesk Main Workspace — All 138 Tools" width="100%" />
   </a>
   <br />
-  <sub><strong>Main Workspace:</strong> Categorized 134-tool grid with instant search, favorites, recently used tools, language switcher, and local offline sandbox status.</sub>
+  <sub><strong>Main Workspace:</strong> Categorized 138-tool grid (134 cross-platform + 4 Desktop-Only Tauri tools) with instant search, favorites, recently used tools, language switcher, and local offline sandbox status.</sub>
 </div>
 
 ---
@@ -60,10 +60,10 @@
 | 🔒 **Privacy, Storage Audit & Full Workspace Backup** | Every file edit, hash, PDF edit, QR scan, image compression, and color conversion runs 100% locally — installable as an offline-first PWA. On the **Tauri Desktop** build, also includes **Full Workspace Backup** (settings + Calendar, Kanban, Notes, Expenses, Habits, Shopping List, Flashcards) and **AES-256-GCM encrypted bundles** (stripped on Web so browser users stay focused on individual tools). |
 | ⚡ **Dual Runtime (Tauri v2 + Web/PWA), Workers & Auto-Updater** | Native **Tauri v2** desktop app (with **signed GitHub Releases Auto-Updater**, multi-monitor-safe **persistent window geometry**, double-click titlebar maximize/restore, `sysinfo` hardware telemetry, OS tray mode, file associations & quick Web/GitHub links) or streamlined offline browser PWA. Heavy dependencies (`pdf-lib`, `tesseract.js`, MCP client), **Web Workers** (batch photo compression & cryptographic hashing), and **IndexedDB** tool storage keep the UI responsive with minimal RAM usage. |
 | 🖨️ **Built-In Document & Media Printing** | Print directly via native OS print dialogs without popup blockers from **PDF Studio**, **Resume / CV Builder**, **Solution Dilution Planner** (bench sheets), **Image Editor**, **Text & Markdown Editor**, **Markdown Preview**, **Notes**, **Diagram Editor**, **Invoice Generator**, **Screenshot Annotator**, **Sketchpad**, and **QR Code Generator**. |
-| 🧭 **Extended Command Palette & Customizable Shortcuts** | Press `Ctrl+K` (`⌘K`) to search across **134 tools**, saved **Notes**, **Calendar events**, **Settings tabs**, and **Themes**. Rebind built-in actions or assign custom keyboard shortcuts to any tool in **Settings → Shortcuts** (press `Shift+?` for cheat sheet). |
+| 🧭 **Extended Command Palette & Customizable Shortcuts** | Press `Ctrl+K` (`⌘K`) to search across **138 tools** (auto-filtered to the active Web or Desktop runtime), saved **Notes**, **Calendar events**, **Settings tabs**, and **Themes**. Rebind built-in actions or assign custom keyboard shortcuts to any tool in **Settings → Shortcuts** (press `Shift+?` for cheat sheet). |
 | 🔄 **Offline Multi-Format Converter Hub** | CloudConvert-style **Offline Format Catalog** & **multi-file batch queue** covering **6 categories** 100% locally in memory: **Video** (`MP4`/`WebM`/`MOV` → `WebM`, animated `GIF`, `WAV` audio, frame capture), **Audio** (`MP3`/`WAV`/`OGG`/`FLAC`/`M4A`/`AAC` → `WAV`/`AIFF`/`WebM`), **Images** (`PNG`/`JPG`/`WebP`/`AVIF`/`GIF`/`BMP`/`SVG`/`ICO` → `WebP`/`PNG`/`JPG`/`GIF`/`BMP`/`ICO`/`PDF`/`SVG`), **Documents** (`DOCX`/`PDF`/`MD`/`HTML`/`TXT`/`RTF`), **Spreadsheets & Data** (`XLSX`/`XLS`/`ODS`/`CSV`/`TSV`/`JSON`/`YAML`/`XML`/`MD`/`HTML`), and **Archives** (`ZIP` ↔ `TAR` ↔ `TAR.GZ` ↔ `GZ` with extraction & batch ZIP download). |
 | 🔗 **Cross-Tool Piping & Smart Drag-and-Drop** | Pipe outputs directly between compatible tools with **Send to...** (`toolPipeService`), or drag & drop any file anywhere on the window to launch the **Smart Drop Router** with matching tools and 1-click **Load Sample** demos. |
-| 💱 **Universal Multi-Currency Engine & Starter Presets** | Configure a global default currency across 13+ world currencies (`CZK`, `EUR`, `USD`, `GBP`, `CHF`, `PLN`, `JPY`, etc.) synced across finance tools, plus 1-click **Workspace Starter Presets** (*Developer*, *Student & Science*, *Finance & Daily*). |
+| 💱 **Universal Multi-Currency Engine & Starter Presets** | Configure a global default currency across 15+ world currencies (`CZK`, `EUR`, `USD`, `GBP`, `CHF`, `PLN`, `JPY`, `CNY`, etc.) synced across finance tools, Invoice Generator, and sidebar widgets, plus 1-click **Workspace Starter Presets** (*Developer*, *Student & Science*, *Finance & Daily*). |
 | 🎨 **12 Themes & Adaptive Mini-Widgets *(Desktop)*** | Switch seamlessly between **9 curated dark palettes** and **3 light palettes** (*Clean Light*, *Warm Paper* & *Soft Sage*) across both Desktop and Web, while the **Tauri Desktop** app adds 7 sidebar mini-widgets with automatic **compact tabbed mode** on smaller screens and subtle non-blocking **Toast notifications**. |
 | 🤖 **MCP Bridge *(Desktop App Only)*** | Exclusive to the **Tauri Desktop** build (stripped from the Web/PWA version): connect AI assistants (Claude Desktop, Cursor, VS Code, Windsurf) via WebSocket or Tauri `stdio` IPC to **24 MCP tools** — including File & Data Conversion, Snippet Vault, Hashing/Encoding, SVG Optimization, Safe Math, Mock Data, Lorem Ipsum, Calendar, Tasks, Notes, System Telemetry, Tool Navigation, and Clipboard Sync — with **Connected Tools**, **MCP Log**, and interactive setup tutorial. |
 | 🌍 **5 Built-In Languages with Crisp SVG Flags** | Instant localization across **English** (`en`, default), **Čeština** (`cs`), **Deutsch** (`de`), **Español** (`es`), and **Русский** (`ru`) with cross-platform inline SVG flag icons (rendered identically on Windows, macOS, Linux, and web) and automated i18n checks. |
@@ -160,9 +160,9 @@ Configure default currency, sidebar mini-widgets, privacy audit, MCP Bridge, cus
 
 ---
 
-## 🛠️ Complete Tool Catalog (134 Tools)
+## 🛠️ Complete Tool Catalog (138 Tools)
 
-OmniDesk organizes **134 specialized tools** into **7 primary categories**, plus the **Everyday Basics** (`43` tools) quick filter for daily workflows.
+OmniDesk organizes **134 cross-platform tools** into **10 primary categories** plus **4 native Desktop-Only tools** (automatically shown in the Tauri v2 Desktop app and hidden in the Web/PWA build) and the **Everyday Basics** (`43` tools) quick filter.
 
 <details open>
 <summary><strong>📁 1. Files, Media &amp; Documents (15 Tools)</strong></summary>
@@ -200,7 +200,7 @@ OmniDesk organizes **134 specialized tools** into **7 primary categories**, plus
 10. **XML Formatter & Validator** — Browser-native XML parsing, error reporting & pretty printing.
 11. **YAML Formatter & Validator** — Full YAML 1.2 validation, formatting, and JSON ↔ YAML conversion powered by `js-yaml`.
 12. **CSS / HTML / JavaScript Minifier** — Minify or beautify CSS, HTML, JS, and JSON locally with live byte-savings statistics.
-13. **CSS Visual Generator Studio** — Interactive visual builder for layered Box Shadows, Glassmorphism, Gradients, Flex/Grid layouts, and Border Radius with instant CSS & Tailwind snippets.
+13. **Unix Timestamp & Epoch Converter** — Live epoch clock, `s/ms/µs/ns` conversion, date arithmetic & batch parsing.
 14. **Markdown Table Generator** — Convert delimited rows into clean Markdown tables.
 15. **Regex Builder & Live Tester** — Interactive regular expression tester with live match highlighting, capture groups, replacement preview, flag controls & starter presets.
 16. **Text & File Diff Checker** — Line-by-line side-by-side and inline diff comparison.
@@ -262,7 +262,7 @@ OmniDesk organizes **134 specialized tools** into **7 primary categories**, plus
 </details>
 
 <details>
-<summary><strong>🔬 5. Science, Chemistry &amp; Engineering (22 Tools)</strong></summary>
+<summary><strong>🧪 5. Chemistry &amp; Biology (11 Tools)</strong></summary>
 
 1. **Chemistry & Periodic Table (118 Elements)** — Official 18-column IUPAC table, orbital block filters, molar mass parser & solution molarity ($c = n/V$).
 2. **Chemical Equation Balancer & Stoichiometry** — Automatic reaction balancing, limiting reactant & theoretical yield.
@@ -271,28 +271,34 @@ OmniDesk organizes **134 specialized tools** into **7 primary categories**, plus
 5. **Molecular Geometry & VSEPR Explorer** — Steric-number VSEPR shape, hybridization, bond angle & polarity explorer with SVG schematics and organic functional groups reference.
 6. **Thermochemistry & Chemical Equilibrium** — Gibbs free energy ($\Delta G^\circ = \Delta H^\circ - T\Delta S^\circ$), crossover temperature $T^*$, 1:1 ICE equilibrium solver & standard $\Delta H^\circ_f / S^\circ$ table.
 7. **Electrochemistry & Redox Studio** — Standard reduction potentials ($E^\circ$), galvanic/electrolytic cell voltage with Nernst correction & Faraday electrolysis mass deposition.
-8. **Isotope & Radioactive Decay Calculator** — Preset isotopes, half-life / decay constant $\lambda$ / mean lifetime $\tau$, remaining mass/activity curve & radiometric dating.
-9. **Thermodynamics, Heat Transfer & Psychrometrics Lab** — Multi-layer wall conduction (R/U-value), Stefan-Boltzmann radiation, Carnot/Otto cycles, Van der Waals real gas & dew point/wet-bulb psychrometrics.
-10. **Chemical Kinetics & Arrhenius Studio** — 0th, 1st & 2nd-order reaction decay curves, half-life markers & Arrhenius activation energy temperature scaling.
-11. **Spectroscopy & Beer-Lambert Lab** — UV-Vis absorbance/transmittance ($A = \varepsilon b c$) & photon wavelength/frequency/wavenumber/eV/kJ·mol⁻¹ EM spectrum converter.
-12. **Optics & Lens / Snell Ray Simulator** — Thin-lens equation with live 3-ray SVG diagram, magnification, Snell refraction, critical angle (TIR) & Brewster angle.
-13. **Signal & Wave Lab (Fourier / Bode / Doppler)** — Harmonic Fourier waveform synthesizer, RC low/high-pass Bode plot & acoustic Doppler shift calculator.
-14. **Astrophysics & Orbital Mechanics** — Circular & escape velocities, Kepler orbital periods, Hohmann transfer $\Delta v$ diagram & Schwarzschild radius across solar-system presets.
-15. **Microbiology & PCR / Lab Bio Calculator** — Primer $T_m$, GC%, 3' GC clamp, restriction enzyme cut-site scanner, `ng/µL ↔ nM` converter & cloning ligation ratios.
-16. **Materials, Structural Mechanics & CODATA** — Beam bending deflection & max moment, pipe flow Reynolds number regime, engineering material properties & CODATA physical constants.
-17. **Physics & Mechanics Toolkit** — Projectile motion, ideal gas law ($PV=nRT$), energy, wave equations & decibels.
-18. **Electronics, Op-Amp, 555 & PCB Trace Lab** — Ohm's law, series/parallel resistors, voltage dividers, LED resistor, RC filter, Op-Amp gain, 555 astable/monostable timer & IPC-2221 PCB trace width.
-19. **DNA / RNA & Protein Sequence Analyzer** — Complement, reverse complement, mRNA transcription, 3-frame translation & GC%.
-20. **Solar, Moon & Geodesic Ephemeris** — Sunrise/sunset, golden hour, lunar phase, Julian date & Haversine distance.
-21. **Scientific Unit Converter** — Precision conversions across length, mass, temperature, pressure, energy & data storage.
-22. **Geographic & GPS Converter** — Bidirectional Decimal Degrees ↔ DMS conversion, Haversine distance, initial bearing, midpoint & offline map links.
+8. **Chemical Kinetics & Arrhenius Studio** — 0th, 1st & 2nd-order reaction decay curves, half-life markers & Arrhenius activation energy temperature scaling.
+9. **Spectroscopy & Beer-Lambert Lab** — UV-Vis absorbance/transmittance ($A = \varepsilon b c$) & photon wavelength/frequency/wavenumber/eV/kJ·mol⁻¹ EM spectrum converter.
+10. **DNA / RNA & Protein Sequence Analyzer** — Complement, reverse complement, mRNA transcription, 3-frame translation & GC%.
+11. **Microbiology & PCR / Lab Bio Calculator** — Primer $T_m$, GC%, 3' GC clamp, restriction enzyme cut-site scanner, `ng/µL ↔ nM` converter & cloning ligation ratios.
 
 </details>
 
 <details>
-<summary><strong>💰 6. Finance, Investing &amp; Calculators (17 Tools)</strong></summary>
+<summary><strong>⚛️ 6. Physics &amp; Engineering (11 Tools)</strong></summary>
 
-1. **Currency Converter & Crypto Tracker** — 19+ fiat currencies and 14 cryptocurrencies with live/offline rates & portfolio tracking.
+1. **Physics & Mechanics Toolkit** — Projectile motion, ideal gas law ($PV=nRT$), energy, wave equations & decibels.
+2. **Electronics, Op-Amp, 555 & PCB Trace Lab** — Ohm's law, series/parallel resistors, voltage dividers, LED resistor, RC filter, Op-Amp gain, 555 astable/monostable timer & IPC-2221 PCB trace width.
+3. **Materials, Structural Mechanics & CODATA** — Beam bending deflection & max moment, pipe flow Reynolds number regime, engineering material properties & CODATA physical constants.
+4. **Thermodynamics, Heat Transfer & Psychrometrics Lab** — Multi-layer wall conduction (R/U-value), Stefan-Boltzmann radiation, Carnot/Otto cycles, Van der Waals real gas & dew point/wet-bulb psychrometrics.
+5. **Optics & Lens / Snell Ray Simulator** — Thin-lens equation with live 3-ray SVG diagram, magnification, Snell refraction, critical angle (TIR) & Brewster angle.
+6. **Signal & Wave Lab (Fourier / Bode / Doppler)** — Harmonic Fourier waveform synthesizer, RC low/high-pass Bode plot & acoustic Doppler shift calculator.
+7. **Isotope & Radioactive Decay Calculator** — Preset isotopes, half-life / decay constant $\lambda$ / mean lifetime $\tau$, remaining mass/activity curve & radiometric dating.
+8. **Astrophysics & Orbital Mechanics** — Circular & escape velocities, Kepler orbital periods, Hohmann transfer $\Delta v$ diagram & Schwarzschild radius across solar-system presets.
+9. **Solar, Moon & Geodesic Ephemeris** — Sunrise/sunset, golden hour, lunar phase, Julian date & Haversine distance.
+10. **Geographic & GPS Converter** — Bidirectional Decimal Degrees ↔ DMS conversion, Haversine distance, initial bearing, midpoint & offline map links.
+11. **Scientific Unit Converter** — Precision conversions across length, mass, temperature, pressure, energy & data storage.
+
+</details>
+
+<details>
+<summary><strong>💰 7. Finance, Investing &amp; Calculators (17 Tools)</strong></summary>
+
+1. **Currency Converter & Crypto Tracker** — 19+ fiat currencies (including Chinese Yuan `CNY`) and 14 cryptocurrencies with live/offline rates & portfolio tracking.
 2. **Mortgage & Loan Calculator** — Annuity payments, principal vs. interest breakdown & CSV amortization schedule.
 3. **Debt Payoff Planner (Snowball vs. Avalanche)** — Compare Debt Snowball & Debt Avalanche payoff timelines, interest saved, payoff order & balance curves with extra monthly payments.
 4. **Rent vs. Buy Home Calculator** — Long-term net worth comparison of buying a home vs. renting and investing the down payment & monthly difference.
@@ -313,30 +319,54 @@ OmniDesk organizes **134 specialized tools** into **7 primary categories**, plus
 </details>
 
 <details>
-<summary><strong>⚙️ 7. Everyday Utilities &amp; Wellness (22 Tools)</strong></summary>
+<summary><strong>🎨 8. Design &amp; Colors (7 Tools)</strong></summary>
 
 1. **Color Picker, Wheel & Charts Studio** — Classic 2D HSV picker + EyeDropper, interactive HSV color wheel with draggable brightness ring, Tailwind CSS / Material Design / Flat UI / Web-Safe (216) charts, 7 color harmony schemes, live bi-directional `RGB ↔ Hex` converter (`Hex`, `RGB`, `HSL`, `OKLCH`, `CMYK`), custom saved palette & `CSS`/`Tailwind`/`JSON`/`SVG`/`PNG` export.
-2. **SVG Inspector & Optimizer** — Sanitize and minify SVG markup, strip editor metadata, recolor fills/strokes, preview at multiple icon sizes (`16–96px`), and export clean SVG or React TSX components.
-3. **Lorem Ipsum & Placeholder Text Generator** — Generate Classic Latin, Tech, or Business placeholder paragraphs, sentences, words, or lists in Plain Text, HTML, or Markdown with live word/byte/reading-time stats.
-4. **Cooking & Recipe Scaler** — Scale recipe servings, convert cups/tbsp to grams by ingredient density & convert oven temperatures (`°C`, `Fan`, `°F`, `Gas Mark`).
-5. **Random Picker, Decision Wheel & Dice** — Animated SVG decision wheel (with optional winner removal), multi-dice roller & coin flip.
-6. **QR & Barcode Reader** — Decode QR codes and barcodes locally from uploaded images, pasted screenshots (`Ctrl+V`) or webcam.
-7. **Offline QR Code Generator** — Vector QR codes for URLs, Wi-Fi networks & plain text with PNG export.
-8. **Word Counter & Text Cleaner** — Word, character, reading-time & top-word stats plus whitespace, HTML & tracking-URL (`utm_*`, `fbclid`) cleanup.
-9. **Case Converter & Text Utilities** — Instant `camelCase`, `snake_case`, `kebab-case`, `CONSTANT_CASE`, URL slugs & line sorting.
-10. **Ambient Sound & White Noise Mixer** — Offline Web Audio soundscape generator (rain, waves, wind, brown/pink/white noise) with presets & sleep timer.
-11. **Sleep Cycle & Nap Calculator** — Optimal 90-minute sleep cycle bedtimes/wake-up times and power-nap guide.
-12. **Guided Breathing & 20-20-20 Eye Break** — Visual Box, 4-7-8 & Coherent breathing pacer with chime + 20-20-20 screen eye-rest timer.
-13. **BMI & Body Composition Calculator** — WHO BMI, healthy weight window, Ponderal Index & US Navy body fat estimate.
-14. **Calories, BMR & Macro Calculator** — Mifflin-St Jeor & Katch-McArdle BMR, TDEE activity multipliers & macro split.
-15. **Clothing & Shoe Size Converter** — Men's & women's international shoe (`EU/US/UK/CM/in`) and apparel (`XS–3XL`) charts.
-16. **Cryptographic Password Generator** — Custom-charset passwords and memorable Diceware passphrases with bit-entropy scoring.
-17. **Unix Timestamp & Epoch Converter** — Live epoch clock, `s/ms/µs/ns` conversion, date arithmetic & batch parsing.
-18. **WCAG Contrast Validator** — Level AA/AAA contrast verification, color-blindness simulation & automated contrast tuning.
-19. **Color Palette & Generator** — Harmonic color schemes with HEX/RGB/HSL conversions.
-20. **Image Color Picker** — Click any image pixel to extract its exact HEX color value.
-21. **Diagram Editor** — Create UML classes, actors, use-cases, and labeled arrows with SVG export.
-22. **System Hardware Monitor** — Native CPU core, RAM & disk telemetry via Tauri Rust APIs.
+2. **Color Palette & Generator** — Harmonic color schemes with HEX/RGB/HSL conversions.
+3. **Image Color Picker** — Click any image pixel to extract its exact HEX color value.
+4. **WCAG Contrast Validator** — Level AA/AAA contrast verification, color-blindness simulation & automated contrast tuning.
+5. **SVG Inspector & Optimizer** — Sanitize and minify SVG markup, strip editor metadata, recolor fills/strokes, preview at multiple icon sizes (`16–96px`), and export clean SVG or React TSX components.
+6. **CSS Visual Generator Studio** — Interactive visual builder for layered Box Shadows, Glassmorphism, Gradients, Flex/Grid layouts, and Border Radius with instant CSS & Tailwind snippets.
+7. **Diagram Editor** — Create UML classes, actors, use-cases, and labeled arrows with SVG export.
+
+</details>
+
+<details>
+<summary><strong>❤️ 9. Health &amp; Wellness (5 Tools)</strong></summary>
+
+1. **BMI & Body Composition Calculator** — WHO BMI, healthy weight window, Ponderal Index & US Navy body fat estimate.
+2. **Calories, BMR & Macro Calculator** — Mifflin-St Jeor & Katch-McArdle BMR, TDEE activity multipliers & macro split.
+3. **Sleep Cycle & Nap Calculator** — Optimal 90-minute sleep cycle bedtimes/wake-up times and power-nap guide.
+4. **Guided Breathing & 20-20-20 Eye Break** — Visual Box, 4-7-8 & Coherent breathing pacer with chime + 20-20-20 screen eye-rest timer.
+5. **Ambient Sound & White Noise Mixer** — Offline Web Audio soundscape generator (rain, waves, wind, brown/pink/white noise) with presets & sleep timer.
+
+</details>
+
+<details>
+<summary><strong>⚙️ 10. Utilities &amp; Everyday Tools (10 Tools)</strong></summary>
+
+1. **Cryptographic Password Generator** — Custom-charset passwords and memorable Diceware passphrases with bit-entropy scoring.
+2. **Offline QR Code Generator** — Vector QR codes for URLs, Wi-Fi networks & plain text with PNG export.
+3. **QR & Barcode Reader** — Decode QR codes and barcodes locally from uploaded images, pasted screenshots (`Ctrl+V`) or webcam.
+4. **Word Counter & Text Cleaner** — Word, character, reading-time & top-word stats plus whitespace, HTML & tracking-URL (`utm_*`, `fbclid`) cleanup.
+5. **Case Converter & Text Utilities** — Instant `camelCase`, `snake_case`, `kebab-case`, `CONSTANT_CASE`, URL slugs & line sorting.
+6. **Lorem Ipsum & Placeholder Text Generator** — Generate Classic Latin, Tech, or Business placeholder paragraphs, sentences, words, or lists in Plain Text, HTML, or Markdown with live word/byte/reading-time stats.
+7. **Clothing & Shoe Size Converter** — Men's & women's international shoe (`EU/US/UK/CM/in`) and apparel (`XS–3XL`) charts.
+8. **Cooking & Recipe Scaler** — Scale recipe servings, convert cups/tbsp to grams by ingredient density & convert oven temperatures (`°C`, `Fan`, `°F`, `Gas Mark`).
+9. **Random Picker, Decision Wheel & Dice** — Animated SVG decision wheel (with optional winner removal), multi-dice roller & coin flip.
+10. **System Hardware Monitor** — Native CPU core, RAM & disk telemetry via Tauri Rust APIs.
+
+</details>
+
+<details>
+<summary><strong>🖥️ 11. Desktop &amp; Automation — Desktop App Only (4 Tools)</strong></summary>
+
+> Automatically hidden on Web/PWA and powered natively by Tauri v2 + Rust OS APIs (`src-tauri/src/desktop_tools.rs`).
+
+1. **Port & Process Manager** — Inspect active listening TCP/UDP ports (with quick localhost dev-port filters `:3000/:5173/:8080/:5432/:6379`) and running OS processes sorted by CPU/RAM/PID, with safe inline termination confirmation.
+2. **Network Diagnostics & Wake-on-LAN** — Native ICMP ping with RTT latency charts, batch TCP port scanner (ranges & comma lists), DNS record lookup (`A`/`AAAA`/`MX`/`TXT`/`NS`/`CNAME`), local LAN adapter inspector, and 102-byte UDP Wake-on-LAN magic packets with saved device presets.
+3. **Auto-Clicker & Key Presser** — Native OS mouse auto-clicker (`left`/`right`/`middle`, `single`/`double`, current cursor or 3-second coordinate picker) and automated key presser with configurable interval/CPS presets, random human-like jitter, start delay, stop limits, and emergency `F6`–`F10` hotkey.
+4. **Keep-Awake (Caffeine) & Mouse Jiggler** — Native OS sleep inhibition (`SetThreadExecutionState` on Windows, `caffeinate` on macOS, `systemd-inhibit` on Linux) for System + Display or System Only, auto-off countdown ring timers, and an optional subtle ±1px mouse jiggler.
 
 </details>
 
@@ -398,7 +428,7 @@ OmniDesk includes full end-to-end MCP support across the lazy-loaded desktop Rea
 - **Dual Native & WebSocket Transports**:
   - **WebSocket Bridge (`ws://127.0.0.1:3847/bridge`)**: Connects with exponential backoff auto-reconnect to `docs/mcp-server-template/server.mjs` (also provides `omnidesk_bridge_status` + scoped `OMNIDESK_WORKSPACE_DIR` file listing, reading, and conversion tools + `notifications/tools/list_changed`).
   - **Native Tauri `stdio` IPC (`--mcp-stdio`) & Background Clipboard**: Rust `stdin`/`stdout` JSON-RPC bridge (`mcp_stdio_ready`, `mcp_stdio_tx`) with startup line buffering and `tauri-plugin-clipboard-manager` (`mcp_read_clipboard`, `mcp_write_clipboard`).
-- **In-App Tutorial, Connected Tools & Live MCP Log**: Built directly into **Settings → MCP Bridge** — includes an interactive **Setup Tutorial** (`McpSetupTutorialPanel`) with copyable config snippets for Claude Desktop / Cursor / VS Code / Windsurf, a **Connected Tools** capability matrix (`McpConnectedToolsPanel`) with a searchable 134-tool catalog, and a live **MCP Log** (`McpLogPanel`) with JSON-RPC payload inspection.
+- **In-App Tutorial, Connected Tools & Live MCP Log**: Built directly into **Settings → MCP Bridge** — includes an interactive **Setup Tutorial** (`McpSetupTutorialPanel`) with copyable config snippets for Claude Desktop / Cursor / VS Code / Windsurf, a **Connected Tools** capability matrix (`McpConnectedToolsPanel`) with a searchable 138-tool catalog, and a live **MCP Log** (`McpLogPanel`) with JSON-RPC payload inspection.
 - **Security Controls**: Loopback-only (`127.0.0.1` / `localhost`) WebSocket validation, optional `OMNIDESK_MCP_TOKEN` handshake, strict `OMNIDESK_WORKSPACE_DIR` path confinement, `readonly` vs `readwrite` permission enforcement, and workspace lock guard.
 
 ### 🔌 Tutorial: How to Connect Any Desktop AI to OmniDesk
@@ -530,7 +560,7 @@ npm run tauri dev
 │   │   └── ui/                # ConfigModal, McpSettingsTab, LanguageFlagIcon, ShortcutsSettingsPanel, SmartDropModal, SendToToolButton, ToastContainer
 │   ├── i18n/                  # Translation context & multi-language tool catalog
 │   ├── locales/               # Locale dictionaries (en, cs, de, es, ru)
-│   ├── services/              # storage, idbStorage, updaterService, printService, mcpClient (desktop), shortcutsService, toolPipeService, workspaceBackupService, workspacePresetsService, toastService, securityService, currencyService, fileSystemService
+│   ├── services/              # storage, idbStorage, updaterService, printService, desktopToolsService, mcpClient (desktop), shortcutsService, toolPipeService, workspaceBackupService, workspacePresetsService, toastService, securityService, currencyService, fileSystemService
 │   ├── tools/
 │   │   ├── files/             # Multi-Format Converter Hub, PDF Studio, PDF Toolkit, CSV Grid Editor, Resume Builder, Audio Editor, Photo Compressor, Screen/Webcam Recorder...
 │   │   ├── programming/       # Hash Suite, AES Studio, CSS Visual Studio, Mock Data Generator, Snippet Vault, CIDR, Cron, Encoding, UUID, JSONPath...
@@ -539,8 +569,9 @@ npm run tauri dev
 │   │   ├── science/           # 118-Element Chemistry, Balancer, pH/Titration, Dilutions, VSEPR, Thermochemistry, Electrochemistry, Isotope Decay, Thermo/Heat/Psychrometrics, Kinetics/Arrhenius, Spectroscopy/Beer-Lambert, Optics, Fourier/Bode/Doppler, Orbital Mechanics, PCR/Bio, Materials/CODATA, Electronics/Op-Amp/555/PCB, Physics, DNA, Ephemeris...
 │   │   ├── finance/           # Currency/Crypto, Loans, Debt Payoff, Rent vs. Buy, Dividend/DRIP, Options/Black-Scholes/Kelly, Bond Yield/Duration, Fuel/EV Trip, FIRE, Portfolio, NPV/IRR, Freelance & Salary Tax
 │   │   ├── utilities/         # Color Studio, SVG Optimizer, Lorem Ipsum, Random Picker, QR Reader, Recipe Scaler, Noise Mixer...
+│   │   ├── desktop/           # Desktop-Only Tauri tools: Port & Process Manager, Network Diagnostics & WoL, Auto-Clicker & Key Presser, Keep-Awake & Mouse Jiggler
 │   │   ├── expanded/          # Budget & Subscriptions, Investment & Inflation, Invoice Generator (PDF/DOCX/CSV/HTML/JSON) & workspace utilities
-│   │   └── registry.ts        # Central 134-tool lazy registry & Everyday Basics metadata
+│   │   └── registry.ts        # Central 138-tool lazy registry & Everyday Basics metadata
 │   ├── utils/                 # financeSuite.logic, scienceMathExt.logic, mathSuite.logic, scienceSuite.logic, invoiceExport.logic, colorMath, safeMathParser, sqlPlaygroundEngine & pure calculation helpers
 │   ├── workers/               # Dedicated ES module Web Workers (photoCompress.worker, hashSuite.worker)
 │   ├── __tests__/             # Vitest unit, storage & registry test suites

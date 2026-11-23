@@ -18,6 +18,10 @@ import {
   ExternalLink,
   Globe,
   Download,
+  Atom,
+  Palette,
+  HeartPulse,
+  MonitorCog,
 } from 'lucide-react';
 import { ToolCategory, WidgetCustomization } from '../../types/tool';
 import { useI18n } from '../../i18n/context';
@@ -86,9 +90,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'programming', label: t('cat_programming', 'Programming & Code'), icon: <Code2 className="w-4 h-4" /> },
     { id: 'planning', label: t('cat_planning', 'Planning & Productivity'), icon: <CalendarCheck className="w-4 h-4" /> },
     { id: 'math', label: t('cat_math', 'Mathematics'), icon: <Calculator className="w-4 h-4" /> },
-    { id: 'science', label: t('cat_science', 'Science & Engineering'), icon: <FlaskConical className="w-4 h-4" /> },
+    { id: 'chemistry', label: t('cat_chemistry', 'Chemistry & Biology'), icon: <FlaskConical className="w-4 h-4" /> },
+    { id: 'science', label: t('cat_science', 'Physics & Engineering'), icon: <Atom className="w-4 h-4" /> },
     { id: 'finance', label: t('cat_finance', 'Finance & Currencies'), icon: <Coins className="w-4 h-4" /> },
+    { id: 'design', label: t('cat_design', 'Design & Colors'), icon: <Palette className="w-4 h-4" /> },
+    { id: 'health', label: t('cat_health', 'Health & Wellness'), icon: <HeartPulse className="w-4 h-4" /> },
     { id: 'utilities', label: t('cat_utilities', 'Utilities'), icon: <Wrench className="w-4 h-4" /> },
+    ...(runningInTauri
+      ? [
+          {
+            id: 'desktop' as ToolCategory,
+            label: t('cat_desktop', 'Desktop & Automation'),
+            icon: <MonitorCog className="w-4 h-4 text-cyan-400" />,
+          },
+        ]
+      : []),
     { id: 'architecture', label: t('cat_architecture', 'Tauri & Code'), icon: <Cpu className="w-4 h-4" /> },
   ];
 

@@ -15,6 +15,7 @@ import { TOOLS_REGISTRY } from '../../tools/registry';
 import { useI18n } from '../../i18n/context';
 import { getToolCatalogText } from '../../i18n/toolCatalog';
 import { toastService } from '../../services/toastService';
+import { isTauri } from '../../services/fileSystemService';
 
 interface ShortcutsSettingsPanelProps {
   shortcuts: ShortcutBindings;
@@ -30,6 +31,7 @@ export const ShortcutsSettingsPanel: React.FC<ShortcutsSettingsPanelProps> = ({
   onChangeCustomToolShortcuts,
 }) => {
   const { t, language } = useI18n();
+  const runningInTauri = isTauri();
   const [recordingId, setRecordingId] = useState<string | null>(null);
   const [newToolId, setNewToolId] = useState<string>(TOOLS_REGISTRY[0]?.id || 'calendar');
   const [newToolCombo, setNewToolCombo] = useState<string>('');
@@ -37,12 +39,12 @@ export const ShortcutsSettingsPanel: React.FC<ShortcutsSettingsPanelProps> = ({
   const [conflictMsg, setConflictMsg] = useState<string | null>(null);
 
   const sortedTools = useMemo(() => {
-    return [...TOOLS_REGISTRY].sort((a, b) => {
+    return TOOLS_REGISTRY.filter(tool => !tool.desktopOnly || runningInTauri).sort((a, b) => {
       const aTitle = getToolCatalogText(a.id, 'title', language, a.title);
       const bTitle = getToolCatalogText(b.id, 'title', language, b.title);
       return aTitle.localeCompare(bTitle);
     });
-  }, [language]);
+  }, [language, runningInTauri]);
 
   useEffect(() => {
     if (!recordingId && !recordingNewTool) return;
