@@ -141,20 +141,31 @@ export const SystemMonitorTool: React.FC = () => {
 
   const pollTelemetry = useCallback(async () => {
     if (!runningInTauri) return;
-    try {
-      const [nextTelemetry, nextProcesses] = await Promise.all([
-        getDesktopSystemTelemetry(),
-        listDesktopProcesses(40),
-      ]);
-      setTelemetry(nextTelemetry);
-      setProcesses(nextProcesses);
-      setError(null);
+    const [telemetryRes, processesRes] = await Promise.allSettled([
+      getDesktopSystemTelemetry(),
+      listDesktopProcesses(40),
+    ]);
 
+    if (telemetryRes.status === 'fulfilled') {
+      const nextTelemetry = telemetryRes.value;
+      setTelemetry(nextTelemetry);
       const ramPct = calculateUsagePercent(nextTelemetry.ram_used_gb, nextTelemetry.ram_total_gb);
       setCpuHistory(prev => [...prev.slice(-(HISTORY_LENGTH - 1)), nextTelemetry.cpu_usage]);
       setRamHistory(prev => [...prev.slice(-(HISTORY_LENGTH - 1)), ramPct]);
-    } catch (err) {
+    }
+
+    if (processesRes.status === 'fulfilled') {
+      setProcesses(processesRes.value);
+    }
+
+    if (telemetryRes.status === 'rejected') {
+      const err = telemetryRes.reason;
       setError(err instanceof Error ? err.message : String(err));
+    } else if (processesRes.status === 'rejected') {
+      const err = processesRes.reason;
+      setError(err instanceof Error ? err.message : String(err));
+    } else {
+      setError(null);
     }
   }, [runningInTauri]);
 

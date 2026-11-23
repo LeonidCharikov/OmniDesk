@@ -626,6 +626,7 @@ pub fn desktop_list_processes(
     let max_items = limit.unwrap_or(150).clamp(10, 500);
     let mut sys = state.lock().map_err(|e| e.to_string())?;
     sys.refresh_processes();
+    let core_count = sys.cpus().len().max(1) as f32;
 
     let mut list: Vec<DesktopProcessInfo> = sys
         .processes()
@@ -637,10 +638,16 @@ pub fn desktop_list_processes(
             } else {
                 cmd_joined
             };
+            let raw_cpu = proc_info.cpu_usage() / core_count;
+            let norm_cpu = if raw_cpu.is_finite() {
+                (raw_cpu.clamp(0.0, 100.0) * 10.0).round() / 10.0
+            } else {
+                0.0
+            };
             DesktopProcessInfo {
                 pid: pid.as_u32(),
                 name: proc_info.name().to_string(),
-                cpu_usage: (proc_info.cpu_usage() * 10.0).round() / 10.0,
+                cpu_usage: norm_cpu,
                 memory_mb: ((proc_info.memory() as f64 / (1024.0 * 1024.0)) * 10.0).round() / 10.0,
                 status: format!("{:?}", proc_info.status()),
                 cmd: cmd_trimmed,

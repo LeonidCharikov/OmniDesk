@@ -586,6 +586,7 @@ pub fn run() {
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_process::init())
         .manage(Mutex::new(TelemetryMonitorState::new()))
+        .manage(Mutex::new(System::new_all()))
         .manage(Mutex::new(McpStdioState::default()))
         .manage(CloseToTrayState(AtomicBool::new(false)))
         .manage(OpenedCliFileState(Mutex::new(None)))
