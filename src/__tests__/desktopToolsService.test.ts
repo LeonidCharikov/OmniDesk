@@ -2,12 +2,20 @@ import { describe, it, expect } from 'vitest';
 import {
   DesktopListeningPort,
   DesktopProcessInfo,
+  HardwareSpecs,
   buildWolMagicPacket,
+  calculateUsagePercent,
   clampAutoClickerInterval,
   estimateActionsPerSecond,
   filterAndSortProcesses,
   filterListeningPorts,
+  formatCpuFrequency,
   formatDurationSeconds,
+  formatHardwareSpecsSummary,
+  formatUptimeDuration,
+  formatVram,
+  getDesktopHardwareSpecs,
+  getDesktopSystemTelemetry,
   isValidIpv4Address,
   isValidMacAddress,
   isValidNetworkHost,
@@ -111,9 +119,77 @@ describe('desktopToolsService pure helpers', () => {
     expect(filterListeningPorts(ports, 'mdns', 'UDP').length).toBe(1);
   });
 
+  it('formats PC hardware specs, VRAM, CPU frequency, usage percentages, and uptime accurately', () => {
+    expect(calculateUsagePercent(16, 32)).toBe(50);
+    expect(calculateUsagePercent(5, 0)).toBe(0);
+    expect(calculateUsagePercent(120, 100)).toBe(100);
+
+    expect(formatVram(null)).toBe('N/A');
+    expect(formatVram(512)).toBe('512 MB');
+    expect(formatVram(8192)).toBe('8 GB');
+    expect(formatVram(12288)).toBe('12 GB');
+    expect(formatVram(6144)).toBe('6 GB');
+
+    expect(formatCpuFrequency(0)).toBe('—');
+    expect(formatCpuFrequency(800)).toBe('800 MHz');
+    expect(formatCpuFrequency(4250)).toBe('4.25 GHz');
+
+    expect(formatUptimeDuration(95)).toBe('1m 35s');
+    expect(formatUptimeDuration(3665)).toBe('1h 1m 5s');
+    expect(formatUptimeDuration(90061)).toBe('1d 1h 1m');
+
+    const sampleSpecs: HardwareSpecs = {
+      cpu_brand: 'AMD Ryzen 9 7950X 16-Core Processor',
+      cpu_vendor: 'AuthenticAMD',
+      cpu_arch: 'x86_64',
+      physical_cores: 16,
+      logical_cores: 32,
+      base_freq_mhz: 4500,
+      ram_total_gb: 64,
+      ram_summary: '2x 32 GB DDR5 @ 6000 MHz',
+      swap_total_gb: 8,
+      gpus: [
+        {
+          name: 'NVIDIA GeForce RTX 4080',
+          vendor: 'NVIDIA',
+          vram_mb: 16384,
+          driver_version: '566.14',
+        },
+      ],
+      display_resolution: '2560x1440 @ 165 Hz',
+      motherboard: 'ASUS ROG STRIX X670E-E',
+      system_model: 'Custom Desktop',
+      os_name: 'Windows 11 Pro',
+      os_version: '23H2',
+      kernel_version: '22631',
+      hostname: 'WORKSTATION',
+      disks: [
+        {
+          name: 'NVMe OS',
+          mount_point: 'C:\\',
+          file_system: 'NTFS',
+          kind: 'SSD',
+          used_gb: 420.5,
+          total_gb: 1000,
+          available_gb: 579.5,
+          is_removable: false,
+        },
+      ],
+    };
+
+    const summary = formatHardwareSpecsSummary(sampleSpecs);
+    expect(summary).toContain('AMD Ryzen 9 7950X');
+    expect(summary).toContain('NVIDIA GeForce RTX 4080 (16 GB VRAM)');
+    expect(summary).toContain('64.0 GB (2x 32 GB DDR5 @ 6000 MHz)');
+    expect(summary).toContain('ASUS ROG STRIX X670E-E');
+    expect(summary).toContain('C:\\ (SSD, NTFS)');
+  });
+
   it('rejects native IPC wrappers cleanly when running outside Tauri', async () => {
     await expect(listDesktopPorts()).rejects.toThrow(/OmniDesk Desktop/);
     await expect(runDesktopPing('1.1.1.1')).rejects.toThrow(/OmniDesk Desktop/);
+    await expect(getDesktopSystemTelemetry()).rejects.toThrow(/OmniDesk Desktop/);
+    await expect(getDesktopHardwareSpecs()).rejects.toThrow(/OmniDesk Desktop/);
     await expect(
       startDesktopKeepAwake({
         keep_display: true,

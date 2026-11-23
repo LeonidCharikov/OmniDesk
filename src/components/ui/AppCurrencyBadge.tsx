@@ -1,7 +1,7 @@
 import React from 'react';
-import { Coins } from 'lucide-react';
 import { getCurrencySymbol } from '../../services/currencyService';
 import { useI18n } from '../../i18n/context';
+import { CurrencyFlagIcon } from './CurrencyFlagIcon';
 
 interface AppCurrencyBadgeProps {
   currency: string;
@@ -28,7 +28,7 @@ export const AppCurrencyBadge: React.FC<AppCurrencyBadgeProps> = ({ currency, co
         compact ? 'px-2 py-0.5 text-[11px]' : 'px-2.5 py-1.5'
       }`}
     >
-      <Coins className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+      <CurrencyFlagIcon code={currency} className="w-4 h-3 rounded-[2px] shrink-0" />
       <span className="font-mono font-semibold">
         {currency} ({symbol})
       </span>

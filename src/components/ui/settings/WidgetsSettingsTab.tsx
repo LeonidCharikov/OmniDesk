@@ -19,6 +19,7 @@ import {
   DEFAULT_WIDGETS_CONFIG,
   FIATS,
 } from './settingsConstants';
+import { CurrencyFlagIcon } from '../CurrencyFlagIcon';
 
 interface WidgetsSettingsTabProps {
   config: UserConfig;
@@ -205,20 +206,28 @@ export const WidgetsSettingsTab: React.FC<WidgetsSettingsTabProps> = ({
               {t('selected_fiat', 'Tracked Fiat Currency')}
             </label>
             <div className="space-y-1">
-              {Array.from({ length: 3 }, (_, index) => (
-                <select
-                  key={index}
-                  value={selectedFiats[index] || selectedFiats[0]}
-                  onChange={e => updateWidgetList('selectedFiats', index, e.target.value)}
-                  className="w-full text-xs p-2 rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-indigo-500"
-                >
-                  {FIATS.map(f => (
-                    <option key={f.code} value={f.code}>
-                      {CURRENCY_NAMES[f.code]?.[language] || f.name} ({f.code})
-                    </option>
-                  ))}
-                </select>
-              ))}
+              {Array.from({ length: 3 }, (_, index) => {
+                const selectedCode = selectedFiats[index] || selectedFiats[0];
+                return (
+                  <div key={index} className="flex items-center gap-1.5">
+                    <CurrencyFlagIcon
+                      code={selectedCode}
+                      className="w-5 h-3.5 rounded-[2px] shrink-0"
+                    />
+                    <select
+                      value={selectedCode}
+                      onChange={e => updateWidgetList('selectedFiats', index, e.target.value)}
+                      className="w-full text-xs p-2 rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-indigo-500"
+                    >
+                      {FIATS.map(f => (
+                        <option key={f.code} value={f.code}>
+                          {CURRENCY_NAMES[f.code]?.[language] || f.name} ({f.code})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                );
+              })}
             </div>
           </div>
 

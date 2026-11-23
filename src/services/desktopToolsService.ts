@@ -125,6 +125,71 @@ export interface WolDevicePreset {
   port: number;
 }
 
+export interface DiskDriveInfo {
+  name: string;
+  mount_point: string;
+  file_system: string;
+  kind: string;
+  used_gb: number;
+  total_gb: number;
+  available_gb: number;
+  is_removable: boolean;
+}
+
+export interface GpuInfo {
+  name: string;
+  vendor: string;
+  vram_mb: number | null;
+  driver_version: string | null;
+}
+
+export interface HardwareSpecs {
+  cpu_brand: string;
+  cpu_vendor: string;
+  cpu_arch: string;
+  physical_cores: number;
+  logical_cores: number;
+  base_freq_mhz: number;
+  ram_total_gb: number;
+  ram_summary: string | null;
+  swap_total_gb: number;
+  gpus: GpuInfo[];
+  display_resolution: string | null;
+  motherboard: string | null;
+  system_model: string | null;
+  os_name: string;
+  os_version: string;
+  kernel_version: string;
+  hostname: string;
+  disks: DiskDriveInfo[];
+}
+
+export interface ThermalSensorInfo {
+  label: string;
+  temp_c: number;
+  max_c: number | null;
+  critical_c: number | null;
+}
+
+export interface NativeSystemTelemetry {
+  cpu_usage: number;
+  cpu_freq_mhz: number;
+  cores: number[];
+  ram_used_gb: number;
+  ram_total_gb: number;
+  ram_available_gb: number;
+  swap_used_gb: number;
+  swap_total_gb: number;
+  disk_used_gb: number;
+  disk_total_gb: number;
+  disks: DiskDriveInfo[];
+  uptime_seconds: number;
+  load_avg_1m: number;
+  load_avg_5m: number;
+  load_avg_15m: number;
+  temperatures: ThermalSensorInfo[];
+}
+
 // ─── Pure Validation, Formatting & Filtering Logic (Unit-Testable) ───────────
 
 export function isValidNetworkHost(host: string): boolean {
@@ -269,6 +334,98 @@ export function filterListeningPorts(
   });
 }
 
+export function calculateUsagePercent(used: number, total: number): number {
+  if (!Number.isFinite(used) || !Number.isFinite(total) || total <= 0) return 0;
+  return Math.max(0, Math.min(100, Math.round((used / total) * 1000) / 10));
+}
+
+export function formatVram(vramMb: number | null | undefined): string {
+  if (vramMb === null || vramMb === undefined || !Number.isFinite(vramMb) || vramMb <= 0) {
+    return 'N/A';
+  }
+  if (vramMb >= 1024) {
+    const gb = vramMb / 1024;
+    return Number.isInteger(gb) ? `${gb} GB` : `${gb.toFixed(1)} GB`;
+  }
+  return `${Math.round(vramMb)} MB`;
+}
+
+export function formatCpuFrequency(mhz: number): string {
+  if (!Number.isFinite(mhz) || mhz <= 0) return '—';
+  if (mhz >= 1000) {
+    return `${(mhz / 1000).toFixed(2)} GHz`;
+  }
+  return `${Math.round(mhz)} MHz`;
+}
+
+export function formatUptimeDuration(totalSeconds: number): string {
+  const safe = Math.max(0, Math.floor(Number.isFinite(totalSeconds) ? totalSeconds : 0));
+  const days = Math.floor(safe / 86400);
+  const hours = Math.floor((safe % 86400) / 3600);
+  const mins = Math.floor((safe % 3600) / 60);
+  const secs = safe % 60;
+  if (days > 0) return `${days}d ${hours}h ${mins}m`;
+  if (hours > 0) return `${hours}h ${mins}m ${secs}s`;
+  return `${mins}m ${secs}s`;
+}
+
+export function formatHardwareSpecsSummary(
+  specs: HardwareSpecs,
+  telemetry?: NativeSystemTelemetry | null
+): string {
+  const lines: string[] = [
+    '=== PC Hardware Specifications ===',
+    `Hostname: ${specs.hostname}`,
+    `OS: ${specs.os_name} (${specs.cpu_arch})`,
+    `Kernel: ${specs.kernel_version}`,
+  ];
+  if (specs.system_model) {
+    lines.push(`System: ${specs.system_model}`);
+  }
+  if (specs.motherboard) {
+    lines.push(`Motherboard: ${specs.motherboard}`);
+  }
+  lines.push(
+    `CPU: ${specs.cpu_brand} (${specs.physical_cores}C / ${specs.logical_cores}T${
+      specs.base_freq_mhz > 0 ? `, ${formatCpuFrequency(specs.base_freq_mhz)}` : ''
+    })`
+  );
+  if (specs.gpus.length > 0) {
+    specs.gpus.forEach((gpu, idx) => {
+      const prefix = specs.gpus.length > 1 ? `GPU #${idx + 1}` : 'GPU';
+      const vram = gpu.vram_mb ? ` (${formatVram(gpu.vram_mb)} VRAM)` : '';
+      const driver = gpu.driver_version ? ` [Driver: ${gpu.driver_version}]` : '';
+      lines.push(`${prefix}: ${gpu.name}${vram}${driver}`);
+    });
+  } else {
+    lines.push('GPU: Not detected');
+  }
+  if (specs.display_resolution) {
+    lines.push(`Display: ${specs.display_resolution}`);
+  }
+  const ramExtra = specs.ram_summary ? ` (${specs.ram_summary})` : '';
+  lines.push(`RAM: ${specs.ram_total_gb.toFixed(1)} GB${ramExtra}`);
+  if (specs.swap_total_gb > 0) {
+    lines.push(`Swap: ${specs.swap_total_gb.toFixed(1)} GB`);
+  }
+  if (specs.disks.length > 0) {
+    lines.push('Storage:');
+    specs.disks.forEach(disk => {
+      const pct = calculateUsagePercent(disk.used_gb, disk.total_gb);
+      lines.push(
+        `  - ${disk.mount_point} (${disk.kind}, ${disk.file_system || 'FS'}): ${disk.used_gb.toFixed(1)} / ${disk.total_gb.toFixed(1)} GB (${pct}% used)`
+      );
+    });
+  }
+  if (telemetry) {
+    const ramPct = calculateUsagePercent(telemetry.ram_used_gb, telemetry.ram_total_gb);
+    lines.push(
+      `Live Snapshot: CPU ${telemetry.cpu_usage.toFixed(1)}% | RAM ${telemetry.ram_used_gb.toFixed(1)}/${telemetry.ram_total_gb.toFixed(1)} GB (${ramPct}%) | Uptime ${formatUptimeDuration(telemetry.uptime_seconds)}`
+    );
+  }
+  return lines.join('\n');
+}
+
 // ─── Native Tauri IPC Wrappers ───────────────────────────────────────────────
 
 function ensureDesktopRuntime(): void {
@@ -379,4 +536,14 @@ export async function stopDesktopKeepAwake(): Promise<KeepAwakeStatus> {
 export async function getDesktopKeepAwakeStatus(): Promise<KeepAwakeStatus> {
   ensureDesktopRuntime();
   return invokeRustCommand<KeepAwakeStatus>('desktop_keepawake_status');
+}
+
+export async function getDesktopSystemTelemetry(): Promise<NativeSystemTelemetry> {
+  ensureDesktopRuntime();
+  return invokeRustCommand<NativeSystemTelemetry>('get_system_telemetry');
+}
+
+export async function getDesktopHardwareSpecs(): Promise<HardwareSpecs> {
+  ensureDesktopRuntime();
+  return invokeRustCommand<HardwareSpecs>('desktop_get_hardware_specs');
 }

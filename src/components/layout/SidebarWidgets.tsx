@@ -27,6 +27,11 @@ import {
 } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
 import { WidgetCustomization, DailyTask } from '../../types/tool';
+import { isTauri } from '../../services/fileSystemService';
+import {
+  calculateUsagePercent,
+  getDesktopSystemTelemetry,
+} from '../../services/desktopToolsService';
 import {
   getSavedRates,
   refreshAllRates,
@@ -262,9 +267,9 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [timerTotal, setTimerTotal] = useState((widgets.timerDurationMinutes || 25) * 60);
 
-  // Mini system simulation stats
-  const [cpuUsage, setCpuUsage] = useState(18);
-  const ramUsage = 42;
+  // Live native system telemetry stats (Tauri desktop)
+  const [cpuUsage, setCpuUsage] = useState<number | null>(null);
+  const [ramUsage, setRamUsage] = useState<number | null>(null);
 
   // Mini Calc state
   const [calcInput, setCalcInput] = useState('25 * 4');
@@ -325,13 +330,30 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
     return () => clearInterval(interval);
   }, []);
 
-  // System load jitter
+  // Real native OS telemetry polling for the mini system gauge (desktop only)
+  const isSystemWidgetEnabled = (widgets.enabledWidgets || []).includes('system');
   useEffect(() => {
+    if (!isSystemWidgetEnabled || !isTauri()) return;
+    let cancelled = false;
+    const poll = async () => {
+      try {
+        const data = await getDesktopSystemTelemetry();
+        if (cancelled) return;
+        setCpuUsage(Math.round(Math.max(0, Math.min(100, data.cpu_usage))));
+        setRamUsage(Math.round(calculateUsagePercent(data.ram_used_gb, data.ram_total_gb)));
+      } catch {
+        // Ignore transient IPC errors
+      }
+    };
+    void poll();
     const interval = setInterval(() => {
-      setCpuUsage(prev => Math.min(95, Math.max(8, prev + Math.floor(Math.random() * 9) - 4)));
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
+      void poll();
+    }, 2500);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [isSystemWidgetEnabled]);
 
   // Mini timer countdown
   useEffect(() => {
@@ -762,12 +784,14 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
         <span className="flex items-center gap-1 text-slate-300">
           <Cpu className="w-2.5 h-2.5 text-cyan-400" /> CPU
         </span>
-        <span className="font-mono text-cyan-300">{cpuUsage}%</span>
+        <span className="font-mono text-cyan-300">
+          {cpuUsage !== null ? `${cpuUsage}%` : '—'}
+        </span>
       </div>
       <div className="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
         <div
           className="h-full bg-cyan-500 transition-all duration-500"
-          style={{ width: `${cpuUsage}%` }}
+          style={{ width: `${cpuUsage ?? 0}%` }}
         />
       </div>
 
@@ -775,12 +799,14 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
         <span className="flex items-center gap-1 text-slate-300">
           <Activity className="w-2.5 h-2.5 text-purple-400" /> RAM
         </span>
-        <span className="font-mono text-purple-300">{ramUsage}%</span>
+        <span className="font-mono text-purple-300">
+          {ramUsage !== null ? `${ramUsage}%` : '—'}
+        </span>
       </div>
       <div className="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
         <div
           className="h-full bg-purple-500 transition-all duration-500"
-          style={{ width: `${ramUsage}%` }}
+          style={{ width: `${ramUsage ?? 0}%` }}
         />
       </div>
     </div>

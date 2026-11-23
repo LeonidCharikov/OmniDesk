@@ -39,7 +39,7 @@ describe('TOOLS_REGISTRY', () => {
 
     for (const cat of VALID_CATEGORIES) {
       if (cat === 'desktop') {
-        expect(counts.get(cat)).toBe(4);
+        expect(counts.get(cat)).toBe(5);
       } else {
         expect(counts.get(cat) || 0).toBeGreaterThanOrEqual(5);
       }

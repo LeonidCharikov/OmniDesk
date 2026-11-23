@@ -3,7 +3,7 @@
   <h1>OmniDesk</h1>
   <p><strong>The 100% Offline-First Desktop & Web Multi-Tool Workstation</strong></p>
   <p>
-    138 integrated utilities (134 cross-platform + 4 native Desktop-Only tools) for files, code, math, science, finance, planning, and OS automation — running locally in memory or natively via Tauri v2 with zero server telemetry.
+    138 integrated utilities (133 cross-platform + 5 native Desktop-Only tools) for files, code, math, science, finance, planning, and OS automation — running locally in memory or natively via Tauri v2 with zero server telemetry.
   </p>
 
   <p>
@@ -48,7 +48,7 @@
     <img src="docs/videos/all-tools.webp" alt="OmniDesk Main Workspace — All 138 Tools" width="100%" />
   </a>
   <br />
-  <sub><strong>Main Workspace:</strong> Categorized 138-tool grid (134 cross-platform + 4 Desktop-Only Tauri tools) with instant search, favorites, recently used tools, language switcher, and local offline sandbox status.</sub>
+  <sub><strong>Main Workspace:</strong> Categorized 138-tool grid (133 cross-platform + 5 Desktop-Only Tauri tools) with instant search, favorites, recently used tools, language switcher, and local offline sandbox status.</sub>
 </div>
 
 ---
@@ -162,7 +162,7 @@ Configure default currency, sidebar mini-widgets, privacy audit, MCP Bridge, cus
 
 ## 🛠️ Complete Tool Catalog (138 Tools)
 
-OmniDesk organizes **134 cross-platform tools** into **10 primary categories** plus **4 native Desktop-Only tools** (automatically shown in the Tauri v2 Desktop app and hidden in the Web/PWA build) and the **Everyday Basics** (`43` tools) quick filter.
+OmniDesk organizes **133 cross-platform tools** into **10 primary categories** plus **5 native Desktop-Only tools** (automatically shown in the Tauri v2 Desktop app and hidden in the Web/PWA build) and the **Everyday Basics** (`43` tools) quick filter.
 
 <details open>
 <summary><strong>📁 1. Files, Media &amp; Documents (15 Tools)</strong></summary>
@@ -343,7 +343,7 @@ OmniDesk organizes **134 cross-platform tools** into **10 primary categories** p
 </details>
 
 <details>
-<summary><strong>⚙️ 10. Utilities &amp; Everyday Tools (10 Tools)</strong></summary>
+<summary><strong>⚙️ 10. Utilities &amp; Everyday Tools (9 Tools)</strong></summary>
 
 1. **Cryptographic Password Generator** — Custom-charset passwords and memorable Diceware passphrases with bit-entropy scoring.
 2. **Offline QR Code Generator** — Vector QR codes for URLs, Wi-Fi networks & plain text with PNG export.
@@ -354,19 +354,19 @@ OmniDesk organizes **134 cross-platform tools** into **10 primary categories** p
 7. **Clothing & Shoe Size Converter** — Men's & women's international shoe (`EU/US/UK/CM/in`) and apparel (`XS–3XL`) charts.
 8. **Cooking & Recipe Scaler** — Scale recipe servings, convert cups/tbsp to grams by ingredient density & convert oven temperatures (`°C`, `Fan`, `°F`, `Gas Mark`).
 9. **Random Picker, Decision Wheel & Dice** — Animated SVG decision wheel (with optional winner removal), multi-dice roller & coin flip.
-10. **System Hardware Monitor** — Native CPU core, RAM & disk telemetry via Tauri Rust APIs.
 
 </details>
 
 <details>
-<summary><strong>🖥️ 11. Desktop &amp; Automation — Desktop App Only (4 Tools)</strong></summary>
+<summary><strong>🖥️ 11. Desktop &amp; Automation — Desktop App Only (5 Tools)</strong></summary>
 
-> Automatically hidden on Web/PWA and powered natively by Tauri v2 + Rust OS APIs (`src-tauri/src/desktop_tools.rs`).
+> Automatically hidden on Web/PWA and powered natively by Tauri v2 + Rust OS APIs (`src-tauri/src/desktop_tools.rs` & `src-tauri/src/lib.rs`).
 
-1. **Port & Process Manager** — Inspect active listening TCP/UDP ports (with quick localhost dev-port filters `:3000/:5173/:8080/:5432/:6379`) and running OS processes sorted by CPU/RAM/PID, with safe inline termination confirmation.
-2. **Network Diagnostics & Wake-on-LAN** — Native ICMP ping with RTT latency charts, batch TCP port scanner (ranges & comma lists), DNS record lookup (`A`/`AAAA`/`MX`/`TXT`/`NS`/`CNAME`), local LAN adapter inspector, and 102-byte UDP Wake-on-LAN magic packets with saved device presets.
-3. **Auto-Clicker & Key Presser** — Native OS mouse auto-clicker (`left`/`right`/`middle`, `single`/`double`, current cursor or 3-second coordinate picker) and automated key presser with configurable interval/CPS presets, random human-like jitter, start delay, stop limits, and emergency `F6`–`F10` hotkey.
-4. **Keep-Awake (Caffeine) & Mouse Jiggler** — Native OS sleep inhibition (`SetThreadExecutionState` on Windows, `caffeinate` on macOS, `systemd-inhibit` on Linux) for System + Display or System Only, auto-off countdown ring timers, and an optional subtle ±1px mouse jiggler.
+1. **System Hardware Monitor & PC Specs** — Truthful native CPU/per-core, RAM/Swap, multi-disk, thermal sensor & top-process telemetry plus full PC hardware specs readout (CPU brand/cores/clock, GPU model/VRAM/driver, RAM module configuration, motherboard, system model, OS/kernel) with one-click Copy Specs.
+2. **Port & Process Manager** — Inspect active listening TCP/UDP ports (with quick localhost dev-port filters `:3000/:5173/:8080/:5432/:6379`) and running OS processes sorted by CPU/RAM/PID, with safe inline termination confirmation.
+3. **Network Diagnostics & Wake-on-LAN** — Native ICMP ping with RTT latency charts, batch TCP port scanner (ranges & comma lists), DNS record lookup (`A`/`AAAA`/`MX`/`TXT`/`NS`/`CNAME`), local LAN adapter inspector, and 102-byte UDP Wake-on-LAN magic packets with saved device presets.
+4. **Auto-Clicker & Key Presser** — Native OS mouse auto-clicker (`left`/`right`/`middle`, `single`/`double`, current cursor or 3-second coordinate picker) and automated key presser with configurable interval/CPS presets, random human-like jitter, start delay, stop limits, and emergency `F6`–`F10` hotkey.
+5. **Keep-Awake (Caffeine) & Mouse Jiggler** — Native OS sleep inhibition (`SetThreadExecutionState` on Windows, `caffeinate` on macOS, `systemd-inhibit` on Linux) for System + Display or System Only, auto-off countdown ring timers, and an optional subtle ±1px mouse jiggler.
 
 </details>
 

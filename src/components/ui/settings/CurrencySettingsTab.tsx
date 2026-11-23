@@ -3,6 +3,7 @@ import { Check } from 'lucide-react';
 import { UserConfig } from '../../../types/tool';
 import { useI18n } from '../../../i18n/context';
 import { ALL_CURRENCIES, CURRENCY_NAMES, DEFAULT_WIDGETS_CONFIG } from './settingsConstants';
+import { CurrencyFlagIcon } from '../CurrencyFlagIcon';
 
 interface CurrencySettingsTabProps {
   config: UserConfig;
@@ -15,6 +16,7 @@ export const CurrencySettingsTab: React.FC<CurrencySettingsTabProps> = ({
 }) => {
   const { t, language } = useI18n();
   const currentWidgets = config.widgets || DEFAULT_WIDGETS_CONFIG;
+  const activeCurrency = config.defaultCurrency || 'CZK';
 
   return (
     <div className="space-y-4">
@@ -29,13 +31,14 @@ export const CurrencySettingsTab: React.FC<CurrencySettingsTabProps> = ({
         </div>
         <div className="flex items-center gap-2 px-3 py-1 rounded-xl bg-indigo-950/60 border border-indigo-500/40 text-indigo-300 text-xs font-mono">
           <span>{t('active_default_currency', 'Active default currency:')}</span>
-          <strong className="text-white font-bold">{config.defaultCurrency || 'CZK'}</strong>
+          <CurrencyFlagIcon code={activeCurrency} className="w-4 h-3 rounded-[2px] shrink-0" />
+          <strong className="text-white font-bold">{activeCurrency}</strong>
         </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
         {ALL_CURRENCIES.map(curr => {
-          const isSelected = (config.defaultCurrency || 'CZK') === curr.code;
+          const isSelected = activeCurrency === curr.code;
           return (
             <div
               key={curr.code}
@@ -56,7 +59,10 @@ export const CurrencySettingsTab: React.FC<CurrencySettingsTabProps> = ({
               }`}
             >
               <div className="flex items-center gap-3">
-                <span className="text-2xl">{curr.flag}</span>
+                <CurrencyFlagIcon
+                  code={curr.code}
+                  className="w-7 h-5 rounded-sm shrink-0 shadow-sm"
+                />
                 <div>
                   <div className="flex items-center gap-1.5">
                     <span className="text-xs font-bold text-white font-mono">{curr.code}</span>

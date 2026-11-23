@@ -489,13 +489,14 @@ export const TOOLS_REGISTRY: ToolDefinition[] = [
   },
   {
     id: 'system-monitor',
-    title: 'System Monitor',
-    shortDesc: 'Nativní telemetrie CPU jader, využití RAM a disků přes Tauri systémové API.',
-    category: 'utilities',
+    title: 'System Hardware Monitor & PC Specs',
+    shortDesc: 'Live native CPU, RAM, swap, disk & thermal telemetry plus full PC hardware specs (CPU, GPU/VRAM, RAM modules, motherboard).',
+    category: 'desktop',
     icon: 'Activity',
     requiresOnline: false,
+    desktopOnly: true,
     component: SystemMonitorTool,
-    tags: ['hardware', 'cpu', 'ram', 'system', 'tauri', 'monitor', 'rust', 'os', 'disk'],
+    tags: ['hardware', 'specs', 'cpu', 'gpu', 'vram', 'ram', 'motherboard', 'system', 'tauri', 'monitor', 'rust', 'os', 'disk', 'desktop'],
   },
   {
     id: 'wcag-validator',

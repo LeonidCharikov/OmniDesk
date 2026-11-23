@@ -5,7 +5,7 @@ use std::process::{Child, Command};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
-use sysinfo::{Networks, Pid, System};
+use sysinfo::{CpuRefreshKind, DiskKind, Disks, MemoryRefreshKind, Networks, Pid, RefreshKind, System};
 use tauri::{AppHandle, Manager, State};
 
 #[cfg(target_os = "windows")]
@@ -1640,4 +1640,566 @@ pub fn shutdown_desktop_workers(app: &AppHandle) {
     if let Some(ka) = app.try_state::<KeepAwakeState>() {
         stop_keepawake_inner(&ka.0);
     }
+}
+
+// ─── 5. Native PC Hardware Specs & Disk Inventory ────────────────────────────
+
+#[derive(Clone, Debug, Serialize)]
+pub struct DiskDriveInfo {
+    pub name: String,
+    pub mount_point: String,
+    pub file_system: String,
+    pub kind: String,
+    pub used_gb: f64,
+    pub total_gb: f64,
+    pub available_gb: f64,
+    pub is_removable: bool,
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct GpuInfo {
+    pub name: String,
+    pub vendor: String,
+    pub vram_mb: Option<u64>,
+    pub driver_version: Option<String>,
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct HardwareSpecs {
+    pub cpu_brand: String,
+    pub cpu_vendor: String,
+    pub cpu_arch: String,
+    pub physical_cores: usize,
+    pub logical_cores: usize,
+    pub base_freq_mhz: u64,
+    pub ram_total_gb: f64,
+    pub ram_summary: Option<String>,
+    pub swap_total_gb: f64,
+    pub gpus: Vec<GpuInfo>,
+    pub display_resolution: Option<String>,
+    pub motherboard: Option<String>,
+    pub system_model: Option<String>,
+    pub os_name: String,
+    pub os_version: String,
+    pub kernel_version: String,
+    pub hostname: String,
+    pub disks: Vec<DiskDriveInfo>,
+}
+
+#[derive(Default)]
+struct PlatformHardwareDetails {
+    gpus: Vec<GpuInfo>,
+    display_resolution: Option<String>,
+    ram_summary: Option<String>,
+    motherboard: Option<String>,
+    system_model: Option<String>,
+}
+
+pub fn collect_disk_drives() -> Vec<DiskDriveInfo> {
+    let bytes_per_gib = 1024.0 * 1024.0 * 1024.0;
+    let disks = Disks::new_with_refreshed_list();
+    let mut seen_mounts: Vec<String> = Vec::new();
+    let mut results: Vec<DiskDriveInfo> = Vec::new();
+
+    for disk in disks.list() {
+        let total_bytes = disk.total_space();
+        if total_bytes == 0 {
+            continue;
+        }
+        let mount = disk.mount_point().to_string_lossy().to_string();
+        if seen_mounts.iter().any(|m| m == &mount) {
+            continue;
+        }
+        seen_mounts.push(mount.clone());
+
+        let avail_bytes = disk.available_space();
+        let used_bytes = total_bytes.saturating_sub(avail_bytes);
+        let kind_str = match disk.kind() {
+            DiskKind::SSD => "SSD",
+            DiskKind::HDD => "HDD",
+            DiskKind::Unknown(_) => "Disk",
+        };
+        let raw_name = disk.name().to_string_lossy().trim().to_string();
+        let name = if raw_name.is_empty() {
+            mount.clone()
+        } else {
+            raw_name
+        };
+
+        results.push(DiskDriveInfo {
+            name,
+            mount_point: mount,
+            file_system: disk.file_system().to_string_lossy().to_string(),
+            kind: kind_str.to_string(),
+            used_gb: (used_bytes as f64 / bytes_per_gib * 100.0).round() / 100.0,
+            total_gb: (total_bytes as f64 / bytes_per_gib * 100.0).round() / 100.0,
+            available_gb: (avail_bytes as f64 / bytes_per_gib * 100.0).round() / 100.0,
+            is_removable: disk.is_removable(),
+        });
+    }
+
+    results
+}
+
+fn clean_opt_string(input: Option<&str>) -> Option<String> {
+    let trimmed = input?.trim();
+    if trimmed.is_empty() {
+        return None;
+    }
+    let lower = trimmed.to_lowercase();
+    if lower == "to be filled by o.e.m."
+        || lower == "default string"
+        || lower == "system product name"
+        || lower == "system manufacturer"
+        || lower == "not specified"
+        || lower == "unknown"
+        || lower == "none"
+    {
+        return None;
+    }
+    Some(trimmed.to_string())
+}
+
+fn infer_gpu_vendor(name: &str, raw_vendor: &str) -> String {
+    let combined = format!("{} {}", raw_vendor, name).to_lowercase();
+    if combined.contains("nvidia") || combined.contains("geforce") || combined.contains("quadro") || combined.contains("rtx") || combined.contains("gtx") {
+        "NVIDIA".to_string()
+    } else if combined.contains("amd") || combined.contains("radeon") || combined.contains("advanced micro devices") {
+        "AMD".to_string()
+    } else if combined.contains("intel") || combined.contains("arc") || combined.contains("iris") || combined.contains("uhd") {
+        "Intel".to_string()
+    } else if combined.contains("apple") {
+        "Apple".to_string()
+    } else if !raw_vendor.trim().is_empty() {
+        raw_vendor.trim().to_string()
+    } else {
+        "GPU".to_string()
+    }
+}
+
+#[cfg(any(target_os = "windows", all(unix, not(target_os = "macos"))))]
+fn query_nvidia_smi_gpus() -> Vec<GpuInfo> {
+    let Ok(output) = new_hidden_command("nvidia-smi")
+        .args([
+            "--query-gpu=name,memory.total,driver_version",
+            "--format=csv,noheader,nounits",
+        ])
+        .output()
+    else {
+        return Vec::new();
+    };
+    if !output.status.success() {
+        return Vec::new();
+    }
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let mut gpus = Vec::new();
+    for line in stdout.lines() {
+        let parts: Vec<&str> = line.split(',').map(|s| s.trim()).collect();
+        if parts.is_empty() || parts[0].is_empty() {
+            continue;
+        }
+        let name = parts[0].to_string();
+        let vram_mb = parts.get(1).and_then(|s| s.parse::<u64>().ok());
+        let driver_version = parts
+            .get(2)
+            .map(|s| s.to_string())
+            .filter(|s| !s.is_empty());
+        gpus.push(GpuInfo {
+            name,
+            vendor: "NVIDIA".to_string(),
+            vram_mb,
+            driver_version,
+        });
+    }
+    gpus
+}
+
+#[cfg(target_os = "windows")]
+fn query_platform_hardware_details() -> PlatformHardwareDetails {
+    let mut details = PlatformHardwareDetails::default();
+
+    let ps_script = r#"
+$regVram = @{}
+try {
+  Get-ItemProperty -Path 'HKLM:\SYSTEM\ControlSet001\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0*' -ErrorAction SilentlyContinue | ForEach-Object {
+    if ($_.DriverDesc -and $_.'HardwareInformation.qwMemorySize') {
+      $val = $_.'HardwareInformation.qwMemorySize'
+      if ($val -is [byte[]]) {
+        if ($val.Length -ge 8) { $bytes = [BitConverter]::ToUInt64($val, 0) }
+        elseif ($val.Length -ge 4) { $bytes = [BitConverter]::ToUInt32($val, 0) }
+        else { $bytes = 0 }
+      } else {
+        $bytes = [uint64]$val
+      }
+      if ($bytes -gt 0) { $regVram[$_.DriverDesc.Trim()] = [math]::Round($bytes / 1048576) }
+    }
+  }
+} catch {}
+
+$gpus = @()
+$displayRes = $null
+try {
+  Get-CimInstance Win32_VideoController -ErrorAction SilentlyContinue | ForEach-Object {
+    $name = if ($_.Name) { $_.Name.Trim() } else { '' }
+    if ($name) {
+      $vramMb = $null
+      if ($regVram.ContainsKey($name)) {
+        $vramMb = [uint64]$regVram[$name]
+      } elseif ($_.AdapterRAM -and $_.AdapterRAM -gt 0) {
+        $vramMb = [uint64][math]::Round([double]$_.AdapterRAM / 1048576)
+      }
+      $gpus += [pscustomobject]@{
+        name = $name
+        vendor = if ($_.AdapterCompatibility) { $_.AdapterCompatibility.Trim() } else { '' }
+        vram_mb = $vramMb
+        driver_version = if ($_.DriverVersion) { $_.DriverVersion.Trim() } else { $null }
+      }
+      if (-not $displayRes -and $_.CurrentHorizontalResolution -and $_.CurrentVerticalResolution) {
+        $hz = if ($_.CurrentRefreshRate) { " @ $($_.CurrentRefreshRate) Hz" } else { '' }
+        $displayRes = "$($_.CurrentHorizontalResolution)x$($_.CurrentVerticalResolution)$hz"
+      }
+    }
+  }
+} catch {}
+
+$ramSummary = $null
+try {
+  $sticks = @(Get-CimInstance Win32_PhysicalMemory -ErrorAction SilentlyContinue)
+  if ($sticks.Count -gt 0) {
+    $memTypes = @{ 20='DDR'; 21='DDR2'; 24='DDR3'; 26='DDR4'; 30='LPDDR4'; 34='DDR5'; 35='LPDDR5' }
+    $first = $sticks[0]
+    $typeCode = [int]$first.SMBIOSMemoryType
+    $memType = if ($memTypes.ContainsKey($typeCode)) { $memTypes[$typeCode] } else { '' }
+    $speed = if ($first.ConfiguredClockSpeed) { $first.ConfiguredClockSpeed } elseif ($first.Speed) { $first.Speed } else { $null }
+    $capGb = [math]::Round(($first.Capacity / 1073741824), 0)
+    $allSame = ($sticks | Select-Object -ExpandProperty Capacity -Unique).Count -eq 1
+    $prefix = if ($allSame) { "$($sticks.Count)x ${capGb} GB" } else { "$($sticks.Count) modules" }
+    $parts = @($prefix)
+    if ($memType) { $parts += $memType }
+    if ($speed) { $parts += "@ $speed MHz" }
+    $ramSummary = ($parts -join ' ').Trim()
+  }
+} catch {}
+
+$board = $null
+try {
+  $bb = Get-CimInstance Win32_BaseBoard -ErrorAction SilentlyContinue | Select-Object -First 1
+  if ($bb) {
+    $board = ("$($bb.Manufacturer) $($bb.Product)").Trim()
+  }
+} catch {}
+
+$model = $null
+try {
+  $cs = Get-CimInstance Win32_ComputerSystem -ErrorAction SilentlyContinue | Select-Object -First 1
+  if ($cs) {
+    $model = ("$($cs.Manufacturer) $($cs.Model)").Trim()
+  }
+} catch {}
+
+[pscustomobject]@{
+  gpus = $gpus
+  display_resolution = $displayRes
+  ram_summary = $ramSummary
+  motherboard = $board
+  system_model = $model
+} | ConvertTo-Json -Compress -Depth 4
+"#;
+
+    if let Ok(output) = new_hidden_command("powershell")
+        .args(["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", ps_script])
+        .output()
+    {
+        if output.status.success() {
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            if let Ok(val) = serde_json::from_str::<serde_json::Value>(stdout.trim()) {
+                if let Some(gpu_list) = val.get("gpus") {
+                    let items: Vec<&serde_json::Value> = if let Some(arr) = gpu_list.as_array() {
+                        arr.iter().collect()
+                    } else if gpu_list.is_object() {
+                        vec![gpu_list]
+                    } else {
+                        Vec::new()
+                    };
+                    for item in items {
+                        if let Some(name) = item.get("name").and_then(|v| v.as_str()) {
+                            let raw_vendor = item.get("vendor").and_then(|v| v.as_str()).unwrap_or("");
+                            let vram_mb = item.get("vram_mb").and_then(|v| v.as_u64()).filter(|&m| m > 0);
+                            let driver_version = item
+                                .get("driver_version")
+                                .and_then(|v| v.as_str())
+                                .map(|s| s.to_string())
+                                .filter(|s| !s.is_empty());
+                            details.gpus.push(GpuInfo {
+                                name: name.to_string(),
+                                vendor: infer_gpu_vendor(name, raw_vendor),
+                                vram_mb,
+                                driver_version,
+                            });
+                        }
+                    }
+                }
+                details.display_resolution = clean_opt_string(
+                    val.get("display_resolution").and_then(|v| v.as_str()),
+                );
+                details.ram_summary = clean_opt_string(
+                    val.get("ram_summary").and_then(|v| v.as_str()),
+                );
+                details.motherboard = clean_opt_string(
+                    val.get("motherboard").and_then(|v| v.as_str()),
+                );
+                details.system_model = clean_opt_string(
+                    val.get("system_model").and_then(|v| v.as_str()),
+                );
+            }
+        }
+    }
+
+    // Refine NVIDIA VRAM / driver via nvidia-smi if present (handles >4GB VRAM reliably even if registry key is absent)
+    let nv_gpus = query_nvidia_smi_gpus();
+    for nv in nv_gpus {
+        if let Some(existing) = details
+            .gpus
+            .iter_mut()
+            .find(|g| g.vendor == "NVIDIA" && (g.name.eq_ignore_ascii_case(&nv.name) || g.name.to_lowercase().contains(&nv.name.to_lowercase())))
+        {
+            if nv.vram_mb.is_some() {
+                existing.vram_mb = nv.vram_mb;
+            }
+            if nv.driver_version.is_some() {
+                existing.driver_version = nv.driver_version;
+            }
+        } else if !details.gpus.iter().any(|g| g.name.eq_ignore_ascii_case(&nv.name)) {
+            details.gpus.push(nv);
+        }
+    }
+
+    details
+}
+
+#[cfg(target_os = "macos")]
+fn query_platform_hardware_details() -> PlatformHardwareDetails {
+    let mut details = PlatformHardwareDetails::default();
+
+    if let Ok(output) = new_hidden_command("system_profiler")
+        .args(["SPDisplaysDataType", "-json"])
+        .output()
+    {
+        if output.status.success() {
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            if let Ok(val) = serde_json::from_str::<serde_json::Value>(&stdout) {
+                if let Some(arr) = val.get("SPDisplaysDataType").and_then(|v| v.as_array()) {
+                    for item in arr {
+                        let name = item
+                            .get("sppci_model")
+                            .or_else(|| item.get("_name"))
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("Apple GPU")
+                            .trim()
+                            .to_string();
+                        let raw_vendor = item
+                            .get("spdisplays_vendor")
+                            .or_else(|| item.get("sppci_vendor"))
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("");
+                        let vram_str = item
+                            .get("spdisplays_vram")
+                            .or_else(|| item.get("spdisplays_vram_shared"))
+                            .and_then(|v| v.as_str());
+                        let vram_mb = vram_str.and_then(|s| {
+                            let parts: Vec<&str> = s.split_whitespace().collect();
+                            let num = parts.first()?.parse::<f64>().ok()?;
+                            let unit = parts.get(1).copied().unwrap_or("MB").to_uppercase();
+                            if unit.starts_with("GB") {
+                                Some((num * 1024.0).round() as u64)
+                            } else {
+                                Some(num.round() as u64)
+                            }
+                        });
+                        let cores_note = item
+                            .get("sppci_cores")
+                            .and_then(|v| v.as_str())
+                            .map(|c| format!("{} GPU cores", c));
+                        details.gpus.push(GpuInfo {
+                            vendor: infer_gpu_vendor(&name, raw_vendor),
+                            name,
+                            vram_mb,
+                            driver_version: cores_note,
+                        });
+
+                        if details.display_resolution.is_none() {
+                            if let Some(ndrvs) = item.get("spdisplays_ndrvs").and_then(|v| v.as_array()) {
+                                if let Some(first_disp) = ndrvs.first() {
+                                    details.display_resolution = first_disp
+                                        .get("_spdisplays_resolution")
+                                        .or_else(|| first_disp.get("_spdisplays_pixels"))
+                                        .and_then(|v| v.as_str())
+                                        .map(|s| s.trim().to_string());
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if let Ok(output) = new_hidden_command("sysctl").args(["-n", "hw.model"]).output() {
+        if output.status.success() {
+            details.system_model = clean_opt_string(Some(&String::from_utf8_lossy(&output.stdout)));
+        }
+    }
+
+    if let Ok(output) = new_hidden_command("system_profiler")
+        .args(["SPMemoryDataType", "-json"])
+        .output()
+    {
+        if output.status.success() {
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            if let Ok(val) = serde_json::from_str::<serde_json::Value>(&stdout) {
+                if let Some(arr) = val.get("SPMemoryDataType").and_then(|v| v.as_array()) {
+                    if let Some(first) = arr.first() {
+                        if let Some(mem_type) = first.get("dimm_type").and_then(|v| v.as_str()) {
+                            let mfr = first
+                                .get("dimm_manufacturer")
+                                .and_then(|v| v.as_str())
+                                .unwrap_or("");
+                            let summary = format!("{} {}", mfr, mem_type).trim().to_string();
+                            if !summary.is_empty() {
+                                details.ram_summary = Some(summary);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    details
+}
+
+#[cfg(all(unix, not(target_os = "macos")))]
+fn query_platform_hardware_details() -> PlatformHardwareDetails {
+    let mut details = PlatformHardwareDetails::default();
+
+    let nv_gpus = query_nvidia_smi_gpus();
+    details.gpus.extend(nv_gpus);
+
+    if let Ok(output) = new_hidden_command("lspci").output() {
+        if output.status.success() {
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            for line in stdout.lines() {
+                if line.contains("VGA compatible controller:")
+                    || line.contains("3D controller:")
+                    || line.contains("Display controller:")
+                {
+                    if let Some((_, desc)) = line.split_once("controller:") {
+                        let name = desc.trim().to_string();
+                        if !name.is_empty() {
+                            let vendor = infer_gpu_vendor(&name, "");
+                            let already_nv = vendor == "NVIDIA"
+                                && details.gpus.iter().any(|g| g.vendor == "NVIDIA");
+                            if !already_nv {
+                                details.gpus.push(GpuInfo {
+                                    name,
+                                    vendor,
+                                    vram_mb: None,
+                                    driver_version: None,
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    let read_dmi = |file: &str| -> Option<String> {
+        let path = format!("/sys/devices/virtual/dmi/id/{}", file);
+        let raw = std::fs::read_to_string(path).ok()?;
+        clean_opt_string(Some(&raw))
+    };
+
+    let board_vendor = read_dmi("board_vendor");
+    let board_name = read_dmi("board_name");
+    details.motherboard = match (board_vendor, board_name) {
+        (Some(v), Some(n)) => Some(format!("{} {}", v, n)),
+        (None, Some(n)) => Some(n),
+        (Some(v), None) => Some(v),
+        (None, None) => None,
+    };
+
+    let sys_vendor = read_dmi("sys_vendor");
+    let prod_name = read_dmi("product_name");
+    details.system_model = match (sys_vendor, prod_name) {
+        (Some(v), Some(n)) => Some(format!("{} {}", v, n)),
+        (None, Some(n)) => Some(n),
+        (Some(v), None) => Some(v),
+        (None, None) => None,
+    };
+
+    details
+}
+
+fn collect_hardware_specs_blocking() -> HardwareSpecs {
+    let sys = System::new_with_specifics(
+        RefreshKind::new()
+            .with_cpu(CpuRefreshKind::everything())
+            .with_memory(MemoryRefreshKind::everything()),
+    );
+
+    let first_cpu = sys.cpus().first();
+    let cpu_brand = first_cpu
+        .map(|c| c.brand().trim().to_string())
+        .filter(|s| !s.is_empty())
+        .unwrap_or_else(|| "Unknown CPU".to_string());
+    let cpu_vendor = first_cpu
+        .map(|c| c.vendor_id().trim().to_string())
+        .filter(|s| !s.is_empty())
+        .unwrap_or_else(|| "Unknown".to_string());
+    let base_freq_mhz = first_cpu.map(|c| c.frequency()).unwrap_or(0);
+    let logical_cores = sys.cpus().len();
+    let physical_cores = sys.physical_core_count().unwrap_or(logical_cores);
+
+    let bytes_per_gib = 1024.0 * 1024.0 * 1024.0;
+    let ram_total_gb = (sys.total_memory() as f64 / bytes_per_gib * 100.0).round() / 100.0;
+    let swap_total_gb = (sys.total_swap() as f64 / bytes_per_gib * 100.0).round() / 100.0;
+
+    let os_name = System::long_os_version()
+        .or_else(System::name)
+        .unwrap_or_else(|| std::env::consts::OS.to_string());
+    let os_version = System::os_version().unwrap_or_else(|| "Unknown".to_string());
+    let kernel_version = System::kernel_version().unwrap_or_else(|| "Unknown".to_string());
+    let hostname = System::host_name().unwrap_or_else(|| "localhost".to_string());
+
+    let platform_details = query_platform_hardware_details();
+    let disks = collect_disk_drives();
+
+    HardwareSpecs {
+        cpu_brand,
+        cpu_vendor,
+        cpu_arch: std::env::consts::ARCH.to_string(),
+        physical_cores,
+        logical_cores,
+        base_freq_mhz,
+        ram_total_gb,
+        ram_summary: platform_details.ram_summary,
+        swap_total_gb,
+        gpus: platform_details.gpus,
+        display_resolution: platform_details.display_resolution,
+        motherboard: platform_details.motherboard,
+        system_model: platform_details.system_model,
+        os_name,
+        os_version,
+        kernel_version,
+        hostname,
+        disks,
+    }
+}
+
+#[tauri::command]
+pub async fn desktop_get_hardware_specs() -> Result<HardwareSpecs, String> {
+    tauri::async_runtime::spawn_blocking(collect_hardware_specs_blocking)
+        .await
+        .map_err(|e| e.to_string())
 }

@@ -4,7 +4,8 @@ use std::io::{BufRead, BufReader, Write};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
-use sysinfo::{CpuRefreshKind, Disks, MemoryRefreshKind, RefreshKind, System};
+use std::time::{Duration, Instant};
+use sysinfo::{Components, CpuRefreshKind, MemoryRefreshKind, RefreshKind, System};
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 use tauri::{AppHandle, Emitter, Manager, PhysicalPosition, PhysicalSize, State, WebviewWindow, WindowEvent};
@@ -12,8 +13,9 @@ use tauri_plugin_clipboard_manager::ClipboardExt;
 
 mod desktop_tools;
 use desktop_tools::{
-    AutoClickerState, KeepAwakeState, desktop_autoclicker_set_hotkey, desktop_autoclicker_start,
-    desktop_autoclicker_status, desktop_autoclicker_stop, desktop_cursor_position,
+    AutoClickerState, DiskDriveInfo, KeepAwakeState, collect_disk_drives,
+    desktop_autoclicker_set_hotkey, desktop_autoclicker_start, desktop_autoclicker_status,
+    desktop_autoclicker_stop, desktop_cursor_position, desktop_get_hardware_specs,
     desktop_keepawake_start, desktop_keepawake_status, desktop_keepawake_stop,
     desktop_kill_process, desktop_list_ports, desktop_list_processes, desktop_net_dns_lookup,
     desktop_net_interfaces, desktop_net_ping, desktop_net_tcp_check, desktop_net_wol,
@@ -60,15 +62,63 @@ struct CliOpenedFilePayload {
     bytes: Vec<u8>,
 }
 
+struct TelemetryMonitorState {
+    sys: System,
+    last_cpu_refresh: Instant,
+    cached_cpu_usage: f32,
+    cached_cores: Vec<f32>,
+    cached_cpu_freq_mhz: u64,
+}
+
+impl TelemetryMonitorState {
+    fn new() -> Self {
+        let sys = System::new_with_specifics(
+            RefreshKind::new()
+                .with_cpu(CpuRefreshKind::everything())
+                .with_memory(MemoryRefreshKind::everything()),
+        );
+        let core_count = sys.cpus().len();
+        let freq = sys.cpus().first().map(|c| c.frequency()).unwrap_or(0);
+        // Backdate last_cpu_refresh so the very first UI poll immediately samples delta usage
+        let initial_refresh = Instant::now()
+            .checked_sub(Duration::from_secs(1))
+            .unwrap_or_else(Instant::now);
+        Self {
+            sys,
+            last_cpu_refresh: initial_refresh,
+            cached_cpu_usage: 0.0,
+            cached_cores: vec![0.0; core_count],
+            cached_cpu_freq_mhz: freq,
+        }
+    }
+}
+
+#[derive(Clone, Debug, Serialize)]
+struct ThermalSensorInfo {
+    label: String,
+    temp_c: f32,
+    max_c: Option<f32>,
+    critical_c: Option<f32>,
+}
+
 #[derive(Serialize)]
 struct NativeSystemTelemetry {
     cpu_usage: f32,
+    cpu_freq_mhz: u64,
     cores: Vec<f32>,
     ram_used_gb: f64,
     ram_total_gb: f64,
+    ram_available_gb: f64,
+    swap_used_gb: f64,
+    swap_total_gb: f64,
     disk_used_gb: f64,
     disk_total_gb: f64,
+    disks: Vec<DiskDriveInfo>,
     uptime_seconds: u64,
+    load_avg_1m: f64,
+    load_avg_5m: f64,
+    load_avg_15m: f64,
+    temperatures: Vec<ThermalSensorInfo>,
 }
 
 fn window_state_path(app: &AppHandle) -> Option<PathBuf> {
@@ -205,43 +255,114 @@ fn restore_window_state(app: &AppHandle, window: &WebviewWindow) {
 }
 
 #[tauri::command]
-fn get_system_telemetry(state: State<'_, Mutex<System>>) -> Result<NativeSystemTelemetry, String> {
-    let mut sys = state.lock().map_err(|e| e.to_string())?;
-    sys.refresh_specifics(
-        RefreshKind::new()
-            .with_cpu(CpuRefreshKind::everything())
-            .with_memory(MemoryRefreshKind::everything()),
-    );
+fn get_system_telemetry(
+    state: State<'_, Mutex<TelemetryMonitorState>>,
+) -> Result<NativeSystemTelemetry, String> {
+    let mut guard = state.lock().map_err(|e| e.to_string())?;
+    guard
+        .sys
+        .refresh_specifics(RefreshKind::new().with_memory(MemoryRefreshKind::everything()));
 
-    let cpu_usage = sys.global_cpu_info().cpu_usage();
-    let cores: Vec<f32> = sys.cpus().iter().map(|c| c.cpu_usage()).collect();
+    // Enforce >= 250ms between sysinfo CPU delta samples so concurrent pollers never read 0%
+    if guard.last_cpu_refresh.elapsed() >= Duration::from_millis(250) {
+        guard
+            .sys
+            .refresh_specifics(RefreshKind::new().with_cpu(CpuRefreshKind::everything()));
+        let raw_global = guard.sys.global_cpu_info().cpu_usage();
+        guard.cached_cpu_usage = if raw_global.is_finite() {
+            raw_global.clamp(0.0, 100.0)
+        } else {
+            0.0
+        };
+        guard.cached_cores = guard
+            .sys
+            .cpus()
+            .iter()
+            .map(|c| {
+                let u = c.cpu_usage();
+                if u.is_finite() {
+                    u.clamp(0.0, 100.0)
+                } else {
+                    0.0
+                }
+            })
+            .collect();
+        let freq_sum: u64 = guard.sys.cpus().iter().map(|c| c.frequency()).sum();
+        let core_len = guard.sys.cpus().len() as u64;
+        guard.cached_cpu_freq_mhz = if core_len > 0 { freq_sum / core_len } else { 0 };
+        guard.last_cpu_refresh = Instant::now();
+    }
+
+    let cpu_usage = guard.cached_cpu_usage;
+    let cpu_freq_mhz = guard.cached_cpu_freq_mhz;
+    let cores = guard.cached_cores.clone();
+
     let bytes_per_gib = 1024.0 * 1024.0 * 1024.0;
-    let ram_total_gb = sys.total_memory() as f64 / bytes_per_gib;
-    let ram_used_gb = sys.used_memory() as f64 / bytes_per_gib;
+    let ram_total_gb = guard.sys.total_memory() as f64 / bytes_per_gib;
+    let ram_used_gb = guard.sys.used_memory() as f64 / bytes_per_gib;
+    let ram_available_gb = guard.sys.available_memory() as f64 / bytes_per_gib;
+    let swap_total_gb = guard.sys.total_swap() as f64 / bytes_per_gib;
+    let swap_used_gb = guard.sys.used_swap() as f64 / bytes_per_gib;
+    drop(guard);
 
-    let disks = Disks::new_with_refreshed_list();
+    let disks = collect_disk_drives();
     let primary_disk = disks
-        .list()
         .iter()
-        .find(|d| d.mount_point() == Path::new("/") || d.mount_point() == Path::new("C:\\"))
-        .or_else(|| disks.list().first());
+        .find(|d| d.mount_point == "/" || d.mount_point.eq_ignore_ascii_case("C:\\"))
+        .or_else(|| disks.first());
 
     let (disk_used_gb, disk_total_gb) = if let Some(disk) = primary_disk {
-        let total = disk.total_space() as f64 / bytes_per_gib;
-        let used = disk.total_space().saturating_sub(disk.available_space()) as f64 / bytes_per_gib;
-        (used, total)
+        (disk.used_gb, disk.total_gb)
     } else {
         (0.0, 0.0)
     };
 
+    let load_avg = System::load_average();
+    let components = Components::new_with_refreshed_list();
+    let temperatures: Vec<ThermalSensorInfo> = components
+        .iter()
+        .filter_map(|comp| {
+            let temp = comp.temperature();
+            if !temp.is_finite() || temp <= 0.0 || temp >= 150.0 {
+                return None;
+            }
+            let max_raw = comp.max();
+            let max_c = if max_raw.is_finite() && max_raw > 0.0 && max_raw < 150.0 {
+                Some((max_raw * 10.0).round() / 10.0)
+            } else {
+                None
+            };
+            let critical_c = comp
+                .critical()
+                .filter(|c| c.is_finite() && *c > 0.0 && *c < 150.0)
+                .map(|c| (c * 10.0).round() / 10.0);
+            Some(ThermalSensorInfo {
+                label: comp.label().to_string(),
+                temp_c: (temp * 10.0).round() / 10.0,
+                max_c,
+                critical_c,
+            })
+        })
+        .take(16)
+        .collect();
+
     Ok(NativeSystemTelemetry {
         cpu_usage,
+        cpu_freq_mhz,
         cores,
         ram_used_gb,
         ram_total_gb,
+        ram_available_gb,
+        swap_used_gb,
+        swap_total_gb,
         disk_used_gb,
         disk_total_gb,
+        disks,
         uptime_seconds: System::uptime(),
+        load_avg_1m: (load_avg.one * 100.0).round() / 100.0,
+        load_avg_5m: (load_avg.five * 100.0).round() / 100.0,
+        load_avg_15m: (load_avg.fifteen * 100.0).round() / 100.0,
+        temperatures,
     })
 }
 
@@ -464,11 +585,7 @@ pub fn run() {
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_process::init())
-        .manage(Mutex::new(System::new_with_specifics(
-            RefreshKind::new()
-                .with_cpu(CpuRefreshKind::everything())
-                .with_memory(MemoryRefreshKind::everything()),
-        )))
+        .manage(Mutex::new(TelemetryMonitorState::new()))
         .manage(Mutex::new(McpStdioState::default()))
         .manage(CloseToTrayState(AtomicBool::new(false)))
         .manage(OpenedCliFileState(Mutex::new(None)))
@@ -478,6 +595,7 @@ pub fn run() {
         .manage(KeepAwakeState::default())
         .invoke_handler(tauri::generate_handler![
             get_system_telemetry,
+            desktop_get_hardware_specs,
             mcp_read_clipboard,
             mcp_write_clipboard,
             mcp_stdio_ready,
