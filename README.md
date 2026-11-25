@@ -3,7 +3,7 @@
   <h1>OmniDesk</h1>
   <p><strong>The 100% Offline-First Desktop & Web Multi-Tool Workstation</strong></p>
   <p>
-    138 integrated utilities (133 cross-platform + 5 native Desktop-Only tools) for files, code, math, science, finance, planning, and OS automation — running locally in memory or natively via Tauri v2 with zero server telemetry.
+    139 integrated utilities (134 cross-platform + 5 native Desktop-Only tools) for files, code, math, science, finance, planning, and OS automation — running locally in memory or natively via Tauri v2 with zero server telemetry.
   </p>
 
   <p>
@@ -13,7 +13,7 @@
     <a href="https://leonidcharikov.github.io/omnidesk.html">
       <img src="https://img.shields.io/badge/Website-Presentation-8B5CF6?style=for-the-badge&logo=githubpages&logoColor=white" alt="OmniDesk Presentation Website" />
     </a>
-    <img src="https://img.shields.io/badge/Tools-138%20Integrated-6366f1?style=for-the-badge" alt="138 Tools" />
+    <img src="https://img.shields.io/badge/Tools-139%20Integrated-6366f1?style=for-the-badge" alt="139 Tools" />
     <img src="https://img.shields.io/badge/Tauri-v2-24C8DB?style=for-the-badge&logo=tauri&logoColor=white" alt="Tauri v2" />
     <img src="https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React 19" />
     <img src="https://img.shields.io/badge/TypeScript-7.0-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
@@ -34,7 +34,7 @@
     <a href="https://github.com/LeonidCharikov/OmniDesk">GitHub Repo</a> •
     <a href="#-visual-showcase">Visual Showcase</a> •
     <a href="#-key-highlights">Key Highlights</a> •
-    <a href="#-complete-tool-catalog-138-tools">Tool Catalog (138)</a> •
+    <a href="#-complete-tool-catalog-139-tools">Tool Catalog (139)</a> •
     <a href="#-themes-widgets--localization">Themes & Widgets</a> •
     <a href="#-quick-start">Quick Start</a> •
     <a href="#-project-structure">Project Structure</a>
@@ -45,10 +45,10 @@
 
 <div align="center">
   <a href="docs/videos/all-tools.webp">
-    <img src="docs/videos/all-tools.webp" alt="OmniDesk Main Workspace — All 138 Tools" width="100%" />
+    <img src="docs/videos/all-tools.webp" alt="OmniDesk Main Workspace — All 139 Tools" width="100%" />
   </a>
   <br />
-  <sub><strong>Main Workspace:</strong> Categorized 138-tool grid (133 cross-platform + 5 Desktop-Only Tauri tools) with instant search, favorites, recently used tools, language switcher, and local offline sandbox status.</sub>
+  <sub><strong>Main Workspace:</strong> Categorized 139-tool grid (134 cross-platform + 5 Desktop-Only Tauri tools) with instant search, favorites, recently used tools, language switcher, and local offline sandbox status.</sub>
 </div>
 
 ---
@@ -60,7 +60,7 @@
 | 🔒 **Privacy, Storage Audit & Full Workspace Backup** | Every file edit, hash, PDF edit, QR scan, image compression, and color conversion runs 100% locally — installable as an offline-first PWA. On the **Tauri Desktop** build, also includes **Full Workspace Backup** (settings + Calendar, Kanban, Notes, Expenses, Habits, Shopping List, Flashcards) and **AES-256-GCM encrypted bundles** (stripped on Web so browser users stay focused on individual tools). |
 | ⚡ **Dual Runtime (Tauri v2 + Web/PWA), Workers & Auto-Updater** | Native **Tauri v2** desktop app (with **signed GitHub Releases Auto-Updater**, multi-monitor-safe **persistent window geometry**, double-click titlebar maximize/restore, `sysinfo` hardware telemetry, OS tray mode, file associations & quick Web/GitHub links) or streamlined offline browser PWA. Heavy dependencies (`pdf-lib`, `tesseract.js`, MCP client), **Web Workers** (batch photo compression & cryptographic hashing), and **IndexedDB** tool storage keep the UI responsive with minimal RAM usage. |
 | 🖨️ **Built-In Document & Media Printing** | Print directly via native OS print dialogs without popup blockers from **PDF Studio**, **Resume / CV Builder**, **Solution Dilution Planner** (bench sheets), **Image Editor**, **Text & Markdown Editor**, **Markdown Preview**, **Notes**, **Diagram Editor**, **Invoice Generator**, **Screenshot Annotator**, **Sketchpad**, and **QR Code Generator**. |
-| 🧭 **Extended Command Palette & Customizable Shortcuts** | Press `Ctrl+K` (`⌘K`) to search across **138 tools** (auto-filtered to the active Web or Desktop runtime), saved **Notes**, **Calendar events**, **Settings tabs**, and **Themes**. Rebind built-in actions or assign custom keyboard shortcuts to any tool in **Settings → Shortcuts** (press `Shift+?` for cheat sheet). |
+| 🧭 **Extended Command Palette & Customizable Shortcuts** | Press `Ctrl+K` (`⌘K`) to search across **139 tools** (auto-filtered to the active Web or Desktop runtime), saved **Notes**, **Calendar events**, **Settings tabs**, and **Themes**. Rebind built-in actions or assign custom keyboard shortcuts to any tool in **Settings → Shortcuts** (press `Shift+?` for cheat sheet). |
 | 🔄 **Offline Multi-Format Converter Hub** | CloudConvert-style **Offline Format Catalog** & **multi-file batch queue** covering **6 categories** 100% locally in memory: **Video** (`MP4`/`WebM`/`MOV` → `WebM`, animated `GIF`, `WAV` audio, frame capture), **Audio** (`MP3`/`WAV`/`OGG`/`FLAC`/`M4A`/`AAC` → `WAV`/`AIFF`/`WebM`), **Images** (`PNG`/`JPG`/`WebP`/`AVIF`/`GIF`/`BMP`/`SVG`/`ICO` → `WebP`/`PNG`/`JPG`/`GIF`/`BMP`/`ICO`/`PDF`/`SVG`), **Documents** (`DOCX`/`PDF`/`MD`/`HTML`/`TXT`/`RTF`), **Spreadsheets & Data** (`XLSX`/`XLS`/`ODS`/`CSV`/`TSV`/`JSON`/`YAML`/`XML`/`MD`/`HTML`), and **Archives** (`ZIP` ↔ `TAR` ↔ `TAR.GZ` ↔ `GZ` with extraction & batch ZIP download). |
 | 🔗 **Cross-Tool Piping & Smart Drag-and-Drop** | Pipe outputs directly between compatible tools with **Send to...** (`toolPipeService`), or drag & drop any file anywhere on the window to launch the **Smart Drop Router** with matching tools and 1-click **Load Sample** demos. |
 | 💱 **Universal Multi-Currency Engine & Starter Presets** | Configure a global default currency across 15+ world currencies (`CZK`, `EUR`, `USD`, `GBP`, `CHF`, `PLN`, `JPY`, `CNY`, etc.) synced across finance tools, Invoice Generator, and sidebar widgets, plus 1-click **Workspace Starter Presets** (*Developer*, *Student & Science*, *Finance & Daily*). |
@@ -160,9 +160,9 @@ Configure default currency, sidebar mini-widgets, privacy audit, MCP Bridge, cus
 
 ---
 
-## 🛠️ Complete Tool Catalog (138 Tools)
+## 🛠️ Complete Tool Catalog (139 Tools)
 
-OmniDesk organizes **133 cross-platform tools** into **10 primary categories** plus **5 native Desktop-Only tools** (automatically shown in the Tauri v2 Desktop app and hidden in the Web/PWA build) and the **Everyday Basics** (`43` tools) quick filter.
+OmniDesk organizes **134 cross-platform tools** into **10 primary categories** plus **5 native Desktop-Only tools** (automatically shown in the Tauri v2 Desktop app and hidden in the Web/PWA build) and the **Everyday Basics** (`44` tools) quick filter.
 
 <details open>
 <summary><strong>📁 1. Files, Media &amp; Documents (15 Tools)</strong></summary>
@@ -233,7 +233,7 @@ OmniDesk organizes **133 cross-platform tools** into **10 primary categories** p
 </details>
 
 <details>
-<summary><strong>📐 4. Mathematics &amp; Statistics (23 Tools)</strong></summary>
+<summary><strong>📐 4. Mathematics &amp; Statistics (24 Tools)</strong></summary>
 
 1. **Standard & Scientific Calculator** — Classic 5×4 keypad with aligned scientific panel (`2nd` shift, `DEG`/`RAD`), trigonometry, logarithms, powers, memory registers (`MC`/`MR`/`M+`/`M-`), keyboard support & calculation history.
 2. **Equation & System Solver** — Polynomial root finder (real & complex roots via Durand-Kerner), linear systems $Ax = b$ with Gaussian elimination steps, and numerical $f(x) = 0$ root finding (Bisection / Newton-Raphson).
@@ -258,6 +258,7 @@ OmniDesk organizes **133 cross-platform tools** into **10 primary categories** p
 21. **Combinatorics & Number Theory (Modular / CRT)** — Permutations, combinations ($nCr$), GCD/LCM, primes, modular exponentiation & inverse, Bézout identity, Euler totient $\varphi(n)$ & Chinese Remainder Theorem.
 22. **Simple Percentage & Ratio Calculator** — Everyday percentage modes (`X% of Y`, `% change`, `+/- %`) and proportional aspect-ratio solver.
 23. **Grade & Weighted Average Calculator** — Weighted course averages, 4.0 GPA scale & Final Exam Target Score solver.
+24. **Chart & Statistics Graph Studio** — Interactive Excel-style chart studio supporting **17 chart families** & **35 subtypes** (Column, Bar, Line, Area, Pie/Donut/Semi-Donut, XY Scatter/Trendline $R^2$/Bubble, Histogram & Pareto, Box & Whisker, Waterfall, Funnel, Radar, Treemap, Sunburst, Heatmap, Stock OHLC Candlestick, Combo, Polar Rose) with live spreadsheet editor, CSV/TSV/Excel/JSON import, descriptive series stats & 2× PNG/SVG/CSV/Print export.
 
 </details>
 
@@ -327,7 +328,7 @@ OmniDesk organizes **133 cross-platform tools** into **10 primary categories** p
 4. **WCAG Contrast Validator** — Level AA/AAA contrast verification, color-blindness simulation & automated contrast tuning.
 5. **SVG Inspector & Optimizer** — Sanitize and minify SVG markup, strip editor metadata, recolor fills/strokes, preview at multiple icon sizes (`16–96px`), and export clean SVG or React TSX components.
 6. **CSS Visual Generator Studio** — Interactive visual builder for layered Box Shadows, Glassmorphism, Gradients, Flex/Grid layouts, and Border Radius with instant CSS & Tailwind snippets.
-7. **Diagram Editor** — Create UML classes, actors, use-cases, and labeled arrows with SVG export.
+7. **Diagram Studio (SQL ERD, UML & Flowcharts)** — Interactive pan/zoom canvas with 20 vector shapes across SQL ERD (PK/FK/UQ/NN tables & bidirectional `CREATE TABLE` DDL import/export), UML (Class, Interface, Enum, Actor, Use-Case, Component, Package), Flowcharts & System Architecture, port-to-port connectors with Crow's Foot & UML markers, Mermaid export, auto-layout, undo/redo, JSON save/load & 2× PNG/SVG/Print export.
 
 </details>
 
@@ -428,7 +429,7 @@ OmniDesk includes full end-to-end MCP support across the lazy-loaded desktop Rea
 - **Dual Native & WebSocket Transports**:
   - **WebSocket Bridge (`ws://127.0.0.1:3847/bridge`)**: Connects with exponential backoff auto-reconnect to `docs/mcp-server-template/server.mjs` (also provides `omnidesk_bridge_status` + scoped `OMNIDESK_WORKSPACE_DIR` file listing, reading, and conversion tools + `notifications/tools/list_changed`).
   - **Native Tauri `stdio` IPC (`--mcp-stdio`) & Background Clipboard**: Rust `stdin`/`stdout` JSON-RPC bridge (`mcp_stdio_ready`, `mcp_stdio_tx`) with startup line buffering and `tauri-plugin-clipboard-manager` (`mcp_read_clipboard`, `mcp_write_clipboard`).
-- **In-App Tutorial, Connected Tools & Live MCP Log**: Built directly into **Settings → MCP Bridge** — includes an interactive **Setup Tutorial** (`McpSetupTutorialPanel`) with copyable config snippets for Claude Desktop / Cursor / VS Code / Windsurf, a **Connected Tools** capability matrix (`McpConnectedToolsPanel`) with a searchable 138-tool catalog, and a live **MCP Log** (`McpLogPanel`) with JSON-RPC payload inspection.
+- **In-App Tutorial, Connected Tools & Live MCP Log**: Built directly into **Settings → MCP Bridge** — includes an interactive **Setup Tutorial** (`McpSetupTutorialPanel`) with copyable config snippets for Claude Desktop / Cursor / VS Code / Windsurf, a **Connected Tools** capability matrix (`McpConnectedToolsPanel`) with a searchable 139-tool catalog, and a live **MCP Log** (`McpLogPanel`) with JSON-RPC payload inspection.
 - **Security Controls**: Loopback-only (`127.0.0.1` / `localhost`) WebSocket validation, optional `OMNIDESK_MCP_TOKEN` handshake, strict `OMNIDESK_WORKSPACE_DIR` path confinement, `readonly` vs `readwrite` permission enforcement, and workspace lock guard.
 
 ### 🔌 Tutorial: How to Connect Any Desktop AI to OmniDesk
@@ -565,13 +566,13 @@ npm run tauri dev
 │   │   ├── files/             # Multi-Format Converter Hub, PDF Studio, PDF Toolkit, CSV Grid Editor, Resume Builder, Audio Editor, Photo Compressor, Screen/Webcam Recorder...
 │   │   ├── programming/       # Hash Suite, AES Studio, CSS Visual Studio, Mock Data Generator, Snippet Vault, CIDR, Cron, Encoding, UUID, JSONPath...
 │   │   ├── planning/          # Calendar, Habits, Packing Checklists, Flashcards, Shopping List...
-│   │   ├── math/              # Classic Scientific Calculator, Equation Solver, Calculus, Linear Programming, ODE/Slope Field, Graph Theory, Sequences/Series, Probability, Curve Fitting, Vectors, Complex, Geometry, Fractions, Boolean/K-Map, Formula Pad, Error Propagation, Matrix, 2D Grapher, LaTeX, Statistics...
+│   │   ├── math/              # Classic Scientific Calculator, Chart & Statistics Graph Studio (17 chart families), Equation Solver, Calculus, Linear Programming, ODE/Slope Field, Graph Theory, Sequences/Series, Probability, Curve Fitting, Vectors, Complex, Geometry, Fractions, Boolean/K-Map, Formula Pad, Error Propagation, Matrix, 2D Grapher, LaTeX, Statistics...
 │   │   ├── science/           # 118-Element Chemistry, Balancer, pH/Titration, Dilutions, VSEPR, Thermochemistry, Electrochemistry, Isotope Decay, Thermo/Heat/Psychrometrics, Kinetics/Arrhenius, Spectroscopy/Beer-Lambert, Optics, Fourier/Bode/Doppler, Orbital Mechanics, PCR/Bio, Materials/CODATA, Electronics/Op-Amp/555/PCB, Physics, DNA, Ephemeris...
 │   │   ├── finance/           # Currency/Crypto, Loans, Debt Payoff, Rent vs. Buy, Dividend/DRIP, Options/Black-Scholes/Kelly, Bond Yield/Duration, Fuel/EV Trip, FIRE, Portfolio, NPV/IRR, Freelance & Salary Tax
 │   │   ├── utilities/         # Color Studio, SVG Optimizer, Lorem Ipsum, Random Picker, QR Reader, Recipe Scaler, Noise Mixer...
 │   │   ├── desktop/           # Desktop-Only Tauri tools: Port & Process Manager, Network Diagnostics & WoL, Auto-Clicker & Key Presser, Keep-Awake & Mouse Jiggler
 │   │   ├── expanded/          # Budget & Subscriptions, Investment & Inflation, Invoice Generator (PDF/DOCX/CSV/HTML/JSON) & workspace utilities
-│   │   └── registry.ts        # Central 138-tool lazy registry & Everyday Basics metadata
+│   │   └── registry.ts        # Central 139-tool lazy registry & Everyday Basics metadata
 │   ├── utils/                 # financeSuite.logic, scienceMathExt.logic, mathSuite.logic, scienceSuite.logic, invoiceExport.logic, colorMath, safeMathParser, sqlPlaygroundEngine & pure calculation helpers
 │   ├── workers/               # Dedicated ES module Web Workers (photoCompress.worker, hashSuite.worker)
 │   ├── __tests__/             # Vitest unit, storage & registry test suites

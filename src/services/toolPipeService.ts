@@ -25,6 +25,8 @@ export const PIPE_TARGET_OPTIONS: PipeTargetOption[] = [
   { toolId: 'encoding-suite', labelKey: 'pipe_target_encoding_suite', defaultLabel: 'Encoding Suite', acceptedKinds: ['text'] },
   { toolId: 'case-converter', labelKey: 'pipe_target_case_converter', defaultLabel: 'Case Converter', acceptedKinds: ['text'] },
   { toolId: 'csv-editor', labelKey: 'pipe_target_csv_editor', defaultLabel: 'CSV & Spreadsheet Grid Editor', acceptedKinds: ['text'] },
+  { toolId: 'chart-studio', labelKey: 'pipe_target_chart_studio', defaultLabel: 'Chart & Statistics Graph Studio', acceptedKinds: ['text'] },
+  { toolId: 'diagram-editor', labelKey: 'pipe_target_diagram_editor', defaultLabel: 'Diagram Studio (SQL ERD / UML)', acceptedKinds: ['text'] },
   { toolId: 'snippet-vault', labelKey: 'pipe_target_snippet_vault', defaultLabel: 'Snippet Vault', acceptedKinds: ['text'] },
   { toolId: 'color-studio', labelKey: 'pipe_target_color_studio', defaultLabel: 'Color Picker & Studio', acceptedKinds: ['color'] },
   { toolId: 'wcag-validator', labelKey: 'pipe_target_wcag_contrast', defaultLabel: 'WCAG Contrast Validator', acceptedKinds: ['color'] },
@@ -76,16 +78,16 @@ export function getMatchingToolIdsForFile(fileName: string, mimeType = ''): stri
     return ['multi-converter', 'image-editor', 'photo-compressor', 'ocr-scanner', 'color-picker', 'qr-barcode-reader', 'file-inspector'];
   }
   if (['xlsx', 'xls', 'ods'].includes(ext)) {
-    return ['multi-converter', 'file-inspector', 'hash-checksum-suite'];
+    return ['chart-studio', 'multi-converter', 'file-inspector', 'hash-checksum-suite'];
   }
   if (['zip', 'tar', 'gz', 'tgz'].includes(ext) || mime.includes('zip') || mime.includes('gzip')) {
     return ['multi-converter', 'file-inspector', 'hash-checksum-suite'];
   }
   if (ext === 'json' || mime === 'application/json') {
-    return ['json-formatter', 'multi-converter', 'jsonpath-explorer', 'data-converter', 'text-diff', 'text-editor'];
+    return ['json-formatter', 'chart-studio', 'multi-converter', 'jsonpath-explorer', 'data-converter', 'text-diff', 'text-editor'];
   }
   if (['csv', 'tsv'].includes(ext) || mime === 'text/csv') {
-    return ['csv-editor', 'multi-converter', 'data-converter', 'sql-playground', 'text-editor'];
+    return ['csv-editor', 'chart-studio', 'multi-converter', 'data-converter', 'sql-playground', 'text-editor'];
   }
   if (['yaml', 'yml'].includes(ext)) {
     return ['yaml-formatter', 'multi-converter', 'data-converter', 'text-editor', 'text-diff'];
@@ -99,7 +101,10 @@ export function getMatchingToolIdsForFile(fileName: string, mimeType = ''): stri
   if (['mp3', 'wav', 'ogg', 'flac', 'm4a', 'webm', 'aac', 'opus', 'aiff'].includes(ext) || mime.startsWith('audio/')) {
     return ['audio-editor', 'multi-converter', 'file-inspector', 'hash-checksum-suite'];
   }
-  if (['txt', 'log', 'ts', 'tsx', 'js', 'jsx', 'css', 'html', 'sql', 'py', 'rs'].includes(ext) || mime.startsWith('text/')) {
+  if (ext === 'sql') {
+    return ['diagram-editor', 'sql-playground', 'text-editor', 'text-diff'];
+  }
+  if (['txt', 'log', 'ts', 'tsx', 'js', 'jsx', 'css', 'html', 'py', 'rs'].includes(ext) || mime.startsWith('text/')) {
     return ['text-editor', 'multi-converter', 'word-counter-cleaner', 'text-diff', 'hash-checksum-suite', 'file-inspector'];
   }
 
