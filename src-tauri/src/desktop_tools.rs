@@ -618,13 +618,34 @@ pub struct DesktopListeningPort {
     pub process_name: String,
 }
 
+#[derive(Default)]
+pub struct ProcessMonitorState(pub Mutex<Option<System>>);
+
+pub fn clear_process_monitor_cache(app: &AppHandle) {
+    if let Some(state) = app.try_state::<ProcessMonitorState>() {
+        if let Ok(mut guard) = state.0.lock() {
+            *guard = None;
+        }
+    }
+}
+
+#[tauri::command]
+pub fn desktop_release_process_cache(state: State<'_, ProcessMonitorState>) {
+    if let Ok(mut guard) = state.0.lock() {
+        *guard = None;
+    }
+}
+
 #[tauri::command]
 pub fn desktop_list_processes(
     limit: Option<usize>,
-    state: State<'_, Mutex<System>>,
+    state: State<'_, ProcessMonitorState>,
 ) -> Result<Vec<DesktopProcessInfo>, String> {
     let max_items = limit.unwrap_or(150).clamp(10, 500);
-    let mut sys = state.lock().map_err(|e| e.to_string())?;
+    let mut guard = state.0.lock().map_err(|e| e.to_string())?;
+    let sys = guard.get_or_insert_with(|| {
+        System::new_with_specifics(RefreshKind::new().with_cpu(CpuRefreshKind::everything()))
+    });
     sys.refresh_processes();
     let core_count = sys.cpus().len().max(1) as f32;
 
@@ -665,14 +686,15 @@ pub fn desktop_list_processes(
 }
 
 #[tauri::command]
-pub fn desktop_kill_process(pid: u32, state: State<'_, Mutex<System>>) -> Result<bool, String> {
+pub fn desktop_kill_process(pid: u32, state: State<'_, ProcessMonitorState>) -> Result<bool, String> {
     if pid == 0 {
         return Err("Refusing to terminate system PID 0.".to_string());
     }
     if pid == std::process::id() {
         return Err("Refusing to terminate OmniDesk itself.".to_string());
     }
-    let mut sys = state.lock().map_err(|e| e.to_string())?;
+    let mut guard = state.0.lock().map_err(|e| e.to_string())?;
+    let sys = guard.get_or_insert_with(System::new);
     sys.refresh_processes();
     let Some(process) = sys.process(Pid::from_u32(pid)) else {
         return Err(format!("Process with PID {} was not found.", pid));
@@ -704,14 +726,25 @@ fn parse_addr_and_port(endpoint: &str) -> Option<(String, u16)> {
 }
 
 #[tauri::command]
-pub fn desktop_list_ports(state: State<'_, Mutex<System>>) -> Result<Vec<DesktopListeningPort>, String> {
+pub fn desktop_list_ports(state: State<'_, ProcessMonitorState>) -> Result<Vec<DesktopListeningPort>, String> {
     let pid_names: HashMap<u32, String> = {
-        let mut sys = state.lock().map_err(|e| e.to_string())?;
-        sys.refresh_processes();
-        sys.processes()
-            .iter()
-            .map(|(pid, p)| (pid.as_u32(), p.name().to_string()))
-            .collect()
+        let mut guard = state.0.lock().map_err(|e| e.to_string())?;
+        if let Some(sys) = guard.as_mut() {
+            sys.refresh_processes();
+            sys.processes()
+                .iter()
+                .map(|(pid, p)| (pid.as_u32(), p.name().to_string()))
+                .collect()
+        } else {
+            drop(guard);
+            let mut temp_sys = System::new();
+            temp_sys.refresh_processes();
+            temp_sys
+                .processes()
+                .iter()
+                .map(|(pid, p)| (pid.as_u32(), p.name().to_string()))
+                .collect()
+        }
     };
 
     let mut ports: Vec<DesktopListeningPort> = Vec::new();
@@ -1352,12 +1385,11 @@ pub fn spawn_global_hotkey_watcher(inner: Arc<AutoClickerInner>) {
     std::thread::spawn(move || {
         let mut was_down = false;
         loop {
-            let hotkey = inner
+            let is_down = inner
                 .active_hotkey
                 .lock()
-                .map(|g| g.clone())
-                .unwrap_or_else(|_| "F6".to_string());
-            let is_down = platform_native::is_hotkey_pressed(&hotkey);
+                .map(|g| platform_native::is_hotkey_pressed(g.as_str()))
+                .unwrap_or_else(|_| platform_native::is_hotkey_pressed("F6"));
             if is_down && !was_down {
                 if inner.running.load(Ordering::SeqCst) {
                     inner.stop_signal.store(true, Ordering::SeqCst);
@@ -1647,6 +1679,7 @@ pub fn shutdown_desktop_workers(app: &AppHandle) {
     if let Some(ka) = app.try_state::<KeepAwakeState>() {
         stop_keepawake_inner(&ka.0);
     }
+    clear_process_monitor_cache(app);
 }
 
 // ─── 5. Native PC Hardware Specs & Disk Inventory ────────────────────────────

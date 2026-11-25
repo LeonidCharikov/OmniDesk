@@ -32,7 +32,9 @@ import {
   getDesktopHardwareSpecs,
   getDesktopSystemTelemetry,
   listDesktopProcesses,
+  releaseDesktopProcessCache,
 } from '../../services/desktopToolsService';
+import { useDocumentVisible } from '../../hooks/useDocumentVisibility';
 import { DesktopOnlyGuard } from '../desktop/DesktopOnlyGuard';
 
 const HISTORY_LENGTH = 30;
@@ -113,6 +115,7 @@ function getVendorBadgeClass(vendor: string): string {
 export const SystemMonitorTool: React.FC = () => {
   const { t } = useI18n();
   const runningInTauri = isTauri();
+  const isDocumentVisible = useDocumentVisible();
 
   const [specs, setSpecs] = useState<HardwareSpecs | null>(null);
   const [specsLoading, setSpecsLoading] = useState(false);
@@ -175,13 +178,20 @@ export const SystemMonitorTool: React.FC = () => {
   }, [runningInTauri, loadHardwareSpecs]);
 
   useEffect(() => {
-    if (!runningInTauri || isPaused) return;
+    if (!runningInTauri || isPaused || !isDocumentVisible) return;
     void pollTelemetry();
     const timer = window.setInterval(() => {
       void pollTelemetry();
     }, pollIntervalMs);
     return () => window.clearInterval(timer);
-  }, [runningInTauri, isPaused, pollIntervalMs, pollTelemetry]);
+  }, [runningInTauri, isPaused, isDocumentVisible, pollIntervalMs, pollTelemetry]);
+
+  useEffect(() => {
+    if (!runningInTauri) return;
+    return () => {
+      void releaseDesktopProcessCache().catch(() => {});
+    };
+  }, [runningInTauri]);
 
   const topProcesses = useMemo(
     () => filterAndSortProcesses(processes, '', procSort, 'desc').slice(0, 10),

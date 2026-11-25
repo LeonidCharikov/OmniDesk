@@ -171,6 +171,12 @@ export interface ThermalSensorInfo {
   critical_c: number | null;
 }
 
+export interface BasicSystemTelemetry {
+  cpu_usage: number;
+  ram_used_gb: number;
+  ram_total_gb: number;
+}
+
 export interface NativeSystemTelemetry {
   cpu_usage: number;
   cpu_freq_mhz: number;
@@ -538,9 +544,19 @@ export async function getDesktopKeepAwakeStatus(): Promise<KeepAwakeStatus> {
   return invokeRustCommand<KeepAwakeStatus>('desktop_keepawake_status');
 }
 
+export async function getDesktopBasicTelemetry(): Promise<BasicSystemTelemetry> {
+  ensureDesktopRuntime();
+  return invokeRustCommand<BasicSystemTelemetry>('get_basic_system_telemetry');
+}
+
 export async function getDesktopSystemTelemetry(): Promise<NativeSystemTelemetry> {
   ensureDesktopRuntime();
   return invokeRustCommand<NativeSystemTelemetry>('get_system_telemetry');
+}
+
+export async function releaseDesktopProcessCache(): Promise<void> {
+  if (!isTauri()) return;
+  await invokeRustCommand<void>('desktop_release_process_cache');
 }
 
 export async function getDesktopHardwareSpecs(): Promise<HardwareSpecs> {

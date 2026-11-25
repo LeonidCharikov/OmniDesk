@@ -10,6 +10,7 @@ import {
 } from '../types/tool';
 import { DEFAULT_SHORTCUTS, normalizeComboString } from './shortcutsService';
 import { isLightTheme, isValidThemeId } from './themes';
+import { normalizeWidgetSlotList } from '../utils/widgetCustomization';
 
 const CONFIG_KEY = 'omnidesk_user_config_v2';
 const LEGACY_KEY = 'omnidesk_user_config_v1';
@@ -126,18 +127,18 @@ export function loadUserConfig(): UserConfig {
         : Array.isArray(parsed.enabledWidgets)
         ? parsed.enabledWidgets
         : DEFAULT_WIDGETS.enabledWidgets,
-      selectedCities:
-        Array.isArray(parsed.widgets?.selectedCities) && parsed.widgets.selectedCities.length
-          ? parsed.widgets.selectedCities.slice(0, 3)
-          : [parsed.widgets?.selectedCity || DEFAULT_WIDGETS.selectedCity],
-      selectedFiats:
-        Array.isArray(parsed.widgets?.selectedFiats) && parsed.widgets.selectedFiats.length
-          ? parsed.widgets.selectedFiats.slice(0, 3)
-          : [parsed.widgets?.selectedFiat || DEFAULT_WIDGETS.selectedFiat],
-      selectedCryptos:
-        Array.isArray(parsed.widgets?.selectedCryptos) && parsed.widgets.selectedCryptos.length
-          ? parsed.widgets.selectedCryptos.slice(0, 3)
-          : [parsed.widgets?.selectedCrypto || DEFAULT_WIDGETS.selectedCrypto],
+      selectedCities: normalizeWidgetSlotList(
+        parsed.widgets?.selectedCities,
+        parsed.widgets?.selectedCity || DEFAULT_WIDGETS.selectedCity
+      ),
+      selectedFiats: normalizeWidgetSlotList(
+        parsed.widgets?.selectedFiats,
+        parsed.widgets?.selectedFiat || DEFAULT_WIDGETS.selectedFiat
+      ),
+      selectedCryptos: normalizeWidgetSlotList(
+        parsed.widgets?.selectedCryptos,
+        parsed.widgets?.selectedCrypto || DEFAULT_WIDGETS.selectedCrypto
+      ),
       timerDurationMinutes:
         typeof parsed.widgets?.timerDurationMinutes === 'number'
           ? Math.min(180, Math.max(1, parsed.widgets.timerDurationMinutes))
@@ -242,15 +243,18 @@ export function validateConfigJson(
         selectedCityName: parsed.widgets?.selectedCityName || DEFAULT_WIDGETS.selectedCityName,
         selectedFiat: parsed.widgets?.selectedFiat || DEFAULT_WIDGETS.selectedFiat,
         selectedCrypto: parsed.widgets?.selectedCrypto || DEFAULT_WIDGETS.selectedCrypto,
-        selectedCities: Array.isArray(parsed.widgets?.selectedCities)
-          ? parsed.widgets.selectedCities.slice(0, 3)
-          : [parsed.widgets?.selectedCity || DEFAULT_WIDGETS.selectedCity],
-        selectedFiats: Array.isArray(parsed.widgets?.selectedFiats)
-          ? parsed.widgets.selectedFiats.slice(0, 3)
-          : [parsed.widgets?.selectedFiat || DEFAULT_WIDGETS.selectedFiat],
-        selectedCryptos: Array.isArray(parsed.widgets?.selectedCryptos)
-          ? parsed.widgets.selectedCryptos.slice(0, 3)
-          : [parsed.widgets?.selectedCrypto || DEFAULT_WIDGETS.selectedCrypto],
+        selectedCities: normalizeWidgetSlotList(
+          parsed.widgets?.selectedCities,
+          parsed.widgets?.selectedCity || DEFAULT_WIDGETS.selectedCity
+        ),
+        selectedFiats: normalizeWidgetSlotList(
+          parsed.widgets?.selectedFiats,
+          parsed.widgets?.selectedFiat || DEFAULT_WIDGETS.selectedFiat
+        ),
+        selectedCryptos: normalizeWidgetSlotList(
+          parsed.widgets?.selectedCryptos,
+          parsed.widgets?.selectedCrypto || DEFAULT_WIDGETS.selectedCrypto
+        ),
         timerDurationMinutes:
           typeof parsed.widgets?.timerDurationMinutes === 'number'
             ? Math.min(180, Math.max(1, parsed.widgets.timerDurationMinutes))

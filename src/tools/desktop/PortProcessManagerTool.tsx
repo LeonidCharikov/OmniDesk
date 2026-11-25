@@ -23,7 +23,9 @@ import {
   killDesktopProcess,
   listDesktopPorts,
   listDesktopProcesses,
+  releaseDesktopProcessCache,
 } from '../../services/desktopToolsService';
+import { useDocumentVisible } from '../../hooks/useDocumentVisibility';
 import { DesktopOnlyGuard } from './DesktopOnlyGuard';
 
 const DEV_PORT_PRESETS = ['3000', '5173', '8080', '8000', '5432', '6379'];
@@ -31,6 +33,7 @@ const DEV_PORT_PRESETS = ['3000', '5173', '8080', '8000', '5432', '6379'];
 export const PortProcessManagerTool: React.FC = () => {
   const { t } = useI18n();
   const runningInTauri = isTauri();
+  const isDocumentVisible = useDocumentVisible();
 
   const [activeTab, setActiveTab] = useState<'ports' | 'processes'>('ports');
   const [ports, setPorts] = useState<DesktopListeningPort[]>([]);
@@ -69,12 +72,19 @@ export const PortProcessManagerTool: React.FC = () => {
   }, [refreshData]);
 
   useEffect(() => {
-    if (!runningInTauri || autoRefreshSec <= 0) return;
+    if (!runningInTauri || autoRefreshSec <= 0 || !isDocumentVisible) return;
     const timer = window.setInterval(() => {
       void refreshData();
     }, autoRefreshSec * 1000);
     return () => window.clearInterval(timer);
-  }, [runningInTauri, autoRefreshSec, refreshData]);
+  }, [runningInTauri, autoRefreshSec, isDocumentVisible, refreshData]);
+
+  useEffect(() => {
+    if (!runningInTauri) return;
+    return () => {
+      void releaseDesktopProcessCache().catch(() => {});
+    };
+  }, [runningInTauri]);
 
   const filteredPorts = useMemo(
     () => filterListeningPorts(ports, searchQuery, protocolFilter),

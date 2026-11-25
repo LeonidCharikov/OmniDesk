@@ -30,7 +30,7 @@ import { WidgetCustomization, DailyTask } from '../../types/tool';
 import { isTauri } from '../../services/fileSystemService';
 import {
   calculateUsagePercent,
-  getDesktopSystemTelemetry,
+  getDesktopBasicTelemetry,
 } from '../../services/desktopToolsService';
 import {
   getSavedRates,
@@ -41,6 +41,11 @@ import {
   SUPPORTED_FIAT_CURRENCIES,
 } from '../../services/currencyService';
 import { evaluateSafeMathExpression } from '../../utils/safeMathParser';
+import { useDocumentVisible } from '../../hooks/useDocumentVisibility';
+import {
+  normalizeWidgetSlotList,
+  selectPrimaryWidgetSlot,
+} from '../../utils/widgetCustomization';
 
 interface SidebarWidgetsProps {
   widgets: WidgetCustomization;
@@ -228,18 +233,27 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
   isCollapsed,
 }) => {
   const { t, language } = useI18n();
+  const isDocumentVisible = useDocumentVisible();
   const [now, setNow] = useState(new Date());
 
-  // Active selected crypto and fiat currency
-  const activeCrypto = widgets.selectedCrypto || 'BTC';
-  const activeFiat = widgets.selectedFiat || defaultCurrency || 'CZK';
+  // Active selected crypto and fiat currencies (normalized & respecting configured count)
+  const trackedCryptos = normalizeWidgetSlotList(
+    widgets.selectedCryptos,
+    widgets.selectedCrypto || 'BTC'
+  );
+  const trackedFiats = normalizeWidgetSlotList(
+    widgets.selectedFiats,
+    widgets.selectedFiat || defaultCurrency || 'CZK'
+  );
+  const activeCrypto = trackedCryptos[0];
+  const activeFiat = trackedFiats[0];
   const [isRefreshingRates, setIsRefreshingRates] = useState(false);
 
   const handleSelectCrypto = (cryptoCode: string) => {
     if (onUpdateWidgetCustomization) {
       onUpdateWidgetCustomization({
         selectedCrypto: cryptoCode,
-        selectedCryptos: [cryptoCode, ...(widgets.selectedCryptos?.filter(c => c !== cryptoCode) || [])].slice(0, 3),
+        selectedCryptos: selectPrimaryWidgetSlot(trackedCryptos, cryptoCode, 'BTC'),
       });
     }
   };
@@ -248,7 +262,11 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
     if (onUpdateWidgetCustomization) {
       onUpdateWidgetCustomization({
         selectedFiat: fiatCode,
-        selectedFiats: [fiatCode, ...(widgets.selectedFiats?.filter(f => f !== fiatCode) || [])].slice(0, 3),
+        selectedFiats: selectPrimaryWidgetSlot(
+          trackedFiats,
+          fiatCode,
+          defaultCurrency || 'CZK'
+        ),
       });
     }
   };
@@ -324,20 +342,39 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
     return () => window.removeEventListener('omnidesk-rates-updated', handleUpdate);
   }, []);
 
-  // Live clock tick
+  const enabledList = widgets.enabledWidgets || [];
+  const isClockWidgetEnabled = enabledList.includes('clock');
+  const isSystemWidgetEnabled = enabledList.includes('system');
+  const isCompactModeNow =
+    widgetLayoutPref === 'compact' || (widgetLayoutPref === 'auto' && isCompactViewport);
+  const isClockVisible =
+    isDocumentVisible &&
+    isClockWidgetEnabled &&
+    !isCollapsed &&
+    isWidgetsExpanded &&
+    (!isCompactModeNow || activeCompactTab === 'clock');
+  const isSystemWidgetVisible =
+    isDocumentVisible &&
+    isSystemWidgetEnabled &&
+    !isCollapsed &&
+    isWidgetsExpanded &&
+    (!isCompactModeNow || activeCompactTab === 'system');
+
+  // Live clock tick (pauses automatically when minimized, hidden to tray, or clock widget hidden)
   useEffect(() => {
+    if (!isClockVisible) return;
+    setNow(new Date());
     const interval = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [isClockVisible]);
 
-  // Real native OS telemetry polling for the mini system gauge (desktop only)
-  const isSystemWidgetEnabled = (widgets.enabledWidgets || []).includes('system');
+  // Lightweight native CPU + RAM telemetry polling (desktop only; pauses when hidden/minimized)
   useEffect(() => {
-    if (!isSystemWidgetEnabled || !isTauri()) return;
+    if (!isSystemWidgetVisible || !isTauri()) return;
     let cancelled = false;
     const poll = async () => {
       try {
-        const data = await getDesktopSystemTelemetry();
+        const data = await getDesktopBasicTelemetry();
         if (cancelled) return;
         setCpuUsage(Math.round(Math.max(0, Math.min(100, data.cpu_usage))));
         setRamUsage(Math.round(calculateUsagePercent(data.ram_used_gb, data.ram_total_gb)));
@@ -353,7 +390,7 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
       cancelled = true;
       clearInterval(interval);
     };
-  }, [isSystemWidgetEnabled]);
+  }, [isSystemWidgetVisible]);
 
   // Mini timer countdown
   useEffect(() => {
@@ -395,7 +432,10 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
 
   const locale = language === 'ru' ? 'ru-RU' : language === 'en' ? 'en-US' : language === 'de' ? 'de-DE' : language === 'es' ? 'es-ES' : 'cs-CZ';
 
-  const selectedCityKeys = (widgets.selectedCities?.length ? widgets.selectedCities : [widgets.selectedCity || 'Europe/Prague']).slice(0, 3);
+  const selectedCityKeys = normalizeWidgetSlotList(
+    widgets.selectedCities,
+    widgets.selectedCity || 'Europe/Prague'
+  );
   const customTimerSeconds = Math.min(180, Math.max(1, widgets.timerDurationMinutes || 25)) * 60;
 
   const enabled = widgets.enabledWidgets || [];
@@ -411,23 +451,30 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
     return null;
   }
 
-  // Live crypto computation for active selected crypto in user's selected fiat currency
-  const currentCryptoItem = ratesData.crypto[activeCrypto] || ratesData.crypto['BTC'] || {
-    name: 'Bitcoin',
-    symbol: 'BTC',
-    usdPrice: 71500,
-    change24h: 2.8,
-  };
+  // Live crypto computation for all configured cryptos in user's active fiat currency
+  const trackedCryptoCards = trackedCryptos.map(code => {
+    const item = ratesData.crypto[code] || ratesData.crypto['BTC'] || {
+      name: 'Bitcoin',
+      symbol: code,
+      usdPrice: 71500,
+      change24h: 2.8,
+    };
+    const priceInActiveFiat = convertCryptoToFiat(item.usdPrice, activeFiat, ratesData.fiat);
+    return {
+      code,
+      name: item.name,
+      symbol: item.symbol || code,
+      change24h: item.change24h,
+      formattedPrice: formatCurrency(priceInActiveFiat, activeFiat),
+    };
+  });
+  const primaryCryptoCard = trackedCryptoCards[0];
+  const secondaryCryptoCards = trackedCryptoCards.slice(1);
 
-  const cryptoPriceInActiveFiat = convertCryptoToFiat(currentCryptoItem.usdPrice, activeFiat, ratesData.fiat);
-  const formattedCryptoPrice = formatCurrency(cryptoPriceInActiveFiat, activeFiat);
-
-  // Compute foreign exchange rates relative to activeFiat
+  // Compute foreign exchange rates only for additional selected fiat currencies relative to activeFiat
   const activeFiatRateInCzk = ratesData.fiat[activeFiat]?.rate || 1;
   const activeFiatSymbol = getCurrencySymbol(activeFiat);
-
-  const referenceCandidates = ['EUR', 'USD', 'CZK', 'GBP', 'CHF', 'PLN'];
-  const refCurrencies = referenceCandidates.filter(c => c !== activeFiat).slice(0, 3);
+  const refCurrencies = trackedFiats.slice(1).filter(c => c !== activeFiat);
 
   const fxRates = refCurrencies.map(refCode => {
     const refRateInCzk = ratesData.fiat[refCode]?.rate || 1;
@@ -487,7 +534,7 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
     const city = CITY_NAMES_LOCALE[timezone]?.[language] || timezone;
     const clockTime = new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false, timeZone: timezone }).format(now);
     const clockDate = new Intl.DateTimeFormat(locale, { weekday: 'short', day: 'numeric', month: 'short', timeZone: timezone }).format(now);
-    return { city, clockTime, clockDate };
+    return { timezone, city, clockTime, clockDate };
   });
 
   if (isCollapsed) {
@@ -504,11 +551,10 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
     { id: 'system', show: showSystem, icon: Cpu, title: t('widget_system_gauge', 'System Gauge') },
   ].filter(item => item.show);
 
-  const isCompactView =
-    widgetLayoutPref === 'compact' || (widgetLayoutPref === 'auto' && isCompactViewport);
+  const isCompactView = isCompactModeNow;
 
   const renderClock = showClock && (!isCompactView || activeCompactTab === 'clock') && cityCards.map(card => (
-    <div key={card.city} className="p-2.5 rounded-lg bg-slate-900/40 border border-slate-800/60 space-y-1">
+    <div key={card.timezone} className="p-2.5 rounded-lg bg-slate-900/40 border border-slate-800/60 space-y-1">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5 text-slate-400 text-xs">
           <Clock className="w-3 h-3 text-indigo-400" />
@@ -641,33 +687,50 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
       <div className="p-1.5 rounded bg-slate-950/60 border border-slate-800/80 space-y-0.5">
         <div className="flex items-center justify-between text-[11px]">
           <span className="font-mono font-bold text-white flex items-center gap-1">
-            {currentCryptoItem.symbol}
-            <span className="text-[9px] font-normal text-slate-400">({currentCryptoItem.name})</span>
+            {primaryCryptoCard.symbol}
+            <span className="text-[9px] font-normal text-slate-400">({primaryCryptoCard.name})</span>
           </span>
-          <span className={`font-mono text-[10px] font-medium flex items-center ${currentCryptoItem.change24h >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-            {currentCryptoItem.change24h >= 0 ? <ArrowUpRight className="w-2.5 h-2.5" /> : <ArrowDownRight className="w-2.5 h-2.5" />}
-            {currentCryptoItem.change24h >= 0 ? `+${currentCryptoItem.change24h}%` : `${currentCryptoItem.change24h}%`}
+          <span className={`font-mono text-[10px] font-medium flex items-center ${primaryCryptoCard.change24h >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+            {primaryCryptoCard.change24h >= 0 ? <ArrowUpRight className="w-2.5 h-2.5" /> : <ArrowDownRight className="w-2.5 h-2.5" />}
+            {primaryCryptoCard.change24h >= 0 ? `+${primaryCryptoCard.change24h}%` : `${primaryCryptoCard.change24h}%`}
           </span>
         </div>
         <div className="text-sm font-mono font-bold text-emerald-300 tracking-tight">
-          {formattedCryptoPrice}
+          {primaryCryptoCard.formattedPrice}
         </div>
+        {secondaryCryptoCards.length > 0 && (
+          <div className="pt-1 mt-1 border-t border-slate-800/70 space-y-0.5">
+            {secondaryCryptoCards.map(item => (
+              <button
+                key={item.code}
+                type="button"
+                onClick={() => handleSelectCrypto(item.code)}
+                className="w-full flex items-center justify-between text-[10px] font-mono hover:bg-slate-900/70 rounded px-1 py-0.5 transition-colors"
+              >
+                <span className="text-slate-300 font-semibold">{item.symbol}</span>
+                <span className="text-emerald-300">{item.formattedPrice}</span>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
-      <div className="pt-1.5 border-t border-slate-800/60 space-y-1">
-        <div className="flex items-center justify-between text-[9px] font-semibold text-slate-500 uppercase tracking-wider">
-          <span>{t('exchange_rates_in', 'Rates')} ({activeFiat}):</span>
-          <span className="text-[9px] font-normal text-slate-400">{ratesData.timestamp || 'Live'}</span>
+      {fxRates.length > 0 && (
+        <div className="pt-1.5 border-t border-slate-800/60 space-y-1">
+          <div className="flex items-center justify-between text-[9px] font-semibold text-slate-500 uppercase tracking-wider">
+            <span>{t('exchange_rates_in', 'Rates')} ({activeFiat}):</span>
+            <span className="text-[9px] font-normal text-slate-400">{ratesData.timestamp || 'Live'}</span>
+          </div>
+          <div className="space-y-0.5">
+            {fxRates.map(fx => (
+              <div key={fx.pair} className="flex items-center justify-between text-[10px] font-mono">
+                <span className="text-slate-400">{fx.pair} =</span>
+                <span className="text-slate-200 font-semibold">{fx.value}</span>
+              </div>
+            ))}
+          </div>
         </div>
-        <div className="space-y-0.5">
-          {fxRates.map(fx => (
-            <div key={fx.pair} className="flex items-center justify-between text-[10px] font-mono">
-              <span className="text-slate-400">{fx.pair} =</span>
-              <span className="text-slate-200 font-semibold">{fx.value}</span>
-            </div>
-          ))}
-        </div>
-      </div>
+      )}
     </div>
   );
 

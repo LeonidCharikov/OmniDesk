@@ -13,12 +13,13 @@ use tauri_plugin_clipboard_manager::ClipboardExt;
 
 mod desktop_tools;
 use desktop_tools::{
-    AutoClickerState, DiskDriveInfo, KeepAwakeState, collect_disk_drives,
-    desktop_autoclicker_set_hotkey, desktop_autoclicker_start, desktop_autoclicker_status,
-    desktop_autoclicker_stop, desktop_cursor_position, desktop_get_hardware_specs,
-    desktop_keepawake_start, desktop_keepawake_status, desktop_keepawake_stop,
-    desktop_kill_process, desktop_list_ports, desktop_list_processes, desktop_net_dns_lookup,
-    desktop_net_interfaces, desktop_net_ping, desktop_net_tcp_check, desktop_net_wol,
+    AutoClickerState, DiskDriveInfo, KeepAwakeState, ProcessMonitorState,
+    clear_process_monitor_cache, collect_disk_drives, desktop_autoclicker_set_hotkey,
+    desktop_autoclicker_start, desktop_autoclicker_status, desktop_autoclicker_stop,
+    desktop_cursor_position, desktop_get_hardware_specs, desktop_keepawake_start,
+    desktop_keepawake_status, desktop_keepawake_stop, desktop_kill_process, desktop_list_ports,
+    desktop_list_processes, desktop_net_dns_lookup, desktop_net_interfaces, desktop_net_ping,
+    desktop_net_tcp_check, desktop_net_wol, desktop_release_process_cache,
     shutdown_desktop_workers, spawn_global_hotkey_watcher,
 };
 
@@ -63,7 +64,7 @@ struct CliOpenedFilePayload {
 }
 
 struct TelemetryMonitorState {
-    sys: System,
+    sys: Option<System>,
     last_cpu_refresh: Instant,
     cached_cpu_usage: f32,
     cached_cores: Vec<f32>,
@@ -72,24 +73,41 @@ struct TelemetryMonitorState {
 
 impl TelemetryMonitorState {
     fn new() -> Self {
-        let sys = System::new_with_specifics(
-            RefreshKind::new()
-                .with_cpu(CpuRefreshKind::everything())
-                .with_memory(MemoryRefreshKind::everything()),
-        );
-        let core_count = sys.cpus().len();
-        let freq = sys.cpus().first().map(|c| c.frequency()).unwrap_or(0);
         // Backdate last_cpu_refresh so the very first UI poll immediately samples delta usage
         let initial_refresh = Instant::now()
             .checked_sub(Duration::from_secs(1))
             .unwrap_or_else(Instant::now);
         Self {
-            sys,
+            sys: None,
             last_cpu_refresh: initial_refresh,
             cached_cpu_usage: 0.0,
-            cached_cores: vec![0.0; core_count],
-            cached_cpu_freq_mhz: freq,
+            cached_cores: Vec::new(),
+            cached_cpu_freq_mhz: 0,
         }
+    }
+
+    fn ensure_sys(&mut self) -> &mut System {
+        if self.sys.is_none() {
+            let sys = System::new_with_specifics(
+                RefreshKind::new()
+                    .with_cpu(CpuRefreshKind::everything())
+                    .with_memory(MemoryRefreshKind::everything()),
+            );
+            let core_count = sys.cpus().len();
+            self.cached_cpu_freq_mhz = sys.cpus().first().map(|c| c.frequency()).unwrap_or(0);
+            self.cached_cores = vec![0.0; core_count];
+            self.last_cpu_refresh = Instant::now()
+                .checked_sub(Duration::from_secs(1))
+                .unwrap_or_else(Instant::now);
+            self.sys = Some(sys);
+        }
+        self.sys.as_mut().expect("telemetry system initialized")
+    }
+
+    fn clear(&mut self) {
+        self.sys = None;
+        self.cached_cores.clear();
+        self.cached_cores.shrink_to_fit();
     }
 }
 
@@ -99,6 +117,13 @@ struct ThermalSensorInfo {
     temp_c: f32,
     max_c: Option<f32>,
     critical_c: Option<f32>,
+}
+
+#[derive(Serialize)]
+struct BasicSystemTelemetry {
+    cpu_usage: f32,
+    ram_used_gb: f64,
+    ram_total_gb: f64,
 }
 
 #[derive(Serialize)]
@@ -119,6 +144,37 @@ struct NativeSystemTelemetry {
     load_avg_5m: f64,
     load_avg_15m: f64,
     temperatures: Vec<ThermalSensorInfo>,
+}
+
+#[cfg(target_os = "windows")]
+fn trim_process_working_set() {
+    #[link(name = "kernel32")]
+    unsafe extern "system" {
+        fn GetCurrentProcess() -> *mut std::ffi::c_void;
+        fn SetProcessWorkingSetSize(
+            h_process: *mut std::ffi::c_void,
+            dw_minimum_working_set_size: usize,
+            dw_maximum_working_set_size: usize,
+        ) -> i32;
+    }
+
+    unsafe {
+        let handle = GetCurrentProcess();
+        let _ = SetProcessWorkingSetSize(handle, usize::MAX, usize::MAX);
+    }
+}
+
+#[cfg(not(target_os = "windows"))]
+fn trim_process_working_set() {}
+
+fn release_idle_memory(app: &AppHandle) {
+    clear_process_monitor_cache(app);
+    if let Some(telemetry_state) = app.try_state::<Mutex<TelemetryMonitorState>>() {
+        if let Ok(mut guard) = telemetry_state.lock() {
+            guard.clear();
+        }
+    }
+    trim_process_working_set();
 }
 
 fn window_state_path(app: &AppHandle) -> Option<PathBuf> {
@@ -254,56 +310,125 @@ fn restore_window_state(app: &AppHandle, window: &WebviewWindow) {
     }
 }
 
-#[tauri::command]
-fn get_system_telemetry(
-    state: State<'_, Mutex<TelemetryMonitorState>>,
-) -> Result<NativeSystemTelemetry, String> {
-    let mut guard = state.lock().map_err(|e| e.to_string())?;
-    guard
-        .sys
-        .refresh_specifics(RefreshKind::new().with_memory(MemoryRefreshKind::everything()));
+struct CpuMemorySnapshot {
+    cpu_usage: f32,
+    cpu_freq_mhz: u64,
+    cores: Vec<f32>,
+    ram_used_gb: f64,
+    ram_total_gb: f64,
+    ram_available_gb: f64,
+    swap_used_gb: f64,
+    swap_total_gb: f64,
+}
 
-    // Enforce >= 250ms between sysinfo CPU delta samples so concurrent pollers never read 0%
-    if guard.last_cpu_refresh.elapsed() >= Duration::from_millis(250) {
-        guard
-            .sys
-            .refresh_specifics(RefreshKind::new().with_cpu(CpuRefreshKind::everything()));
-        let raw_global = guard.sys.global_cpu_info().cpu_usage();
-        guard.cached_cpu_usage = if raw_global.is_finite() {
-            raw_global.clamp(0.0, 100.0)
-        } else {
-            0.0
-        };
-        guard.cached_cores = guard
-            .sys
-            .cpus()
-            .iter()
-            .map(|c| {
-                let u = c.cpu_usage();
-                if u.is_finite() {
-                    u.clamp(0.0, 100.0)
-                } else {
-                    0.0
-                }
-            })
-            .collect();
-        let freq_sum: u64 = guard.sys.cpus().iter().map(|c| c.frequency()).sum();
-        let core_len = guard.sys.cpus().len() as u64;
-        guard.cached_cpu_freq_mhz = if core_len > 0 { freq_sum / core_len } else { 0 };
+fn sample_cpu_and_memory(
+    state: &State<'_, Mutex<TelemetryMonitorState>>,
+    include_cores: bool,
+) -> Result<CpuMemorySnapshot, String> {
+    let mut guard = state.lock().map_err(|e| e.to_string())?;
+    let should_refresh_cpu = guard.sys.is_none()
+        || (include_cores && guard.cached_cores.is_empty())
+        || guard.last_cpu_refresh.elapsed() >= Duration::from_millis(250);
+    {
+        let sys = guard.ensure_sys();
+        sys.refresh_specifics(RefreshKind::new().with_memory(MemoryRefreshKind::everything()));
+        if should_refresh_cpu {
+            sys.refresh_specifics(RefreshKind::new().with_cpu(CpuRefreshKind::everything()));
+        }
+    }
+
+    let refreshed = if should_refresh_cpu {
+        guard.sys.as_ref().map(|sys| {
+            let raw_global = sys.global_cpu_info().cpu_usage();
+            let cpu_usage = if raw_global.is_finite() {
+                raw_global.clamp(0.0, 100.0)
+            } else {
+                0.0
+            };
+            let cores: Option<Vec<f32>> = if include_cores {
+                Some(
+                    sys.cpus()
+                        .iter()
+                        .map(|c| {
+                            let u = c.cpu_usage();
+                            if u.is_finite() {
+                                u.clamp(0.0, 100.0)
+                            } else {
+                                0.0
+                            }
+                        })
+                        .collect(),
+                )
+            } else {
+                None
+            };
+            let freq_sum: u64 = sys.cpus().iter().map(|c| c.frequency()).sum();
+            let core_len = sys.cpus().len() as u64;
+            let cpu_freq_mhz = if core_len > 0 { freq_sum / core_len } else { 0 };
+            (cpu_usage, cores, cpu_freq_mhz)
+        })
+    } else {
+        None
+    };
+
+    if let Some((cpu_usage, cores_opt, cpu_freq_mhz)) = refreshed {
+        guard.cached_cpu_usage = cpu_usage;
+        if let Some(cores) = cores_opt {
+            guard.cached_cores = cores;
+        }
+        guard.cached_cpu_freq_mhz = cpu_freq_mhz;
         guard.last_cpu_refresh = Instant::now();
     }
 
     let cpu_usage = guard.cached_cpu_usage;
     let cpu_freq_mhz = guard.cached_cpu_freq_mhz;
-    let cores = guard.cached_cores.clone();
+    let cores = if include_cores {
+        guard.cached_cores.clone()
+    } else {
+        Vec::new()
+    };
 
     let bytes_per_gib = 1024.0 * 1024.0 * 1024.0;
-    let ram_total_gb = guard.sys.total_memory() as f64 / bytes_per_gib;
-    let ram_used_gb = guard.sys.used_memory() as f64 / bytes_per_gib;
-    let ram_available_gb = guard.sys.available_memory() as f64 / bytes_per_gib;
-    let swap_total_gb = guard.sys.total_swap() as f64 / bytes_per_gib;
-    let swap_used_gb = guard.sys.used_swap() as f64 / bytes_per_gib;
-    drop(guard);
+    let (ram_total_gb, ram_used_gb, ram_available_gb, swap_total_gb, swap_used_gb) = {
+        let sys = guard.sys.as_ref().expect("telemetry system initialized");
+        (
+            sys.total_memory() as f64 / bytes_per_gib,
+            sys.used_memory() as f64 / bytes_per_gib,
+            sys.available_memory() as f64 / bytes_per_gib,
+            sys.total_swap() as f64 / bytes_per_gib,
+            sys.used_swap() as f64 / bytes_per_gib,
+        )
+    };
+
+    Ok(CpuMemorySnapshot {
+        cpu_usage,
+        cpu_freq_mhz,
+        cores,
+        ram_used_gb,
+        ram_total_gb,
+        ram_available_gb,
+        swap_used_gb,
+        swap_total_gb,
+    })
+}
+
+#[tauri::command]
+fn get_basic_system_telemetry(
+    state: State<'_, Mutex<TelemetryMonitorState>>,
+) -> Result<BasicSystemTelemetry, String> {
+    let snap = sample_cpu_and_memory(&state, false)?;
+    Ok(BasicSystemTelemetry {
+        cpu_usage: snap.cpu_usage,
+        ram_used_gb: snap.ram_used_gb,
+        ram_total_gb: snap.ram_total_gb,
+    })
+}
+
+#[tauri::command]
+fn get_system_telemetry(
+    state: State<'_, Mutex<TelemetryMonitorState>>,
+) -> Result<NativeSystemTelemetry, String> {
+    let snap = sample_cpu_and_memory(&state, true)?;
 
     let disks = collect_disk_drives();
     let primary_disk = disks
@@ -347,14 +472,14 @@ fn get_system_telemetry(
         .collect();
 
     Ok(NativeSystemTelemetry {
-        cpu_usage,
-        cpu_freq_mhz,
-        cores,
-        ram_used_gb,
-        ram_total_gb,
-        ram_available_gb,
-        swap_used_gb,
-        swap_total_gb,
+        cpu_usage: snap.cpu_usage,
+        cpu_freq_mhz: snap.cpu_freq_mhz,
+        cores: snap.cores,
+        ram_used_gb: snap.ram_used_gb,
+        ram_total_gb: snap.ram_total_gb,
+        ram_available_gb: snap.ram_available_gb,
+        swap_used_gb: snap.swap_used_gb,
+        swap_total_gb: snap.swap_total_gb,
         disk_used_gb,
         disk_total_gb,
         disks,
@@ -586,7 +711,7 @@ pub fn run() {
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_process::init())
         .manage(Mutex::new(TelemetryMonitorState::new()))
-        .manage(Mutex::new(System::new_all()))
+        .manage(ProcessMonitorState::default())
         .manage(Mutex::new(McpStdioState::default()))
         .manage(CloseToTrayState(AtomicBool::new(false)))
         .manage(OpenedCliFileState(Mutex::new(None)))
@@ -595,8 +720,10 @@ pub fn run() {
         .manage(AutoClickerState::default())
         .manage(KeepAwakeState::default())
         .invoke_handler(tauri::generate_handler![
+            get_basic_system_telemetry,
             get_system_telemetry,
             desktop_get_hardware_specs,
+            desktop_release_process_cache,
             mcp_read_clipboard,
             mcp_write_clipboard,
             mcp_stdio_ready,
@@ -680,6 +807,7 @@ pub fn run() {
                         "hide" => {
                             if let Some(win) = app.get_webview_window("main") {
                                 let _ = win.hide();
+                                release_idle_memory(app);
                             }
                         }
                         "reset_window" => {
@@ -728,11 +856,22 @@ pub fn run() {
 
             let ac_state = app.state::<AutoClickerState>();
             spawn_global_hotkey_watcher(std::sync::Arc::clone(&ac_state.0));
-            spawn_mcp_stdio_reader(app.handle().clone());
+            if is_mcp_stdio {
+                spawn_mcp_stdio_reader(app.handle().clone());
+            }
             Ok(())
         })
         .on_window_event(|window, event| match event {
-            WindowEvent::Resized(_) | WindowEvent::Moved(_) => {
+            WindowEvent::Resized(_) => {
+                if let Some(webview_win) = window.app_handle().get_webview_window(window.label()) {
+                    if webview_win.is_minimized().unwrap_or(false) {
+                        release_idle_memory(window.app_handle());
+                    } else {
+                        capture_window_state(&webview_win);
+                    }
+                }
+            }
+            WindowEvent::Moved(_) => {
                 if let Some(webview_win) = window.app_handle().get_webview_window(window.label()) {
                     capture_window_state(&webview_win);
                 }
@@ -751,6 +890,7 @@ pub fn run() {
                 if close_to_tray {
                     api.prevent_close();
                     let _ = window.hide();
+                    release_idle_memory(window.app_handle());
                 } else {
                     shutdown_desktop_workers(window.app_handle());
                 }

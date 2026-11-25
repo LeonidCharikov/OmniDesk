@@ -19,6 +19,7 @@ import {
   startDesktopKeepAwake,
   stopDesktopKeepAwake,
 } from '../../services/desktopToolsService';
+import { useDocumentVisible } from '../../hooks/useDocumentVisibility';
 import { DesktopOnlyGuard } from './DesktopOnlyGuard';
 
 const STORAGE_KEY = 'omnidesk_keepawake_cfg_v1';
@@ -65,6 +66,7 @@ function loadConfig(): KeepAwakeConfig {
 export const KeepAwakeTool: React.FC = () => {
   const { t } = useI18n();
   const runningInTauri = isTauri();
+  const isDocumentVisible = useDocumentVisible();
 
   const [config, setConfig] = useState<KeepAwakeConfig>(loadConfig);
   const [status, setStatus] = useState<KeepAwakeStatus | null>(null);
@@ -98,12 +100,13 @@ export const KeepAwakeTool: React.FC = () => {
   }, [fetchStatus]);
 
   useEffect(() => {
-    if (!runningInTauri || !status?.active) return;
+    if (!runningInTauri || !status?.active || !isDocumentVisible) return;
+    void fetchStatus();
     const id = window.setInterval(() => {
       void fetchStatus();
     }, 1000);
     return () => window.clearInterval(id);
-  }, [runningInTauri, status?.active, fetchStatus]);
+  }, [runningInTauri, status?.active, isDocumentVisible, fetchStatus]);
 
   const handleToggle = async () => {
     setError(null);

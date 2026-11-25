@@ -29,6 +29,7 @@ import {
   startDesktopAutoClicker,
   stopDesktopAutoClicker,
 } from '../../services/desktopToolsService';
+import { useDocumentVisible } from '../../hooks/useDocumentVisibility';
 import { DesktopOnlyGuard } from './DesktopOnlyGuard';
 
 const STORAGE_KEY = 'omnidesk_autoclicker_cfg_v1';
@@ -107,6 +108,7 @@ function loadConfig(): AutoClickerConfig {
 export const AutoClickerTool: React.FC = () => {
   const { t } = useI18n();
   const runningInTauri = isTauri();
+  const isDocumentVisible = useDocumentVisible();
 
   const [config, setConfig] = useState<AutoClickerConfig>(loadConfig);
   const [status, setStatus] = useState<AutoClickerStatus | null>(null);
@@ -145,13 +147,14 @@ export const AutoClickerTool: React.FC = () => {
   }, [runningInTauri, fetchStatus, config.hotkey]);
 
   useEffect(() => {
-    if (!runningInTauri) return;
+    if (!runningInTauri || !isDocumentVisible) return;
+    void fetchStatus();
     const pollMs = status?.running ? 250 : 600;
     const id = window.setInterval(() => {
       void fetchStatus();
     }, pollMs);
     return () => window.clearInterval(id);
-  }, [runningInTauri, status?.running, fetchStatus]);
+  }, [runningInTauri, isDocumentVisible, status?.running, fetchStatus]);
 
   useEffect(() => {
     return () => {

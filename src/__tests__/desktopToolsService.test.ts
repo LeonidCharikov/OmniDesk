@@ -14,6 +14,7 @@ import {
   formatHardwareSpecsSummary,
   formatUptimeDuration,
   formatVram,
+  getDesktopBasicTelemetry,
   getDesktopHardwareSpecs,
   getDesktopSystemTelemetry,
   isValidIpv4Address,
@@ -22,6 +23,7 @@ import {
   listDesktopPorts,
   normalizeMacAddress,
   parsePortList,
+  releaseDesktopProcessCache,
   runDesktopPing,
   startDesktopKeepAwake,
 } from '../services/desktopToolsService';
@@ -188,8 +190,10 @@ describe('desktopToolsService pure helpers', () => {
   it('rejects native IPC wrappers cleanly when running outside Tauri', async () => {
     await expect(listDesktopPorts()).rejects.toThrow(/OmniDesk Desktop/);
     await expect(runDesktopPing('1.1.1.1')).rejects.toThrow(/OmniDesk Desktop/);
+    await expect(getDesktopBasicTelemetry()).rejects.toThrow(/OmniDesk Desktop/);
     await expect(getDesktopSystemTelemetry()).rejects.toThrow(/OmniDesk Desktop/);
     await expect(getDesktopHardwareSpecs()).rejects.toThrow(/OmniDesk Desktop/);
+    await expect(releaseDesktopProcessCache()).resolves.toBeUndefined();
     await expect(
       startDesktopKeepAwake({
         keep_display: true,
