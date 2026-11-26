@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
+  AlertTriangle,
   Bookmark,
   Check,
   Copy,
@@ -7,6 +8,7 @@ import {
   Download,
   Eye,
   EyeOff,
+  Loader2,
   Monitor,
   Palette,
   Power,
@@ -128,6 +130,7 @@ export const CrosshairOverlayTool: React.FC = () => {
   const [overlayActive, setOverlayActive] = useState(false);
   const [globalHotkeySupported, setGlobalHotkeySupported] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [overlayError, setOverlayError] = useState<string | null>(null);
   const [gameFilter, setGameFilter] = useState<'all' | CrosshairGameTag>('all');
   const [presetSearch, setPresetSearch] = useState('');
   const [previewBg, setPreviewBg] = useState<PreviewBg>('dark');
@@ -236,21 +239,41 @@ export const CrosshairOverlayTool: React.FC = () => {
   const handleToggleOverlay = useCallback(async () => {
     if (!runningInTauri || busy) return;
     setBusy(true);
+    setOverlayError(null);
+    const withTimeout = <T,>(promise: Promise<T>, ms = 10_000): Promise<T> =>
+      new Promise<T>((resolve, reject) => {
+        const timer = window.setTimeout(() => {
+          reject(new Error('Crosshair overlay command timed out. Please retry.'));
+        }, ms);
+        promise.then(
+          val => {
+            window.clearTimeout(timer);
+            resolve(val);
+          },
+          err => {
+            window.clearTimeout(timer);
+            reject(err);
+          }
+        );
+      });
+
     try {
       if (overlayActive) {
-        const st = await hideDesktopCrosshairOverlay();
+        const st = await withTimeout(hideDesktopCrosshairOverlay());
         setOverlayActive(st.active);
         toastService.show({
           type: 'info',
           title: t('xh_overlay_hidden_toast', 'Crosshair overlay hidden'),
         });
       } else {
-        const st = await openDesktopCrosshairOverlay({
-          configJson: JSON.stringify(config),
-          monitorIndex: prefs.monitorIndex,
-          offsetX: config.offsetX,
-          offsetY: config.offsetY,
-        });
+        const st = await withTimeout(
+          openDesktopCrosshairOverlay({
+            configJson: JSON.stringify(config),
+            monitorIndex: prefs.monitorIndex,
+            offsetX: config.offsetX,
+            offsetY: config.offsetY,
+          })
+        );
         setOverlayActive(st.active);
         toastService.show({
           type: 'success',
@@ -260,18 +283,20 @@ export const CrosshairOverlayTool: React.FC = () => {
         });
       }
     } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setOverlayError(msg);
       toastService.show({
         type: 'error',
-        title: err instanceof Error ? err.message : String(err),
+        title: msg,
       });
     } finally {
       setBusy(false);
     }
   }, [runningInTauri, busy, overlayActive, config, prefs.monitorIndex, prefs.hotkey, t]);
 
-  // In-window hotkey fallback
+  // In-window hotkey fallback (only when OS global hotkey is unavailable, preventing double-toggle)
   useEffect(() => {
-    if (!runningInTauri) return;
+    if (!runningInTauri || globalHotkeySupported) return;
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.repeat) return;
       if (e.key === prefs.hotkey) {
@@ -281,7 +306,7 @@ export const CrosshairOverlayTool: React.FC = () => {
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [runningInTauri, prefs.hotkey, handleToggleOverlay]);
+  }, [runningInTauri, globalHotkeySupported, prefs.hotkey, handleToggleOverlay]);
 
   const filteredPresets = useMemo(() => {
     const q = presetSearch.trim().toLowerCase();
@@ -439,6 +464,22 @@ export const CrosshairOverlayTool: React.FC = () => {
             <span className="text-xs font-mono text-slate-400">
               · {t('desktop_only_badge', 'Desktop Only')}
             </span>
+            <span
+              className={`inline-flex items-center gap-1.5 text-[11px] font-mono px-2 py-0.5 rounded-md border ${
+                overlayActive
+                  ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300'
+                  : 'bg-slate-800/70 border-slate-700 text-slate-400'
+              }`}
+            >
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${
+                  overlayActive ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'
+                }`}
+              />
+              {overlayActive
+                ? t('xh_status_live', 'LIVE ON SCREEN')
+                : t('xh_status_preview', 'PREVIEW ONLY')}
+            </span>
           </div>
           <p className="text-xs text-slate-400">
             {t(
@@ -505,7 +546,13 @@ export const CrosshairOverlayTool: React.FC = () => {
                 : 'bg-indigo-600 hover:bg-indigo-500 text-white'
             }`}
           >
-            {overlayActive ? <Eye className="w-4 h-4" /> : <Power className="w-4 h-4" />}
+            {busy ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : overlayActive ? (
+              <Eye className="w-4 h-4" />
+            ) : (
+              <Power className="w-4 h-4" />
+            )}
             <span>
               {overlayActive
                 ? t('xh_overlay_on_btn', 'Overlay Active ({hotkey})', { hotkey: prefs.hotkey })
@@ -514,6 +561,14 @@ export const CrosshairOverlayTool: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {overlayError && (
+        <div className="px-4 py-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs text-rose-300 flex items-center gap-2">
+          <AlertTriangle className="w-4 h-4 shrink-0 text-rose-400" />
+          <span className="font-medium">{t('error', 'Error')}:</span>
+          <span className="truncate">{overlayError}</span>
+        </div>
+      )}
 
       {/* Main Split: Live Stage (Left 5) + Studio Workspace (Right 7) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
