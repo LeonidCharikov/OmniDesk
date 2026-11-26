@@ -8,6 +8,10 @@ export const CALENDAR_STORAGE_KEY = 'omnidesk_calendar_events';
 export const KANBAN_STORAGE_KEY = 'omnidesk-kanban-board-v2';
 export const NOTES_STORAGE_KEY = 'omnidesk-notes';
 export const SNIPPETS_STORAGE_KEY = 'omnidesk_snippet_vault_v1';
+export const CHART_STUDIO_STORAGE_KEY = 'omnidesk_chart_studio_v1';
+export const DIAGRAM_STUDIO_STORAGE_KEY = 'omnidesk_diagram_studio_v2';
+export const CROSSHAIR_ACTIVE_STORAGE_KEY = 'omnidesk_crosshair_active_v1';
+export const CROSSHAIR_PREFS_STORAGE_KEY = 'omnidesk_crosshair_prefs_v1';
 
 export type McpConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
 
@@ -691,6 +695,238 @@ export const OMNIDESK_MCP_TOOLS: ReadonlyArray<McpToolDescriptor> = [
       },
     },
   },
+  {
+    name: 'chart_list_types',
+    description: 'List all 17 Chart Studio families, 35 chart subtypes, color palettes, and built-in sample dataset presets.',
+    access: 'readonly',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+    },
+  },
+  {
+    name: 'chart_analyze_data',
+    description: 'Compute summary statistics (count, sum, mean, median, min, max, stdDev), linear regression R², histogram bins, and box-plot quartiles on CSV/TSV/JSON data or the current Chart Studio dataset.',
+    access: 'readonly',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        data: {
+          type: 'string',
+          description: 'Optional CSV, TSV, semicolon-delimited, or JSON array string. Omit to analyze the current Chart Studio dataset.',
+        },
+        includeRegression: {
+          type: 'boolean',
+          description: 'When true, compute linear regression (slope, intercept, R²) for the first numeric series.',
+        },
+        histogramBins: {
+          type: 'integer',
+          description: 'Optional bin count (2-20) to compute frequency & cumulative Pareto histogram bins.',
+          minimum: 2,
+          maximum: 20,
+        },
+        includeBoxPlot: {
+          type: 'boolean',
+          description: 'When true, compute five-number summary quartiles (Q1, median, Q3, whiskers, outliers) per series.',
+        },
+      },
+    },
+  },
+  {
+    name: 'chart_create_or_update',
+    description: 'Create or update the active OmniDesk Chart & Statistics Graph Studio chart with CSV/TSV/JSON data or a built-in preset, configure type/style, and optionally open Chart Studio in the UI.',
+    access: 'readwrite',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        data: {
+          type: 'string',
+          description: 'Optional CSV, TSV, semicolon-delimited, or JSON array string to load as the chart dataset.',
+        },
+        presetId: {
+          type: 'string',
+          description: 'Optional built-in sample preset ID when data is not provided.',
+          enum: [
+            'sales-multi',
+            'funnel-web',
+            'waterfall-cashflow',
+            'stock-ohlc',
+            'experiment-groups',
+            'xy-bubble',
+            'budget-hierarchy',
+            'weekly-heatmap',
+          ],
+        },
+        family: {
+          type: 'string',
+          description: 'Chart family ID.',
+          enum: [
+            'column',
+            'bar',
+            'line',
+            'area',
+            'pie',
+            'scatter',
+            'histogram',
+            'boxplot',
+            'waterfall',
+            'funnel',
+            'radar',
+            'treemap',
+            'sunburst',
+            'heatmap',
+            'stock',
+            'combo',
+            'polar',
+          ],
+        },
+        subtype: { type: 'string', description: 'Optional chart subtype ID matching the selected family (e.g. "line-smooth", "pie-donut", "scatter-trendline").' },
+        title: { type: 'string', description: 'Optional chart title.' },
+        subtitle: { type: 'string', description: 'Optional chart subtitle.' },
+        xAxisLabel: { type: 'string', description: 'Optional X-axis label.' },
+        yAxisLabel: { type: 'string', description: 'Optional Y-axis label.' },
+        palette: {
+          type: 'string',
+          description: 'Color palette.',
+          enum: ['vibrant', 'corporate', 'nordic', 'emerald', 'sunset', 'colorblind'],
+        },
+        canvasTheme: {
+          type: 'string',
+          description: 'Canvas background theme.',
+          enum: ['dark', 'light', 'transparent'],
+        },
+        legendPosition: {
+          type: 'string',
+          description: 'Legend placement.',
+          enum: ['top', 'bottom', 'none'],
+        },
+        showGrid: { type: 'boolean', description: 'Toggle background gridlines.' },
+        showDataLabels: { type: 'boolean', description: 'Toggle value labels on bars/points.' },
+        histogramBins: { type: 'integer', description: 'Number of histogram bins (2-20).', minimum: 2, maximum: 20 },
+        openInUi: { type: 'boolean', description: 'When true, immediately switch OmniDesk UI to Chart Studio.' },
+      },
+    },
+  },
+  {
+    name: 'diagram_get_current',
+    description: 'Read the current Diagram Studio document (nodes, edges) along with auto-generated Mermaid syntax and SQL DDL.',
+    access: 'readonly',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+    },
+  },
+  {
+    name: 'diagram_from_sql',
+    description: 'Parse SQL CREATE TABLE DDL statements into an auto-laid-out ERD diagram in Diagram Studio and optionally open it in the UI.',
+    access: 'readwrite',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        sql: { type: 'string', description: 'SQL CREATE TABLE DDL statements (supports PRIMARY KEY and FOREIGN KEY / REFERENCES).' },
+        title: { type: 'string', description: 'Optional diagram title.' },
+        openInUi: { type: 'boolean', description: 'When true, immediately switch OmniDesk UI to Diagram Studio.' },
+      },
+      required: ['sql'],
+    },
+  },
+  {
+    name: 'sql_run_query',
+    description: 'Run a local SQL SELECT query (WHERE, GROUP BY, HAVING, ORDER BY, DISTINCT, LIMIT, aggregates) against inline JSON or CSV/TSV data.',
+    access: 'readonly',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        data: { type: 'string', description: 'JSON array/object string or CSV/TSV dataset with headers.' },
+        query: { type: 'string', description: 'SQL SELECT query targeting table "data" (e.g. "SELECT region, SUM(sales) AS total FROM data GROUP BY region ORDER BY total DESC").' },
+        includeCsv: { type: 'boolean', description: 'When true, also return the query result formatted as CSV.' },
+      },
+      required: ['data', 'query'],
+    },
+  },
+  {
+    name: 'desktop_hardware_specs',
+    description: 'Inspect native PC hardware specifications (CPU, cores, RAM, GPUs, disks, OS, kernel) on the OmniDesk Desktop app.',
+    access: 'readonly',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+    },
+  },
+  {
+    name: 'desktop_list_ports_and_processes',
+    description: 'Read-only inspection of listening TCP/UDP ports and running OS processes on the OmniDesk Desktop app (never terminates processes).',
+    access: 'readonly',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        scope: {
+          type: 'string',
+          description: 'What to inspect (default: all).',
+          enum: ['all', 'ports', 'processes'],
+        },
+        query: { type: 'string', description: 'Optional filter matched against port, PID, process name, address, or command.' },
+        limit: { type: 'integer', description: 'Max items per list (1-100, default: 30).', minimum: 1, maximum: 100 },
+        sortBy: {
+          type: 'string',
+          description: 'Process sort field (default: memory_mb).',
+          enum: ['memory_mb', 'cpu_usage', 'pid', 'name'],
+        },
+      },
+    },
+  },
+  {
+    name: 'desktop_network_check',
+    description: 'Run native Ping, TCP port reachability check, or DNS lookup from the OmniDesk Desktop app.',
+    access: 'readonly',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        action: {
+          type: 'string',
+          description: 'Diagnostic check to perform.',
+          enum: ['ping', 'tcp_check', 'dns_lookup'],
+        },
+        host: { type: 'string', description: 'Target hostname or IP address (e.g. "1.1.1.1" or "example.com").' },
+        port: { type: 'integer', description: 'TCP port (1-65535), required when action=tcp_check.', minimum: 1, maximum: 65535 },
+        count: { type: 'integer', description: 'Ping packet count (1-8, default: 4) when action=ping.', minimum: 1, maximum: 8 },
+        recordType: {
+          type: 'string',
+          description: 'DNS record type when action=dns_lookup (default: A).',
+          enum: ['A', 'AAAA', 'MX', 'TXT', 'NS', 'CNAME'],
+        },
+      },
+      required: ['action', 'host'],
+    },
+  },
+  {
+    name: 'crosshair_list_presets',
+    description: 'List built-in FPS crosshair presets (with ODX share codes) and inspect the currently active Crosshair Overlay Studio configuration.',
+    access: 'readonly',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        game: {
+          type: 'string',
+          description: 'Optional game filter.',
+          enum: ['cs2', 'valorant', 'apex', 'rust', 'fortnite', 'minecraft', 'pubg', 'r6'],
+        },
+      },
+    },
+  },
+  {
+    name: 'crosshair_apply_preset',
+    description: 'Apply a built-in preset ID or ODX share code to Crosshair Overlay Studio (and live-update the native desktop overlay if active).',
+    access: 'readwrite',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        presetId: { type: 'string', description: 'Built-in crosshair preset ID (from crosshair_list_presets).' },
+        shareCode: { type: 'string', description: 'ODX-... share code or CrosshairConfig JSON string.' },
+        openInUi: { type: 'boolean', description: 'When true, switch OmniDesk UI to Crosshair Overlay Studio.' },
+      },
+    },
+  },
 ];
 
 export const OMNIDESK_MCP_RESOURCES: ReadonlyArray<McpResourceDescriptor> = [
@@ -710,6 +946,18 @@ export const OMNIDESK_MCP_RESOURCES: ReadonlyArray<McpResourceDescriptor> = [
     uri: 'omnidesk://snippets/list',
     name: 'OmniDesk Snippet Vault',
     description: 'JSON list of reusable code and shell snippets stored locally in Snippet Vault.',
+    mimeType: 'application/json',
+  },
+  {
+    uri: 'omnidesk://chart-studio/current',
+    name: 'OmniDesk Chart Studio Active Chart',
+    description: 'Current Chart & Statistics Graph Studio configuration, dataset, and summary statistics.',
+    mimeType: 'application/json',
+  },
+  {
+    uri: 'omnidesk://diagram-studio/current',
+    name: 'OmniDesk Diagram Studio Current Document',
+    description: 'Current Diagram Studio nodes, edges, Mermaid export, and SQL DDL export.',
     mimeType: 'application/json',
   },
   {
@@ -1180,6 +1428,70 @@ export class OmniDeskMcpClient {
         isAvailable,
       },
       {
+        id: 'chart-studio',
+        localToolId: 'chart-studio',
+        titleKey: 'mcp_cap_chart_studio_title',
+        defaultTitle: 'Chart & Statistics Graph Studio',
+        descKey: 'mcp_cap_chart_studio_desc',
+        defaultDesc: 'List 17 chart families, run statistical/regression analysis, and build or update live charts from CSV/JSON data.',
+        exposedMcpTools: pickExposed('chart_list_types', 'chart_analyze_data', 'chart_create_or_update'),
+        canRead: true,
+        canWrite,
+        isAvailable,
+      },
+      {
+        id: 'diagram-studio',
+        localToolId: 'diagram-editor',
+        titleKey: 'mcp_cap_diagram_studio_title',
+        defaultTitle: 'Diagram Studio (ERD / UML)',
+        descKey: 'mcp_cap_diagram_studio_desc',
+        defaultDesc: 'Inspect current diagrams with Mermaid/SQL export or generate auto-laid-out SQL ERDs directly from DDL.',
+        exposedMcpTools: pickExposed('diagram_get_current', 'diagram_from_sql'),
+        canRead: true,
+        canWrite,
+        isAvailable,
+      },
+      {
+        id: 'sql-playground',
+        localToolId: 'sql-playground',
+        titleKey: 'mcp_cap_sql_playground_title',
+        defaultTitle: 'Local SQL Query Playground',
+        descKey: 'mcp_cap_sql_playground_desc',
+        defaultDesc: 'Execute offline SQL SELECT, WHERE, GROUP BY, and aggregation queries over JSON or CSV/TSV datasets.',
+        exposedMcpTools: pickExposed('sql_run_query'),
+        canRead: true,
+        canWrite: false,
+        isAvailable,
+      },
+      {
+        id: 'desktop-diagnostics',
+        localToolId: 'port-process-manager',
+        titleKey: 'mcp_cap_desktop_diag_title',
+        defaultTitle: 'Desktop Hardware & Network Diagnostics',
+        descKey: 'mcp_cap_desktop_diag_desc',
+        defaultDesc: 'Read native PC hardware specs, listening TCP/UDP ports, running processes, and run Ping/TCP/DNS checks.',
+        exposedMcpTools: pickExposed(
+          'desktop_hardware_specs',
+          'desktop_list_ports_and_processes',
+          'desktop_network_check'
+        ),
+        canRead: true,
+        canWrite: false,
+        isAvailable,
+      },
+      {
+        id: 'crosshair-studio',
+        localToolId: 'crosshair-overlay',
+        titleKey: 'mcp_cap_crosshair_title',
+        defaultTitle: 'Crosshair Overlay Studio',
+        descKey: 'mcp_cap_crosshair_desc',
+        defaultDesc: 'Browse FPS crosshair presets with share codes or apply a preset/share code to the desktop overlay.',
+        exposedMcpTools: pickExposed('crosshair_list_presets', 'crosshair_apply_preset'),
+        canRead: true,
+        canWrite,
+        isAvailable,
+      },
+      {
         id: 'workspace-tools',
         titleKey: 'mcp_cap_catalog_title',
         defaultTitle: 'Local Tool Launcher & Catalog',
@@ -1432,10 +1744,82 @@ export class OmniDeskMcpClient {
     if (uri === 'omnidesk://snippets/list') {
       return await this.readSnippetsStore();
     }
+    if (uri === 'omnidesk://chart-studio/current') {
+      const logic = await import('../tools/math/chartStudio.logic');
+      const fallbackPreset = logic.getPresetById('sales-multi');
+      const stored = readJsonStorage<{
+        config?: Record<string, unknown>;
+        dataset?: { headers: string[]; rows: string[][] };
+        isCustomData?: boolean;
+      } | null>(CHART_STUDIO_STORAGE_KEY, null);
+      const dataset =
+        stored?.dataset &&
+        Array.isArray(stored.dataset.headers) &&
+        stored.dataset.headers.length >= 2 &&
+        Array.isArray(stored.dataset.rows)
+          ? stored.dataset
+          : logic.cloneDataset(fallbackPreset.dataset);
+      return {
+        config: stored?.config ?? {
+          family: 'column',
+          subtype: 'column-clustered',
+          title: fallbackPreset.title,
+          subtitle: fallbackPreset.subtitle,
+          xAxisLabel: fallbackPreset.xAxisLabel,
+          yAxisLabel: fallbackPreset.yAxisLabel,
+          palette: 'vibrant',
+          canvasTheme: 'dark',
+          legendPosition: 'top',
+          showGrid: true,
+          showDataLabels: false,
+          histogramBins: 6,
+        },
+        isCustomData: Boolean(stored?.isCustomData),
+        dataset,
+        summaryStats: logic.computeSeriesSummaryStats(dataset),
+      };
+    }
+    if (uri === 'omnidesk://diagram-studio/current') {
+      const logic = await import('../tools/expanded/diagramEditor.logic');
+      const stored = readJsonStorage<Partial<import('../tools/expanded/diagramEditor.logic').DiagramDocument> | null>(
+        DIAGRAM_STUDIO_STORAGE_KEY,
+        null
+      );
+      const doc =
+        stored && Array.isArray(stored.nodes) && Array.isArray(stored.edges)
+          ? {
+              title: typeof stored.title === 'string' && stored.title.trim() ? stored.title : 'Untitled Diagram',
+              nodes: stored.nodes,
+              edges: stored.edges,
+              canvasTheme:
+                stored.canvasTheme === 'light' || stored.canvasTheme === 'transparent'
+                  ? stored.canvasTheme
+                  : ('dark' as const),
+              showGrid: stored.showGrid !== false,
+              snapToGrid: stored.snapToGrid !== false,
+            }
+          : logic.getTemplateDocument('sql-ecommerce');
+      return {
+        title: doc.title,
+        nodeCount: doc.nodes.length,
+        edgeCount: doc.edges.length,
+        document: doc,
+        mermaid: logic.exportDiagramToMermaid(doc),
+        sqlDdl: logic.exportDiagramToSqlDdl(doc),
+      };
+    }
     if (uri === 'omnidesk://system/telemetry') {
       return await this.collectSystemInfo();
     }
     return null;
+  }
+
+  private openToolInUi(toolId: string): void {
+    if (this.onOpenToolFn) {
+      this.onOpenToolFn(toolId);
+    } else if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('omnidesk-open-tool', { detail: { toolId } }));
+    }
   }
 
   private async collectSystemInfo(): Promise<Record<string, unknown>> {
@@ -2178,6 +2562,600 @@ export class OmniDeskMcpClient {
           seed: 1337,
         });
         return this.okResult({ style, unit, count, format, text });
+      }
+
+      case 'chart_list_types': {
+        const logic = await import('../tools/math/chartStudio.logic');
+        return this.okResult({
+          totalFamilies: logic.CHART_FAMILIES.length,
+          totalSubtypes: logic.CHART_FAMILIES.reduce((acc, fam) => acc + fam.subtypes.length, 0),
+          families: logic.CHART_FAMILIES.map(fam => ({
+            id: fam.id,
+            label: fam.defaultLabel,
+            description: fam.defaultDesc,
+            defaultSubtype: fam.defaultSubtype,
+            defaultPresetId: fam.defaultPresetId,
+            subtypes: fam.subtypes.map(sub => ({ id: sub.id, label: sub.defaultLabel })),
+          })),
+          palettes: logic.CHART_PALETTES.map(p => ({ id: p.id, label: p.defaultLabel, colors: p.colors })),
+          presets: logic.SAMPLE_PRESETS.map(pr => ({
+            id: pr.id,
+            label: pr.defaultLabel,
+            title: pr.title,
+            rowCount: pr.dataset.rows.length,
+            headers: pr.dataset.headers,
+          })),
+        });
+      }
+
+      case 'chart_analyze_data': {
+        const logic = await import('../tools/math/chartStudio.logic');
+        let dataset: import('../tools/math/chartStudio.logic').ChartDataset;
+        let source: 'input' | 'workspace' | 'default_preset' = 'default_preset';
+
+        if (typeof args.data === 'string' && args.data.trim()) {
+          if (new TextEncoder().encode(args.data).length > MAX_DATA_CONVERT_BYTES) {
+            return this.errResult(`data exceeds maximum size of ${MAX_DATA_CONVERT_BYTES} bytes.`);
+          }
+          dataset = logic.parseTabularData(args.data);
+          source = 'input';
+        } else {
+          const stored = readJsonStorage<{
+            dataset?: { headers: string[]; rows: string[][] };
+          } | null>(CHART_STUDIO_STORAGE_KEY, null);
+          if (
+            stored?.dataset &&
+            Array.isArray(stored.dataset.headers) &&
+            stored.dataset.headers.length >= 2 &&
+            Array.isArray(stored.dataset.rows)
+          ) {
+            dataset = stored.dataset;
+            source = 'workspace';
+          } else {
+            dataset = logic.cloneDataset(logic.getPresetById('sales-multi').dataset);
+            source = 'default_preset';
+          }
+        }
+
+        const summaryStats = logic.computeSeriesSummaryStats(dataset);
+        const firstSeriesValues = dataset.rows
+          .map(row => logic.parseNumericCell(row[1]))
+          .filter(v => Number.isFinite(v));
+
+        let regression: import('../tools/math/chartStudio.logic').LinearRegressionResult | null | undefined;
+        if (args.includeRegression === true) {
+          const xyPoints: Array<{ x: number; y: number }> = [];
+          dataset.rows.forEach((row, idx) => {
+            const y = logic.parseNumericCell(row[1]);
+            if (!Number.isFinite(y)) return;
+            const parsedX = logic.parseNumericCell(row[0]);
+            xyPoints.push({ x: Number.isFinite(parsedX) ? parsedX : idx + 1, y });
+          });
+          regression = logic.computeLinearRegression(xyPoints);
+        }
+
+        let histogram: import('../tools/math/chartStudio.logic').HistogramBin[] | undefined;
+        if (typeof args.histogramBins === 'number' && Number.isFinite(args.histogramBins)) {
+          const bins = Math.max(2, Math.min(20, Math.round(args.histogramBins)));
+          histogram = logic.computeHistogramBins(firstSeriesValues, bins);
+        }
+
+        let boxPlots: Array<{
+          series: string;
+          min: number;
+          whiskerLow: number;
+          q1: number;
+          median: number;
+          mean: number;
+          q3: number;
+          whiskerHigh: number;
+          max: number;
+          outliers: number[];
+        }> | undefined;
+        if (args.includeBoxPlot === true) {
+          boxPlots = [];
+          for (let col = 1; col < dataset.headers.length; col++) {
+            const vals = dataset.rows
+              .map(r => logic.parseNumericCell(r[col]))
+              .filter(n => Number.isFinite(n));
+            const bp = logic.computeBoxPlotStats(vals);
+            if (bp) {
+              boxPlots.push({
+                series: dataset.headers[col] || `Series ${col}`,
+                min: bp.min,
+                whiskerLow: bp.whiskerLow,
+                q1: bp.q1,
+                median: bp.median,
+                mean: bp.mean,
+                q3: bp.q3,
+                whiskerHigh: bp.whiskerHigh,
+                max: bp.max,
+                outliers: bp.outliers,
+              });
+            }
+          }
+        }
+
+        return this.okResult({
+          source,
+          headers: dataset.headers,
+          rowCount: dataset.rows.length,
+          summaryStats,
+          regression,
+          histogram,
+          boxPlots,
+        });
+      }
+
+      case 'chart_create_or_update': {
+        const logic = await import('../tools/math/chartStudio.logic');
+        const defaultPreset = logic.getPresetById('sales-multi');
+        const stored = readJsonStorage<{
+          config?: Partial<import('../tools/math/chartStudio.logic').ChartConfig>;
+          dataset?: import('../tools/math/chartStudio.logic').ChartDataset;
+          isCustomData?: boolean;
+        } | null>(CHART_STUDIO_STORAGE_KEY, null);
+
+        let dataset: import('../tools/math/chartStudio.logic').ChartDataset;
+        let isCustomData = Boolean(stored?.isCustomData);
+        let presetMeta: import('../tools/math/chartStudio.logic').SamplePreset | null = null;
+
+        if (typeof args.data === 'string' && args.data.trim()) {
+          if (new TextEncoder().encode(args.data).length > MAX_DATA_CONVERT_BYTES) {
+            return this.errResult(`data exceeds maximum size of ${MAX_DATA_CONVERT_BYTES} bytes.`);
+          }
+          dataset = logic.parseTabularData(args.data);
+          isCustomData = true;
+        } else if (typeof args.presetId === 'string' && args.presetId.trim()) {
+          const foundPreset = logic.SAMPLE_PRESETS.find(p => p.id === args.presetId);
+          if (!foundPreset) {
+            return this.errResult(`Unknown chart presetId: ${args.presetId}`);
+          }
+          presetMeta = foundPreset;
+          dataset = logic.cloneDataset(foundPreset.dataset);
+          isCustomData = false;
+        } else if (
+          stored?.dataset &&
+          Array.isArray(stored.dataset.headers) &&
+          stored.dataset.headers.length >= 2 &&
+          Array.isArray(stored.dataset.rows)
+        ) {
+          dataset = stored.dataset;
+        } else {
+          presetMeta = defaultPreset;
+          dataset = logic.cloneDataset(defaultPreset.dataset);
+          isCustomData = false;
+        }
+
+        const existingCfg = stored?.config;
+        const requestedFamily = typeof args.family === 'string' ? args.family.trim().toLowerCase() : '';
+        let familySpec = logic.CHART_FAMILIES.find(f => f.id === existingCfg?.family) ?? logic.CHART_FAMILIES[0];
+        if (requestedFamily) {
+          const matchedFamily = logic.CHART_FAMILIES.find(f => f.id === requestedFamily);
+          if (!matchedFamily) {
+            return this.errResult(`Unknown chart family: ${requestedFamily}`);
+          }
+          familySpec = matchedFamily;
+        }
+
+        const requestedSubtype = typeof args.subtype === 'string' ? args.subtype.trim().toLowerCase() : '';
+        let subtype = familySpec.defaultSubtype;
+        if (requestedSubtype) {
+          const validSub = familySpec.subtypes.find(s => s.id === requestedSubtype);
+          if (!validSub) {
+            return this.errResult(
+              `Subtype "${requestedSubtype}" is not valid for family "${familySpec.id}". Valid subtypes: ${familySpec.subtypes.map(s => s.id).join(', ')}`
+            );
+          }
+          subtype = validSub.id;
+        } else if (!requestedFamily && existingCfg?.subtype && familySpec.subtypes.some(s => s.id === existingCfg.subtype)) {
+          subtype = existingCfg.subtype;
+        }
+
+        const requestedPalette = typeof args.palette === 'string' ? args.palette.trim().toLowerCase() : '';
+        const palette =
+          logic.CHART_PALETTES.find(p => p.id === requestedPalette)?.id ??
+          (existingCfg?.palette && logic.CHART_PALETTES.some(p => p.id === existingCfg.palette)
+            ? existingCfg.palette
+            : 'vibrant');
+
+        const canvasTheme =
+          args.canvasTheme === 'dark' || args.canvasTheme === 'light' || args.canvasTheme === 'transparent'
+            ? args.canvasTheme
+            : existingCfg?.canvasTheme === 'light' || existingCfg?.canvasTheme === 'transparent'
+              ? existingCfg.canvasTheme
+              : 'dark';
+
+        const legendPosition =
+          args.legendPosition === 'top' || args.legendPosition === 'bottom' || args.legendPosition === 'none'
+            ? args.legendPosition
+            : existingCfg?.legendPosition === 'bottom' || existingCfg?.legendPosition === 'none'
+              ? existingCfg.legendPosition
+              : 'top';
+
+        const histogramBins =
+          typeof args.histogramBins === 'number' && Number.isFinite(args.histogramBins)
+            ? Math.max(2, Math.min(20, Math.round(args.histogramBins)))
+            : typeof existingCfg?.histogramBins === 'number'
+              ? existingCfg.histogramBins
+              : 6;
+
+        const nextConfig: import('../tools/math/chartStudio.logic').ChartConfig = {
+          family: familySpec.id,
+          subtype,
+          title:
+            typeof args.title === 'string'
+              ? sanitizeText(args.title, 160)
+              : presetMeta?.title ?? existingCfg?.title ?? defaultPreset.title,
+          subtitle:
+            typeof args.subtitle === 'string'
+              ? sanitizeText(args.subtitle, 240)
+              : presetMeta?.subtitle ?? existingCfg?.subtitle ?? defaultPreset.subtitle,
+          xAxisLabel:
+            typeof args.xAxisLabel === 'string'
+              ? sanitizeText(args.xAxisLabel, 100)
+              : presetMeta?.xAxisLabel ?? existingCfg?.xAxisLabel ?? dataset.headers[0] ?? 'Category',
+          yAxisLabel:
+            typeof args.yAxisLabel === 'string'
+              ? sanitizeText(args.yAxisLabel, 100)
+              : presetMeta?.yAxisLabel ?? existingCfg?.yAxisLabel ?? dataset.headers[1] ?? 'Value',
+          palette,
+          canvasTheme,
+          legendPosition,
+          showGrid: typeof args.showGrid === 'boolean' ? args.showGrid : existingCfg?.showGrid ?? true,
+          showDataLabels:
+            typeof args.showDataLabels === 'boolean' ? args.showDataLabels : existingCfg?.showDataLabels ?? false,
+          histogramBins,
+        };
+
+        writeJsonStorage(
+          CHART_STUDIO_STORAGE_KEY,
+          { config: nextConfig, dataset, isCustomData },
+          'omnidesk-chart-studio-updated'
+        );
+
+        const openedInUi = args.openInUi === true;
+        if (openedInUi) {
+          this.openToolInUi('chart-studio');
+        }
+
+        return this.okResult({
+          config: nextConfig,
+          headers: dataset.headers,
+          rowCount: dataset.rows.length,
+          summaryStats: logic.computeSeriesSummaryStats(dataset),
+          openedInUi,
+        });
+      }
+
+      case 'diagram_get_current': {
+        const logic = await import('../tools/expanded/diagramEditor.logic');
+        const stored = readJsonStorage<Partial<import('../tools/expanded/diagramEditor.logic').DiagramDocument> | null>(
+          DIAGRAM_STUDIO_STORAGE_KEY,
+          null
+        );
+        const doc: import('../tools/expanded/diagramEditor.logic').DiagramDocument =
+          stored && Array.isArray(stored.nodes) && Array.isArray(stored.edges)
+            ? {
+                title: typeof stored.title === 'string' && stored.title.trim() ? stored.title : 'Untitled Diagram',
+                nodes: stored.nodes,
+                edges: stored.edges,
+                canvasTheme:
+                  stored.canvasTheme === 'light' || stored.canvasTheme === 'transparent'
+                    ? stored.canvasTheme
+                    : 'dark',
+                showGrid: stored.showGrid !== false,
+                snapToGrid: stored.snapToGrid !== false,
+              }
+            : logic.getTemplateDocument('sql-ecommerce');
+
+        return this.okResult({
+          title: doc.title,
+          nodeCount: doc.nodes.length,
+          edgeCount: doc.edges.length,
+          nodes: doc.nodes.map(n => ({
+            id: n.id,
+            type: n.type,
+            title: n.title,
+            columns: n.columns?.map(c => ({
+              name: c.name,
+              dataType: c.dataType,
+              isPrimaryKey: Boolean(c.isPrimaryKey),
+              isForeignKey: Boolean(c.isForeignKey),
+            })),
+          })),
+          edges: doc.edges.map(e => ({
+            id: e.id,
+            fromId: e.fromId,
+            toId: e.toId,
+            label: e.label,
+          })),
+          mermaid: logic.exportDiagramToMermaid(doc),
+          sqlDdl: logic.exportDiagramToSqlDdl(doc),
+        });
+      }
+
+      case 'diagram_from_sql': {
+        if (typeof args.sql !== 'string' || !args.sql.trim()) {
+          return this.errResult('sql DDL string is required.');
+        }
+        if (new TextEncoder().encode(args.sql).length > MAX_DATA_CONVERT_BYTES) {
+          return this.errResult(`sql exceeds maximum size of ${MAX_DATA_CONVERT_BYTES} bytes.`);
+        }
+
+        const logic = await import('../tools/expanded/diagramEditor.logic');
+        const parsed = logic.parseSqlDdlToDiagram(args.sql);
+        if (parsed.nodes.length === 0) {
+          return this.errResult('No valid CREATE TABLE statements found in SQL DDL.');
+        }
+
+        const layoutNodes = logic.autoLayoutNodes(parsed.nodes, parsed.edges);
+        const existing = readJsonStorage<Partial<import('../tools/expanded/diagramEditor.logic').DiagramDocument> | null>(
+          DIAGRAM_STUDIO_STORAGE_KEY,
+          null
+        );
+        const doc: import('../tools/expanded/diagramEditor.logic').DiagramDocument = {
+          title: sanitizeText(args.title, 160) || 'SQL Schema ERD',
+          nodes: layoutNodes,
+          edges: parsed.edges,
+          canvasTheme:
+            existing?.canvasTheme === 'light' || existing?.canvasTheme === 'transparent'
+              ? existing.canvasTheme
+              : 'dark',
+          showGrid: existing?.showGrid !== false,
+          snapToGrid: existing?.snapToGrid !== false,
+        };
+
+        writeJsonStorage(DIAGRAM_STUDIO_STORAGE_KEY, doc, 'omnidesk-diagram-studio-updated');
+
+        const openedInUi = args.openInUi === true;
+        if (openedInUi) {
+          this.openToolInUi('diagram-editor');
+        }
+
+        return this.okResult({
+          title: doc.title,
+          tableCount: doc.nodes.length,
+          relationshipCount: doc.edges.length,
+          tables: doc.nodes.map(n => ({
+            name: n.title,
+            columnCount: n.columns?.length ?? 0,
+          })),
+          mermaid: logic.exportDiagramToMermaid(doc),
+          openedInUi,
+        });
+      }
+
+      case 'sql_run_query': {
+        if (typeof args.data !== 'string' || !args.data.trim()) {
+          return this.errResult('data (JSON or CSV/TSV string) is required.');
+        }
+        if (new TextEncoder().encode(args.data).length > MAX_DATA_CONVERT_BYTES) {
+          return this.errResult(`data exceeds maximum size of ${MAX_DATA_CONVERT_BYTES} bytes.`);
+        }
+        const query = typeof args.query === 'string' ? args.query.trim() : '';
+        if (!query) {
+          return this.errResult('SQL query string is required.');
+        }
+        if (query.length > 4000) {
+          return this.errResult('SQL query exceeds maximum length of 4000 characters.');
+        }
+
+        try {
+          const engine = await import('../utils/sqlPlaygroundEngine');
+          const parsed = engine.parseDatasetInput(args.data);
+          const result = engine.executeSqlQuery(parsed.rows, query);
+          const maxRows = 500;
+          const rows = result.rows.slice(0, maxRows);
+          return this.okResult({
+            inputFormat: parsed.format,
+            inputRowCount: parsed.rows.length,
+            columns: result.columns,
+            rowCount: result.rowCount,
+            returnedRows: rows.length,
+            truncated: result.rows.length > maxRows,
+            elapsedMs: result.elapsedMs,
+            rows,
+            csv: args.includeCsv === true ? engine.formatRowsAsCsv(rows) : undefined,
+          });
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : 'Failed to execute SQL query.';
+          return this.errResult(msg);
+        }
+      }
+
+      case 'desktop_hardware_specs': {
+        if (!isTauri()) {
+          return this.errResult('Hardware specs inspection requires the OmniDesk Desktop application (Tauri).');
+        }
+        try {
+          const desktop = await import('./desktopToolsService');
+          const specs = await desktop.getDesktopHardwareSpecs();
+          return this.okResult({
+            specs,
+            summary: desktop.formatHardwareSpecsSummary(specs),
+          });
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : 'Failed to inspect hardware specifications.';
+          return this.errResult(msg);
+        }
+      }
+
+      case 'desktop_list_ports_and_processes': {
+        const scope =
+          args.scope === 'ports' || args.scope === 'processes' || args.scope === 'all' ? args.scope : 'all';
+        const query = sanitizeText(args.query, 120);
+        const limit =
+          typeof args.limit === 'number' && Number.isFinite(args.limit)
+            ? Math.max(1, Math.min(100, Math.round(args.limit)))
+            : 30;
+        const sortBy: import('./desktopToolsService').ProcessSortField =
+          args.sortBy === 'cpu_usage' || args.sortBy === 'pid' || args.sortBy === 'name' || args.sortBy === 'memory_mb'
+            ? args.sortBy
+            : 'memory_mb';
+
+        if (!isTauri()) {
+          return this.errResult('Port and process inspection requires the OmniDesk Desktop application (Tauri).');
+        }
+
+        try {
+          const desktop = await import('./desktopToolsService');
+          const payload: Record<string, unknown> = { scope, query, limit };
+          if (scope === 'all' || scope === 'ports') {
+            const rawPorts = await desktop.listDesktopPorts();
+            const filteredPorts = desktop.filterListeningPorts(rawPorts, query, 'ALL');
+            payload.portCount = filteredPorts.length;
+            payload.ports = filteredPorts.slice(0, limit);
+          }
+          if (scope === 'all' || scope === 'processes') {
+            const rawProcs = await desktop.listDesktopProcesses(Math.max(limit, 150));
+            const filteredProcs = desktop.filterAndSortProcesses(rawProcs, query, sortBy, 'desc');
+            payload.processCount = filteredProcs.length;
+            payload.processes = filteredProcs.slice(0, limit);
+          }
+          return this.okResult(payload);
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : 'Failed to list ports or processes.';
+          return this.errResult(msg);
+        }
+      }
+
+      case 'desktop_network_check': {
+        const action =
+          args.action === 'ping' || args.action === 'tcp_check' || args.action === 'dns_lookup' ? args.action : null;
+        if (!action) {
+          return this.errResult('action must be one of: ping, tcp_check, dns_lookup.');
+        }
+
+        const desktop = await import('./desktopToolsService');
+        const host = typeof args.host === 'string' ? args.host.trim() : '';
+        if (!desktop.isValidNetworkHost(host)) {
+          return this.errResult('Invalid host. Provide a valid hostname or IP address.');
+        }
+
+        let port = 443;
+        if (action === 'tcp_check') {
+          if (typeof args.port !== 'number' || !Number.isFinite(args.port) || args.port < 1 || args.port > 65535) {
+            return this.errResult('Valid TCP port (1-65535) is required for tcp_check.');
+          }
+          port = Math.round(args.port);
+        }
+
+        if (!isTauri()) {
+          return this.errResult('Network diagnostics require the OmniDesk Desktop application (Tauri).');
+        }
+
+        try {
+          if (action === 'ping') {
+            const count =
+              typeof args.count === 'number' && Number.isFinite(args.count)
+                ? Math.max(1, Math.min(8, Math.round(args.count)))
+                : 4;
+            const result = await desktop.runDesktopPing(host, count);
+            return this.okResult({ action, result });
+          }
+          if (action === 'tcp_check') {
+            const result = await desktop.runDesktopTcpCheck(host, port, 2500);
+            return this.okResult({ action, result });
+          }
+          const validDns = ['A', 'AAAA', 'MX', 'TXT', 'NS', 'CNAME'] as const;
+          const recordType = validDns.includes(args.recordType as (typeof validDns)[number])
+            ? (args.recordType as (typeof validDns)[number])
+            : 'A';
+          const result = await desktop.runDesktopDnsLookup(host, recordType);
+          return this.okResult({ action, result });
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : 'Network diagnostic check failed.';
+          return this.errResult(msg);
+        }
+      }
+
+      case 'crosshair_list_presets': {
+        const logic = await import('../tools/gaming/crosshair.logic');
+        const game = typeof args.game === 'string' ? args.game.trim().toLowerCase() : '';
+        const presets = game
+          ? logic.CROSSHAIR_PRESETS.filter(p => p.game === game)
+          : logic.CROSSHAIR_PRESETS;
+        const storedActive = readJsonStorage<Partial<import('../tools/gaming/crosshair.logic').CrosshairConfig> | null>(
+          CROSSHAIR_ACTIVE_STORAGE_KEY,
+          null
+        );
+        const activeConfig = storedActive
+          ? logic.sanitizeCrosshairConfig(storedActive)
+          : logic.DEFAULT_CROSSHAIR_CONFIG;
+
+        return this.okResult({
+          active: {
+            config: activeConfig,
+            shareCode: logic.encodeCrosshairShareCode(activeConfig),
+          },
+          count: presets.length,
+          presets: presets.map(p => ({
+            id: p.id,
+            name: p.name,
+            game: p.game,
+            author: p.author,
+            shareCode: logic.encodeCrosshairShareCode(p.config),
+          })),
+        });
+      }
+
+      case 'crosshair_apply_preset': {
+        const logic = await import('../tools/gaming/crosshair.logic');
+        const presetId = typeof args.presetId === 'string' ? args.presetId.trim() : '';
+        const shareCode = typeof args.shareCode === 'string' ? args.shareCode.trim() : '';
+        if (!presetId && !shareCode) {
+          return this.errResult('Provide either presetId or shareCode.');
+        }
+
+        let resolved: import('../tools/gaming/crosshair.logic').CrosshairConfig | null = null;
+        if (presetId) {
+          const found = logic.CROSSHAIR_PRESETS.find(p => p.id === presetId);
+          if (!found) {
+            return this.errResult(`Unknown crosshair presetId: ${presetId}`);
+          }
+          resolved = logic.sanitizeCrosshairConfig(found.config);
+        } else {
+          resolved = logic.decodeCrosshairShareCode(shareCode);
+          if (!resolved) {
+            return this.errResult('Invalid crosshair shareCode.');
+          }
+        }
+
+        writeJsonStorage(CROSSHAIR_ACTIVE_STORAGE_KEY, resolved, 'omnidesk-crosshair-updated');
+
+        let overlaySynced = false;
+        if (isTauri()) {
+          try {
+            const desktop = await import('./desktopToolsService');
+            const status = await desktop.getDesktopCrosshairStatus();
+            if (status.active) {
+              const prefs = readJsonStorage<{ monitorIndex?: number }>(CROSSHAIR_PREFS_STORAGE_KEY, {});
+              const monitorIndex = Math.max(0, Math.round(Number(prefs.monitorIndex) || 0));
+              await desktop.updateDesktopCrosshairOverlay({
+                configJson: JSON.stringify(resolved),
+                monitorIndex,
+                offsetX: resolved.offsetX,
+                offsetY: resolved.offsetY,
+              });
+              overlaySynced = true;
+            }
+          } catch {
+            overlaySynced = false;
+          }
+        }
+
+        const openedInUi = args.openInUi === true;
+        if (openedInUi) {
+          this.openToolInUi('crosshair-overlay');
+        }
+
+        return this.okResult({
+          applied: resolved,
+          shareCode: logic.encodeCrosshairShareCode(resolved),
+          overlaySynced,
+          openedInUi,
+        });
       }
 
       default:

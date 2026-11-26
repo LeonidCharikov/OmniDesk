@@ -28,17 +28,44 @@ export const ScreenshotAnnotatorTool: React.FC = () => {
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const baseImageRef = useRef<HTMLImageElement | null>(null);
+  const objectUrlRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (objectUrlRef.current) {
+        URL.revokeObjectURL(objectUrlRef.current);
+        objectUrlRef.current = null;
+      }
+      baseImageRef.current = null;
+      if (canvasRef.current) {
+        canvasRef.current.width = 0;
+        canvasRef.current.height = 0;
+      }
+    };
+  }, []);
 
   const load = (file: File) => {
+    if (objectUrlRef.current) {
+      URL.revokeObjectURL(objectUrlRef.current);
+      objectUrlRef.current = null;
+    }
     setFileName(file.name);
     setShapes([]);
+    const url = URL.createObjectURL(file);
+    objectUrlRef.current = url;
     const img = new Image();
     img.onload = () => {
       baseImageRef.current = img;
       redraw();
-      setSrc(URL.createObjectURL(file));
+      setSrc(url);
     };
-    img.src = URL.createObjectURL(file);
+    img.onerror = () => {
+      if (objectUrlRef.current === url) {
+        URL.revokeObjectURL(url);
+        objectUrlRef.current = null;
+      }
+    };
+    img.src = url;
   };
 
   const getCanvasCoords = (e: React.MouseEvent<HTMLCanvasElement>) => {

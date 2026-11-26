@@ -168,6 +168,20 @@ export const DiagramEditorTool: React.FC = () => {
     }
   }, [doc]);
 
+  // Sync live updates pushed from Desktop MCP Bridge
+  useEffect(() => {
+    const handleExternalUpdate = () => {
+      const next = loadInitialDocument();
+      setDoc(next);
+      setSelectedNodeId(next.nodes[0]?.id ?? null);
+      setSelectedEdgeId(null);
+    };
+    window.addEventListener('omnidesk-diagram-studio-updated', handleExternalUpdate);
+    return () => {
+      window.removeEventListener('omnidesk-diagram-studio-updated', handleExternalUpdate);
+    };
+  }, []);
+
   const commitChange = useCallback((updater: (prev: DiagramDocument) => DiagramDocument) => {
     setDoc(prev => {
       const next = updater(prev);

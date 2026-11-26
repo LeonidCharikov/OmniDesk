@@ -559,6 +559,15 @@ export async function releaseDesktopProcessCache(): Promise<void> {
   await invokeRustCommand<void>('desktop_release_process_cache');
 }
 
+export async function trimDesktopMemory(clearTelemetry = false): Promise<void> {
+  if (!isTauri()) return;
+  try {
+    await invokeRustCommand<void>('desktop_trim_memory', { clearTelemetry });
+  } catch {
+    // Ignore transient IPC errors during shutdown or transition
+  }
+}
+
 export async function getDesktopHardwareSpecs(): Promise<HardwareSpecs> {
   ensureDesktopRuntime();
   return invokeRustCommand<HardwareSpecs>('desktop_get_hardware_specs');

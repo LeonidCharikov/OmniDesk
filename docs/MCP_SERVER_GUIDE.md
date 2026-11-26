@@ -58,11 +58,25 @@ All tools respect OmniDesk’s **Permission Level** (`readonly` vs `readwrite`).
 | `app_open_tool` | `readwrite` | `App.tsx` navigation handler | Focus and open a specific tool ID (e.g. `calendar`, `notes`, `pdf-editor`) in the desktop UI. |
 | `clipboard_read` | `readonly` | Tauri `mcp_read_clipboard` / `navigator.clipboard` | Read current plain text content from the desktop or browser clipboard. |
 | `clipboard_write` | `readwrite` | Tauri `mcp_write_clipboard` / `navigator.clipboard` | Write plain text content (`text`, max 100,000 chars) to the clipboard. |
+| `chart_list_types` | `readonly` | `chartStudio.logic.ts` | List all 17 chart families, 35 subtypes, color palettes, and sample presets. |
+| `chart_analyze_data` | `readonly` | `chartStudio.logic.ts` + `omnidesk_chart_studio_v1` | Parse CSV/TSV/JSON (or active chart data) and compute series stats, linear regression $R^2$, histogram bins, or box-plot quartiles. |
+| `chart_create_or_update` | `readwrite` | `localStorage` (`omnidesk_chart_studio_v1`) + `omnidesk-chart-studio-updated` | Load data or a preset into Chart Studio, configure chart family/subtype/labels/palette, and optionally open `chart-studio`. |
+| `diagram_get_current` | `readonly` | `localStorage` (`omnidesk_diagram_studio_v2`) + `diagramEditor.logic.ts` | Inspect the active Diagram Studio document and export Mermaid markup and SQL DDL. |
+| `diagram_from_sql` | `readwrite` | `localStorage` (`omnidesk_diagram_studio_v2`) + `omnidesk-diagram-studio-updated` | Parse SQL `CREATE TABLE` DDL into an auto-laid-out visual SQL ERD in Diagram Studio and optionally open `diagram-editor`. |
+| `sql_run_query` | `readonly` | `sqlPlaygroundEngine.ts` | Execute local SQL (`SELECT`, `WHERE`, `JOIN`, `GROUP BY`, `ORDER BY`, `LIMIT`) on inline JSON or CSV datasets. |
+| `desktop_hardware_specs` | `readonly` | Rust `desktop_get_hardware_specs` | Read native PC hardware specs (CPU, GPUs & VRAM, RAM modules, motherboard, disks, OS/kernel). |
+| `desktop_list_ports_and_processes` | `readonly` | Rust `desktop_list_ports` & `desktop_list_processes` | Read-only snapshot of active listening TCP/UDP ports and top OS processes by CPU/RAM. |
+| `desktop_network_check` | `readonly` | Rust `desktop_net_ping` / `desktop_net_tcp_check` / `desktop_net_dns_lookup` | Run safe read-only ICMP ping, TCP port check, or DNS lookup with host validation. |
+| `crosshair_list_presets` | `readonly` | `crosshair.logic.ts` + `omnidesk_crosshair_active_v1` | List the 15 built-in game crosshair presets, share codes, and active crosshair config. |
+| `crosshair_apply_preset` | `readwrite` | `localStorage` (`omnidesk_crosshair_active_v1`) + `omnidesk-crosshair-updated` | Apply a preset by ID or share code and live-update the native desktop Crosshair Overlay if active. |
 
 ### B. MCP Resources
 
 - `omnidesk://calendar/events` — JSON snapshot of all saved calendar events.
 - `omnidesk://tasks/summary` — Combined JSON snapshot of daily tasks and Kanban cards.
+- `omnidesk://snippets/list` — JSON list of reusable code & shell snippets in Snippet Vault.
+- `omnidesk://chart-studio/current` — Active Chart Studio configuration, dataset, and series statistics.
+- `omnidesk://diagram-studio/current` — Active Diagram Studio document with Mermaid and SQL DDL exports.
 - `omnidesk://system/telemetry` — Live system telemetry and runtime metadata.
 
 ### C. Local File System APIs (Tauri & Scoped Server Directory)

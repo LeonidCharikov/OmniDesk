@@ -57,8 +57,8 @@
 
 | Capability | Details |
 | :--- | :--- |
-| 🔒 **Privacy, Storage Audit & Full Workspace Backup** | Every file edit, hash, PDF edit, QR scan, image compression, and color conversion runs 100% locally — installable as an offline-first PWA. On the **Tauri Desktop** build, also includes **Full Workspace Backup** (settings + Calendar, Kanban, Notes, Expenses, Habits, Shopping List, Flashcards) and **AES-256-GCM encrypted bundles** (stripped on Web so browser users stay focused on individual tools). |
-| ⚡ **Dual Runtime (Tauri v2 + Web/PWA), Workers & Auto-Updater** | Native **Tauri v2** desktop app (with **signed GitHub Releases Auto-Updater**, multi-monitor-safe **persistent window geometry**, transparent click-through **Crosshair Overlay window**, double-click titlebar maximize/restore, `sysinfo` hardware telemetry, OS tray mode, file associations & quick Web/GitHub links) or streamlined offline browser PWA. Heavy dependencies (`pdf-lib`, `tesseract.js`, MCP client), **Web Workers** (batch photo compression & cryptographic hashing), and **IndexedDB** tool storage keep the UI responsive with minimal RAM usage. |
+| 🔒 **Privacy, Storage Audit & Full Workspace Backup** | Every file edit, hash, PDF edit, QR scan, image compression, and color conversion runs 100% locally in memory with zero cloud telemetry. On the **Tauri Desktop** build, also includes **Full Workspace Backup** (settings + Calendar, Kanban, Notes, Expenses, Habits, Shopping List, Flashcards) and **AES-256-GCM encrypted bundles** (stripped on Web so browser users stay focused on individual tools). |
+| ⚡ **Dual Runtime (Tauri v2 Desktop + Web), Workers & Auto-Updater** | Native **Tauri v2** desktop app (with **signed GitHub Releases Auto-Updater**, multi-monitor-safe **persistent window geometry**, transparent click-through **Crosshair Overlay window**, double-click titlebar maximize/restore, `sysinfo` hardware telemetry, OS tray mode, file associations & quick Web/GitHub links) or instant zero-install browser web app. Heavy dependencies (`pdf-lib`, `tesseract.js`, MCP client), **Web Workers** (batch photo compression & cryptographic hashing), and **IndexedDB** tool storage keep the UI responsive with minimal RAM usage. |
 | 🖨️ **Built-In Document & Media Printing** | Print directly via native OS print dialogs without popup blockers from **PDF Studio**, **Resume / CV Builder**, **Chart & Statistics Graph Studio**, **Solution Dilution Planner** (bench sheets), **Image Editor**, **Text & Markdown Editor**, **Markdown Preview**, **Notes**, **Diagram Editor**, **Invoice Generator**, **Screenshot Annotator**, **Sketchpad**, and **QR Code Generator**. |
 | 🧭 **Extended Command Palette & Customizable Shortcuts** | Press `Ctrl+K` (`⌘K`) to search across **145 tools** (auto-filtered to the active Web or Desktop runtime), saved **Notes**, **Calendar events**, **Settings tabs**, and **Themes**. Rebind built-in actions or assign custom keyboard shortcuts to any tool in **Settings → Shortcuts** (press `Shift+?` for cheat sheet). |
 | 🔄 **Offline Multi-Format Converter Hub** | CloudConvert-style **Offline Format Catalog** & **multi-file batch queue** covering **6 categories** 100% locally in memory: **Video** (`MP4`/`WebM`/`MOV` → `WebM`, animated `GIF`, `WAV` audio, frame capture), **Audio** (`MP3`/`WAV`/`OGG`/`FLAC`/`M4A`/`AAC` → `WAV`/`AIFF`/`WebM`), **Images** (`PNG`/`JPG`/`WebP`/`AVIF`/`GIF`/`BMP`/`SVG`/`ICO` → `WebP`/`PNG`/`JPG`/`GIF`/`BMP`/`ICO`/`PDF`/`SVG`), **Documents** (`DOCX`/`PDF`/`MD`/`HTML`/`TXT`/`RTF`), **Spreadsheets & Data** (`XLSX`/`XLS`/`ODS`/`CSV`/`TSV`/`JSON`/`YAML`/`XML`/`MD`/`HTML`), and **Archives** (`ZIP` ↔ `TAR` ↔ `TAR.GZ` ↔ `GZ` with extraction & batch ZIP download). |
@@ -66,7 +66,7 @@
 | 🔗 **Cross-Tool Piping & Smart Drag-and-Drop** | Pipe outputs directly between compatible tools with **Send to...** (`toolPipeService`), or drag & drop any file anywhere on the window to launch the **Smart Drop Router** with matching tools and 1-click **Load Sample** demos. |
 | 💱 **Universal Multi-Currency Engine & Starter Presets** | Configure a global default currency across 15+ world currencies (`CZK`, `EUR`, `USD`, `GBP`, `CHF`, `PLN`, `JPY`, `CNY`, etc.) synced across finance tools, Invoice Generator, and sidebar widgets, plus 1-click **Workspace Starter Presets** (*Developer*, *Student & Science*, *Finance & Daily*). |
 | 🎨 **12 Themes & Adaptive Mini-Widgets *(Desktop)*** | Switch seamlessly between **9 curated dark palettes** and **3 light palettes** (*Clean Light*, *Warm Paper* & *Soft Sage*) across both Desktop and Web, while the **Tauri Desktop** app adds 7 sidebar mini-widgets with automatic **compact tabbed mode** on smaller screens and subtle non-blocking **Toast notifications**. |
-| 🤖 **MCP Bridge *(Desktop App Only)*** | Exclusive to the **Tauri Desktop** build (stripped from the Web/PWA version): connect AI assistants (Claude Desktop, Cursor, VS Code, Windsurf) via WebSocket or Tauri `stdio` IPC to **24 MCP tools** — including File & Data Conversion, Snippet Vault, Hashing/Encoding, SVG Optimization, Safe Math, Mock Data, Lorem Ipsum, Calendar, Tasks, Notes, System Telemetry, Tool Navigation, and Clipboard Sync — with **Connected Tools**, **MCP Log**, and interactive setup tutorial. |
+| 🤖 **MCP Bridge *(Desktop App Only)*** | Exclusive to the **Tauri Desktop** build (stripped from the Web version): connect AI assistants (Claude Desktop, Cursor, VS Code, Windsurf) via WebSocket or Tauri `stdio` IPC to **35 MCP tools** — including **Chart Studio**, **Diagram Studio (SQL ERD / UML / Mermaid)**, **SQL Playground**, **Desktop Hardware / Ports / Network Diagnostics**, **Crosshair Overlay Presets**, File & Data Conversion, Snippet Vault, Hashing/Encoding, SVG Optimization, Safe Math, Mock Data, Lorem Ipsum, Calendar, Tasks, Notes, System Telemetry, Tool Navigation, and Clipboard Sync — with **Connected Tools**, **MCP Log**, and interactive setup tutorial. |
 | 🌍 **5 Built-In Languages with Crisp SVG Flags** | Instant localization across **English** (`en`, default), **Čeština** (`cs`), **Deutsch** (`de`), **Español** (`es`), and **Русский** (`ru`) with cross-platform inline SVG flag icons (rendered identically on Windows, macOS, Linux, and web) and automated i18n checks. |
 
 ---
@@ -429,16 +429,21 @@ In the **Tauri Desktop** build, on smaller viewports (`< 1024px` wide or `< 880p
 
 ## 🤖 Model Context Protocol (MCP) Bridge & Live Debugger *(Desktop Only)*
 
-> **Note:** MCP Bridge, transport connections, and the **Settings → MCP Bridge** tab run exclusively in the **Tauri v2 Desktop** application and are automatically excluded from the **Web / PWA** build to keep browser memory usage and bundle size minimal. In the desktop app, convenient **Web Version** and **GitHub** links are included directly in the sidebar and Settings footer.
+> **Note:** MCP Bridge, transport connections, and the **Settings → MCP Bridge** tab run exclusively in the **Tauri v2 Desktop** application and are automatically excluded from the **Web** build to keep browser memory usage and bundle size minimal. In the desktop app, convenient **Web Version** and **GitHub** links are included directly in the sidebar and Settings footer.
 
 OmniDesk includes full end-to-end MCP support across the lazy-loaded desktop React client (`src/services/mcpClient.ts`), the **Tauri v2 Rust backend** (`src-tauri/src/lib.rs`), and the standalone **Node.js MCP server template** (`docs/mcp-server-template/server.mjs`):
 
-- **24 Exposed Desktop MCP Tools (`readonly` & `readwrite` modes)**:
+- **35 Exposed Desktop MCP Tools (`readonly` & `readwrite` modes)**:
+  - **Chart & Statistics Graph Studio**: `chart_list_types`, `chart_analyze_data` (summary stats, regression $R^2$, histogram bins, box-plot quartiles), `chart_create_or_update` (live-updates & opens Chart Studio).
+  - **Diagram Studio (SQL ERD / UML / Flowcharts)**: `diagram_get_current` (with Mermaid & SQL DDL export), `diagram_from_sql` (auto-generates & lays out a visual SQL ERD from `CREATE TABLE` DDL).
+  - **SQL Playground**: `sql_run_query` (run `SELECT`/`WHERE`/`JOIN`/`GROUP BY`/`ORDER BY` queries against inline JSON or CSV datasets).
+  - **Desktop Hardware, Ports & Network Diagnostics**: `desktop_hardware_specs`, `desktop_list_ports_and_processes` (read-only), `desktop_network_check` (`ping`, `tcp_check`, `dns_lookup`).
+  - **Crosshair Overlay Studio**: `crosshair_list_presets` (15 built-in game presets & share codes), `crosshair_apply_preset` (apply preset or share code & live-update active overlay).
   - **File & Data Conversion**: `convert_list_formats`, `convert_data` (`JSON`/`YAML`/`CSV`/`TSV`/`Markdown`/`XML`), `convert_file_base64` (full Multi-Format Converter engine), plus scoped `workspace_convert_file` in `server.mjs` when `OMNIDESK_WORKSPACE_DIR` is enabled.
   - **Snippet Vault**: `snippets_search` (with `{{variable}}` template rendering), `snippets_create`.
   - **Developer & Utility Suite**: `crypto_hash_text` (`SHA-256`/`384`/`512`/`1`), `encode_decode_text` (`base64`/`base64url`/`url`/`hex`/`binary`), `svg_optimize` (+ React TSX), `math_evaluate`, `generate_mock_data` (`json`/`csv`/`sql`), `generate_lorem_ipsum`.
   - **Workspace & Productivity**: Calendar (`calendar_list_events`, `calendar_create_event`, `calendar_delete_event`), Tasks (`tasks_list`, `tasks_create`, `tasks_update_status`), Notes (`notes_search`, `notes_create`), System Telemetry (`system_get_info`), App Navigation (`app_list_tools`, `app_open_tool`), and **Clipboard Synchronization** (`clipboard_read`, `clipboard_write`).
-- **4 MCP Resources**: `omnidesk://calendar/events`, `omnidesk://tasks/summary`, `omnidesk://snippets/list`, and `omnidesk://system/telemetry`.
+- **6 MCP Resources**: `omnidesk://calendar/events`, `omnidesk://tasks/summary`, `omnidesk://snippets/list`, `omnidesk://chart-studio/current`, `omnidesk://diagram-studio/current`, and `omnidesk://system/telemetry`.
 - **Dual Native & WebSocket Transports**:
   - **WebSocket Bridge (`ws://127.0.0.1:3847/bridge`)**: Connects with exponential backoff auto-reconnect to `docs/mcp-server-template/server.mjs` (also provides `omnidesk_bridge_status` + scoped `OMNIDESK_WORKSPACE_DIR` file listing, reading, and conversion tools + `notifications/tools/list_changed`).
   - **Native Tauri `stdio` IPC (`--mcp-stdio`) & Background Clipboard**: Rust `stdin`/`stdout` JSON-RPC bridge (`mcp_stdio_ready`, `mcp_stdio_tx`) with startup line buffering and `tauri-plugin-clipboard-manager` (`mcp_read_clipboard`, `mcp_write_clipboard`).
@@ -509,17 +514,15 @@ See **[docs/MCP_SERVER_GUIDE.md](docs/MCP_SERVER_GUIDE.md)** for full architectu
 
 ## 🚀 Quick Start
 
-### Option 1 — Live Web App (Browser / Offline PWA)
-Launch OmniDesk directly in your browser with zero installation at **[https://leonidcharikov.github.io/OmniDesk/](https://leonidcharikov.github.io/OmniDesk/)** — optionally click **Install App** in the header to install it as an offline-capable PWA.
+### Option 1 — Live Web App (Run in Browser)
+Use OmniDesk directly in your browser with zero installation at **[https://leonidcharikov.github.io/OmniDesk/](https://leonidcharikov.github.io/OmniDesk/)**.
 
-### Option 2 — Pre-Built Desktop Releases & Auto-Updater
-Download the latest installer for **Windows** (`-setup.exe`), **macOS** (`.dmg`), or **Linux** (`.AppImage`) from the **Releases** page. Future releases support 1-click cryptographically signed updates directly inside **Settings → Updates** (see **[docs/AUTO_UPDATER_GUIDE.md](docs/AUTO_UPDATER_GUIDE.md)** to configure signing keys in CI).
+### Option 2 — Download Desktop App (Pre-Built Releases & Auto-Updater)
+Download the latest native desktop installer for **Windows** (`-setup.exe`), **macOS** (`.dmg`), or **Linux** (`.AppImage`) from **[GitHub Releases](https://github.com/LeonidCharikov/OmniDesk/releases)** (or click **Install App** in the web app header). Future releases support 1-click cryptographically signed updates directly inside **Settings → Updates** (see **[docs/AUTO_UPDATER_GUIDE.md](docs/AUTO_UPDATER_GUIDE.md)** to configure signing keys in CI).
 
-### Option 3 — One-Click Launcher
-- **Windows:** Double-click `start.bat`
-- **macOS / Linux:** Run `./start.sh`
-
-### Option 4 — Web Development Server, Tests & PWA
+### Option 3 — Download / Clone Project (Local Source & Development)
+- **One-Click Launcher:** Double-click `start.bat` (Windows) or run `./start.sh` (macOS / Linux).
+- **Web Dev Server & Tests:**
 ```bash
 npm install
 npm run dev          # Start dev server on http://localhost:3000
@@ -527,9 +530,7 @@ npm test             # Run Vitest unit & registry tests
 npm run test:e2e     # Run headless Chromium Playwright E2E smoke tests
 npm run i18n:check   # Verify all translation keys exist across all 5 locales
 ```
-Open **[http://localhost:3000](http://localhost:3000)** and optionally click **Install App** in the header to install OmniDesk as an offline-capable PWA.
-
-### Option 5 — Tauri v2 Desktop Development
+- **Tauri v2 Desktop Development:**
 ```bash
 npm install
 npm run tauri dev

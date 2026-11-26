@@ -360,6 +360,22 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
     isWidgetsExpanded &&
     (!isCompactModeNow || activeCompactTab === 'system');
 
+  const [isWindowFocused, setIsWindowFocused] = useState<boolean>(() =>
+    typeof document !== 'undefined' ? document.hasFocus() : true
+  );
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const onFocus = () => setIsWindowFocused(true);
+    const onBlur = () => setIsWindowFocused(false);
+    window.addEventListener('focus', onFocus);
+    window.addEventListener('blur', onBlur);
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      window.removeEventListener('blur', onBlur);
+    };
+  }, []);
+
   // Live clock tick (pauses automatically when minimized, hidden to tray, or clock widget hidden)
   useEffect(() => {
     if (!isClockVisible) return;
@@ -368,9 +384,9 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
     return () => clearInterval(interval);
   }, [isClockVisible]);
 
-  // Lightweight native CPU + RAM telemetry polling (desktop only; pauses when hidden/minimized)
+  // Lightweight native CPU + RAM telemetry polling (desktop only; pauses when hidden, minimized, or unfocused)
   useEffect(() => {
-    if (!isSystemWidgetVisible || !isTauri()) return;
+    if (!isSystemWidgetVisible || !isWindowFocused || !isTauri()) return;
     let cancelled = false;
     const poll = async () => {
       try {
@@ -385,12 +401,12 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
     void poll();
     const interval = setInterval(() => {
       void poll();
-    }, 2500);
+    }, 5000);
     return () => {
       cancelled = true;
       clearInterval(interval);
     };
-  }, [isSystemWidgetVisible]);
+  }, [isSystemWidgetVisible, isWindowFocused]);
 
   // Mini timer countdown
   useEffect(() => {
@@ -404,8 +420,16 @@ export const SidebarWidgets: React.FC<SidebarWidgetsProps> = ({
         const osc = audioCtx.createOscillator();
         osc.frequency.setValueAtTime(800, audioCtx.currentTime);
         osc.connect(audioCtx.destination);
+        osc.onended = () => {
+          void audioCtx.close().catch(() => {});
+        };
         osc.start();
         osc.stop(audioCtx.currentTime + 0.3);
+        window.setTimeout(() => {
+          if (audioCtx.state !== 'closed') {
+            void audioCtx.close().catch(() => {});
+          }
+        }, 500);
       } catch {
         // blocked
       }

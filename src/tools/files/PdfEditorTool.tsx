@@ -446,10 +446,11 @@ export const PdfEditorTool: React.FC = () => {
   // Generate thumbnail previews for all pages
   const generateThumbnails = useCallback(async (pdfBytes: Uint8Array) => {
     if (!pdfBytes || pdfBytes.byteLength === 0) return;
+    let pdf: pdfjsLib.PDFDocumentProxy | null = null;
     try {
       const dataCopy = clonePdfBytes(pdfBytes);
       const loadingTask = pdfjsLib.getDocument({ data: dataCopy });
-      const pdf = await loadingTask.promise;
+      pdf = await loadingTask.promise;
       const thumbs: string[] = [];
 
       for (let i = 1; i <= pdf.numPages; i++) {
@@ -463,10 +464,14 @@ export const PdfEditorTool: React.FC = () => {
           await page.render({ canvasContext: ctx, viewport }).promise;
           thumbs.push(canvas.toDataURL('image/jpeg', 0.7));
         }
+        canvas.width = 0;
+        canvas.height = 0;
       }
       setPageThumbnails(thumbs);
     } catch (err) {
       console.warn('Could not generate thumbnails', err);
+    } finally {
+      await pdf?.destroy().catch(() => {});
     }
   }, []);
 
@@ -612,11 +617,12 @@ export const PdfEditorTool: React.FC = () => {
   const handleLiftEmbeddedImage = useCallback(
     async (imgObj: DetectedImageObject) => {
       if (!currentPdfBytes || !pageCanvasRef.current) return;
+      let pdf: pdfjsLib.PDFDocumentProxy | null = null;
       try {
         setIsProcessing(true);
         // Render page at 2x without overlays to extract clean pixels for the image region
         const loadingTask = pdfjsLib.getDocument({ data: clonePdfBytes(currentPdfBytes) });
-        const pdf = await loadingTask.promise;
+        pdf = await loadingTask.promise;
         const page = await pdf.getPage(activePageIndex + 1);
         const extractScale = 2.5;
         const vp = page.getViewport({ scale: extractScale });
@@ -639,6 +645,10 @@ export const PdfEditorTool: React.FC = () => {
         if (!cCtx) return;
         cCtx.drawImage(fullCanvas, sx, sy, sw, sh, 0, 0, sw, sh);
         const dataUrl = cropCanvas.toDataURL('image/png');
+        fullCanvas.width = 0;
+        fullCanvas.height = 0;
+        cropCanvas.width = 0;
+        cropCanvas.height = 0;
 
         const { updatedBytes, removed } = await removeSpecificImageFromPdf(
           clonePdfBytes(currentPdfBytes),
@@ -675,6 +685,7 @@ export const PdfEditorTool: React.FC = () => {
       } catch (err) {
         console.error('Failed to lift embedded image:', err);
       } finally {
+        await pdf?.destroy().catch(() => {});
         setIsProcessing(false);
       }
     },
@@ -940,10 +951,11 @@ export const PdfEditorTool: React.FC = () => {
         renderTaskRef.current = null;
       }
 
+      let pdf: pdfjsLib.PDFDocumentProxy | null = null;
       try {
         const dataCopy = clonePdfBytes(pdfBytes);
         const loadingTask = pdfjsLib.getDocument({ data: dataCopy });
-        const pdf = await loadingTask.promise;
+        pdf = await loadingTask.promise;
         setTotalPages(pdf.numPages);
 
         const safeIdx = Math.min(Math.max(0, pageIdx), pdf.numPages - 1);
@@ -1075,6 +1087,7 @@ export const PdfEditorTool: React.FC = () => {
         console.error('Error rendering page:', err);
         showNotification('error', `${t('pdf_editor_error_processing', 'Error processing document: ')} ${err instanceof Error ? err.message : String(err)}`);
       } finally {
+        await pdf?.destroy().catch(() => {});
         setIsProcessing(false);
       }
     },
@@ -1223,6 +1236,10 @@ export const PdfEditorTool: React.FC = () => {
           // ignore
         }
         renderTaskRef.current = null;
+      }
+      if (pageCanvasRef.current) {
+        pageCanvasRef.current.width = 0;
+        pageCanvasRef.current.height = 0;
       }
     };
   }, []);
@@ -1852,6 +1869,7 @@ export const PdfEditorTool: React.FC = () => {
 
       // Load pdfjs doc for exact viewport-to-PDF coordinate conversion per page (handles CropBox/MediaBox)
       const pdfJsDoc = await pdfjsLib.getDocument({ data: clonePdfBytes(baseBytes) }).promise;
+      try {
       const numPages = pdfDoc.getPageCount();
 
       for (let p = 0; p < numPages; p++) {
@@ -2049,6 +2067,9 @@ export const PdfEditorTool: React.FC = () => {
       }
 
       return clonePdfBytes(await pdfDoc.save());
+      } finally {
+        await pdfJsDoc.destroy().catch(() => {});
+      }
     },
     [elements, drawingStrokes]
   );

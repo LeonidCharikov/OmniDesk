@@ -201,6 +201,20 @@ export const ChartStudioTool: React.FC = () => {
     }
   }, [config, dataset, isCustomData]);
 
+  // Sync live updates pushed from Desktop MCP Bridge
+  useEffect(() => {
+    const handleExternalUpdate = () => {
+      const next = loadPersistedState();
+      setConfig(next.config);
+      setDataset(next.dataset);
+      setIsCustomData(next.isCustomData);
+    };
+    window.addEventListener('omnidesk-chart-studio-updated', handleExternalUpdate);
+    return () => {
+      window.removeEventListener('omnidesk-chart-studio-updated', handleExternalUpdate);
+    };
+  }, []);
+
   const importFileObject = useCallback(
     async (file: File) => {
       try {

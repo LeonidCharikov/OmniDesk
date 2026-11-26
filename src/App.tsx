@@ -16,7 +16,8 @@ import { Info, FileUp } from 'lucide-react';
 import { getToolCatalogText } from './i18n/toolCatalog';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
 import { DEFAULT_SHORTCUTS, isTypingTarget, matchesShortcutCombo } from './services/shortcutsService';
-import { setPendingToolPipe } from './services/toolPipeService';
+import { clearPendingToolPipe, setPendingToolPipe } from './services/toolPipeService';
+import { trimDesktopMemory } from './services/desktopToolsService';
 import { toastService } from './services/toastService';
 import {
   invokeRustCommand,
@@ -243,6 +244,49 @@ export default function App() {
       window.history.replaceState(null, '', nextHash || window.location.pathname + window.location.search);
     }
   }, [activeCategory, selectedToolId]);
+
+  // Reclaim stale tool handoffs and trim desktop working set when switching tools
+  const prevToolIdRef = useRef<string | null>(selectedToolId);
+  useEffect(() => {
+    const prevToolId = prevToolIdRef.current;
+    prevToolIdRef.current = selectedToolId;
+    if (!prevToolId || prevToolId === selectedToolId) return;
+
+    if (selectedToolId === null) {
+      clearPendingToolPipe();
+    }
+
+    if (!isTauri()) return;
+    const shouldClearTelemetry = prevToolId === 'system-monitor' || selectedToolId === null;
+    const timer = window.setTimeout(() => {
+      void trimDesktopMemory(shouldClearTelemetry);
+    }, 1200);
+    return () => window.clearTimeout(timer);
+  }, [selectedToolId]);
+
+  // Periodically trim desktop working set after 45s of user inactivity to prevent idle RAM creep
+  useEffect(() => {
+    if (!isTauri()) return;
+    let idleTimer: number | null = null;
+    const scheduleIdleTrim = () => {
+      if (idleTimer !== null) {
+        window.clearTimeout(idleTimer);
+      }
+      idleTimer = window.setTimeout(() => {
+        idleTimer = null;
+        void trimDesktopMemory(false);
+      }, 45_000);
+    };
+
+    scheduleIdleTrim();
+    window.addEventListener('pointerdown', scheduleIdleTrim, { passive: true });
+    window.addEventListener('keydown', scheduleIdleTrim, { passive: true });
+    return () => {
+      if (idleTimer !== null) window.clearTimeout(idleTimer);
+      window.removeEventListener('pointerdown', scheduleIdleTrim);
+      window.removeEventListener('keydown', scheduleIdleTrim);
+    };
+  }, []);
 
   useEffect(() => {
     const handleHashChange = () => {

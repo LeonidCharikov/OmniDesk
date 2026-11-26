@@ -173,6 +173,17 @@ export const CrosshairOverlayTool: React.FC = () => {
     [persistConfig]
   );
 
+  // Sync live preset updates pushed from Desktop MCP Bridge
+  useEffect(() => {
+    const handleExternalUpdate = () => {
+      setConfig(loadActiveConfig());
+    };
+    window.addEventListener('omnidesk-crosshair-updated', handleExternalUpdate);
+    return () => {
+      window.removeEventListener('omnidesk-crosshair-updated', handleExternalUpdate);
+    };
+  }, []);
+
   // Sync with native Tauri overlay state & monitor inventory
   useEffect(() => {
     if (!runningInTauri) return;

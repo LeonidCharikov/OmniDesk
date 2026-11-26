@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   CALENDAR_STORAGE_KEY,
+  CHART_STUDIO_STORAGE_KEY,
+  CROSSHAIR_ACTIVE_STORAGE_KEY,
+  DIAGRAM_STUDIO_STORAGE_KEY,
   isValidMcpWebSocketUrl,
   KANBAN_STORAGE_KEY,
   McpConnectionStatus,
@@ -574,6 +577,277 @@ describe('OmniDeskMcpClient', () => {
       params: { name: 'math_evaluate', arguments: { expression: '1+1' } },
     });
     expect(unlockedRes?.error).toBeUndefined();
+  });
+
+  it('supports Chart Studio MCP tools, live sync event, and resource snapshot', async () => {
+    const roClient = new OmniDeskMcpClient({ accessMode: 'readonly' });
+    const typesRes = await roClient.handleRequest({
+      jsonrpc: '2.0',
+      id: 90,
+      method: 'tools/call',
+      params: { name: 'chart_list_types', arguments: {} },
+    });
+    const typesPayload = JSON.parse(
+      (typesRes?.result as { content: Array<{ text: string }> }).content[0].text
+    ) as { totalFamilies: number; totalSubtypes: number };
+    expect(typesPayload.totalFamilies).toBe(17);
+    expect(typesPayload.totalSubtypes).toBe(35);
+
+    const blockedWrite = await roClient.handleRequest({
+      jsonrpc: '2.0',
+      id: 91,
+      method: 'tools/call',
+      params: { name: 'chart_create_or_update', arguments: { family: 'line', title: 'Blocked' } },
+    });
+    expect(blockedWrite?.error?.code).toBe(-32002);
+
+    const openedTools: string[] = [];
+    const chartUpdated = vi.fn();
+    window.addEventListener('omnidesk-chart-studio-updated', chartUpdated);
+
+    const rwClient = new OmniDeskMcpClient({
+      accessMode: 'readwrite',
+      onOpenTool: id => openedTools.push(id),
+    });
+
+    const csv = 'Quarter,Revenue,Profit\n1,100,25\n2,150,40\n3,200,55\n4,250,70';
+    const createRes = await rwClient.handleRequest({
+      jsonrpc: '2.0',
+      id: 92,
+      method: 'tools/call',
+      params: {
+        name: 'chart_create_or_update',
+        arguments: {
+          data: csv,
+          family: 'line',
+          subtype: 'line-smooth',
+          title: 'Quarterly Growth',
+          palette: 'emerald',
+          openInUi: true,
+        },
+      },
+    });
+    expect(createRes?.error).toBeUndefined();
+    const createdPayload = JSON.parse(
+      (createRes?.result as { content: Array<{ text: string }> }).content[0].text
+    ) as { config: { family: string; subtype: string; title: string }; rowCount: number; openedInUi: boolean };
+    expect(createdPayload.config.family).toBe('line');
+    expect(createdPayload.config.subtype).toBe('line-smooth');
+    expect(createdPayload.config.title).toBe('Quarterly Growth');
+    expect(createdPayload.rowCount).toBe(4);
+    expect(createdPayload.openedInUi).toBe(true);
+    expect(openedTools).toContain('chart-studio');
+    expect(chartUpdated).toHaveBeenCalledTimes(1);
+    expect(localStorage.getItem(CHART_STUDIO_STORAGE_KEY)).toContain('Quarterly Growth');
+
+    const analyzeRes = await rwClient.handleRequest({
+      jsonrpc: '2.0',
+      id: 93,
+      method: 'tools/call',
+      params: {
+        name: 'chart_analyze_data',
+        arguments: { includeRegression: true, histogramBins: 4, includeBoxPlot: true },
+      },
+    });
+    const analyzePayload = JSON.parse(
+      (analyzeRes?.result as { content: Array<{ text: string }> }).content[0].text
+    ) as {
+      source: string;
+      summaryStats: Array<{ name: string; mean: number }>;
+      regression: { slope: number; r2: number };
+      histogram: Array<{ count: number }>;
+      boxPlots: Array<{ series: string; median: number }>;
+    };
+    expect(analyzePayload.source).toBe('workspace');
+    expect(analyzePayload.summaryStats[0].mean).toBe(175);
+    expect(analyzePayload.regression.slope).toBeCloseTo(50, 5);
+    expect(analyzePayload.regression.r2).toBeCloseTo(1, 5);
+    expect(analyzePayload.histogram).toHaveLength(4);
+    expect(analyzePayload.boxPlots).toHaveLength(2);
+
+    const resourceRes = await rwClient.handleRequest({
+      jsonrpc: '2.0',
+      id: 94,
+      method: 'resources/read',
+      params: { uri: 'omnidesk://chart-studio/current' },
+    });
+    const resText = (resourceRes?.result as { contents: Array<{ text: string }> }).contents[0].text;
+    expect(JSON.parse(resText).config.title).toBe('Quarterly Growth');
+
+    window.removeEventListener('omnidesk-chart-studio-updated', chartUpdated);
+  });
+
+  it('supports Diagram Studio SQL DDL import, Mermaid export, and resource snapshot', async () => {
+    const diagramUpdated = vi.fn();
+    window.addEventListener('omnidesk-diagram-studio-updated', diagramUpdated);
+
+    const client = new OmniDeskMcpClient({ accessMode: 'readwrite' });
+    const ddl = `
+      CREATE TABLE teams (
+        id BIGINT PRIMARY KEY,
+        name VARCHAR(100) NOT NULL
+      );
+      CREATE TABLE members (
+        id BIGINT PRIMARY KEY,
+        team_id BIGINT REFERENCES teams(id),
+        email VARCHAR(255) UNIQUE NOT NULL
+      );
+    `;
+
+    const fromSqlRes = await client.handleRequest({
+      jsonrpc: '2.0',
+      id: 100,
+      method: 'tools/call',
+      params: { name: 'diagram_from_sql', arguments: { sql: ddl, title: 'Team ERD' } },
+    });
+    const fromSqlPayload = JSON.parse(
+      (fromSqlRes?.result as { content: Array<{ text: string }> }).content[0].text
+    ) as { title: string; tableCount: number; relationshipCount: number; mermaid: string };
+    expect(fromSqlPayload.title).toBe('Team ERD');
+    expect(fromSqlPayload.tableCount).toBe(2);
+    expect(fromSqlPayload.relationshipCount).toBe(1);
+    expect(fromSqlPayload.mermaid).toContain('erDiagram');
+    expect(diagramUpdated).toHaveBeenCalledTimes(1);
+    expect(localStorage.getItem(DIAGRAM_STUDIO_STORAGE_KEY)).toContain('Team ERD');
+
+    const getRes = await client.handleRequest({
+      jsonrpc: '2.0',
+      id: 101,
+      method: 'tools/call',
+      params: { name: 'diagram_get_current', arguments: {} },
+    });
+    const getPayload = JSON.parse(
+      (getRes?.result as { content: Array<{ text: string }> }).content[0].text
+    ) as { title: string; nodeCount: number; sqlDdl: string };
+    expect(getPayload.title).toBe('Team ERD');
+    expect(getPayload.nodeCount).toBe(2);
+    expect(getPayload.sqlDdl).toContain('CREATE TABLE teams');
+
+    const resourceRes = await client.handleRequest({
+      jsonrpc: '2.0',
+      id: 102,
+      method: 'resources/read',
+      params: { uri: 'omnidesk://diagram-studio/current' },
+    });
+    const resText = (resourceRes?.result as { contents: Array<{ text: string }> }).contents[0].text;
+    expect(JSON.parse(resText).title).toBe('Team ERD');
+
+    window.removeEventListener('omnidesk-diagram-studio-updated', diagramUpdated);
+  });
+
+  it('supports sql_run_query over inline JSON and CSV datasets', async () => {
+    const client = new OmniDeskMcpClient({ accessMode: 'readonly' });
+    const data = JSON.stringify([
+      { region: 'EU', sales: 120 },
+      { region: 'EU', sales: 80 },
+      { region: 'US', sales: 300 },
+    ]);
+
+    const res = await client.handleRequest({
+      jsonrpc: '2.0',
+      id: 110,
+      method: 'tools/call',
+      params: {
+        name: 'sql_run_query',
+        arguments: {
+          data,
+          query: 'SELECT region, SUM(sales) AS total FROM data GROUP BY region ORDER BY total DESC',
+          includeCsv: true,
+        },
+      },
+    });
+    const payload = JSON.parse(
+      (res?.result as { content: Array<{ text: string }> }).content[0].text
+    ) as { rowCount: number; rows: Array<{ region: string; total: number }>; csv: string };
+    expect(payload.rowCount).toBe(2);
+    expect(payload.rows[0]).toEqual({ region: 'US', total: 300 });
+    expect(payload.rows[1]).toEqual({ region: 'EU', total: 200 });
+    expect(payload.csv).toContain('region,total');
+  });
+
+  it('supports crosshair_list_presets and crosshair_apply_preset with readonly enforcement', async () => {
+    const roClient = new OmniDeskMcpClient({ accessMode: 'readonly' });
+    const listRes = await roClient.handleRequest({
+      jsonrpc: '2.0',
+      id: 120,
+      method: 'tools/call',
+      params: { name: 'crosshair_list_presets', arguments: { game: 'cs2' } },
+    });
+    const listPayload = JSON.parse(
+      (listRes?.result as { content: Array<{ text: string }> }).content[0].text
+    ) as { count: number; presets: Array<{ id: string; shareCode: string }> };
+    expect(listPayload.count).toBeGreaterThan(0);
+    expect(listPayload.presets[0].shareCode).toMatch(/^ODX-/);
+
+    const blockedApply = await roClient.handleRequest({
+      jsonrpc: '2.0',
+      id: 121,
+      method: 'tools/call',
+      params: { name: 'crosshair_apply_preset', arguments: { presetId: listPayload.presets[0].id } },
+    });
+    expect(blockedApply?.error?.code).toBe(-32002);
+
+    const crosshairUpdated = vi.fn();
+    window.addEventListener('omnidesk-crosshair-updated', crosshairUpdated);
+
+    const rwClient = new OmniDeskMcpClient({ accessMode: 'readwrite' });
+    const applyRes = await rwClient.handleRequest({
+      jsonrpc: '2.0',
+      id: 122,
+      method: 'tools/call',
+      params: { name: 'crosshair_apply_preset', arguments: { shareCode: listPayload.presets[0].shareCode } },
+    });
+    const applyPayload = JSON.parse(
+      (applyRes?.result as { content: Array<{ text: string }> }).content[0].text
+    ) as { applied: { name: string }; shareCode: string };
+    expect(applyPayload.shareCode).toBe(listPayload.presets[0].shareCode);
+    expect(crosshairUpdated).toHaveBeenCalledTimes(1);
+    expect(localStorage.getItem(CROSSHAIR_ACTIVE_STORAGE_KEY)).toContain(applyPayload.applied.name);
+
+    window.removeEventListener('omnidesk-crosshair-updated', crosshairUpdated);
+  });
+
+  it('validates desktop diagnostics MCP tools safely outside Tauri runtime', async () => {
+    const client = new OmniDeskMcpClient({ accessMode: 'readonly' });
+
+    const invalidHostRes = await client.handleRequest({
+      jsonrpc: '2.0',
+      id: 130,
+      method: 'tools/call',
+      params: { name: 'desktop_network_check', arguments: { action: 'ping', host: 'bad host; rm -rf' } },
+    });
+    expect((invalidHostRes?.result as { isError?: boolean }).isError).toBe(true);
+
+    const missingPortRes = await client.handleRequest({
+      jsonrpc: '2.0',
+      id: 131,
+      method: 'tools/call',
+      params: { name: 'desktop_network_check', arguments: { action: 'tcp_check', host: '1.1.1.1' } },
+    });
+    expect((missingPortRes?.result as { isError?: boolean }).isError).toBe(true);
+
+    const nonTauriSpecsRes = await client.handleRequest({
+      jsonrpc: '2.0',
+      id: 132,
+      method: 'tools/call',
+      params: { name: 'desktop_hardware_specs', arguments: {} },
+    });
+    expect((nonTauriSpecsRes?.result as { isError?: boolean }).isError).toBe(true);
+
+    const nonTauriPortsRes = await client.handleRequest({
+      jsonrpc: '2.0',
+      id: 133,
+      method: 'tools/call',
+      params: { name: 'desktop_list_ports_and_processes', arguments: { scope: 'ports' } },
+    });
+    expect((nonTauriPortsRes?.result as { isError?: boolean }).isError).toBe(true);
+
+    const caps = client.getConnectedToolCapabilities().map(c => c.id);
+    expect(caps).toContain('chart-studio');
+    expect(caps).toContain('diagram-studio');
+    expect(caps).toContain('sql-playground');
+    expect(caps).toContain('desktop-diagnostics');
+    expect(caps).toContain('crosshair-studio');
   });
 });
 

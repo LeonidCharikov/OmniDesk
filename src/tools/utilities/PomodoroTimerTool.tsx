@@ -53,8 +53,16 @@ export const PomodoroTimerTool: React.FC = () => {
       gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
       osc.connect(gain);
       gain.connect(audioCtx.destination);
+      osc.onended = () => {
+        void audioCtx.close().catch(() => {});
+      };
       osc.start();
       osc.stop(audioCtx.currentTime + 0.4);
+      window.setTimeout(() => {
+        if (audioCtx.state !== 'closed') {
+          void audioCtx.close().catch(() => {});
+        }
+      }, 600);
     } catch {
       // Audio not permitted or supported
     }

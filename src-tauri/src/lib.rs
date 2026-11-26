@@ -88,16 +88,34 @@ impl TelemetryMonitorState {
         }
     }
 
-    fn ensure_sys(&mut self) -> &mut System {
+    fn ensure_sys(&mut self, include_cores: bool) -> &mut System {
         if self.sys.is_none() {
+            let cpu_kind = if include_cores {
+                CpuRefreshKind::everything()
+            } else {
+                CpuRefreshKind::new().with_cpu_usage()
+            };
+            let mem_kind = if include_cores {
+                MemoryRefreshKind::everything()
+            } else {
+                MemoryRefreshKind::new().with_ram()
+            };
             let sys = System::new_with_specifics(
                 RefreshKind::new()
-                    .with_cpu(CpuRefreshKind::everything())
-                    .with_memory(MemoryRefreshKind::everything()),
+                    .with_cpu(cpu_kind)
+                    .with_memory(mem_kind),
             );
             let core_count = sys.cpus().len();
-            self.cached_cpu_freq_mhz = sys.cpus().first().map(|c| c.frequency()).unwrap_or(0);
-            self.cached_cores = vec![0.0; core_count];
+            self.cached_cpu_freq_mhz = if include_cores {
+                sys.cpus().first().map(|c| c.frequency()).unwrap_or(0)
+            } else {
+                0
+            };
+            self.cached_cores = if include_cores {
+                vec![0.0; core_count]
+            } else {
+                Vec::new()
+            };
             self.last_cpu_refresh = Instant::now()
                 .checked_sub(Duration::from_secs(1))
                 .unwrap_or_else(Instant::now);
@@ -177,6 +195,24 @@ fn release_idle_memory(app: &AppHandle) {
         }
     }
     trim_process_working_set();
+}
+
+#[tauri::command]
+async fn desktop_trim_memory(app: AppHandle, clear_telemetry: Option<bool>) -> Result<(), String> {
+    let should_clear_telemetry = clear_telemetry.unwrap_or(false);
+    tauri::async_runtime::spawn_blocking(move || {
+        clear_process_monitor_cache(&app);
+        if should_clear_telemetry {
+            if let Some(telemetry_state) = app.try_state::<Mutex<TelemetryMonitorState>>() {
+                if let Ok(mut guard) = telemetry_state.lock() {
+                    guard.clear();
+                }
+            }
+        }
+        trim_process_working_set();
+    })
+    .await
+    .map_err(|e| format!("Failed to trim desktop memory: {e}"))
 }
 
 fn window_state_path(app: &AppHandle) -> Option<PathBuf> {
@@ -332,10 +368,20 @@ fn sample_cpu_and_memory(
         || (include_cores && guard.cached_cores.is_empty())
         || guard.last_cpu_refresh.elapsed() >= Duration::from_millis(250);
     {
-        let sys = guard.ensure_sys();
-        sys.refresh_specifics(RefreshKind::new().with_memory(MemoryRefreshKind::everything()));
+        let sys = guard.ensure_sys(include_cores);
+        let mem_kind = if include_cores {
+            MemoryRefreshKind::everything()
+        } else {
+            MemoryRefreshKind::new().with_ram()
+        };
+        sys.refresh_specifics(RefreshKind::new().with_memory(mem_kind));
         if should_refresh_cpu {
-            sys.refresh_specifics(RefreshKind::new().with_cpu(CpuRefreshKind::everything()));
+            let cpu_kind = if include_cores {
+                CpuRefreshKind::everything()
+            } else {
+                CpuRefreshKind::new().with_cpu_usage()
+            };
+            sys.refresh_specifics(RefreshKind::new().with_cpu(cpu_kind));
         }
     }
 
@@ -364,21 +410,27 @@ fn sample_cpu_and_memory(
             } else {
                 None
             };
-            let freq_sum: u64 = sys.cpus().iter().map(|c| c.frequency()).sum();
-            let core_len = sys.cpus().len() as u64;
-            let cpu_freq_mhz = if core_len > 0 { freq_sum / core_len } else { 0 };
+            let cpu_freq_mhz: Option<u64> = if include_cores {
+                let freq_sum: u64 = sys.cpus().iter().map(|c| c.frequency()).sum();
+                let core_len = sys.cpus().len() as u64;
+                Some(if core_len > 0 { freq_sum / core_len } else { 0 })
+            } else {
+                None
+            };
             (cpu_usage, cores, cpu_freq_mhz)
         })
     } else {
         None
     };
 
-    if let Some((cpu_usage, cores_opt, cpu_freq_mhz)) = refreshed {
+    if let Some((cpu_usage, cores_opt, cpu_freq_opt)) = refreshed {
         guard.cached_cpu_usage = cpu_usage;
         if let Some(cores) = cores_opt {
             guard.cached_cores = cores;
         }
-        guard.cached_cpu_freq_mhz = cpu_freq_mhz;
+        if let Some(cpu_freq_mhz) = cpu_freq_opt {
+            guard.cached_cpu_freq_mhz = cpu_freq_mhz;
+        }
         guard.last_cpu_refresh = Instant::now();
     }
 
@@ -727,6 +779,7 @@ pub fn run() {
             get_system_telemetry,
             desktop_get_hardware_specs,
             desktop_release_process_cache,
+            desktop_trim_memory,
             mcp_read_clipboard,
             mcp_write_clipboard,
             mcp_stdio_ready,
@@ -893,6 +946,9 @@ pub fn run() {
                 if let Some(webview_win) = window.app_handle().get_webview_window(window.label()) {
                     capture_window_state(&webview_win);
                 }
+            }
+            WindowEvent::Focused(false) => {
+                trim_process_working_set();
             }
             WindowEvent::CloseRequested { api, .. } => {
                 if let Some(webview_win) = window.app_handle().get_webview_window(window.label()) {
