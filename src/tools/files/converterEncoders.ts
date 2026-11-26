@@ -855,10 +855,44 @@ export function buildMinimalDocx(plainText: string): Uint8Array {
 // 4. SPREADSHEET & STRUCTURED DATA HELPERS (CSV, TSV, XML, Markdown/HTML Table)
 // ---------------------------------------------------------------------------
 
+export function detectCsvDelimiter(text: string): ',' | ';' | '\t' {
+  const clean = text.replace(/^\uFEFF/, '');
+  const lines = clean.split(/\r\n|\r|\n/).filter(l => l.trim().length > 0).slice(0, 5);
+  if (lines.length === 0) return ',';
+
+  const countOutsideQuotes = (line: string, target: string): number => {
+    let inQuotes = false;
+    let count = 0;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') {
+        if (inQuotes && line[i + 1] === '"') {
+          i++;
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (!inQuotes && ch === target) {
+        count++;
+      }
+    }
+    return count;
+  };
+
+  const headerLine = lines[0];
+  const commas = countOutsideQuotes(headerLine, ',');
+  const semis = countOutsideQuotes(headerLine, ';');
+  const tabs = countOutsideQuotes(headerLine, '\t');
+
+  if (semis > commas && semis >= tabs) return ';';
+  if (tabs > commas && tabs > semis) return '\t';
+  return ',';
+}
+
 export function parseDelimitedText(
   text: string,
   delimiter = ','
 ): Record<string, string | number | boolean>[] {
+  const activeDelimiter = delimiter === 'auto' ? detectCsvDelimiter(text) : delimiter;
   const rows: string[][] = [];
   let currentRow: string[] = [];
   let currentVal = '';
@@ -878,7 +912,7 @@ export function parseDelimitedText(
       }
     } else if (ch === '"') {
       inQuotes = true;
-    } else if (ch === delimiter) {
+    } else if (ch === activeDelimiter) {
       currentRow.push(currentVal.trim());
       currentVal = '';
     } else if (ch === '\n') {
@@ -1034,11 +1068,15 @@ export function parseSimpleXmlToRows(xmlText: string): Record<string, string | n
   }
 
   // Fallback lightweight regex parser for Node/test environments without full XML DOM
+  const withoutDecl = xmlText.replace(/<\?xml[\s\S]*?\?>/gi, '').trim();
+  const rootMatch = /^<([a-zA-Z0-9_:-]+)(?:\s[^>]*)?>([\s\S]*)<\/\1>$/.exec(withoutDecl);
+  const scanTarget = rootMatch ? rootMatch[2] : withoutDecl;
+
   const rows: Record<string, string | number | boolean>[] = [];
-  const blockMatches = xmlText.match(/<([a-zA-Z0-9_-]+)>[\s\S]*?<\/\1>/g) ?? [];
+  const blockMatches = scanTarget.match(/<([a-zA-Z0-9_:-]+)(?:\s[^>]*)?>[\s\S]*?<\/\1>/g) ?? [];
   for (const block of blockMatches) {
     const inner = block.replace(/^<[^>]+>|<\/[^>]+>$/g, '');
-    const fieldRegex = /<([a-zA-Z0-9_-]+)>([^<]*)<\/\1>/g;
+    const fieldRegex = /<([a-zA-Z0-9_:-]+)(?:\s[^>]*)?>([^<]*)<\/\1>/g;
     const obj: Record<string, string | number | boolean> = {};
     let m: RegExpExecArray | null;
     while ((m = fieldRegex.exec(inner)) !== null) {

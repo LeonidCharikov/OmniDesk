@@ -18,6 +18,7 @@ import {
   createTarArchive,
   createZipArchive,
   decompressGzip,
+  detectCsvDelimiter,
   encodeAiffPcm16,
   encodeBmp24,
   encodeIcoFromPng,
@@ -43,6 +44,11 @@ import {
   parseDocxToLayoutModel,
   setDocumentPdfFontBundle,
 } from '../tools/files/documentPdfEngine';
+import {
+  detectContainerHasAudioTrack,
+  fixWebmBytes,
+  inspectWebmMetadata,
+} from '../tools/files/webmFixer';
 
 function buildCzechPowerOfAttorneyDocx(): ArrayBuffer {
   const enc = new TextEncoder();
@@ -262,6 +268,15 @@ describe('converterEncoders documents, data, and archives', () => {
     const reserialized = serializeDelimitedRows(rows, ',');
     expect(reserialized).toContain('"Widget, Pro"');
 
+    // European semicolon-separated CSV auto-detection
+    const euroCsv = '\uFEFFNázev;Cena;Skladem\r\n"Monitor; 4K";12500;true\r\nKlávesnice;1990;false';
+    expect(detectCsvDelimiter(euroCsv)).toBe(';');
+    const euroRows = parseDelimitedText(euroCsv, 'auto');
+    expect(euroRows).toHaveLength(2);
+    expect(euroRows[0]['Název']).toBe('Monitor; 4K');
+    expect(euroRows[0]['Cena']).toBe(12500);
+    expect(euroRows[1]['Skladem']).toBe(false);
+
     const xml = rowsToXml(rows);
     expect(xml).toContain('<records>');
     const parsedXml = parseSimpleXmlToRows(xml);
@@ -479,5 +494,121 @@ describe('documentPdfEngine full-Unicode OOXML & PDF generation', () => {
     const pdfBlob = await createPdfBlobFromDocx(buf.buffer);
     const pdfDoc = await PDFDocument.load(new Uint8Array(await pdfBlob.arrayBuffer()));
     expect(pdfDoc.getPageCount()).toBe(1);
+  });
+});
+
+describe('webmFixer EBML container remuxer & audio-track detection', () => {
+  function buildStreamingWebmFixture(useBlockGroup = false, initialClusterTs = 0): Uint8Array {
+    // Minimal valid EBML header (DocType = "webm")
+    const ebml = [
+      0x1a, 0x45, 0xdf, 0xa3, 0x9f,
+      0x42, 0x86, 0x81, 0x01,
+      0x42, 0xf7, 0x81, 0x01,
+      0x42, 0xf2, 0x81, 0x04,
+      0x42, 0xf3, 0x81, 0x08,
+      0x42, 0x82, 0x84, 0x77, 0x65, 0x62, 0x6d, // "webm"
+      0x42, 0x87, 0x81, 0x04,
+      0x42, 0x85, 0x81, 0x02,
+    ];
+    // Segment with unknown size 0x01FFFFFFFFFFFFFF (as produced by Chromium MediaRecorder)
+    const segmentHeader = [0x18, 0x53, 0x80, 0x67, 0x01, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff];
+    // Info with TimestampScale = 1_000_000 (1ms) and NO Duration (7 payload bytes -> 0x87)
+    const info = [0x15, 0x49, 0xa9, 0x66, 0x87, 0x2a, 0xd7, 0xb1, 0x83, 0x0f, 0x42, 0x40];
+    // Tracks with 1 video track (TrackNumber=1, TrackType=1)
+    const tracks = [
+      0x16, 0x54, 0xae, 0x6b, 0x88,
+      0xae, 0x86,
+      0xd7, 0x81, 0x01,
+      0x83, 0x81, 0x01,
+    ];
+
+    const makeCluster = (tsMs: number, isKeyframe: boolean): number[] => {
+      const tsBytes = tsMs < 256 ? [0xe7, 0x81, tsMs] : [0xe7, 0x82, (tsMs >> 8) & 0xff, tsMs & 0xff];
+      let blockBytes: number[];
+      if (useBlockGroup) {
+        // Block (0xA1): track=1 (0x81), relTc=0 (0x00,0x00), flags=0x00, payload=[0xaa, 0xbb]
+        const block = [0xa1, 0x86, 0x81, 0x00, 0x00, 0x00, 0xaa, 0xbb];
+        // Inter-frames include ReferenceBlock (0xFB)
+        const ref = isKeyframe ? [] : [0xfb, 0x81, 0xdd];
+        const bgPayload = [...block, ...ref];
+        blockBytes = [0xa0, 0x80 | bgPayload.length, ...bgPayload];
+      } else {
+        // SimpleBlock (0xA3): flags=0x80 for keyframe, 0x00 for inter-frame
+        blockBytes = [0xa3, 0x86, 0x81, 0x00, 0x00, isKeyframe ? 0x80 : 0x00, 0xaa, 0xbb];
+      }
+      return [
+        0x1f, 0x43, 0xb6, 0x75, 0x01, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+        ...tsBytes,
+        ...blockBytes,
+      ];
+    };
+
+    const clusters = [
+      ...makeCluster(initialClusterTs, true),
+      ...makeCluster(initialClusterTs + 500, false),
+      ...makeCluster(initialClusterTs + 1000, true),
+      ...makeCluster(initialClusterTs + 1500, false),
+    ];
+
+    return new Uint8Array([...ebml, ...segmentHeader, ...info, ...tracks, ...clusters]);
+  }
+
+  it('adds finite Segment/Cluster sizes, Duration, SeekHead, and Cues to streaming SimpleBlock WebM', () => {
+    const raw = buildStreamingWebmFixture(false, 200);
+    const before = inspectWebmMetadata(raw);
+    expect(before.isWebm).toBe(true);
+    expect(before.hasFiniteSegmentSize).toBe(false);
+    expect(before.hasDuration).toBe(false);
+    expect(before.hasSeekHead).toBe(false);
+    expect(before.hasCues).toBe(false);
+    expect(before.clusterCount).toBe(4);
+
+    const fixed = fixWebmBytes(raw);
+    const after = inspectWebmMetadata(fixed);
+    expect(after.isWebm).toBe(true);
+    expect(after.hasFiniteSegmentSize).toBe(true);
+    expect(after.hasDuration).toBe(true);
+    expect(after.durationMs).toBeGreaterThanOrEqual(1500);
+    expect(after.hasSeekHead).toBe(true);
+    expect(after.hasCues).toBe(true);
+    expect(after.clusterCount).toBe(4);
+    // Two keyframes (at normalized 0ms and 1000ms) -> 2 cue points
+    expect(after.cuePointCount).toBe(2);
+    expect(after.hasVideoTrack).toBe(true);
+    expect(after.hasAudioTrack).toBe(false);
+  });
+
+  it('detects keyframes accurately inside BlockGroup (0xA0) WebM containers', () => {
+    const raw = buildStreamingWebmFixture(true, 0);
+    const fixed = fixWebmBytes(raw);
+    const report = inspectWebmMetadata(fixed);
+    expect(report.hasFiniteSegmentSize).toBe(true);
+    expect(report.hasDuration).toBe(true);
+    expect(report.hasSeekHead).toBe(true);
+    expect(report.hasCues).toBe(true);
+    expect(report.cuePointCount).toBe(2);
+  });
+
+  it('returns non-WebM bytes untouched without throwing', () => {
+    const garbage = new Uint8Array([0x00, 0x01, 0x02, 0x03, 0x04]);
+    const out = fixWebmBytes(garbage);
+    expect(out).toEqual(garbage);
+    expect(inspectWebmMetadata(garbage).isWebm).toBe(false);
+  });
+
+  it('detects whether MP4 containers have an audio track via ISO BMFF hdlr boxes', async () => {
+    const enc = new TextEncoder();
+    const makeMp4 = (handler: 'vide' | 'soun') => {
+      const bytes = new Uint8Array(48);
+      // ftyp box at offset 4
+      bytes.set(enc.encode('ftypisom'), 4);
+      // hdlr box at offset 16: 'hdlr' + 8 zero bytes + handler_type
+      bytes.set(enc.encode('hdlr'), 16);
+      bytes.set(enc.encode(handler), 28);
+      return new File([bytes], `clip_${handler}.mp4`, { type: 'video/mp4' });
+    };
+
+    expect(await detectContainerHasAudioTrack(makeMp4('vide'))).toBe(false);
+    expect(await detectContainerHasAudioTrack(makeMp4('soun'))).toBe(true);
   });
 });

@@ -42,6 +42,7 @@ import {
   createPdfBlobFromPlainText,
   createPdfBlobFromTableRows,
 } from './documentPdfEngine';
+import { detectContainerHasAudioTrack, fixWebmBlob } from './webmFixer';
 
 if (typeof window !== 'undefined' && pdfjsLib.GlobalWorkerOptions) {
   pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
@@ -142,13 +143,13 @@ function loadImageFromFile(file: File): Promise<{ img: HTMLImageElement; cleanup
   });
 }
 
-function loadVideoMetadata(file: File): Promise<{ video: HTMLVideoElement; cleanup: () => void }> {
+function loadVideoElementFromBlob(blob: Blob): Promise<{ video: HTMLVideoElement; cleanup: () => void }> {
   return new Promise((resolve, reject) => {
     const video = document.createElement('video');
     video.muted = true;
     video.playsInline = true;
     video.preload = 'auto';
-    const url = URL.createObjectURL(file);
+    const url = URL.createObjectURL(blob);
     const cleanup = () => {
       video.pause();
       video.removeAttribute('src');
@@ -163,6 +164,31 @@ function loadVideoMetadata(file: File): Promise<{ video: HTMLVideoElement; clean
     };
     video.src = url;
   });
+}
+
+async function loadVideoMetadata(file: File): Promise<{ video: HTMLVideoElement; cleanup: () => void }> {
+  const loaded = await loadVideoElementFromBlob(file);
+  if (Number.isFinite(loaded.video.duration) && loaded.video.duration > 0) {
+    return loaded;
+  }
+
+  // Un-indexed streaming WebM inputs (e.g. raw MediaRecorder recordings) report Infinity
+  // duration in Chromium and cannot be seeked accurately for GIF/frame extraction.
+  // Remux locally in memory with fixWebmBlob so duration and Cues are accurate.
+  try {
+    const head = new Uint8Array(await file.slice(0, 4).arrayBuffer());
+    const isEbml = head.length >= 4 && head[0] === 0x1a && head[1] === 0x45 && head[2] === 0xdf && head[3] === 0xa3;
+    if (isEbml) {
+      const repaired = await fixWebmBlob(file, undefined, file.type || 'video/webm');
+      const reloaded = await loadVideoElementFromBlob(repaired);
+      loaded.cleanup();
+      return reloaded;
+    }
+  } catch {
+    // Fall back to originally loaded element if remuxing is unnecessary or unsupported
+  }
+
+  return loaded;
 }
 
 function seekVideoTo(video: HTMLVideoElement, timeSec: number): Promise<void> {
@@ -374,8 +400,15 @@ async function convertVideo(
       const canvas = document.createElement('canvas');
       canvas.width = outW;
       canvas.height = outH;
-      const ctx = canvas.getContext('2d');
+      // Opaque 2D context prevents Chromium from encoding VP9+Alpha (alpha_mode=1 / BlockAdditions)
+      // which bloats files and is rejected by many players and upload validators.
+      const ctx = canvas.getContext('2d', { alpha: false });
       if (!ctx) throw new Error('Canvas 2D context unavailable.');
+
+      await seekVideoTo(video, 0);
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(0, 0, outW, outH);
+      ctx.drawImage(video, 0, 0, outW, outH);
 
       const canvasStream = canvas.captureStream(30);
       const videoTracks = [...canvasStream.getVideoTracks()];
@@ -385,15 +418,17 @@ async function convertVideo(
       const chosenAudioMime = audioSupportedMimes.find(m => MediaRecorder.isTypeSupported(m));
       const chosenVideoMime = videoOnlyMimes.find(m => MediaRecorder.isTypeSupported(m));
       if (!chosenAudioMime && !chosenVideoMime) {
+        videoTracks.forEach(t => t.stop());
         throw new Error('WebM video recording is not supported by this browser engine.');
       }
 
-      // Route audio silently into the recording stream if codec supports Opus audio
+      // Only attach an Opus audio track when the source container actually has audio
+      const sourceHasAudio = await detectContainerHasAudioTrack(file, video);
       let audioCtx: AudioContext | null = null;
       let combinedTracks: MediaStreamTrack[] = [...videoTracks];
       let chosenMime = chosenVideoMime || 'video/webm';
 
-      if (chosenAudioMime) {
+      if (sourceHasAudio && chosenAudioMime) {
         try {
           const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
           audioCtx = new AudioCtx();
@@ -413,6 +448,8 @@ async function convertVideo(
           video.muted = true;
           combinedTracks = [...videoTracks];
         }
+      } else {
+        video.muted = true;
       }
 
       let combinedStream = new MediaStream(combinedTracks);
@@ -425,6 +462,7 @@ async function convertVideo(
       } catch {
         // Fallback to video-only stream if audio+video codec combination is rejected
         video.muted = true;
+        combinedStream.getAudioTracks().forEach(t => t.stop());
         combinedStream = new MediaStream(videoTracks);
         recorder = new MediaRecorder(combinedStream, {
           mimeType: chosenVideoMime || 'video/webm',
@@ -433,53 +471,108 @@ async function convertVideo(
       }
 
       const chunks: Blob[] = [];
+      type VideoWithFrameCallback = HTMLVideoElement & {
+        requestVideoFrameCallback?: (cb: () => void) => number;
+        cancelVideoFrameCallback?: (handle: number) => void;
+      };
+      const videoWithCb = video as VideoWithFrameCallback;
 
-      const recordedBlob = await new Promise<Blob>((resolve, reject) => {
-        recorder.ondataavailable = e => {
-          if (e.data && e.data.size > 0) chunks.push(e.data);
-        };
-        recorder.onerror = () => reject(new Error('WebM MediaRecorder failed during encoding.'));
-        recorder.onstop = () => resolve(new Blob(chunks, { type: 'video/webm' }));
+      let recordedBlob: Blob;
+      try {
+        recordedBlob = await new Promise<Blob>((resolve, reject) => {
+          let rafId = 0;
+          let vfcId = 0;
+          let stopTimer = 0;
+          let settled = false;
 
-        let rafId = 0;
-        const drawLoop = () => {
-          if (video.paused || video.ended) return;
-          ctx.drawImage(video, 0, 0, outW, outH);
-          if (duration > 0) {
-            onProgress?.(Math.min(98, Math.round((video.currentTime / duration) * 98)), 'Encoding WebM');
-          }
-          rafId = requestAnimationFrame(drawLoop);
-        };
+          const stopFramePump = () => {
+            if (rafId) {
+              cancelAnimationFrame(rafId);
+              rafId = 0;
+            }
+            if (vfcId && videoWithCb.cancelVideoFrameCallback) {
+              videoWithCb.cancelVideoFrameCallback(vfcId);
+              vfcId = 0;
+            }
+            if (stopTimer) {
+              window.clearTimeout(stopTimer);
+              stopTimer = 0;
+            }
+          };
 
-        video.onended = () => {
-          cancelAnimationFrame(rafId);
-          if (recorder.state !== 'inactive') recorder.stop();
-        };
+          recorder.ondataavailable = e => {
+            if (e.data && e.data.size > 0) chunks.push(e.data);
+          };
+          recorder.onerror = () => {
+            if (settled) return;
+            settled = true;
+            stopFramePump();
+            reject(new Error('WebM MediaRecorder failed during encoding.'));
+          };
+          recorder.onstop = () => {
+            if (settled) return;
+            settled = true;
+            stopFramePump();
+            resolve(new Blob(chunks, { type: 'video/webm' }));
+          };
 
-        video.currentTime = 0;
-        recorder.start(250);
-        video
-          .play()
-          .then(() => {
-            drawLoop();
-          })
-          .catch(err => {
-            cancelAnimationFrame(rafId);
-            if (recorder.state !== 'inactive') recorder.stop();
-            reject(err);
-          });
-      });
+          const renderCurrentFrame = () => {
+            ctx.drawImage(video, 0, 0, outW, outH);
+            if (duration > 0) {
+              onProgress?.(Math.min(95, Math.round((video.currentTime / duration) * 95)), 'Encoding WebM');
+            }
+          };
 
-      if (audioCtx) {
-        await audioCtx.close().catch(() => {});
+          const pumpNextFrame = () => {
+            if (video.paused || video.ended || settled) return;
+            renderCurrentFrame();
+            if (videoWithCb.requestVideoFrameCallback) {
+              vfcId = videoWithCb.requestVideoFrameCallback(pumpNextFrame);
+            } else {
+              rafId = requestAnimationFrame(pumpNextFrame);
+            }
+          };
+
+          video.onended = () => {
+            stopFramePump();
+            renderCurrentFrame();
+            stopTimer = window.setTimeout(() => {
+              if (recorder.state !== 'inactive') {
+                recorder.stop();
+              }
+            }, 60);
+          };
+
+          video
+            .play()
+            .then(() => {
+              renderCurrentFrame();
+              recorder.start(1000);
+              pumpNextFrame();
+            })
+            .catch(err => {
+              stopFramePump();
+              if (recorder.state !== 'inactive') recorder.stop();
+              reject(err);
+            });
+        });
+      } finally {
+        combinedStream.getTracks().forEach(track => track.stop());
+        videoTracks.forEach(track => track.stop());
+        if (audioCtx) {
+          await audioCtx.close().catch(() => {});
+        }
       }
+
+      onProgress?.(98, 'Indexing WebM metadata');
+      const seekableBlob = await fixWebmBlob(recordedBlob, duration * 1000, 'video/webm');
       onProgress?.(100);
       return {
-        blob: recordedBlob,
+        blob: seekableBlob,
         fileName: `${baseName}.webm`,
         mime: 'video/webm',
         previewKind: 'video',
-        note: `${outW}×${outH} WebM`,
+        note: `${outW}×${outH} WebM${sourceHasAudio ? '' : ' (video-only)'}`,
       };
     }
 
@@ -570,7 +663,7 @@ async function convertAudio(
       }, 150);
 
       try {
-        const blob = await new Promise<Blob>((resolve, reject) => {
+        const rawBlob = await new Promise<Blob>((resolve, reject) => {
           recorder.ondataavailable = e => {
             if (e.data.size > 0) chunks.push(e.data);
           };
@@ -579,18 +672,20 @@ async function convertAudio(
           source.onended = () => {
             if (recorder.state !== 'inactive') recorder.stop();
           };
-          recorder.start(200);
+          recorder.start(500);
           source.start(0);
         });
 
+        const fixedBlob = await fixWebmBlob(rawBlob, decoded.duration * 1000, 'audio/webm');
         onProgress?.(100);
         return {
-          blob,
+          blob: fixedBlob,
           fileName: `${baseName}.webm`,
           mime: 'audio/webm',
           previewKind: 'audio',
         };
       } finally {
+        dest.stream.getTracks().forEach(t => t.stop());
         window.clearInterval(interval);
       }
     }
@@ -1135,7 +1230,7 @@ async function convertSpreadsheetOrData(
     rawData = rows;
   } else if (inputExt === 'csv' || inputExt === 'tsv') {
     const text = await file.text();
-    rows = parseDelimitedText(text, inputExt === 'tsv' ? '\t' : ',');
+    rows = parseDelimitedText(text, inputExt === 'tsv' ? '\t' : 'auto');
     rawData = rows;
   } else if (inputExt === 'json') {
     const text = await file.text();
@@ -1516,7 +1611,7 @@ OD-104,Ergonomic Desk Lamp,Lighting,89,false`;
     const canvas = document.createElement('canvas');
     canvas.width = 480;
     canvas.height = 270;
-    const ctx = canvas.getContext('2d')!;
+    const ctx = canvas.getContext('2d', { alpha: false })!;
     const stream = canvas.captureStream(24);
     const mime =
       typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported('video/webm;codecs=vp8')
@@ -1528,7 +1623,7 @@ OD-104,Ergonomic Desk Lamp,Lighting,89,false`;
       if (e.data.size > 0) chunks.push(e.data);
     };
 
-    const blob = await new Promise<Blob>(resolve => {
+    const rawBlob = await new Promise<Blob>(resolve => {
       recorder.onstop = () => resolve(new Blob(chunks, { type: 'video/webm' }));
       recorder.start();
       const startTs = performance.now();
@@ -1563,6 +1658,8 @@ OD-104,Ergonomic Desk Lamp,Lighting,89,false`;
       };
       tick();
     });
+    stream.getTracks().forEach(t => t.stop());
+    const blob = await fixWebmBlob(rawBlob, 1800, 'video/webm');
 
     return new File([blob], 'sample_motion.webm', { type: 'video/webm' });
   }

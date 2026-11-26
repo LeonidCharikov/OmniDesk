@@ -13,6 +13,7 @@ import {
   Check,
 } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
+import { fixWebmBlob } from './webmFixer';
 import { saveBinaryWithDialog } from '../../services/fileSystemService';
 
 interface AudioRecord {
@@ -107,21 +108,9 @@ export const VoiceRecorderTool: React.FC = () => {
       };
 
       mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
+        const rawBlob = new Blob(audioChunksRef.current, { type: mimeType });
         audioChunksRef.current = [];
-        const audioUrl = URL.createObjectURL(audioBlob);
-
-        const newRec: AudioRecord = {
-          id: Date.now().toString(),
-          name: `${t('voice_memo_default', 'Hlasový záznam')} ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
-          blob: audioBlob,
-          url: audioUrl,
-          duration: recordSeconds,
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-          sizeBytes: audioBlob.size,
-        };
-
-        setRecordings(prev => [newRec, ...prev]);
+        const recordedDurationSec = recordSeconds;
 
         // Clean up stream tracks
         stream.getTracks().forEach(track => track.stop());
@@ -137,6 +126,20 @@ export const VoiceRecorderTool: React.FC = () => {
           animFrameRef.current = null;
         }
         setVolumeLevel(0);
+
+        void fixWebmBlob(rawBlob, Math.max(500, recordedDurationSec * 1000), mimeType).then(audioBlob => {
+          const audioUrl = URL.createObjectURL(audioBlob);
+          const newRec: AudioRecord = {
+            id: Date.now().toString(),
+            name: `${t('voice_memo_default', 'Hlasový záznam')} ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
+            blob: audioBlob,
+            url: audioUrl,
+            duration: recordedDurationSec,
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+            sizeBytes: audioBlob.size,
+          };
+          setRecordings(prev => [newRec, ...prev]);
+        });
       };
 
       mediaRecorder.start(250);

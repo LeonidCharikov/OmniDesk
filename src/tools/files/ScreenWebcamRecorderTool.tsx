@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Video, Monitor, Camera, Square, Download, Trash2 } from 'lucide-react';
 import { useI18n } from '../../i18n/context';
+import { fixWebmBlob } from './webmFixer';
 
 interface RecordedClip {
   id: string;
@@ -105,22 +106,25 @@ export const ScreenWebcamRecorderTool: React.FC = () => {
       };
 
       recorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: 'video/webm' });
+        const rawBlob = new Blob(chunksRef.current, { type: 'video/webm' });
         chunksRef.current = [];
-        const url = URL.createObjectURL(blob);
-        const dur = Math.max(1, Math.round((Date.now() - startedAt) / 1000));
-        setClips(prev => [
-          {
-            id: Date.now().toString(),
-            name: `${source === 'screen' ? t('svr_clip_screen', 'Screen') : t('svr_clip_webcam', 'Webcam')}-${new Date().toLocaleTimeString()}`,
-            url,
-            durationSec: dur,
-            sizeBytes: blob.size,
-          },
-          ...prev,
-        ]);
+        const elapsedMs = Math.max(500, Date.now() - startedAt);
+        const dur = Math.max(1, Math.round(elapsedMs / 1000));
         cleanupStreams();
         setIsRecording(false);
+        void fixWebmBlob(rawBlob, elapsedMs, 'video/webm').then(blob => {
+          const url = URL.createObjectURL(blob);
+          setClips(prev => [
+            {
+              id: Date.now().toString(),
+              name: `${source === 'screen' ? t('svr_clip_screen', 'Screen') : t('svr_clip_webcam', 'Webcam')}-${new Date().toLocaleTimeString()}`,
+              url,
+              durationSec: dur,
+              sizeBytes: blob.size,
+            },
+            ...prev,
+          ]);
+        });
       };
 
       // Handle user stopping screen share via browser chrome
