@@ -101,6 +101,10 @@ import {
   Coffee,
   Radar,
   Server,
+  Gamepad2,
+  Crosshair,
+  Blocks,
+  Gauge,
 } from 'lucide-react';
 import { ToolDefinition, ToolCategory } from '../../types/tool';
 import { useI18n } from '../../i18n/context';
@@ -212,6 +216,10 @@ const ICON_MAP: Record<string, React.ReactNode> = {
   Coffee: <Coffee className="w-5 h-5 text-amber-400" />,
   Radar: <Radar className="w-5 h-5 text-emerald-400" />,
   Server: <Server className="w-5 h-5 text-indigo-400" />,
+  Gamepad2: <Gamepad2 className="w-5 h-5 text-emerald-400" />,
+  Crosshair: <Crosshair className="w-5 h-5 text-emerald-400" />,
+  Blocks: <Blocks className="w-5 h-5 text-indigo-400" />,
+  Gauge: <Gauge className="w-5 h-5 text-cyan-400" />,
 };
 
 export const ToolGrid: React.FC<ToolGridProps> = ({
@@ -304,6 +312,15 @@ export const ToolGrid: React.FC<ToolGridProps> = ({
       desc: t(
         'desc_cat_util',
         'Secure password generator, QR codes, text utilities, recipe scaler, random picker, and system monitor'
+      ),
+    },
+    {
+      id: 'gaming',
+      label: t('cat_gaming', 'Gaming & Arcade'),
+      icon: <Gamepad2 className="w-4 h-4 text-emerald-400" />,
+      desc: t(
+        'desc_cat_gaming',
+        'Desktop crosshair overlay, Snake, Tetris, Reaction Time Lab, Aim Trainer, and Mouse CPS / Polling Rate tester'
       ),
     },
     {

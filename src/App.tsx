@@ -59,6 +59,7 @@ const VALID_CATEGORIES = new Set<ToolCategory>([
   'design',
   'health',
   'utilities',
+  'gaming',
   'desktop',
   'architecture',
 ]);
@@ -741,6 +742,7 @@ export default function App() {
       case 'design': return t('cat_design', 'Design & Colors');
       case 'health': return t('cat_health', 'Health & Wellness');
       case 'utilities': return t('cat_utilities', 'Utilities & Tools');
+      case 'gaming': return t('cat_gaming', 'Gaming & Arcade');
       case 'desktop': return t('cat_desktop', 'Desktop & Automation');
       case 'architecture': return t('cat_architecture', 'Tauri & Code');
       default: return t('catalog', 'Catalog');

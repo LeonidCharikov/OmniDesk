@@ -13,14 +13,16 @@ use tauri_plugin_clipboard_manager::ClipboardExt;
 
 mod desktop_tools;
 use desktop_tools::{
-    AutoClickerState, DiskDriveInfo, KeepAwakeState, ProcessMonitorState,
+    AutoClickerState, CrosshairOverlayState, DiskDriveInfo, KeepAwakeState, ProcessMonitorState,
     clear_process_monitor_cache, collect_disk_drives, desktop_autoclicker_set_hotkey,
     desktop_autoclicker_start, desktop_autoclicker_status, desktop_autoclicker_stop,
+    desktop_crosshair_hide, desktop_crosshair_list_monitors, desktop_crosshair_open,
+    desktop_crosshair_set_hotkey, desktop_crosshair_status, desktop_crosshair_update,
     desktop_cursor_position, desktop_get_hardware_specs, desktop_keepawake_start,
     desktop_keepawake_status, desktop_keepawake_stop, desktop_kill_process, desktop_list_ports,
     desktop_list_processes, desktop_net_dns_lookup, desktop_net_interfaces, desktop_net_ping,
     desktop_net_tcp_check, desktop_net_wol, desktop_release_process_cache,
-    shutdown_desktop_workers, spawn_global_hotkey_watcher,
+    shutdown_desktop_workers, spawn_crosshair_hotkey_watcher, spawn_global_hotkey_watcher,
 };
 
 const MAX_CLIPBOARD_CHARS: usize = 100_000;
@@ -719,6 +721,7 @@ pub fn run() {
         .manage(WindowGeometryState(Mutex::new(None)))
         .manage(AutoClickerState::default())
         .manage(KeepAwakeState::default())
+        .manage(CrosshairOverlayState::default())
         .invoke_handler(tauri::generate_handler![
             get_basic_system_telemetry,
             get_system_telemetry,
@@ -748,7 +751,13 @@ pub fn run() {
             desktop_cursor_position,
             desktop_keepawake_start,
             desktop_keepawake_stop,
-            desktop_keepawake_status
+            desktop_keepawake_status,
+            desktop_crosshair_list_monitors,
+            desktop_crosshair_open,
+            desktop_crosshair_update,
+            desktop_crosshair_hide,
+            desktop_crosshair_status,
+            desktop_crosshair_set_hotkey
         ])
         .setup(|app| {
             #[cfg(desktop)]
@@ -856,12 +865,21 @@ pub fn run() {
 
             let ac_state = app.state::<AutoClickerState>();
             spawn_global_hotkey_watcher(std::sync::Arc::clone(&ac_state.0));
+            let ch_state = app.state::<CrosshairOverlayState>();
+            spawn_crosshair_hotkey_watcher(
+                app.handle().clone(),
+                std::sync::Arc::clone(&ch_state.0),
+            );
             if is_mcp_stdio {
                 spawn_mcp_stdio_reader(app.handle().clone());
             }
             Ok(())
         })
-        .on_window_event(|window, event| match event {
+        .on_window_event(|window, event| {
+            if window.label() != "main" {
+                return;
+            }
+            match event {
             WindowEvent::Resized(_) => {
                 if let Some(webview_win) = window.app_handle().get_webview_window(window.label()) {
                     if webview_win.is_minimized().unwrap_or(false) {
@@ -912,7 +930,7 @@ pub fn run() {
                 }
             }
             _ => {}
-        })
+        }})
         .run(tauri::generate_context!())
         .expect("error while building tauri application");
 }

@@ -22,6 +22,7 @@ import {
   Palette,
   HeartPulse,
   MonitorCog,
+  Gamepad2,
 } from 'lucide-react';
 import { ToolCategory, WidgetCustomization } from '../../types/tool';
 import { useI18n } from '../../i18n/context';
@@ -96,6 +97,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'design', label: t('cat_design', 'Design & Colors'), icon: <Palette className="w-4 h-4" /> },
     { id: 'health', label: t('cat_health', 'Health & Wellness'), icon: <HeartPulse className="w-4 h-4" /> },
     { id: 'utilities', label: t('cat_utilities', 'Utilities'), icon: <Wrench className="w-4 h-4" /> },
+    { id: 'gaming', label: t('cat_gaming', 'Gaming & Arcade'), icon: <Gamepad2 className="w-4 h-4 text-emerald-400" /> },
     ...(runningInTauri
       ? [
           {

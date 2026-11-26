@@ -151,6 +151,12 @@ const PortProcessManagerTool = lazyTool(() => import('./desktop/PortProcessManag
 const NetworkDiagnosticsTool = lazyTool(() => import('./desktop/NetworkDiagnosticsTool'), 'NetworkDiagnosticsTool');
 const AutoClickerTool = lazyTool(() => import('./desktop/AutoClickerTool'), 'AutoClickerTool');
 const KeepAwakeTool = lazyTool(() => import('./desktop/KeepAwakeTool'), 'KeepAwakeTool');
+const CrosshairOverlayTool = lazyTool(() => import('./gaming/CrosshairOverlayTool'), 'CrosshairOverlayTool');
+const SnakeGameTool = lazyTool(() => import('./gaming/SnakeGameTool'), 'SnakeGameTool');
+const TetrisGameTool = lazyTool(() => import('./gaming/TetrisGameTool'), 'TetrisGameTool');
+const ReactionTesterTool = lazyTool(() => import('./gaming/ReactionTesterTool'), 'ReactionTesterTool');
+const AimTrainerTool = lazyTool(() => import('./gaming/AimTrainerTool'), 'AimTrainerTool');
+const MouseCpsTesterTool = lazyTool(() => import('./gaming/MouseCpsTesterTool'), 'MouseCpsTesterTool');
 
 
 export const TOOLS_REGISTRY: ToolDefinition[] = [
@@ -1580,6 +1586,68 @@ export const TOOLS_REGISTRY: ToolDefinition[] = [
     desktopOnly: true,
     component: KeepAwakeTool,
     tags: ['keep-awake', 'caffeine', 'jiggler', 'mouse-jiggler', 'sleep', 'screen', 'presentation', 'desktop', 'tauri'],
+  },
+  // Gaming & Arcade Tools
+  {
+    id: 'crosshair-overlay',
+    title: 'Crosshair Overlay Studio',
+    shortDesc: 'Live click-through transparent desktop gaming crosshair overlay with CS2/Valorant/Apex/Rust presets, full visual editor, global hotkey, and share codes.',
+    category: 'gaming',
+    icon: 'Crosshair',
+    requiresOnline: false,
+    desktopOnly: true,
+    component: CrosshairOverlayTool,
+    tags: ['crosshair', 'overlay', 'gaming', 'fps', 'cs2', 'valorant', 'apex', 'rust', 'reticle', 'aim', 'desktop', 'tauri'],
+  },
+  {
+    id: 'snake-game',
+    title: 'Snake Arcade',
+    shortDesc: 'Classic, Portal Walls, and Turbo Snake with smooth canvas rendering, bonus golden apples, retro synth audio, and local high scores.',
+    category: 'gaming',
+    icon: 'Gamepad2',
+    requiresOnline: false,
+    component: SnakeGameTool,
+    tags: ['snake', 'game', 'arcade', 'minigame', 'retro', 'offline', 'gaming'],
+  },
+  {
+    id: 'tetris-game',
+    title: 'Tetris Classic',
+    shortDesc: 'Full 7-bag SRS Tetris with wall kicks, ghost landing preview, Hold slot, Next 3 queue, combo & Back-to-Back scoring, and local bests.',
+    category: 'gaming',
+    icon: 'Blocks',
+    requiresOnline: false,
+    component: TetrisGameTool,
+    tags: ['tetris', 'blocks', 'puzzle', 'game', 'arcade', 'minigame', 'retro', 'gaming'],
+  },
+  {
+    id: 'reaction-tester',
+    title: 'Reaction Time & Timing Lab',
+    shortDesc: 'Test human reflexes with Visual Flash, Audio Beep, and Click-in-the-Moment Precision Timing Bar modes with millisecond statistics.',
+    category: 'gaming',
+    icon: 'Zap',
+    requiresOnline: false,
+    component: ReactionTesterTool,
+    tags: ['reaction', 'reflex', 'timing', 'speed', 'ms', 'benchmark', 'click', 'gaming', 'minigame'],
+  },
+  {
+    id: 'aim-trainer',
+    title: 'Aim Trainer Studio',
+    shortDesc: 'Warm up mouse precision with Gridshot, Micro-Flick, and Moving Target modes tracking accuracy, targets/sec, and average hit time.',
+    category: 'gaming',
+    icon: 'Target',
+    requiresOnline: false,
+    component: AimTrainerTool,
+    tags: ['aim', 'trainer', 'gridshot', 'flick', 'fps', 'mouse', 'precision', 'gaming'],
+  },
+  {
+    id: 'mouse-cps-tester',
+    title: 'Mouse CPS, Polling Rate & Switch Lab',
+    shortDesc: 'Measure clicks per second (1s–30s), detect faulty mouse double-click switches, and estimate real-time mouse polling rate in Hz.',
+    category: 'gaming',
+    icon: 'Gauge',
+    requiresOnline: false,
+    component: MouseCpsTesterTool,
+    tags: ['cps', 'mouse', 'polling-rate', 'hz', 'double-click', 'switch', 'clicks', 'gaming', 'hardware'],
   },
 ];
 

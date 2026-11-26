@@ -1679,7 +1679,369 @@ pub fn shutdown_desktop_workers(app: &AppHandle) {
     if let Some(ka) = app.try_state::<KeepAwakeState>() {
         stop_keepawake_inner(&ka.0);
     }
+    if let Some(ch) = app.try_state::<CrosshairOverlayState>() {
+        ch.0.active.store(false, Ordering::SeqCst);
+    }
+    if let Some(overlay) = app.get_webview_window(CROSSHAIR_WINDOW_LABEL) {
+        let _ = overlay.close();
+    }
     clear_process_monitor_cache(app);
+}
+
+// ─── 4b. Native Always-On-Top Click-Through Crosshair Overlay ────────────────
+
+pub const CROSSHAIR_WINDOW_LABEL: &str = "crosshair-overlay";
+const CROSSHAIR_OVERLAY_LOGICAL_SIZE: f64 = 240.0;
+
+#[derive(Clone, Debug, Serialize)]
+pub struct DesktopMonitorInfo {
+    pub index: usize,
+    pub name: String,
+    pub width: u32,
+    pub height: u32,
+    pub x: i32,
+    pub y: i32,
+    pub scale_factor: f64,
+    pub is_primary: bool,
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct CrosshairOverlayStatus {
+    pub active: bool,
+    pub monitor_index: usize,
+    pub hotkey: String,
+    pub global_hotkey_supported: bool,
+    pub config_json: Option<String>,
+}
+
+pub struct CrosshairOverlayInner {
+    pub active: AtomicBool,
+    pub monitor_index: Mutex<usize>,
+    pub offset_x: Mutex<i32>,
+    pub offset_y: Mutex<i32>,
+    pub hotkey: Mutex<String>,
+    pub config_json: Mutex<Option<String>>,
+}
+
+impl Default for CrosshairOverlayInner {
+    fn default() -> Self {
+        Self {
+            active: AtomicBool::new(false),
+            monitor_index: Mutex::new(0),
+            offset_x: Mutex::new(0),
+            offset_y: Mutex::new(0),
+            hotkey: Mutex::new("F8".to_string()),
+            config_json: Mutex::new(None),
+        }
+    }
+}
+
+pub struct CrosshairOverlayState(pub Arc<CrosshairOverlayInner>);
+
+impl Default for CrosshairOverlayState {
+    fn default() -> Self {
+        Self(Arc::new(CrosshairOverlayInner::default()))
+    }
+}
+
+fn position_crosshair_window(
+    app: &AppHandle,
+    win: &tauri::WebviewWindow,
+    monitor_index: usize,
+    offset_x: i32,
+    offset_y: i32,
+) {
+    let monitors = app.available_monitors().unwrap_or_default();
+    let target = monitors
+        .get(monitor_index)
+        .or_else(|| monitors.first());
+
+    if let Some(mon) = target {
+        let scale = mon.scale_factor().max(0.5);
+        let mon_pos = mon.position();
+        let mon_size = mon.size();
+        let phys_overlay = (CROSSHAIR_OVERLAY_LOGICAL_SIZE * scale).round() as i32;
+        let dx = (offset_x.clamp(-400, 400) as f64 * scale).round() as i32;
+        let dy = (offset_y.clamp(-400, 400) as f64 * scale).round() as i32;
+        let x = mon_pos.x + (mon_size.width as i32 - phys_overlay) / 2 + dx;
+        let y = mon_pos.y + (mon_size.height as i32 - phys_overlay) / 2 + dy;
+        let _ = win.set_position(tauri::PhysicalPosition::new(x, y));
+    } else {
+        let _ = win.center();
+    }
+}
+
+fn build_crosshair_status(inner: &CrosshairOverlayInner) -> CrosshairOverlayStatus {
+    let active = inner.active.load(Ordering::SeqCst);
+    let monitor_index = inner.monitor_index.lock().map(|g| *g).unwrap_or(0);
+    let hotkey = inner
+        .hotkey
+        .lock()
+        .map(|g| g.clone())
+        .unwrap_or_else(|_| "F8".to_string());
+    let config_json = inner.config_json.lock().ok().and_then(|g| g.clone());
+
+    CrosshairOverlayStatus {
+        active,
+        monitor_index,
+        hotkey,
+        global_hotkey_supported: platform_native::global_hotkey_supported(),
+        config_json,
+    }
+}
+
+fn show_or_update_crosshair_internal(
+    app: &AppHandle,
+    inner: &CrosshairOverlayInner,
+    config_json: Option<String>,
+    monitor_index: Option<usize>,
+    offset_x: Option<i32>,
+    offset_y: Option<i32>,
+) -> Result<CrosshairOverlayStatus, String> {
+    if let Some(cfg) = config_json {
+        if cfg.len() > 16_384 {
+            return Err("Crosshair config payload is too large.".to_string());
+        }
+        if let Ok(mut guard) = inner.config_json.lock() {
+            *guard = Some(cfg);
+        }
+    }
+    if let Some(idx) = monitor_index {
+        if let Ok(mut guard) = inner.monitor_index.lock() {
+            *guard = idx;
+        }
+    }
+    if let Some(ox) = offset_x {
+        if let Ok(mut guard) = inner.offset_x.lock() {
+            *guard = ox.clamp(-400, 400);
+        }
+    }
+    if let Some(oy) = offset_y {
+        if let Ok(mut guard) = inner.offset_y.lock() {
+            *guard = oy.clamp(-400, 400);
+        }
+    }
+
+    let mon_idx = inner.monitor_index.lock().map(|g| *g).unwrap_or(0);
+    let ox = inner.offset_x.lock().map(|g| *g).unwrap_or(0);
+    let oy = inner.offset_y.lock().map(|g| *g).unwrap_or(0);
+    let current_cfg = inner.config_json.lock().ok().and_then(|g| g.clone());
+
+    let win = if let Some(existing) = app.get_webview_window(CROSSHAIR_WINDOW_LABEL) {
+        existing
+    } else {
+        let created = tauri::WebviewWindowBuilder::new(
+            app,
+            CROSSHAIR_WINDOW_LABEL,
+            tauri::WebviewUrl::App("index.html?window=crosshair-overlay".into()),
+        )
+        .title("OmniDesk Crosshair Overlay")
+        .inner_size(CROSSHAIR_OVERLAY_LOGICAL_SIZE, CROSSHAIR_OVERLAY_LOGICAL_SIZE)
+        .decorations(false)
+        .transparent(true)
+        .always_on_top(true)
+        .skip_taskbar(true)
+        .shadow(false)
+        .resizable(false)
+        .focusable(false)
+        .visible(false)
+        .build()
+        .map_err(|e| format!("Failed to create crosshair overlay window: {}", e))?;
+        let _ = created.set_ignore_cursor_events(true);
+        created
+    };
+
+    position_crosshair_window(app, &win, mon_idx, ox, oy);
+    let _ = win.set_always_on_top(true);
+    let _ = win.set_ignore_cursor_events(true);
+    let _ = win.show();
+
+    if let Some(cfg) = current_cfg {
+        use tauri::Emitter;
+        let _ = app.emit_to(CROSSHAIR_WINDOW_LABEL, "omnidesk:crosshair-config", cfg);
+    }
+
+    inner.active.store(true, Ordering::SeqCst);
+    let status = build_crosshair_status(inner);
+    {
+        use tauri::Emitter;
+        let _ = app.emit_to("main", "omnidesk:crosshair-status", status.clone());
+    }
+    Ok(status)
+}
+
+fn hide_crosshair_internal(app: &AppHandle, inner: &CrosshairOverlayInner) -> CrosshairOverlayStatus {
+    if let Some(win) = app.get_webview_window(CROSSHAIR_WINDOW_LABEL) {
+        let _ = win.hide();
+        let _ = win.close();
+    }
+    inner.active.store(false, Ordering::SeqCst);
+    let status = build_crosshair_status(inner);
+    {
+        use tauri::Emitter;
+        let _ = app.emit_to("main", "omnidesk:crosshair-status", status.clone());
+    }
+    status
+}
+
+pub fn spawn_crosshair_hotkey_watcher(app: AppHandle, inner: Arc<CrosshairOverlayInner>) {
+    if !platform_native::global_hotkey_supported() {
+        return;
+    }
+    std::thread::spawn(move || {
+        let mut was_down = false;
+        loop {
+            let is_down = inner
+                .hotkey
+                .lock()
+                .map(|g| platform_native::is_hotkey_pressed(g.as_str()))
+                .unwrap_or(false);
+            if is_down && !was_down {
+                if inner.active.load(Ordering::SeqCst) {
+                    let _ = hide_crosshair_internal(&app, &inner);
+                } else {
+                    let _ = show_or_update_crosshair_internal(&app, &inner, None, None, None, None);
+                }
+            }
+            was_down = is_down;
+            std::thread::sleep(Duration::from_millis(45));
+        }
+    });
+}
+
+#[tauri::command]
+pub fn desktop_crosshair_list_monitors(app: AppHandle) -> Result<Vec<DesktopMonitorInfo>, String> {
+    let primary_pos = app
+        .primary_monitor()
+        .ok()
+        .flatten()
+        .map(|m| (*m.position(), *m.size()));
+    let monitors = app.available_monitors().map_err(|e| e.to_string())?;
+    let mut out = Vec::with_capacity(monitors.len());
+    for (idx, mon) in monitors.iter().enumerate() {
+        let pos = mon.position();
+        let size = mon.size();
+        let is_primary = primary_pos
+            .map(|(pp, ps)| pp.x == pos.x && pp.y == pos.y && ps.width == size.width && ps.height == size.height)
+            .unwrap_or(idx == 0);
+        let raw_name = mon.name().cloned().unwrap_or_default();
+        let name = if raw_name.trim().is_empty() {
+            format!("Display {}", idx + 1)
+        } else {
+            raw_name
+        };
+        out.push(DesktopMonitorInfo {
+            index: idx,
+            name,
+            width: size.width,
+            height: size.height,
+            x: pos.x,
+            y: pos.y,
+            scale_factor: mon.scale_factor(),
+            is_primary,
+        });
+    }
+    Ok(out)
+}
+
+#[tauri::command]
+pub fn desktop_crosshair_open(
+    app: AppHandle,
+    config_json: String,
+    monitor_index: Option<usize>,
+    offset_x: Option<i32>,
+    offset_y: Option<i32>,
+    state: State<'_, CrosshairOverlayState>,
+) -> Result<CrosshairOverlayStatus, String> {
+    show_or_update_crosshair_internal(
+        &app,
+        &state.0,
+        Some(config_json),
+        monitor_index,
+        offset_x,
+        offset_y,
+    )
+}
+
+#[tauri::command]
+pub fn desktop_crosshair_update(
+    app: AppHandle,
+    config_json: String,
+    monitor_index: Option<usize>,
+    offset_x: Option<i32>,
+    offset_y: Option<i32>,
+    state: State<'_, CrosshairOverlayState>,
+) -> Result<CrosshairOverlayStatus, String> {
+    if config_json.len() > 16_384 {
+        return Err("Crosshair config payload is too large.".to_string());
+    }
+    if let Ok(mut guard) = state.0.config_json.lock() {
+        *guard = Some(config_json.clone());
+    }
+    if let Some(idx) = monitor_index {
+        if let Ok(mut guard) = state.0.monitor_index.lock() {
+            *guard = idx;
+        }
+    }
+    if let Some(ox) = offset_x {
+        if let Ok(mut guard) = state.0.offset_x.lock() {
+            *guard = ox.clamp(-400, 400);
+        }
+    }
+    if let Some(oy) = offset_y {
+        if let Ok(mut guard) = state.0.offset_y.lock() {
+            *guard = oy.clamp(-400, 400);
+        }
+    }
+
+    if state.0.active.load(Ordering::SeqCst) {
+        if let Some(win) = app.get_webview_window(CROSSHAIR_WINDOW_LABEL) {
+            let mon_idx = state.0.monitor_index.lock().map(|g| *g).unwrap_or(0);
+            let ox = state.0.offset_x.lock().map(|g| *g).unwrap_or(0);
+            let oy = state.0.offset_y.lock().map(|g| *g).unwrap_or(0);
+            position_crosshair_window(&app, &win, mon_idx, ox, oy);
+            let _ = win.set_always_on_top(true);
+            let _ = win.set_ignore_cursor_events(true);
+            use tauri::Emitter;
+            let _ = app.emit_to(CROSSHAIR_WINDOW_LABEL, "omnidesk:crosshair-config", config_json);
+        }
+    }
+
+    Ok(build_crosshair_status(&state.0))
+}
+
+#[tauri::command]
+pub fn desktop_crosshair_hide(
+    app: AppHandle,
+    state: State<'_, CrosshairOverlayState>,
+) -> Result<CrosshairOverlayStatus, String> {
+    Ok(hide_crosshair_internal(&app, &state.0))
+}
+
+#[tauri::command]
+pub fn desktop_crosshair_status(
+    state: State<'_, CrosshairOverlayState>,
+) -> Result<CrosshairOverlayStatus, String> {
+    Ok(build_crosshair_status(&state.0))
+}
+
+#[tauri::command]
+pub fn desktop_crosshair_set_hotkey(
+    hotkey: String,
+    state: State<'_, CrosshairOverlayState>,
+) -> Result<String, String> {
+    let upper = hotkey.trim().to_uppercase();
+    let valid = matches!(
+        upper.as_str(),
+        "F1" | "F2" | "F3" | "F4" | "F5" | "F6" | "F7" | "F8" | "F9" | "F10" | "F11" | "F12"
+    );
+    if !valid {
+        return Err("Crosshair hotkey must be between F1 and F12.".to_string());
+    }
+    if let Ok(mut guard) = state.0.hotkey.lock() {
+        *guard = upper.clone();
+    }
+    Ok(upper)
 }
 
 // ─── 5. Native PC Hardware Specs & Disk Inventory ────────────────────────────

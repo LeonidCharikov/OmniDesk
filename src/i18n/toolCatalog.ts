@@ -1065,6 +1065,30 @@ const catalog: Record<string, { title: CatalogText; desc: CatalogText }> = {
     title: { cs: 'Sequences, Series & Convergence Explorer', en: 'Sequences, Series & Convergence Explorer', de: 'Sequences, Series & Convergence Explorer', es: 'Sequences, Series & Convergence Explorer', ru: 'Sequences, Series & Convergence Explorer' },
     desc: { cs: 'Explore Arithmetic, Geometric, Fibonacci, p-Series & custom a(n) formulas with partial sums and convergence.', en: 'Explore Arithmetic, Geometric, Fibonacci, p-Series & custom a(n) formulas with partial sums and convergence.', de: 'Explore Arithmetic, Geometric, Fibonacci, p-Series & custom a(n) formulas with partial sums and convergence.', es: 'Explore Arithmetic, Geometric, Fibonacci, p-Series & custom a(n) formulas with partial sums and convergence.', ru: 'Explore Arithmetic, Geometric, Fibonacci, p-Series & custom a(n) formulas with partial sums and convergence.' },
   },
+  'crosshair-overlay': {
+    title: { cs: 'Crosshair Overlay Studio', en: 'Crosshair Overlay Studio', de: 'Crosshair Overlay Studio', es: 'Crosshair Overlay Studio', ru: 'Студия прицелов (Overlay)' },
+    desc: { cs: 'Živý průhledný click-through herní zaměřovač pro desktop s presety CS2/Valorant/Apex/Rust, editorem, klávesovou zkratkou a sdílením.', en: 'Live click-through transparent desktop gaming crosshair overlay with CS2/Valorant/Apex/Rust presets, full visual editor, global hotkey, and share codes.', de: 'Transparentes Click-Through-Desktop-Fadenkreuz mit CS2/Valorant/Apex/Rust-Presets, Editor, globalem Hotkey und Share-Codes.', es: 'Mira superpuesta transparente y click-through para escritorio con presets de CS2/Valorant/Apex/Rust, editor visual, atajo global y códigos.', ru: 'Прозрачный клик-сквозь игровой прицел для десктопа с пресетами CS2/Valorant/Apex/Rust, редактором, горячей клавишей и кодами.' },
+  },
+  'snake-game': {
+    title: { cs: 'Had (Snake Arcade)', en: 'Snake Arcade', de: 'Snake Arcade', es: 'Snake Arcade', ru: 'Змейка (Snake Arcade)' },
+    desc: { cs: 'Klasický, portálový a turbo Had s plynulým plátnem, bonusovými zlatými jablky, retro zvukem a lokálními rekordy.', en: 'Classic, Portal Walls, and Turbo Snake with smooth canvas rendering, bonus golden apples, retro synth audio, and local high scores.', de: 'Classic-, Portal-Wände- und Turbo-Snake mit flüssigem Canvas, goldenen Bonus-Äpfeln, Retro-Audio und lokalen Bestwerten.', es: 'Snake clásico, paredes portal y turbo con canvas fluido, manzanas doradas extra, audio retro y récords locales.', ru: 'Классическая, портальная и турбо-Змейка с плавным рендером, золотыми яблоками, ретро-звуком и локальными рекордами.' },
+  },
+  'tetris-game': {
+    title: { cs: 'Tetris Classic', en: 'Tetris Classic', de: 'Tetris Classic', es: 'Tetris Classic', ru: 'Тетрис (Tetris Classic)' },
+    desc: { cs: 'Plný 7-bag SRS Tetris s wall-kicky, náhledem dopadu (ghost), slotem Hold, frontou Next 3 a kombo skóre.', en: 'Full 7-bag SRS Tetris with wall kicks, ghost landing preview, Hold slot, Next 3 queue, combo & Back-to-Back scoring, and local bests.', de: 'Vollständiges 7-Bag-SRS-Tetris mit Wall-Kicks, Ghost-Vorschau, Hold-Slot, Next-3-Vorschau, Combo- und Back-to-Back-Wertung.', es: 'Tetris SRS 7-bag completo con wall kicks, vista fantasma, ranura Hold, cola Next 3 y puntuación de combos.', ru: 'Полноценный 7-bag SRS Тетрис с wall-kick, призраком посадки, слотом Hold, очередью Next 3 и комбо-очками.' },
+  },
+  'reaction-tester': {
+    title: { cs: 'Test reakcí a časování', en: 'Reaction Time & Timing Lab', de: 'Reaktionszeit- & Timing-Labor', es: 'Laboratorio de Reacción y Precisión', ru: 'Лаборатория реакции и тайминга' },
+    desc: { cs: 'Otestujte reflexy ve vizuálním, zvukovém a přesnostním režimu (klik v pravý okamžik) s milisekundovou statistikou.', en: 'Test human reflexes with Visual Flash, Audio Beep, and Click-in-the-Moment Precision Timing Bar modes with millisecond statistics.', de: 'Teste Reflexe mit visuellem Blitz, Audio-Piepton und Präzisions-Timing-Balken samt Millisekunden-Statistik.', es: 'Pon a prueba tus reflejos con modos de destello visual, pitido de audio y barra de precisión en milisegundos.', ru: 'Проверьте реакцию в визуальном, звуковом и точном тайминг-режиме (клик в нужный момент) со статистикой в мс.' },
+  },
+  'aim-trainer': {
+    title: { cs: 'Aim Trainer Studio', en: 'Aim Trainer Studio', de: 'Aim Trainer Studio', es: 'Aim Trainer Studio', ru: 'Тренажёр аима (Aim Trainer)' },
+    desc: { cs: 'Rozehřejte přesnost myši v režimech Gridshot, Micro-Flick a Pohyblivý cíl se sledováním přesnosti, TPS a času zásahu.', en: 'Warm up mouse precision with Gridshot, Micro-Flick, and Moving Target modes tracking accuracy, targets/sec, and average hit time.', de: 'Trainiere Mauspräzision mit Gridshot, Micro-Flick und beweglichen Zielen inkl. Genauigkeit, TPS und Trefferzeit.', es: 'Entrena la puntería con modos Gridshot, Micro-Flick y objetivo móvil con métricas de precisión, TPS y tiempo medio.', ru: 'Разминка точности мыши в режимах Gridshot, Micro-Flick и движущейся цели с точностью, TPS и временем попадания.' },
+  },
+  'mouse-cps-tester': {
+    title: { cs: 'Mouse CPS, Polling Rate & Switch Lab', en: 'Mouse CPS, Polling Rate & Switch Lab', de: 'Maus-CPS, Polling-Rate & Schalter-Labor', es: 'Laboratorio de CPS, Polling Rate y Switches', ru: 'Тест CPS, частоты опроса и свитчей мыши' },
+    desc: { cs: 'Měřte kliky za sekundu (1s–30s), odhalte vadný dvojklik spínače myši a změřte frekvenci dotazování (Hz).', en: 'Measure clicks per second (1s–30s), detect faulty mouse double-click switches, and estimate real-time mouse polling rate in Hz.', de: 'Miss Klicks pro Sekunde (1s–30s), erkenne defekte Doppelklick-Schalter und schätze die Maus-Polling-Rate in Hz.', es: 'Mide clics por segundo (1s–30s), detecta fallos de doble clic en switches y estima el polling rate en Hz.', ru: 'Измеряйте клики в секунду (1–30 с), выявляйте дабл-клик свитчей и оценивайте частоту опроса мыши в Гц.' },
+  },
 };
 
 export function getToolCatalogText(id: string, field: 'title' | 'desc', language: SupportedLanguage, fallback: string) {

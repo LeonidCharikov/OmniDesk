@@ -14,6 +14,7 @@ export type ToolCategory =
   | 'design'
   | 'health'
   | 'utilities'
+  | 'gaming'
   | 'desktop'
   | 'architecture';
 
@@ -32,6 +33,7 @@ export interface ToolDefinition {
     | 'design'
     | 'health'
     | 'utilities'
+    | 'gaming'
     | 'desktop';
   icon: string;
   requiresOnline?: boolean;

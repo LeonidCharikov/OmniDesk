@@ -3,7 +3,7 @@
   <h1>OmniDesk</h1>
   <p><strong>The 100% Offline-First Desktop & Web Multi-Tool Workstation</strong></p>
   <p>
-    139 integrated utilities (134 cross-platform + 5 native Desktop-Only tools) for files, code, math, science, finance, planning, and OS automation — running locally in memory or natively via Tauri v2 with zero server telemetry.
+    145 integrated utilities (139 cross-platform + 6 native Desktop-Only tools) for files, code, math, science, finance, planning, gaming &amp; reflex training, and OS automation — running locally in memory or natively via Tauri v2 with zero server telemetry.
   </p>
 
   <p>
@@ -13,7 +13,7 @@
     <a href="https://leonidcharikov.github.io/omnidesk.html">
       <img src="https://img.shields.io/badge/Website-Presentation-8B5CF6?style=for-the-badge&logo=githubpages&logoColor=white" alt="OmniDesk Presentation Website" />
     </a>
-    <img src="https://img.shields.io/badge/Tools-139%20Integrated-6366f1?style=for-the-badge" alt="139 Tools" />
+    <img src="https://img.shields.io/badge/Tools-145%20Integrated-6366f1?style=for-the-badge" alt="145 Tools" />
     <img src="https://img.shields.io/badge/Tauri-v2-24C8DB?style=for-the-badge&logo=tauri&logoColor=white" alt="Tauri v2" />
     <img src="https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React 19" />
     <img src="https://img.shields.io/badge/TypeScript-7.0-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
@@ -34,7 +34,7 @@
     <a href="https://github.com/LeonidCharikov/OmniDesk">GitHub Repo</a> •
     <a href="#-visual-showcase">Visual Showcase</a> •
     <a href="#-key-highlights">Key Highlights</a> •
-    <a href="#-complete-tool-catalog-139-tools">Tool Catalog (139)</a> •
+    <a href="#-complete-tool-catalog-145-tools">Tool Catalog (145)</a> •
     <a href="#-themes-widgets--localization">Themes & Widgets</a> •
     <a href="#-quick-start">Quick Start</a> •
     <a href="#-project-structure">Project Structure</a>
@@ -45,10 +45,10 @@
 
 <div align="center">
   <a href="docs/videos/all-tools.webp">
-    <img src="docs/videos/all-tools.webp" alt="OmniDesk Main Workspace — All 139 Tools" width="100%" />
+    <img src="docs/videos/all-tools.webp" alt="OmniDesk Main Workspace — All 145 Tools" width="100%" />
   </a>
   <br />
-  <sub><strong>Main Workspace:</strong> Categorized 139-tool grid (134 cross-platform + 5 Desktop-Only Tauri tools) with instant search, favorites, recently used tools, language switcher, and local offline sandbox status.</sub>
+  <sub><strong>Main Workspace:</strong> Categorized 145-tool grid (139 cross-platform + 6 Desktop-Only Tauri tools) with instant search, favorites, recently used tools, language switcher, and local offline sandbox status.</sub>
 </div>
 
 ---
@@ -58,10 +58,11 @@
 | Capability | Details |
 | :--- | :--- |
 | 🔒 **Privacy, Storage Audit & Full Workspace Backup** | Every file edit, hash, PDF edit, QR scan, image compression, and color conversion runs 100% locally — installable as an offline-first PWA. On the **Tauri Desktop** build, also includes **Full Workspace Backup** (settings + Calendar, Kanban, Notes, Expenses, Habits, Shopping List, Flashcards) and **AES-256-GCM encrypted bundles** (stripped on Web so browser users stay focused on individual tools). |
-| ⚡ **Dual Runtime (Tauri v2 + Web/PWA), Workers & Auto-Updater** | Native **Tauri v2** desktop app (with **signed GitHub Releases Auto-Updater**, multi-monitor-safe **persistent window geometry**, double-click titlebar maximize/restore, `sysinfo` hardware telemetry, OS tray mode, file associations & quick Web/GitHub links) or streamlined offline browser PWA. Heavy dependencies (`pdf-lib`, `tesseract.js`, MCP client), **Web Workers** (batch photo compression & cryptographic hashing), and **IndexedDB** tool storage keep the UI responsive with minimal RAM usage. |
-| 🖨️ **Built-In Document & Media Printing** | Print directly via native OS print dialogs without popup blockers from **PDF Studio**, **Resume / CV Builder**, **Solution Dilution Planner** (bench sheets), **Image Editor**, **Text & Markdown Editor**, **Markdown Preview**, **Notes**, **Diagram Editor**, **Invoice Generator**, **Screenshot Annotator**, **Sketchpad**, and **QR Code Generator**. |
-| 🧭 **Extended Command Palette & Customizable Shortcuts** | Press `Ctrl+K` (`⌘K`) to search across **139 tools** (auto-filtered to the active Web or Desktop runtime), saved **Notes**, **Calendar events**, **Settings tabs**, and **Themes**. Rebind built-in actions or assign custom keyboard shortcuts to any tool in **Settings → Shortcuts** (press `Shift+?` for cheat sheet). |
+| ⚡ **Dual Runtime (Tauri v2 + Web/PWA), Workers & Auto-Updater** | Native **Tauri v2** desktop app (with **signed GitHub Releases Auto-Updater**, multi-monitor-safe **persistent window geometry**, transparent click-through **Crosshair Overlay window**, double-click titlebar maximize/restore, `sysinfo` hardware telemetry, OS tray mode, file associations & quick Web/GitHub links) or streamlined offline browser PWA. Heavy dependencies (`pdf-lib`, `tesseract.js`, MCP client), **Web Workers** (batch photo compression & cryptographic hashing), and **IndexedDB** tool storage keep the UI responsive with minimal RAM usage. |
+| 🖨️ **Built-In Document & Media Printing** | Print directly via native OS print dialogs without popup blockers from **PDF Studio**, **Resume / CV Builder**, **Chart & Statistics Graph Studio**, **Solution Dilution Planner** (bench sheets), **Image Editor**, **Text & Markdown Editor**, **Markdown Preview**, **Notes**, **Diagram Editor**, **Invoice Generator**, **Screenshot Annotator**, **Sketchpad**, and **QR Code Generator**. |
+| 🧭 **Extended Command Palette & Customizable Shortcuts** | Press `Ctrl+K` (`⌘K`) to search across **145 tools** (auto-filtered to the active Web or Desktop runtime), saved **Notes**, **Calendar events**, **Settings tabs**, and **Themes**. Rebind built-in actions or assign custom keyboard shortcuts to any tool in **Settings → Shortcuts** (press `Shift+?` for cheat sheet). |
 | 🔄 **Offline Multi-Format Converter Hub** | CloudConvert-style **Offline Format Catalog** & **multi-file batch queue** covering **6 categories** 100% locally in memory: **Video** (`MP4`/`WebM`/`MOV` → `WebM`, animated `GIF`, `WAV` audio, frame capture), **Audio** (`MP3`/`WAV`/`OGG`/`FLAC`/`M4A`/`AAC` → `WAV`/`AIFF`/`WebM`), **Images** (`PNG`/`JPG`/`WebP`/`AVIF`/`GIF`/`BMP`/`SVG`/`ICO` → `WebP`/`PNG`/`JPG`/`GIF`/`BMP`/`ICO`/`PDF`/`SVG`), **Documents** (`DOCX`/`PDF`/`MD`/`HTML`/`TXT`/`RTF`), **Spreadsheets & Data** (`XLSX`/`XLS`/`ODS`/`CSV`/`TSV`/`JSON`/`YAML`/`XML`/`MD`/`HTML`), and **Archives** (`ZIP` ↔ `TAR` ↔ `TAR.GZ` ↔ `GZ` with extraction & batch ZIP download). |
+| 🎮 **Gaming, Reflex & Desktop Crosshair Suite** | Built-in offline arcade & FPS warm-up lab featuring **Snake Arcade**, **7-bag SRS Tetris Classic**, **Reaction Time & Timing Lab**, **Aim Trainer Studio**, and **Mouse CPS / Polling Rate / Double-Click Switch Lab**, plus a native Tauri **Crosshair Overlay Studio** *(Desktop Only)* with transparent click-through rendering, multi-monitor selection, global `F1`–`F12` toggle hotkey, 15 game presets, and share codes. |
 | 🔗 **Cross-Tool Piping & Smart Drag-and-Drop** | Pipe outputs directly between compatible tools with **Send to...** (`toolPipeService`), or drag & drop any file anywhere on the window to launch the **Smart Drop Router** with matching tools and 1-click **Load Sample** demos. |
 | 💱 **Universal Multi-Currency Engine & Starter Presets** | Configure a global default currency across 15+ world currencies (`CZK`, `EUR`, `USD`, `GBP`, `CHF`, `PLN`, `JPY`, `CNY`, etc.) synced across finance tools, Invoice Generator, and sidebar widgets, plus 1-click **Workspace Starter Presets** (*Developer*, *Student & Science*, *Finance & Daily*). |
 | 🎨 **12 Themes & Adaptive Mini-Widgets *(Desktop)*** | Switch seamlessly between **9 curated dark palettes** and **3 light palettes** (*Clean Light*, *Warm Paper* & *Soft Sage*) across both Desktop and Web, while the **Tauri Desktop** app adds 7 sidebar mini-widgets with automatic **compact tabbed mode** on smaller screens and subtle non-blocking **Toast notifications**. |
@@ -160,9 +161,9 @@ Configure default currency, sidebar mini-widgets, privacy audit, MCP Bridge, cus
 
 ---
 
-## 🛠️ Complete Tool Catalog (139 Tools)
+## 🛠️ Complete Tool Catalog (145 Tools)
 
-OmniDesk organizes **134 cross-platform tools** into **10 primary categories** plus **5 native Desktop-Only tools** (automatically shown in the Tauri v2 Desktop app and hidden in the Web/PWA build) and the **Everyday Basics** (`44` tools) quick filter.
+OmniDesk organizes **139 cross-platform tools** and **6 native Desktop-Only tools** across **12 categories** (Desktop-Only tools are automatically shown in the Tauri v2 Desktop app and hidden in the Web/PWA build) plus the **Everyday Basics** (`44` tools) quick filter.
 
 <details open>
 <summary><strong>📁 1. Files, Media &amp; Documents (15 Tools)</strong></summary>
@@ -359,9 +360,21 @@ OmniDesk organizes **134 cross-platform tools** into **10 primary categories** p
 </details>
 
 <details>
-<summary><strong>🖥️ 11. Desktop &amp; Automation — Desktop App Only (5 Tools)</strong></summary>
+<summary><strong>🎮 11. Gaming &amp; Arcade (6 Tools — 5 Cross-Platform + 1 Desktop-Only)</strong></summary>
 
-> Automatically hidden on Web/PWA and powered natively by Tauri v2 + Rust OS APIs (`src-tauri/src/desktop_tools.rs` & `src-tauri/src/lib.rs`).
+1. **Crosshair Overlay Studio *(Desktop App Only)*** — Native transparent, always-on-top, click-through desktop gaming crosshair overlay with multi-monitor selection, global `F1`–`F12` toggle hotkey, **15 built-in game presets** (CS2, Valorant, Apex Legends, Rust, Fortnite, Minecraft, PUBG, Rainbow Six Siege), full visual editor (lines, T-style, 45° X-shape, center dot, outer ring, outline, scale & X/Y offset), saved custom profiles, SVG export & shareable import/export codes.
+2. **Snake Arcade** — Classic, Portal Walls, and Turbo Snake modes with smooth canvas rendering, bonus golden apples, retro Web Audio synth effects, keyboard/touch controls & per-mode local high scores.
+3. **Tetris Classic** — Full 7-bag SRS Tetris with wall kicks, ghost landing preview, Hold slot, Next 3 piece queue, combo & Back-to-Back scoring, retro synth audio & local best records.
+4. **Reaction Time & Timing Lab** — Benchmark reflexes across Visual Flash, Audio Beep, and Click-in-the-Moment Precision Timing Bar modes with 5-round millisecond statistics and personal best streaks.
+5. **Aim Trainer Studio** — Warm up mouse precision with Gridshot, Micro-Flick, and Moving Target tracking modes, configurable target size & duration, accuracy, targets/sec & average hit time stats.
+6. **Mouse CPS, Polling Rate & Switch Lab** — Measure clicks per second (`1s`/`5s`/`10s`/`30s` sprints), detect faulty mouse double-click switches with adjustable threshold & event logs, and estimate real-time mouse polling rate in Hz.
+
+</details>
+
+<details>
+<summary><strong>🖥️ 12. Desktop &amp; Automation — Desktop App Only (5 Tools)</strong></summary>
+
+> Automatically hidden on Web/PWA and powered natively by Tauri v2 + Rust OS APIs (`src-tauri/src/desktop_tools.rs` & `src-tauri/src/lib.rs`). *(A 6th Desktop-Only tool, **Crosshair Overlay Studio**, is located in **Gaming & Arcade** above.)*
 
 1. **System Hardware Monitor & PC Specs** — Truthful native CPU/per-core, RAM/Swap, multi-disk, thermal sensor & top-process telemetry plus full PC hardware specs readout (CPU brand/cores/clock, GPU model/VRAM/driver, RAM module configuration, motherboard, system model, OS/kernel) with one-click Copy Specs.
 2. **Port & Process Manager** — Inspect active listening TCP/UDP ports (with quick localhost dev-port filters `:3000/:5173/:8080/:5432/:6379`) and running OS processes sorted by CPU/RAM/PID, with safe inline termination confirmation.
@@ -429,7 +442,7 @@ OmniDesk includes full end-to-end MCP support across the lazy-loaded desktop Rea
 - **Dual Native & WebSocket Transports**:
   - **WebSocket Bridge (`ws://127.0.0.1:3847/bridge`)**: Connects with exponential backoff auto-reconnect to `docs/mcp-server-template/server.mjs` (also provides `omnidesk_bridge_status` + scoped `OMNIDESK_WORKSPACE_DIR` file listing, reading, and conversion tools + `notifications/tools/list_changed`).
   - **Native Tauri `stdio` IPC (`--mcp-stdio`) & Background Clipboard**: Rust `stdin`/`stdout` JSON-RPC bridge (`mcp_stdio_ready`, `mcp_stdio_tx`) with startup line buffering and `tauri-plugin-clipboard-manager` (`mcp_read_clipboard`, `mcp_write_clipboard`).
-- **In-App Tutorial, Connected Tools & Live MCP Log**: Built directly into **Settings → MCP Bridge** — includes an interactive **Setup Tutorial** (`McpSetupTutorialPanel`) with copyable config snippets for Claude Desktop / Cursor / VS Code / Windsurf, a **Connected Tools** capability matrix (`McpConnectedToolsPanel`) with a searchable 139-tool catalog, and a live **MCP Log** (`McpLogPanel`) with JSON-RPC payload inspection.
+- **In-App Tutorial, Connected Tools & Live MCP Log**: Built directly into **Settings → MCP Bridge** — includes an interactive **Setup Tutorial** (`McpSetupTutorialPanel`) with copyable config snippets for Claude Desktop / Cursor / VS Code / Windsurf, a **Connected Tools** capability matrix (`McpConnectedToolsPanel`) with a searchable 145-tool catalog, and a live **MCP Log** (`McpLogPanel`) with JSON-RPC payload inspection.
 - **Security Controls**: Loopback-only (`127.0.0.1` / `localhost`) WebSocket validation, optional `OMNIDESK_MCP_TOKEN` handshake, strict `OMNIDESK_WORKSPACE_DIR` path confinement, `readonly` vs `readwrite` permission enforcement, and workspace lock guard.
 
 ### 🔌 Tutorial: How to Connect Any Desktop AI to OmniDesk
@@ -554,11 +567,12 @@ npm run tauri dev
 │   └── videos/                # Looping animated WebP demo recordings for README showcase
 ├── e2e/                       # Playwright browser E2E smoke test suite
 ├── public/                    # Static icons, logos, PWA manifest & assets
-├── src-tauri/                 # Tauri v2 Rust backend, capabilities & desktop icons
+├── scripts/                   # Automation scripts (check-i18n.mjs locale verifier)
+├── src-tauri/                 # Tauri v2 Rust backend, native desktop tools, capabilities & icons
 ├── src/
 │   ├── components/
 │   │   ├── layout/            # Header, Sidebar, SidebarWidgets, ToolGrid, CommandPalette
-│   │   └── ui/                # ConfigModal, McpSettingsTab, LanguageFlagIcon, ShortcutsSettingsPanel, SmartDropModal, SendToToolButton, ToastContainer
+│   │   └── ui/                # ConfigModal, settings/* tabs, McpSettingsTab, LanguageFlagIcon, ShortcutsSettingsPanel, SmartDropModal, SendToToolButton, ToastContainer
 │   ├── i18n/                  # Translation context & multi-language tool catalog
 │   ├── locales/               # Locale dictionaries (en, cs, de, es, ru)
 │   ├── services/              # storage, idbStorage, updaterService, printService, desktopToolsService, mcpClient (desktop), shortcutsService, toolPipeService, workspaceBackupService, workspacePresetsService, toastService, securityService, currencyService, fileSystemService
@@ -570,12 +584,13 @@ npm run tauri dev
 │   │   ├── science/           # 118-Element Chemistry, Balancer, pH/Titration, Dilutions, VSEPR, Thermochemistry, Electrochemistry, Isotope Decay, Thermo/Heat/Psychrometrics, Kinetics/Arrhenius, Spectroscopy/Beer-Lambert, Optics, Fourier/Bode/Doppler, Orbital Mechanics, PCR/Bio, Materials/CODATA, Electronics/Op-Amp/555/PCB, Physics, DNA, Ephemeris...
 │   │   ├── finance/           # Currency/Crypto, Loans, Debt Payoff, Rent vs. Buy, Dividend/DRIP, Options/Black-Scholes/Kelly, Bond Yield/Duration, Fuel/EV Trip, FIRE, Portfolio, NPV/IRR, Freelance & Salary Tax
 │   │   ├── utilities/         # Color Studio, SVG Optimizer, Lorem Ipsum, Random Picker, QR Reader, Recipe Scaler, Noise Mixer...
+│   │   ├── gaming/            # Crosshair Overlay Studio (Desktop-Only), Snake Arcade, Tetris Classic, Reaction Time Lab, Aim Trainer Studio, Mouse CPS & Polling Rate Lab
 │   │   ├── desktop/           # Desktop-Only Tauri tools: Port & Process Manager, Network Diagnostics & WoL, Auto-Clicker & Key Presser, Keep-Awake & Mouse Jiggler
 │   │   ├── expanded/          # Budget & Subscriptions, Investment & Inflation, Invoice Generator (PDF/DOCX/CSV/HTML/JSON) & workspace utilities
-│   │   └── registry.ts        # Central 139-tool lazy registry & Everyday Basics metadata
+│   │   └── registry.ts        # Central 145-tool lazy registry & Everyday Basics metadata
 │   ├── utils/                 # financeSuite.logic, scienceMathExt.logic, mathSuite.logic, scienceSuite.logic, invoiceExport.logic, colorMath, safeMathParser, sqlPlaygroundEngine & pure calculation helpers
 │   ├── workers/               # Dedicated ES module Web Workers (photoCompress.worker, hashSuite.worker)
-│   ├── __tests__/             # Vitest unit, storage & registry test suites
+│   ├── __tests__/             # 23 Vitest unit, storage, gaming, MCP & registry test suites
 │   ├── types/                 # Strict TypeScript tool & category interfaces
 │   ├── App.tsx                # Root workspace layout & category routing
 │   └── index.css              # Tailwind CSS v4 + 12 theme palettes

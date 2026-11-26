@@ -12,12 +12,13 @@ const VALID_CATEGORIES = new Set([
   'design',
   'health',
   'utilities',
+  'gaming',
   'desktop',
 ]);
 
 describe('TOOLS_REGISTRY', () => {
-  it('contains all 139 tools with unique IDs and valid categories', () => {
-    expect(TOOLS_REGISTRY.length).toBe(139);
+  it('contains all 145 tools with unique IDs and valid categories', () => {
+    expect(TOOLS_REGISTRY.length).toBe(145);
     expect(TOOLS_REGISTRY.some(t => t.id === 'online-translator')).toBe(false);
 
     const ids = new Set<string>();
@@ -47,5 +48,8 @@ describe('TOOLS_REGISTRY', () => {
 
     const desktopTools = TOOLS_REGISTRY.filter(t => t.category === 'desktop');
     expect(desktopTools.every(t => t.desktopOnly === true)).toBe(true);
+
+    const crosshairTool = TOOLS_REGISTRY.find(t => t.id === 'crosshair-overlay');
+    expect(crosshairTool?.desktopOnly).toBe(true);
   });
 });

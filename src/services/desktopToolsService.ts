@@ -563,3 +563,89 @@ export async function getDesktopHardwareSpecs(): Promise<HardwareSpecs> {
   ensureDesktopRuntime();
   return invokeRustCommand<HardwareSpecs>('desktop_get_hardware_specs');
 }
+
+export async function listDesktopCrosshairMonitors(): Promise<
+  Array<{
+    index: number;
+    name: string;
+    width: number;
+    height: number;
+    x: number;
+    y: number;
+    scale_factor: number;
+    is_primary: boolean;
+  }>
+> {
+  ensureDesktopRuntime();
+  return invokeRustCommand('desktop_crosshair_list_monitors');
+}
+
+export async function openDesktopCrosshairOverlay(params: {
+  configJson: string;
+  monitorIndex: number;
+  offsetX: number;
+  offsetY: number;
+}): Promise<{
+  active: boolean;
+  monitor_index: number;
+  hotkey: string;
+  global_hotkey_supported: boolean;
+  config_json: string | null;
+}> {
+  ensureDesktopRuntime();
+  return invokeRustCommand('desktop_crosshair_open', {
+    configJson: params.configJson,
+    monitorIndex: params.monitorIndex,
+    offsetX: params.offsetX,
+    offsetY: params.offsetY,
+  });
+}
+
+export async function updateDesktopCrosshairOverlay(params: {
+  configJson: string;
+  monitorIndex: number;
+  offsetX: number;
+  offsetY: number;
+}): Promise<{
+  active: boolean;
+  monitor_index: number;
+  hotkey: string;
+  global_hotkey_supported: boolean;
+  config_json: string | null;
+}> {
+  ensureDesktopRuntime();
+  return invokeRustCommand('desktop_crosshair_update', {
+    configJson: params.configJson,
+    monitorIndex: params.monitorIndex,
+    offsetX: params.offsetX,
+    offsetY: params.offsetY,
+  });
+}
+
+export async function hideDesktopCrosshairOverlay(): Promise<{
+  active: boolean;
+  monitor_index: number;
+  hotkey: string;
+  global_hotkey_supported: boolean;
+  config_json: string | null;
+}> {
+  ensureDesktopRuntime();
+  return invokeRustCommand('desktop_crosshair_hide');
+}
+
+export async function getDesktopCrosshairStatus(): Promise<{
+  active: boolean;
+  monitor_index: number;
+  hotkey: string;
+  global_hotkey_supported: boolean;
+  config_json: string | null;
+}> {
+  ensureDesktopRuntime();
+  return invokeRustCommand('desktop_crosshair_status');
+}
+
+export async function setDesktopCrosshairHotkey(hotkey: string): Promise<string> {
+  ensureDesktopRuntime();
+  return invokeRustCommand<string>('desktop_crosshair_set_hotkey', { hotkey });
+}
+
