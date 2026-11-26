@@ -73,6 +73,50 @@
 
 ## 🎬 Visual Showcase
 
+### 📊 Chart & Statistics Graph Studio
+Interactive Excel-style chart studio across 17 chart families &amp; 35 subtypes (Column, Bar, Area, XY Scatter &amp; Trendline, Waterfall, Treemap, Sunburst, Heatmap, Combo Bar + Line, Polar Area &amp; more) with live customization and PNG/SVG/CSV/Print export.
+
+<div align="center">
+  <a href="docs/videos/charts.webp">
+    <img src="docs/videos/charts.webp" alt="Chart & Statistics Graph Studio" width="100%" />
+  </a>
+</div>
+
+<br />
+
+### 🔀 Diagram Studio (SQL ERD, UML & Flowcharts)
+Visual diagramming canvas with SQL ERD tables (`PK`/`FK`/`UQ`/`NN` &amp; bidirectional DDL import/export), UML Class/Use-Case/Component diagrams, Flowcharts &amp; System Architecture, port-to-port connectors, auto-layout, Mermaid &amp; 2× PNG/SVG export.
+
+<div align="center">
+  <a href="docs/videos/diagram.webp">
+    <img src="docs/videos/diagram.webp" alt="Diagram Studio (SQL ERD, UML & Flowcharts)" width="100%" />
+  </a>
+</div>
+
+<br />
+
+### 🖥️ System Hardware Monitor & PC Specs *(Desktop Only)*
+Native Tauri v2 hardware readout (CPU, GPU/VRAM, RAM modules, motherboard, OS/kernel), live CPU/memory/storage gauges, per-thread CPU load bars, mounted storage drives, thermal sensors &amp; sortable active OS processes.
+
+<div align="center">
+  <a href="docs/videos/system-monitor.webp">
+    <img src="docs/videos/system-monitor.webp" alt="System Hardware Monitor & PC Specs" width="100%" />
+  </a>
+</div>
+
+<br />
+
+### 🎯 Crosshair Overlay Studio *(Desktop Only — Screenshot)*
+Transparent, always-on-top, click-through desktop gaming crosshair overlay with multi-monitor selection, global `F1`–`F12` toggle hotkey, 15 built-in game presets (CS2, Valorant, Apex Legends, Rust &amp; more), live preview test surfaces, visual editor &amp; shareable codes.
+
+<div align="center">
+  <a href="docs/screenshots/crosshair.png">
+    <img src="docs/screenshots/crosshair.png" alt="Crosshair Overlay Studio (Desktop Only)" width="100%" />
+  </a>
+</div>
+
+<br />
+
 ### 📄 PDF Studio & Visual Editor
 Direct text editing, image embedding, whiteout, redaction, signatures, watermarks &amp; page management.
 
@@ -84,12 +128,12 @@ Direct text editing, image embedding, whiteout, redaction, signatures, watermark
 
 <br />
 
-### 📅 Calendar & Leave Planner
-Month, Week &amp; Day views with hourly slots, instant search, working-days calculator &amp; `.ICS` export.
+### 📅 Calendar & Planner
+Month, Week &amp; Day views with hourly slots, instant search, working-days leave calculator &amp; `.ICS` export.
 
 <div align="center">
   <a href="docs/videos/calendar.webp">
-    <img src="docs/videos/calendar.webp" alt="Calendar & Leave Planner" width="100%" />
+    <img src="docs/videos/calendar.webp" alt="Calendar & Planner" width="100%" />
   </a>
 </div>
 
@@ -128,34 +172,34 @@ Multi-function expressions, drag pan &amp; zoom, point inspector with tangent sl
 
 <br />
 
-### 🧪 Chemistry & 118-Element Periodic Table
-Full IUPAC periodic table with state &amp; orbital filters, molar mass parser &amp; solution molarity solver.
+### 🧪 Chemistry & Periodic Table (118 Elements)
+Full 18-column IUPAC periodic table with state &amp; orbital filters, molar mass parser &amp; solution molarity solver.
 
 <div align="center">
   <a href="docs/videos/periodic-table.webp">
-    <img src="docs/videos/periodic-table.webp" alt="Chemistry & 118-Element Periodic Table" width="100%" />
+    <img src="docs/videos/periodic-table.webp" alt="Chemistry & Periodic Table (118 Elements)" width="100%" />
   </a>
 </div>
 
 <br />
 
-### 🎨 12 Live Themes & Starter Presets
-Instant switching across 9 curated dark palettes and 3 daylight palettes (*Clean Light*, *Warm Paper* &amp; *Soft Sage*) plus 1-click workspace presets.
+### 🎨 Settings & Appearance — 12 Live Themes & Workspace Starter Presets
+Instant switching across 9 curated dark palettes and 3 daylight palettes (*Clean Light*, *Warm Paper* &amp; *Soft Sage*) plus 1-click Workspace Starter Presets.
 
 <div align="center">
   <a href="docs/videos/themes.webp">
-    <img src="docs/videos/themes.webp" alt="12 Live Themes & Starter Presets" width="100%" />
+    <img src="docs/videos/themes.webp" alt="Settings & Appearance — 12 Live Themes & Workspace Starter Presets" width="100%" />
   </a>
 </div>
 
 <br />
 
-### ⚙️ Settings, Widgets, MCP Bridge & Backup
-Configure default currency, sidebar mini-widgets, privacy audit, MCP Bridge, custom shortcuts, encrypted JSON backups, languages &amp; updates.
+### ⚙️ Settings & Appearance — Currency, Widgets, Privacy, MCP Bridge, Shortcuts, Backup, Languages & Updates
+Configure default currency, sidebar mini-widgets, offline simulation &amp; storage audit, MCP Bridge, custom keyboard shortcuts, JSON &amp; AES-256-GCM encrypted backups, 5 interface languages &amp; desktop auto-updates.
 
 <div align="center">
   <a href="docs/videos/settings.webp">
-    <img src="docs/videos/settings.webp" alt="Settings, Widgets, MCP Bridge & Backup" width="100%" />
+    <img src="docs/videos/settings.webp" alt="Settings & Appearance — Currency, Widgets, Privacy, MCP Bridge, Shortcuts, Backup, Languages & Updates" width="100%" />
   </a>
 </div>
 
