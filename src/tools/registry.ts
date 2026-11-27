@@ -157,6 +157,13 @@ const TetrisGameTool = lazyTool(() => import('./gaming/TetrisGameTool'), 'Tetris
 const ReactionTesterTool = lazyTool(() => import('./gaming/ReactionTesterTool'), 'ReactionTesterTool');
 const AimTrainerTool = lazyTool(() => import('./gaming/AimTrainerTool'), 'AimTrainerTool');
 const MouseCpsTesterTool = lazyTool(() => import('./gaming/MouseCpsTesterTool'), 'MouseCpsTesterTool');
+const MonitorTesterTool = lazyTool(() => import('./gaming/MonitorTesterTool'), 'MonitorTesterTool');
+const InputDiagnosticsTool = lazyTool(() => import('./gaming/InputDiagnosticsTool'), 'InputDiagnosticsTool');
+const Game2048Tool = lazyTool(() => import('./gaming/Game2048Tool'), 'Game2048Tool');
+const MinesweeperTool = lazyTool(() => import('./gaming/MinesweeperTool'), 'MinesweeperTool');
+const TypingTestTool = lazyTool(() => import('./gaming/TypingTestTool'), 'TypingTestTool');
+const MemorySequenceTool = lazyTool(() => import('./gaming/MemorySequenceTool'), 'MemorySequenceTool');
+const RhythmTimingBarTool = lazyTool(() => import('./gaming/RhythmTimingBarTool'), 'RhythmTimingBarTool');
 
 
 export const TOOLS_REGISTRY: ToolDefinition[] = [
@@ -1648,6 +1655,76 @@ export const TOOLS_REGISTRY: ToolDefinition[] = [
     requiresOnline: false,
     component: MouseCpsTesterTool,
     tags: ['cps', 'mouse', 'polling-rate', 'hz', 'double-click', 'switch', 'clicks', 'gaming', 'hardware'],
+  },
+  {
+    id: 'monitor-tester',
+    title: 'Monitor, Dead-Pixel & Ghosting Test',
+    shortDesc: 'Fullscreen dead/stuck pixel inspector, UFO motion ghosting & overdrive overshoot test, color banding/gamma/4:4:4 chroma checks, and live refresh rate meter.',
+    category: 'gaming',
+    icon: 'Monitor',
+    requiresOnline: false,
+    component: MonitorTesterTool,
+    tags: ['monitor', 'display', 'dead-pixel', 'stuck-pixel', 'ghosting', 'ufo', 'refresh-rate', 'hz', 'banding', 'gamma', 'gaming', 'hardware'],
+  },
+  {
+    id: 'input-diagnostics',
+    title: 'Keyboard NKRO, Mouse & Gamepad Latency Lab',
+    shortDesc: 'Interactive keyboard NKRO & anti-ghosting matrix, mouse side buttons/wheel/polling, gamepad analog stick drift & rumble test, and input-to-frame latency profiler.',
+    category: 'gaming',
+    icon: 'Keyboard',
+    requiresOnline: false,
+    component: InputDiagnosticsTool,
+    tags: ['keyboard', 'nkro', 'ghosting', 'rollover', 'chatter', 'mouse', 'gamepad', 'controller', 'drift', 'latency', 'input', 'gaming', 'hardware'],
+  },
+  {
+    id: 'game-2048',
+    title: '2048 Arcade',
+    shortDesc: 'Classic 4×4 and 5×5 sliding tile puzzle with undo history, endless post-2048 mode, swipe/keyboard controls, retro sound, and local high scores.',
+    category: 'gaming',
+    icon: 'Grid2x2',
+    requiresOnline: false,
+    component: Game2048Tool,
+    tags: ['2048', 'puzzle', 'tiles', 'game', 'arcade', 'minigame', 'offline', 'gaming'],
+  },
+  {
+    id: 'minesweeper-game',
+    title: 'Minesweeper Classic',
+    shortDesc: 'Beginner, Intermediate, and Expert minefields with guaranteed safe first click, flood-fill cascades, chord-reveal, right-click flags, and local best times.',
+    category: 'gaming',
+    icon: 'Bomb',
+    requiresOnline: false,
+    component: MinesweeperTool,
+    tags: ['minesweeper', 'mines', 'puzzle', 'logic', 'game', 'arcade', 'classic', 'offline', 'gaming'],
+  },
+  {
+    id: 'typing-test',
+    title: 'Typing Speed & Accuracy Test',
+    shortDesc: 'Offline WPM & accuracy benchmark with Time Sprint (15/30/60s), Word Count, and Code Syntax modes, live WPM pacing graph, and weakest-key analysis.',
+    category: 'gaming',
+    icon: 'Type',
+    requiresOnline: false,
+    component: TypingTestTool,
+    tags: ['typing', 'wpm', 'speed', 'accuracy', 'keyboard', 'code', 'monkeytype', 'test', 'gaming'],
+  },
+  {
+    id: 'memory-sequence',
+    title: 'Memory Sequence Trainer',
+    shortDesc: 'Train working memory with Musical Color Simon (audio-visual), Spatial Grid Pattern Matrix, and escalating Digit Span recall.',
+    category: 'gaming',
+    icon: 'Brain',
+    requiresOnline: false,
+    component: MemorySequenceTool,
+    tags: ['memory', 'sequence', 'simon', 'pattern', 'grid', 'digits', 'brain', 'training', 'game', 'gaming'],
+  },
+  {
+    id: 'rhythm-timing-bar',
+    title: 'Aim & Rhythm Timing Bar Studio',
+    shortDesc: 'Beat-synced BPM rhythm lane with early/late millisecond meter, Aim-Click shrinking approach circles, and escalating precision skill-check bar.',
+    category: 'gaming',
+    icon: 'Music',
+    requiresOnline: false,
+    component: RhythmTimingBarTool,
+    tags: ['rhythm', 'aim', 'timing', 'bar', 'bpm', 'beat', 'osu', 'reflex', 'skill-check', 'gaming'],
   },
 ];
 

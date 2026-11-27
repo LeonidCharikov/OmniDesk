@@ -105,6 +105,12 @@ import {
   Crosshair,
   Blocks,
   Gauge,
+  Monitor,
+  Keyboard,
+  Grid2x2,
+  Bomb,
+  Brain,
+  Music,
 } from 'lucide-react';
 import { ToolDefinition, ToolCategory } from '../../types/tool';
 import { useI18n } from '../../i18n/context';
@@ -220,6 +226,12 @@ const ICON_MAP: Record<string, React.ReactNode> = {
   Crosshair: <Crosshair className="w-5 h-5 text-emerald-400" />,
   Blocks: <Blocks className="w-5 h-5 text-indigo-400" />,
   Gauge: <Gauge className="w-5 h-5 text-cyan-400" />,
+  Monitor: <Monitor className="w-5 h-5 text-sky-400" />,
+  Keyboard: <Keyboard className="w-5 h-5 text-emerald-400" />,
+  Grid2x2: <Grid2x2 className="w-5 h-5 text-amber-400" />,
+  Bomb: <Bomb className="w-5 h-5 text-rose-400" />,
+  Brain: <Brain className="w-5 h-5 text-fuchsia-400" />,
+  Music: <Music className="w-5 h-5 text-indigo-400" />,
 };
 
 export const ToolGrid: React.FC<ToolGridProps> = ({

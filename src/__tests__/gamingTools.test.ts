@@ -35,6 +35,53 @@ import {
   isAccidentalDoubleClick,
   summarizeReactionTimes,
 } from '../tools/gaming/reflex.logic';
+import {
+  computeRefreshMetrics,
+  PIXEL_TEST_COLORS,
+  snapStandardRefreshRate,
+} from '../tools/gaming/monitorTester.logic';
+import {
+  ANSI_KEYBOARD_ROWS,
+  computeStickMetrics,
+  GHOSTING_CHALLENGES,
+  isChallengeSatisfied,
+  isKeyChatter,
+  summarizeLatencySamples,
+} from '../tools/gaming/inputDiagnostics.logic';
+import {
+  createInitial2048State,
+  getMax2048Tile,
+  hasAvailable2048Moves,
+  slide2048Board,
+} from '../tools/gaming/game2048.logic';
+import {
+  checkMinesweeperWin,
+  chordRevealCell,
+  countFlags,
+  createEmptyMinesweeperBoard,
+  placeMinesSafely,
+  revealMineCell,
+  toggleFlagCell,
+} from '../tools/gaming/minesweeper.logic';
+import {
+  computeTypingConsistency,
+  evaluateTypingProgress,
+  generateTypingPrompt,
+} from '../tools/gaming/typingTest.logic';
+import {
+  appendSimonStep,
+  generateDigitSequence,
+  generateGridPattern,
+  getGridConfigForLevel,
+  getSimonPlaybackIntervalMs,
+} from '../tools/gaming/memorySequence.logic';
+import {
+  computeComboMultiplier,
+  computeRhythmAccuracy,
+  computeRhythmLetterGrade,
+  generateBeatChart,
+  judgeRhythmOffset,
+} from '../tools/gaming/rhythmTiming.logic';
 
 describe('Crosshair Overlay Studio Logic', () => {
   it('provides valid game presets across popular FPS titles', () => {
@@ -268,3 +315,159 @@ describe('Reaction, Aim & Mouse Lab Logic', () => {
     expect(isAccidentalDoubleClick(140, 80)).toBe(false);
   });
 });
+
+describe('Monitor & Dead-Pixel / Ghosting Test Logic', () => {
+  it('measures refresh rate, frame jitter, dropped frames, and snaps nominal Hz', () => {
+    expect(PIXEL_TEST_COLORS.length).toBeGreaterThanOrEqual(8);
+    // Simulate 144 Hz display (~6.94ms) with one dropped frame spike (21ms)
+    const deltas = [...Array(29).fill(6.944), 21.0];
+    const m = computeRefreshMetrics(deltas);
+    expect(m.hz).toBeCloseTo(144, 0);
+    expect(m.droppedFrames).toBe(1);
+    expect(snapStandardRefreshRate(143.8)).toBe(144);
+    expect(snapStandardRefreshRate(59.94)).toBe(60);
+    expect(snapStandardRefreshRate(239.7)).toBe(240);
+  });
+});
+
+describe('Keyboard NKRO, Mouse & Gamepad Input Diagnostics Logic', () => {
+  it('validates ANSI layout, NKRO combos, key chatter, stick drift, and latency stats', () => {
+    expect(ANSI_KEYBOARD_ROWS.length).toBe(6);
+    const held = new Set(['KeyW', 'KeyD', 'ShiftLeft', 'Space']);
+    expect(isChallengeSatisfied(held, GHOSTING_CHALLENGES[0])).toBe(true);
+    expect(isChallengeSatisfied(new Set(['KeyW']), GHOSTING_CHALLENGES[0])).toBe(false);
+
+    expect(isKeyChatter(12, 25)).toBe(true);
+    expect(isKeyChatter(60, 25)).toBe(false);
+
+    const drifting = computeStickMetrics(0.14, 0.05, 0.08);
+    expect(drifting.isDrifting).toBe(true);
+    const centered = computeStickMetrics(0.01, -0.02, 0.08);
+    expect(centered.isDrifting).toBe(false);
+
+    const lat = summarizeLatencySamples([2.1, 3.4, 4.0, 8.2, 2.9]);
+    expect(lat).not.toBeNull();
+    expect(lat!.minMs).toBe(2.1);
+    expect(lat!.maxMs).toBe(8.2);
+    expect(lat!.count).toBe(5);
+  });
+});
+
+describe('2048 Arcade Logic', () => {
+  it('merges adjacent equal tiles once per slide and detects game over', () => {
+    const state = {
+      ...createInitial2048State(4, () => 0),
+      board: [
+        [2, 2, 4, 4],
+        [0, 0, 0, 0],
+        [0, 0, 0, 0],
+        [0, 0, 0, 0],
+      ],
+    };
+    const res = slide2048Board(state, 'LEFT', () => 0);
+    expect(res.moved).toBe(true);
+    expect(res.gainedScore).toBe(12);
+    expect(res.next.board[0][0]).toBe(4);
+    expect(res.next.board[0][1]).toBe(8);
+    expect(getMax2048Tile(res.next.board)).toBe(8);
+
+    const lockedBoard = [
+      [2, 4, 2, 4],
+      [4, 2, 4, 2],
+      [2, 4, 2, 4],
+      [4, 2, 4, 2],
+    ];
+    expect(hasAvailable2048Moves(lockedBoard)).toBe(false);
+  });
+});
+
+describe('Minesweeper Classic Logic', () => {
+  it('guarantees first-click safety, flood-fill reveals, flags, chord reveals, and win detection', () => {
+    const empty = createEmptyMinesweeperBoard(9, 9);
+    const placed = placeMinesSafely(empty, 10, 4, 4, () => 0.3);
+    // Safe 3x3 zone around first click must be mine-free
+    for (let r = 3; r <= 5; r++) {
+      for (let c = 3; c <= 5; c++) {
+        expect(placed[r][c].isMine).toBe(false);
+      }
+    }
+    const firstClick = revealMineCell(placed, 4, 4);
+    expect(firstClick.hitMine).toBe(false);
+    expect(firstClick.revealedCount).toBeGreaterThan(1);
+
+    // Deterministic 3x3 board with 1 mine at (0,0)
+    const mini = createEmptyMinesweeperBoard(3, 3);
+    mini[0][0].isMine = true;
+    mini[0][1].adjacentMines = 1;
+    mini[1][0].adjacentMines = 1;
+    mini[1][1].adjacentMines = 1;
+
+    const flagged = toggleFlagCell(mini, 0, 0);
+    expect(countFlags(flagged)).toBe(1);
+    const rev1 = revealMineCell(flagged, 1, 1);
+    expect(rev1.hitMine).toBe(false);
+    const chord = chordRevealCell(rev1.board, 1, 1);
+    expect(chord.hitMine).toBe(false);
+    expect(checkMinesweeperWin(chord.board)).toBe(true);
+  });
+});
+
+describe('Typing Speed & Accuracy Test Logic', () => {
+  it('generates prompts and calculates WPM, accuracy, weak keys, and consistency', () => {
+    const words = generateTypingPrompt(
+      { mode: 'words', wordCount: 15, includePunctuation: true, includeNumbers: false },
+      () => 0.4
+    );
+    expect(words.split(' ').length).toBe(15);
+
+    const code = generateTypingPrompt(
+      { mode: 'code', wordCount: 30, includePunctuation: false, includeNumbers: false },
+      () => 0.2
+    );
+    expect(code.length).toBeGreaterThan(20);
+
+    const stats = evaluateTypingProgress('hello world', 'hello wxrld', 6); // 6s = 0.1 min
+    expect(stats.correctChars).toBe(10);
+    expect(stats.errorChars).toBe(1);
+    expect(stats.netWpm).toBe(20);
+    expect(stats.weakKeys[0]).toEqual({ char: 'O', misses: 1 });
+    expect(computeTypingConsistency([80, 82, 79, 81])).toBeGreaterThan(95);
+  });
+});
+
+describe('Memory Sequence Trainer Logic', () => {
+  it('generates escalating Simon sequences, unique grid patterns, and digit spans', () => {
+    const seq = appendSimonStep(appendSimonStep([], 4, () => 0.1), 4, () => 0.9);
+    expect(seq).toHaveLength(2);
+    expect(getSimonPlaybackIntervalMs(8)).toBeLessThan(getSimonPlaybackIntervalMs(1));
+
+    const cfg = getGridConfigForLevel(5);
+    expect(cfg.gridSize).toBe(4);
+    const pattern = generateGridPattern(cfg.gridSize, cfg.tileCount, () => 0.3);
+    expect(pattern).toHaveLength(cfg.tileCount);
+    expect(new Set(pattern).size).toBe(cfg.tileCount);
+
+    const digits = generateDigitSequence(7, () => 0.5);
+    expect(digits).toMatch(/^\d{7}$/);
+  });
+});
+
+describe('Aim & Rhythm Timing Bar Logic', () => {
+  it('judges timing windows, builds BPM charts, and scores accuracy/grades', () => {
+    expect(judgeRhythmOffset(10).grade).toBe('perfect');
+    expect(judgeRhythmOffset(-55).grade).toBe('great');
+    expect(judgeRhythmOffset(105).grade).toBe('good');
+    expect(judgeRhythmOffset(180).grade).toBe('miss');
+
+    const chart = generateBeatChart(120, 16, 1500, () => 0.2);
+    expect(chart).toHaveLength(16);
+    expect(chart[0].targetTimeMs).toBe(1500);
+    expect(chart[1].targetTimeMs).toBe(2000);
+
+    const acc = computeRhythmAccuracy({ perfect: 18, great: 2, good: 0, miss: 0 });
+    expect(acc).toBe(97.5);
+    expect(computeRhythmLetterGrade(acc)).toBe('S');
+    expect(computeComboMultiplier(30)).toBe(4);
+  });
+});
+

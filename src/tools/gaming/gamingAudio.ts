@@ -114,3 +114,29 @@ export function playArcadeSound(kind: ArcadeSoundKind, enabled = true): void {
       break;
   }
 }
+
+export function playNoteTone(
+  freq: number,
+  durationSec = 0.22,
+  type: OscillatorType = 'triangle',
+  enabled = true,
+  gainPeak = 0.09
+): void {
+  if (!enabled || !Number.isFinite(freq) || freq <= 0) return;
+  const ctx = getAudioContext();
+  if (!ctx) return;
+
+  const now = ctx.currentTime;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, now);
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.linearRampToValueAtTime(gainPeak, now + 0.012);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + Math.max(0.03, durationSec));
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(now);
+  osc.stop(now + Math.max(0.03, durationSec) + 0.015);
+}
+
