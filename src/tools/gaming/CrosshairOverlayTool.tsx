@@ -305,6 +305,31 @@ export const CrosshairOverlayTool: React.FC = () => {
     }
   }, [runningInTauri, busy, overlayActive, config, prefs.monitorIndex, prefs.hotkey, t]);
 
+  const handleBringToFront = useCallback(async () => {
+    if (!runningInTauri || busy || !overlayActive) return;
+    setBusy(true);
+    setOverlayError(null);
+    try {
+      const st = await openDesktopCrosshairOverlay({
+        configJson: JSON.stringify(config),
+        monitorIndex: prefs.monitorIndex,
+        offsetX: config.offsetX,
+        offsetY: config.offsetY,
+      });
+      setOverlayActive(st.active);
+      toastService.show({
+        type: 'success',
+        title: t('xh_raised_toast', 'Crosshair re-centered & brought to front'),
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setOverlayError(msg);
+      toastService.show({ type: 'error', title: msg });
+    } finally {
+      setBusy(false);
+    }
+  }, [runningInTauri, busy, overlayActive, config, prefs.monitorIndex, t]);
+
   // In-window hotkey fallback (only when OS global hotkey is unavailable, preventing double-toggle)
   useEffect(() => {
     if (!runningInTauri || globalHotkeySupported) return;
@@ -654,14 +679,27 @@ export const CrosshairOverlayTool: React.FC = () => {
                     : t('xh_status_preview', 'PREVIEW ONLY')}
                 </span>
                 {overlayActive && (
-                  <button
-                    type="button"
-                    onClick={() => void handleToggleOverlay()}
-                    className="px-2 py-0.5 rounded bg-black/65 text-rose-300 hover:text-white inline-flex items-center gap-1"
-                  >
-                    <EyeOff className="w-3 h-3" />
-                    <span>{t('xh_hide_btn', 'Hide')}</span>
-                  </button>
+                  <div className="inline-flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => void handleBringToFront()}
+                      title={t('xh_raise_title', 'Re-center and force overlay back on top')}
+                      className="px-2 py-0.5 rounded bg-black/65 text-sky-300 hover:text-white inline-flex items-center gap-1 disabled:opacity-50"
+                    >
+                      <RotateCcw className="w-3 h-3" />
+                      <span>{t('xh_raise_btn', 'Re-raise')}</span>
+                    </button>
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => void handleToggleOverlay()}
+                      className="px-2 py-0.5 rounded bg-black/65 text-rose-300 hover:text-white inline-flex items-center gap-1 disabled:opacity-50"
+                    >
+                      <EyeOff className="w-3 h-3" />
+                      <span>{t('xh_hide_btn', 'Hide')}</span>
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
@@ -697,18 +735,26 @@ export const CrosshairOverlayTool: React.FC = () => {
               </div>
             </div>
 
-            <p className="text-[11px] text-slate-400 leading-relaxed pt-1 border-t border-slate-800/80">
-              {globalHotkeySupported
-                ? t(
-                    'xh_borderless_hint',
-                    'Tip: Run games in Borderless Windowed mode for guaranteed overlay visibility. Global hotkey {hotkey} toggles the overlay even while minimized to tray.',
-                    { hotkey: prefs.hotkey }
-                  )
-                : t(
-                    'xh_borderless_hint_window',
-                    'Tip: Run games in Borderless Windowed mode for guaranteed overlay visibility.'
-                  )}
-            </p>
+            <div className="space-y-1.5 pt-2 border-t border-slate-800/80 text-[11px] text-slate-400 leading-relaxed">
+              <p>
+                {globalHotkeySupported
+                  ? t(
+                      'xh_borderless_hint',
+                      'Tip: Run games in Borderless Windowed mode for guaranteed overlay visibility. Global hotkey {hotkey} toggles the overlay even while minimized to tray.',
+                      { hotkey: prefs.hotkey }
+                    )
+                  : t(
+                      'xh_borderless_hint_window',
+                      'Tip: Run games in Borderless Windowed mode for guaranteed overlay visibility.'
+                    )}
+              </p>
+              <p className="text-slate-500">
+                {t(
+                  'xh_fullscreen_note',
+                  'Auto-topmost & resolution re-centering keep the overlay visible over Borderless & Windows Flip-Model Fullscreen games. Legacy Exclusive Fullscreen bypasses desktop overlays by OS design (no DLL injection is used, keeping anti-cheat safe).'
+                )}
+              </p>
+            </div>
           </div>
         </div>
 

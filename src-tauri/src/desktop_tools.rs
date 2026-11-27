@@ -205,6 +205,22 @@ mod platform_native {
     const ES_SYSTEM_REQUIRED: u32 = 0x0000_0001;
     const ES_DISPLAY_REQUIRED: u32 = 0x0000_0002;
 
+    const GWL_EXSTYLE: i32 = -20;
+    const WS_EX_TOPMOST: i32 = 0x0000_0008;
+    const WS_EX_TRANSPARENT: i32 = 0x0000_0020;
+    const WS_EX_TOOLWINDOW: i32 = 0x0000_0080;
+    const WS_EX_APPWINDOW: i32 = 0x0004_0000;
+    const WS_EX_NOACTIVATE: i32 = 0x0800_0000;
+
+    const HWND_TOPMOST: isize = -1;
+    const SWP_NOSIZE: u32 = 0x0001;
+    const SWP_NOMOVE: u32 = 0x0002;
+    const SWP_NOACTIVATE: u32 = 0x0010;
+    const SWP_FRAMECHANGED: u32 = 0x0020;
+    const SWP_SHOWWINDOW: u32 = 0x0040;
+    const SWP_NOOWNERZORDER: u32 = 0x0200;
+    const SWP_ASYNCWINDOWPOS: u32 = 0x4000;
+
     #[link(name = "user32")]
     unsafe extern "system" {
         fn GetCursorPos(lp_point: *mut Point) -> i32;
@@ -212,6 +228,18 @@ mod platform_native {
         fn mouse_event(dw_flags: u32, dx: i32, dy: i32, dw_data: u32, dw_extra_info: usize);
         fn keybd_event(b_vk: u8, b_scan: u8, dw_flags: u32, dw_extra_info: usize);
         fn GetAsyncKeyState(v_key: i32) -> i16;
+        fn GetWindowLongW(h_wnd: isize, n_index: i32) -> i32;
+        fn SetWindowLongW(h_wnd: isize, n_index: i32, dw_new_long: i32) -> i32;
+        fn SetWindowPos(
+            h_wnd: isize,
+            h_wnd_insert_after: isize,
+            x: i32,
+            y: i32,
+            cx: i32,
+            cy: i32,
+            u_flags: u32,
+        ) -> i32;
+        fn IsWindowVisible(h_wnd: isize) -> i32;
     }
 
     #[link(name = "kernel32")]
@@ -324,6 +352,51 @@ mod platform_native {
         };
         unsafe {
             SetThreadExecutionState(flags);
+        }
+    }
+
+    pub fn enforce_overlay_window_topmost(
+        _app: &tauri::AppHandle,
+        win: &tauri::WebviewWindow,
+        apply_styles: bool,
+    ) {
+        let Ok(hwnd) = win.hwnd() else {
+            return;
+        };
+        let raw_hwnd = hwnd.0 as isize;
+        if raw_hwnd == 0 {
+            return;
+        }
+
+        if apply_styles {
+            // Preserve WebView2 DirectComposition bits (do NOT add WS_EX_LAYERED).
+            let current_ex = unsafe { GetWindowLongW(raw_hwnd, GWL_EXSTYLE) };
+            let desired_ex = (current_ex
+                | WS_EX_TOPMOST
+                | WS_EX_TRANSPARENT
+                | WS_EX_TOOLWINDOW
+                | WS_EX_NOACTIVATE)
+                & !WS_EX_APPWINDOW;
+            if desired_ex != current_ex {
+                unsafe {
+                    SetWindowLongW(raw_hwnd, GWL_EXSTYLE, desired_ex);
+                }
+            }
+        }
+
+        let mut flags = SWP_NOMOVE
+            | SWP_NOSIZE
+            | SWP_NOACTIVATE
+            | SWP_NOOWNERZORDER
+            | SWP_ASYNCWINDOWPOS;
+        if apply_styles {
+            flags |= SWP_FRAMECHANGED | SWP_SHOWWINDOW;
+        } else if unsafe { IsWindowVisible(raw_hwnd) } == 0 {
+            flags |= SWP_SHOWWINDOW;
+        }
+
+        unsafe {
+            SetWindowPos(raw_hwnd, HWND_TOPMOST, 0, 0, 0, 0, flags);
         }
     }
 }
@@ -489,6 +562,58 @@ mod platform_native {
     }
 
     pub fn set_keep_awake(_active: bool, _keep_display: bool) {}
+
+    #[link(name = "objc")]
+    unsafe extern "C" {
+        fn sel_registerName(name: *const std::ffi::c_char) -> *mut c_void;
+        fn objc_msgSend();
+    }
+
+    pub fn enforce_overlay_window_topmost(
+        app: &tauri::AppHandle,
+        win: &tauri::WebviewWindow,
+        apply_styles: bool,
+    ) {
+        if apply_styles {
+            let _ = win.set_visible_on_all_workspaces(true);
+            let _ = win.set_always_on_top(true);
+        }
+
+        let win_clone = win.clone();
+        let _ = app.run_on_main_thread(move || {
+            let Ok(ns_win) = win_clone.ns_window() else {
+                return;
+            };
+            if ns_win.is_null() {
+                return;
+            }
+            unsafe {
+                if apply_styles {
+                    let sel_level = sel_registerName(b"setLevel:\0".as_ptr() as *const std::ffi::c_char);
+                    let msg_level: unsafe extern "C" fn(*mut c_void, *mut c_void, isize) =
+                        std::mem::transmute(objc_msgSend as *const ());
+                    // NSScreenSaverWindowLevel (1000) keeps the overlay above fullscreen Spaces.
+                    msg_level(ns_win, sel_level, 1000);
+
+                    let sel_behavior = sel_registerName(
+                        b"setCollectionBehavior:\0".as_ptr() as *const std::ffi::c_char,
+                    );
+                    let msg_behavior: unsafe extern "C" fn(*mut c_void, *mut c_void, usize) =
+                        std::mem::transmute(objc_msgSend as *const ());
+                    // CanJoinAllSpaces (1 << 0) | Stationary (1 << 4) | FullScreenAuxiliary (1 << 8)
+                    let behavior: usize = (1 << 0) | (1 << 4) | (1 << 8);
+                    msg_behavior(ns_win, sel_behavior, behavior);
+                }
+
+                let sel_order = sel_registerName(
+                    b"orderFrontRegardless\0".as_ptr() as *const std::ffi::c_char,
+                );
+                let msg_order: unsafe extern "C" fn(*mut c_void, *mut c_void) =
+                    std::mem::transmute(objc_msgSend as *const ());
+                msg_order(ns_win, sel_order);
+            }
+        });
+    }
 }
 
 #[cfg(all(unix, not(target_os = "macos")))]
@@ -594,6 +719,17 @@ mod platform_native {
     }
 
     pub fn set_keep_awake(_active: bool, _keep_display: bool) {}
+
+    pub fn enforce_overlay_window_topmost(
+        _app: &tauri::AppHandle,
+        win: &tauri::WebviewWindow,
+        apply_styles: bool,
+    ) {
+        if apply_styles {
+            let _ = win.set_visible_on_all_workspaces(true);
+        }
+        let _ = win.set_always_on_top(true);
+    }
 }
 
 // ─── 1. Port & Process Manager Commands ──────────────────────────────────────
@@ -1773,6 +1909,18 @@ fn position_crosshair_window(
     }
 }
 
+fn target_monitor_geometry(
+    app: &AppHandle,
+    monitor_index: usize,
+) -> Option<(i32, i32, u32, u32, i32)> {
+    let monitors = app.available_monitors().ok()?;
+    let mon = monitors.get(monitor_index).or_else(|| monitors.first())?;
+    let pos = mon.position();
+    let size = mon.size();
+    let scale_x100 = (mon.scale_factor().max(0.5) * 100.0).round() as i32;
+    Some((pos.x, pos.y, size.width, size.height, scale_x100))
+}
+
 fn build_crosshair_status(inner: &CrosshairOverlayInner) -> CrosshairOverlayStatus {
     let active = inner.active.load(Ordering::SeqCst);
     let monitor_index = inner.monitor_index.lock().map(|g| *g).unwrap_or(0);
@@ -1844,6 +1992,7 @@ fn show_or_update_crosshair_internal(
         .decorations(false)
         .transparent(true)
         .always_on_top(true)
+        .visible_on_all_workspaces(true)
         .skip_taskbar(true)
         .shadow(false)
         .resizable(false)
@@ -1856,9 +2005,11 @@ fn show_or_update_crosshair_internal(
     };
 
     position_crosshair_window(app, &win, mon_idx, ox, oy);
+    let _ = win.set_visible_on_all_workspaces(true);
     let _ = win.set_always_on_top(true);
     let _ = win.set_ignore_cursor_events(true);
     let _ = win.show();
+    platform_native::enforce_overlay_window_topmost(app, &win, true);
 
     if let Some(cfg) = current_cfg {
         use tauri::Emitter;
@@ -1914,6 +2065,7 @@ fn update_crosshair_internal(
                 position_crosshair_window(app, &win, mon_idx, ox, oy);
                 let _ = win.set_always_on_top(true);
                 let _ = win.set_ignore_cursor_events(true);
+                platform_native::enforce_overlay_window_topmost(app, &win, false);
                 use tauri::Emitter;
                 let _ = app.emit_to(CROSSHAIR_WINDOW_LABEL, "omnidesk:crosshair-config", config_json);
             }
@@ -1975,26 +2127,58 @@ fn list_crosshair_monitors_blocking(app: &AppHandle) -> Result<Vec<DesktopMonito
 }
 
 pub fn spawn_crosshair_hotkey_watcher(app: AppHandle, inner: Arc<CrosshairOverlayInner>) {
-    if !platform_native::global_hotkey_supported() {
-        return;
-    }
+    let hotkey_supported = platform_native::global_hotkey_supported();
     std::thread::spawn(move || {
         let mut was_down = false;
+        let mut ticks_since_enforce: u8 = 0;
+        let mut last_mon_geom: Option<(i32, i32, u32, u32, i32)> = None;
+
         loop {
-            let is_down = inner
-                .hotkey
-                .lock()
-                .map(|g| platform_native::is_hotkey_pressed(g.as_str()))
-                .unwrap_or(false);
-            if is_down && !was_down {
-                if inner.active.load(Ordering::SeqCst) {
-                    let _ = hide_crosshair_internal(&app, &inner);
-                } else {
-                    let _ = show_or_update_crosshair_internal(&app, &inner, None, None, None, None);
+            if hotkey_supported {
+                let is_down = inner
+                    .hotkey
+                    .lock()
+                    .map(|g| platform_native::is_hotkey_pressed(g.as_str()))
+                    .unwrap_or(false);
+                if is_down && !was_down {
+                    if inner.active.load(Ordering::SeqCst) {
+                        let _ = hide_crosshair_internal(&app, &inner);
+                        last_mon_geom = None;
+                    } else {
+                        let _ =
+                            show_or_update_crosshair_internal(&app, &inner, None, None, None, None);
+                    }
                 }
+                was_down = is_down;
             }
-            was_down = is_down;
-            std::thread::sleep(Duration::from_millis(45));
+
+            if inner.active.load(Ordering::SeqCst) {
+                ticks_since_enforce = ticks_since_enforce.saturating_add(1);
+                if !hotkey_supported || ticks_since_enforce >= 5 {
+                    ticks_since_enforce = 0;
+                    if let Ok(_op_guard) = inner.op_lock.try_lock() {
+                        if inner.active.load(Ordering::SeqCst) {
+                            if let Some(win) = app.get_webview_window(CROSSHAIR_WINDOW_LABEL) {
+                                let mon_idx = inner.monitor_index.lock().map(|g| *g).unwrap_or(0);
+                                let current_geom = target_monitor_geometry(&app, mon_idx);
+                                if current_geom != last_mon_geom {
+                                    let ox = inner.offset_x.lock().map(|g| *g).unwrap_or(0);
+                                    let oy = inner.offset_y.lock().map(|g| *g).unwrap_or(0);
+                                    position_crosshair_window(&app, &win, mon_idx, ox, oy);
+                                    last_mon_geom = current_geom;
+                                }
+                                platform_native::enforce_overlay_window_topmost(&app, &win, false);
+                            }
+                        }
+                    }
+                }
+            } else {
+                ticks_since_enforce = 0;
+                last_mon_geom = None;
+            }
+
+            let sleep_ms = if hotkey_supported { 45 } else { 250 };
+            std::thread::sleep(Duration::from_millis(sleep_ms));
         }
     });
 }
