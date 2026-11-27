@@ -205,22 +205,6 @@ mod platform_native {
     const ES_SYSTEM_REQUIRED: u32 = 0x0000_0001;
     const ES_DISPLAY_REQUIRED: u32 = 0x0000_0002;
 
-    const GWL_EXSTYLE: i32 = -20;
-    const WS_EX_TOPMOST: i32 = 0x0000_0008;
-    const WS_EX_TRANSPARENT: i32 = 0x0000_0020;
-    const WS_EX_TOOLWINDOW: i32 = 0x0000_0080;
-    const WS_EX_APPWINDOW: i32 = 0x0004_0000;
-    const WS_EX_NOACTIVATE: i32 = 0x0800_0000;
-
-    const HWND_TOPMOST: isize = -1;
-    const SWP_NOSIZE: u32 = 0x0001;
-    const SWP_NOMOVE: u32 = 0x0002;
-    const SWP_NOACTIVATE: u32 = 0x0010;
-    const SWP_FRAMECHANGED: u32 = 0x0020;
-    const SWP_SHOWWINDOW: u32 = 0x0040;
-    const SWP_NOOWNERZORDER: u32 = 0x0200;
-    const SWP_ASYNCWINDOWPOS: u32 = 0x4000;
-
     #[link(name = "user32")]
     unsafe extern "system" {
         fn GetCursorPos(lp_point: *mut Point) -> i32;
@@ -228,18 +212,6 @@ mod platform_native {
         fn mouse_event(dw_flags: u32, dx: i32, dy: i32, dw_data: u32, dw_extra_info: usize);
         fn keybd_event(b_vk: u8, b_scan: u8, dw_flags: u32, dw_extra_info: usize);
         fn GetAsyncKeyState(v_key: i32) -> i16;
-        fn GetWindowLongW(h_wnd: isize, n_index: i32) -> i32;
-        fn SetWindowLongW(h_wnd: isize, n_index: i32, dw_new_long: i32) -> i32;
-        fn SetWindowPos(
-            h_wnd: isize,
-            h_wnd_insert_after: isize,
-            x: i32,
-            y: i32,
-            cx: i32,
-            cy: i32,
-            u_flags: u32,
-        ) -> i32;
-        fn IsWindowVisible(h_wnd: isize) -> i32;
     }
 
     #[link(name = "kernel32")]
@@ -354,49 +326,927 @@ mod platform_native {
             SetThreadExecutionState(flags);
         }
     }
+}
 
-    pub fn enforce_overlay_window_topmost(
-        _app: &tauri::AppHandle,
-        win: &tauri::WebviewWindow,
-        apply_styles: bool,
+#[cfg(target_os = "windows")]
+mod win32_crosshair_overlay {
+    use super::CROSSHAIR_OVERLAY_LOGICAL_SIZE;
+    use serde::Deserialize;
+    use std::ffi::c_void;
+    use std::sync::atomic::{AtomicIsize, Ordering};
+    use std::sync::{mpsc, Arc, Mutex, OnceLock};
+
+    const WS_POPUP: u32 = 0x8000_0000;
+    const WS_EX_TOPMOST: u32 = 0x0000_0008;
+    const WS_EX_TRANSPARENT: u32 = 0x0000_0020;
+    const WS_EX_TOOLWINDOW: u32 = 0x0000_0080;
+    const WS_EX_LAYERED: u32 = 0x0008_0000;
+    const WS_EX_NOACTIVATE: u32 = 0x0800_0000;
+    const OVERLAY_EX_STYLE: u32 =
+        WS_EX_LAYERED | WS_EX_TRANSPARENT | WS_EX_TOPMOST | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE;
+
+    const GWL_EXSTYLE: i32 = -20;
+    const HWND_TOPMOST: isize = -1;
+    const SWP_NOSIZE: u32 = 0x0001;
+    const SWP_NOMOVE: u32 = 0x0002;
+    const SWP_NOACTIVATE: u32 = 0x0010;
+    const SWP_SHOWWINDOW: u32 = 0x0040;
+    const SWP_NOOWNERZORDER: u32 = 0x0200;
+
+    const SW_HIDE: i32 = 0;
+    const SW_SHOWNOACTIVATE: i32 = 4;
+
+    const WM_DESTROY: u32 = 0x0002;
+    const WM_MOUSEACTIVATE: u32 = 0x0021;
+    const WM_DISPLAYCHANGE: u32 = 0x007E;
+    const WM_NCHITTEST: u32 = 0x0084;
+    const WM_TIMER: u32 = 0x0113;
+    const WM_APP_UPDATE_OVERLAY: u32 = 0x8001;
+    const WM_APP_HIDE_OVERLAY: u32 = 0x8002;
+    const WM_APP_DESTROY_OVERLAY: u32 = 0x8003;
+
+    const HTTRANSPARENT: isize = -1;
+    const MA_NOACTIVATE: isize = 3;
+    const TIMER_TOPMOST_ID: usize = 1;
+
+    const BI_RGB: u32 = 0;
+    const DIB_RGB_COLORS: u32 = 0;
+    const AC_SRC_OVER: u8 = 0x00;
+    const AC_SRC_ALPHA: u8 = 0x01;
+    const ULW_ALPHA: u32 = 0x0000_0002;
+    const SM_CXSCREEN: i32 = 0;
+    const SM_CYSCREEN: i32 = 1;
+
+    #[repr(C)]
+    #[derive(Clone, Copy, Default, PartialEq, Eq)]
+    struct Point {
+        x: i32,
+        y: i32,
+    }
+
+    #[repr(C)]
+    #[derive(Clone, Copy, Default)]
+    struct Size {
+        cx: i32,
+        cy: i32,
+    }
+
+    #[repr(C)]
+    #[derive(Clone, Copy, Default, PartialEq, Eq)]
+    struct Rect {
+        left: i32,
+        top: i32,
+        right: i32,
+        bottom: i32,
+    }
+
+    #[repr(C)]
+    #[derive(Clone, Copy)]
+    struct MonitorInfo {
+        cb_size: u32,
+        rc_monitor: Rect,
+        rc_work: Rect,
+        dw_flags: u32,
+    }
+
+    #[repr(C)]
+    #[derive(Clone, Copy)]
+    struct BlendFunction {
+        blend_op: u8,
+        blend_flags: u8,
+        source_constant_alpha: u8,
+        alpha_format: u8,
+    }
+
+    #[repr(C)]
+    #[derive(Clone, Copy)]
+    struct BitmapInfoHeader {
+        bi_size: u32,
+        bi_width: i32,
+        bi_height: i32,
+        bi_planes: u16,
+        bi_bit_count: u16,
+        bi_compression: u32,
+        bi_size_image: u32,
+        bi_x_pels_per_meter: i32,
+        bi_y_pels_per_meter: i32,
+        bi_clr_used: u32,
+        bi_clr_important: u32,
+    }
+
+    #[repr(C)]
+    #[derive(Clone, Copy)]
+    struct BitmapInfo {
+        bmi_header: BitmapInfoHeader,
+        bmi_colors: [u32; 1],
+    }
+
+    #[repr(C)]
+    struct WndClassExW {
+        cb_size: u32,
+        style: u32,
+        lpfn_wnd_proc: Option<unsafe extern "system" fn(isize, u32, usize, isize) -> isize>,
+        cb_cls_extra: i32,
+        cb_wnd_extra: i32,
+        h_instance: isize,
+        h_icon: isize,
+        h_cursor: isize,
+        h_br_background: isize,
+        lpsz_menu_name: *const u16,
+        lpsz_class_name: *const u16,
+        h_icon_sm: isize,
+    }
+
+    #[repr(C)]
+    #[derive(Default)]
+    struct Msg {
+        hwnd: isize,
+        message: u32,
+        w_param: usize,
+        l_param: isize,
+        time: u32,
+        pt: Point,
+    }
+
+    #[link(name = "kernel32")]
+    unsafe extern "system" {
+        fn GetModuleHandleW(lp_module_name: *const u16) -> isize;
+    }
+
+    #[link(name = "gdi32")]
+    unsafe extern "system" {
+        fn CreateCompatibleDC(hdc: isize) -> isize;
+        fn DeleteDC(hdc: isize) -> i32;
+        fn CreateDIBSection(
+            hdc: isize,
+            pbmi: *const BitmapInfo,
+            usage: u32,
+            ppv_bits: *mut *mut c_void,
+            h_section: isize,
+            offset: u32,
+        ) -> isize;
+        fn SelectObject(hdc: isize, h: isize) -> isize;
+        fn DeleteObject(ho: isize) -> i32;
+    }
+
+    #[link(name = "user32")]
+    unsafe extern "system" {
+        fn RegisterClassExW(lpwcx: *const WndClassExW) -> u16;
+        fn CreateWindowExW(
+            dw_ex_style: u32,
+            lp_class_name: *const u16,
+            lp_window_name: *const u16,
+            dw_style: u32,
+            x: i32,
+            y: i32,
+            n_width: i32,
+            n_height: i32,
+            h_wnd_parent: isize,
+            h_menu: isize,
+            h_instance: isize,
+            lp_param: *mut c_void,
+        ) -> isize;
+        fn DestroyWindow(h_wnd: isize) -> i32;
+        fn DefWindowProcW(h_wnd: isize, msg: u32, w_param: usize, l_param: isize) -> isize;
+        fn ShowWindow(h_wnd: isize, n_cmd_show: i32) -> i32;
+        fn SetWindowPos(
+            h_wnd: isize,
+            h_wnd_insert_after: isize,
+            x: i32,
+            y: i32,
+            cx: i32,
+            cy: i32,
+            u_flags: u32,
+        ) -> i32;
+        fn GetWindowLongW(h_wnd: isize, n_index: i32) -> i32;
+        fn SetWindowLongW(h_wnd: isize, n_index: i32, dw_new_long: i32) -> i32;
+        fn UpdateLayeredWindow(
+            h_wnd: isize,
+            hdc_dst: isize,
+            ppt_dst: *const Point,
+            psize: *const Size,
+            hdc_src: isize,
+            ppt_src: *const Point,
+            cr_key: u32,
+            pblend: *const BlendFunction,
+            dw_flags: u32,
+        ) -> i32;
+        fn GetDC(h_wnd: isize) -> isize;
+        fn ReleaseDC(h_wnd: isize, h_dc: isize) -> i32;
+        fn SetTimer(h_wnd: isize, n_id_event: usize, u_elapse: u32, lp_timer_func: isize) -> usize;
+        fn KillTimer(h_wnd: isize, u_id_event: usize) -> i32;
+        fn GetMessageW(
+            lp_msg: *mut Msg,
+            h_wnd: isize,
+            w_msg_filter_min: u32,
+            w_msg_filter_max: u32,
+        ) -> i32;
+        fn TranslateMessage(lp_msg: *const Msg) -> i32;
+        fn DispatchMessageW(lp_msg: *const Msg) -> isize;
+        fn PostMessageW(h_wnd: isize, msg: u32, w_param: usize, l_param: isize) -> i32;
+        fn PostQuitMessage(n_exit_code: i32);
+        fn GetSystemMetrics(n_index: i32) -> i32;
+        fn EnumDisplayMonitors(
+            hdc: isize,
+            lprc_clip: *const Rect,
+            lpfn_enum: unsafe extern "system" fn(isize, isize, *mut Rect, isize) -> i32,
+            dw_data: isize,
+        ) -> i32;
+        fn GetMonitorInfoW(h_monitor: isize, lpmi: *mut MonitorInfo) -> i32;
+    }
+
+    #[derive(Clone, Debug, Deserialize)]
+    #[serde(rename_all = "camelCase", default)]
+    struct NativeCrosshairConfig {
+        color: String,
+        opacity: f64,
+        scale: f64,
+        show_lines: bool,
+        line_length: f64,
+        line_thickness: f64,
+        line_gap: f64,
+        t_style: bool,
+        diagonal: bool,
+        show_dot: bool,
+        dot_size: f64,
+        dot_color: String,
+        show_ring: bool,
+        ring_radius: f64,
+        ring_thickness: f64,
+        show_outline: bool,
+        outline_thickness: f64,
+        outline_color: String,
+        outline_opacity: f64,
+    }
+
+    impl Default for NativeCrosshairConfig {
+        fn default() -> Self {
+            Self {
+                color: "#00f0ff".to_string(),
+                opacity: 0.95,
+                scale: 1.0,
+                show_lines: true,
+                line_length: 8.0,
+                line_thickness: 2.0,
+                line_gap: 4.0,
+                t_style: false,
+                diagonal: false,
+                show_dot: true,
+                dot_size: 2.0,
+                dot_color: "#00f0ff".to_string(),
+                show_ring: false,
+                ring_radius: 14.0,
+                ring_thickness: 1.5,
+                show_outline: true,
+                outline_thickness: 1.0,
+                outline_color: "#000000".to_string(),
+                outline_opacity: 0.85,
+            }
+        }
+    }
+
+    #[derive(Clone)]
+    struct OverlayPayload {
+        visible: bool,
+        config: NativeCrosshairConfig,
+        monitor_index: usize,
+        offset_x: i32,
+        offset_y: i32,
+        dpi_scale: f64,
+    }
+
+    impl Default for OverlayPayload {
+        fn default() -> Self {
+            Self {
+                visible: false,
+                config: NativeCrosshairConfig::default(),
+                monitor_index: 0,
+                offset_x: 0,
+                offset_y: 0,
+                dpi_scale: 1.0,
+            }
+        }
+    }
+
+    struct NativeOverlayState {
+        hwnd: AtomicIsize,
+        payload: Mutex<OverlayPayload>,
+        last_monitor_rect: Mutex<Option<Rect>>,
+    }
+
+    static OVERLAY_STATE: OnceLock<Arc<NativeOverlayState>> = OnceLock::new();
+
+    fn shared_state() -> &'static Arc<NativeOverlayState> {
+        OVERLAY_STATE.get_or_init(|| {
+            Arc::new(NativeOverlayState {
+                hwnd: AtomicIsize::new(0),
+                payload: Mutex::new(OverlayPayload::default()),
+                last_monitor_rect: Mutex::new(None),
+            })
+        })
+    }
+
+    fn parse_hex_rgb(hex: &str) -> (f64, f64, f64) {
+        let trimmed = hex.trim().trim_start_matches('#');
+        if trimmed.is_ascii() && trimmed.len() == 6 {
+            let r = u8::from_str_radix(&trimmed[0..2], 16).unwrap_or(0) as f64 / 255.0;
+            let g = u8::from_str_radix(&trimmed[2..4], 16).unwrap_or(240) as f64 / 255.0;
+            let b = u8::from_str_radix(&trimmed[4..6], 16).unwrap_or(255) as f64 / 255.0;
+            return (r, g, b);
+        }
+        if trimmed.is_ascii() && trimmed.len() == 3 {
+            let bytes = trimmed.as_bytes();
+            let expand = |b: u8| -> f64 {
+                let v = match b {
+                    b'0'..=b'9' => b - b'0',
+                    b'a'..=b'f' => b - b'a' + 10,
+                    b'A'..=b'F' => b - b'A' + 10,
+                    _ => 0,
+                };
+                (v * 17) as f64 / 255.0
+            };
+            return (expand(bytes[0]), expand(bytes[1]), expand(bytes[2]));
+        }
+        (0.0, 240.0 / 255.0, 1.0)
+    }
+
+    fn sd_rect(x: f64, y: f64, rx: f64, ry: f64, rw: f64, rh: f64) -> f64 {
+        let cx = rx + rw * 0.5;
+        let cy = ry + rh * 0.5;
+        let hx = rw * 0.5;
+        let hy = rh * 0.5;
+        let dx = (x - cx).abs() - hx;
+        let dy = (y - cy).abs() - hy;
+        dx.max(0.0).hypot(dy.max(0.0)) + dx.max(dy).min(0.0)
+    }
+
+    fn blend_over(
+        dst_r: &mut f64,
+        dst_g: &mut f64,
+        dst_b: &mut f64,
+        dst_a: &mut f64,
+        src_r: f64,
+        src_g: f64,
+        src_b: f64,
+        src_a: f64,
     ) {
-        let Ok(hwnd) = win.hwnd() else {
-            return;
-        };
-        let raw_hwnd = hwnd.0 as isize;
-        if raw_hwnd == 0 {
+        if src_a <= 0.0 {
             return;
         }
+        let inv = 1.0 - src_a;
+        let out_a = src_a + (*dst_a) * inv;
+        if out_a <= 1e-6 {
+            *dst_r = 0.0;
+            *dst_g = 0.0;
+            *dst_b = 0.0;
+            *dst_a = 0.0;
+            return;
+        }
+        *dst_r = (src_r * src_a + (*dst_r) * (*dst_a) * inv) / out_a;
+        *dst_g = (src_g * src_a + (*dst_g) * (*dst_a) * inv) / out_a;
+        *dst_b = (src_b * src_a + (*dst_b) * (*dst_a) * inv) / out_a;
+        *dst_a = out_a;
+    }
 
-        if apply_styles {
-            // Preserve WebView2 DirectComposition bits (do NOT add WS_EX_LAYERED).
-            let current_ex = unsafe { GetWindowLongW(raw_hwnd, GWL_EXSTYLE) };
-            let desired_ex = (current_ex
-                | WS_EX_TOPMOST
-                | WS_EX_TRANSPARENT
-                | WS_EX_TOOLWINDOW
-                | WS_EX_NOACTIVATE)
-                & !WS_EX_APPWINDOW;
-            if desired_ex != current_ex {
-                unsafe {
-                    SetWindowLongW(raw_hwnd, GWL_EXSTYLE, desired_ex);
+    fn rasterize_crosshair_bgra(cfg: &NativeCrosshairConfig, size: i32, dpi_scale: f64) -> Vec<u8> {
+        let size_u = size.max(1) as usize;
+        let mut pixels = vec![0u8; size_u * size_u * 4];
+
+        let scale = cfg.scale.clamp(0.5, 3.0);
+        let total_scale = (scale * dpi_scale.clamp(0.5, 4.0)).max(0.5);
+        let global_opacity = cfg.opacity.clamp(0.1, 1.0);
+        let line_len = cfg.line_length.clamp(1.0, 40.0);
+        let line_thick = cfg.line_thickness.clamp(1.0, 12.0);
+        let line_gap = cfg.line_gap.clamp(0.0, 30.0);
+        let dot_r = cfg.dot_size.clamp(1.0, 12.0) * 0.5;
+        let ring_r = cfg.ring_radius.clamp(4.0, 48.0);
+        let ring_half_t = cfg.ring_thickness.clamp(1.0, 8.0) * 0.5;
+        let outline_w = if cfg.show_outline {
+            cfg.outline_thickness.clamp(0.5, 4.0)
+        } else {
+            0.0
+        };
+        let outline_alpha = cfg.outline_opacity.clamp(0.1, 1.0);
+
+        let (line_r, line_g, line_b) = parse_hex_rgb(&cfg.color);
+        let (dot_cr, dot_cg, dot_cb) = parse_hex_rgb(&cfg.dot_color);
+        let (out_cr, out_cg, out_cb) = parse_hex_rgb(&cfg.outline_color);
+
+        let rects: [(f64, f64, f64, f64); 4] = [
+            (-(line_gap + line_len), -line_thick * 0.5, line_len, line_thick),
+            (line_gap, -line_thick * 0.5, line_len, line_thick),
+            (-line_thick * 0.5, line_gap, line_thick, line_len),
+            (-line_thick * 0.5, -(line_gap + line_len), line_thick, line_len),
+        ];
+        let rect_count = if cfg.t_style { 3 } else { 4 };
+        let rects_slice = &rects[..rect_count];
+
+        let half = size as f64 * 0.5;
+        let inv_sqrt2 = std::f64::consts::FRAC_1_SQRT_2;
+
+        for py in 0..size_u {
+            let sy = (py as f64 + 0.5 - half) / total_scale;
+            for px in 0..size_u {
+                let sx = (px as f64 + 0.5 - half) / total_scale;
+
+                let mut pr = 0.0_f64;
+                let mut pg = 0.0_f64;
+                let mut pb = 0.0_f64;
+                let mut pa = 0.0_f64;
+
+                let dist_center = sx.hypot(sy);
+
+                if cfg.show_ring {
+                    if outline_w > 0.0 {
+                        let d_out = (dist_center - ring_r).abs() - (ring_half_t + outline_w);
+                        let cov = (0.5 - d_out * total_scale).clamp(0.0, 1.0);
+                        if cov > 0.0 {
+                            blend_over(
+                                &mut pr,
+                                &mut pg,
+                                &mut pb,
+                                &mut pa,
+                                out_cr,
+                                out_cg,
+                                out_cb,
+                                cov * outline_alpha,
+                            );
+                        }
+                    }
+                    let d_fill = (dist_center - ring_r).abs() - ring_half_t;
+                    let cov = (0.5 - d_fill * total_scale).clamp(0.0, 1.0);
+                    if cov > 0.0 {
+                        blend_over(&mut pr, &mut pg, &mut pb, &mut pa, line_r, line_g, line_b, cov);
+                    }
+                }
+
+                if cfg.show_lines {
+                    let (lx, ly) = if cfg.diagonal {
+                        ((sx + sy) * inv_sqrt2, (-sx + sy) * inv_sqrt2)
+                    } else {
+                        (sx, sy)
+                    };
+
+                    if outline_w > 0.0 {
+                        let mut d_min = f64::INFINITY;
+                        for &(rx, ry, rw, rh) in rects_slice.iter() {
+                            let d = sd_rect(
+                                lx,
+                                ly,
+                                rx - outline_w,
+                                ry - outline_w,
+                                rw + outline_w * 2.0,
+                                rh + outline_w * 2.0,
+                            );
+                            if d < d_min {
+                                d_min = d;
+                            }
+                        }
+                        let cov = (0.5 - d_min * total_scale).clamp(0.0, 1.0);
+                        if cov > 0.0 {
+                            blend_over(
+                                &mut pr,
+                                &mut pg,
+                                &mut pb,
+                                &mut pa,
+                                out_cr,
+                                out_cg,
+                                out_cb,
+                                cov * outline_alpha,
+                            );
+                        }
+                    }
+
+                    let mut d_min = f64::INFINITY;
+                    for &(rx, ry, rw, rh) in rects_slice.iter() {
+                        let d = sd_rect(lx, ly, rx, ry, rw, rh);
+                        if d < d_min {
+                            d_min = d;
+                        }
+                    }
+                    let cov = (0.5 - d_min * total_scale).clamp(0.0, 1.0);
+                    if cov > 0.0 {
+                        blend_over(&mut pr, &mut pg, &mut pb, &mut pa, line_r, line_g, line_b, cov);
+                    }
+                }
+
+                if cfg.show_dot {
+                    if outline_w > 0.0 {
+                        let d_out = dist_center - (dot_r + outline_w);
+                        let cov = (0.5 - d_out * total_scale).clamp(0.0, 1.0);
+                        if cov > 0.0 {
+                            blend_over(
+                                &mut pr,
+                                &mut pg,
+                                &mut pb,
+                                &mut pa,
+                                out_cr,
+                                out_cg,
+                                out_cb,
+                                cov * outline_alpha,
+                            );
+                        }
+                    }
+                    let d_fill = dist_center - dot_r;
+                    let cov = (0.5 - d_fill * total_scale).clamp(0.0, 1.0);
+                    if cov > 0.0 {
+                        blend_over(&mut pr, &mut pg, &mut pb, &mut pa, dot_cr, dot_cg, dot_cb, cov);
+                    }
+                }
+
+                let final_a = (pa * global_opacity).clamp(0.0, 1.0);
+                if final_a > 0.0 {
+                    let a_u8 = (final_a * 255.0).round().clamp(0.0, 255.0) as u8;
+                    let a_norm = a_u8 as f64;
+                    let r_pm = (pr * a_norm).round().clamp(0.0, a_norm) as u8;
+                    let g_pm = (pg * a_norm).round().clamp(0.0, a_norm) as u8;
+                    let b_pm = (pb * a_norm).round().clamp(0.0, a_norm) as u8;
+                    let idx = (py * size_u + px) * 4;
+                    pixels[idx] = b_pm;
+                    pixels[idx + 1] = g_pm;
+                    pixels[idx + 2] = r_pm;
+                    pixels[idx + 3] = a_u8;
                 }
             }
         }
 
-        let mut flags = SWP_NOMOVE
-            | SWP_NOSIZE
-            | SWP_NOACTIVATE
-            | SWP_NOOWNERZORDER
-            | SWP_ASYNCWINDOWPOS;
-        if apply_styles {
-            flags |= SWP_FRAMECHANGED | SWP_SHOWWINDOW;
-        } else if unsafe { IsWindowVisible(raw_hwnd) } == 0 {
-            flags |= SWP_SHOWWINDOW;
+        pixels
+    }
+
+    unsafe extern "system" fn enum_monitors_proc(
+        h_monitor: isize,
+        _hdc: isize,
+        _lprc_monitor: *mut Rect,
+        dw_data: isize,
+    ) -> i32 {
+        if dw_data == 0 {
+            return 0;
+        }
+        let list = unsafe { &mut *(dw_data as *mut Vec<Rect>) };
+        let mut info = MonitorInfo {
+            cb_size: std::mem::size_of::<MonitorInfo>() as u32,
+            rc_monitor: Rect::default(),
+            rc_work: Rect::default(),
+            dw_flags: 0,
+        };
+        if unsafe { GetMonitorInfoW(h_monitor, &mut info) } != 0 {
+            list.push(info.rc_monitor);
+        }
+        1
+    }
+
+    fn get_target_monitor_rect(monitor_index: usize) -> Rect {
+        let mut monitors: Vec<Rect> = Vec::new();
+        let ptr = (&mut monitors as *mut Vec<Rect>) as isize;
+        unsafe {
+            EnumDisplayMonitors(0, std::ptr::null(), enum_monitors_proc, ptr);
+        }
+        if let Some(rect) = monitors.get(monitor_index).or_else(|| monitors.first()) {
+            return *rect;
+        }
+        let w = unsafe { GetSystemMetrics(SM_CXSCREEN) }.max(1);
+        let h = unsafe { GetSystemMetrics(SM_CYSCREEN) }.max(1);
+        Rect {
+            left: 0,
+            top: 0,
+            right: w,
+            bottom: h,
+        }
+    }
+
+    fn render_and_present(hwnd: isize) {
+        let state = shared_state();
+        let payload = match state.payload.lock() {
+            Ok(g) => g.clone(),
+            Err(_) => return,
+        };
+        if !payload.visible {
+            unsafe {
+                ShowWindow(hwnd, SW_HIDE);
+            }
+            return;
         }
 
+        let mon_rect = get_target_monitor_rect(payload.monitor_index);
+        if let Ok(mut guard) = state.last_monitor_rect.lock() {
+            *guard = Some(mon_rect);
+        }
+
+        let mon_w = (mon_rect.right - mon_rect.left).max(1);
+        let mon_h = (mon_rect.bottom - mon_rect.top).max(1);
+        let scale = payload.dpi_scale.clamp(0.5, 4.0);
+        let size = ((CROSSHAIR_OVERLAY_LOGICAL_SIZE * scale).round() as i32).clamp(160, 640);
+        let dx = (payload.offset_x.clamp(-400, 400) as f64 * scale).round() as i32;
+        let dy = (payload.offset_y.clamp(-400, 400) as f64 * scale).round() as i32;
+        let dst_x = mon_rect.left + (mon_w - size) / 2 + dx;
+        let dst_y = mon_rect.top + (mon_h - size) / 2 + dy;
+
+        let pixels = rasterize_crosshair_bgra(&payload.config, size, scale);
+
         unsafe {
-            SetWindowPos(raw_hwnd, HWND_TOPMOST, 0, 0, 0, 0, flags);
+            let cur_ex = GetWindowLongW(hwnd, GWL_EXSTYLE) as u32;
+            if (cur_ex & OVERLAY_EX_STYLE) != OVERLAY_EX_STYLE {
+                SetWindowLongW(hwnd, GWL_EXSTYLE, (cur_ex | OVERLAY_EX_STYLE) as i32);
+            }
+
+            let screen_dc = GetDC(0);
+            if screen_dc == 0 {
+                return;
+            }
+            let mem_dc = CreateCompatibleDC(screen_dc);
+            if mem_dc == 0 {
+                ReleaseDC(0, screen_dc);
+                return;
+            }
+
+            let bmi = BitmapInfo {
+                bmi_header: BitmapInfoHeader {
+                    bi_size: std::mem::size_of::<BitmapInfoHeader>() as u32,
+                    bi_width: size,
+                    bi_height: -size,
+                    bi_planes: 1,
+                    bi_bit_count: 32,
+                    bi_compression: BI_RGB,
+                    bi_size_image: 0,
+                    bi_x_pels_per_meter: 0,
+                    bi_y_pels_per_meter: 0,
+                    bi_clr_used: 0,
+                    bi_clr_important: 0,
+                },
+                bmi_colors: [0],
+            };
+
+            let mut bits_ptr: *mut c_void = std::ptr::null_mut();
+            let hbitmap = CreateDIBSection(mem_dc, &bmi, DIB_RGB_COLORS, &mut bits_ptr, 0, 0);
+            if hbitmap != 0 && !bits_ptr.is_null() {
+                let dst_slice = std::slice::from_raw_parts_mut(bits_ptr as *mut u8, pixels.len());
+                dst_slice.copy_from_slice(&pixels);
+
+                let old_obj = SelectObject(mem_dc, hbitmap);
+                let pt_dst = Point { x: dst_x, y: dst_y };
+                let sz = Size { cx: size, cy: size };
+                let pt_src = Point { x: 0, y: 0 };
+                let blend = BlendFunction {
+                    blend_op: AC_SRC_OVER,
+                    blend_flags: 0,
+                    source_constant_alpha: 255,
+                    alpha_format: AC_SRC_ALPHA,
+                };
+
+                UpdateLayeredWindow(
+                    hwnd,
+                    screen_dc,
+                    &pt_dst,
+                    &sz,
+                    mem_dc,
+                    &pt_src,
+                    0,
+                    &blend,
+                    ULW_ALPHA,
+                );
+
+                SelectObject(mem_dc, old_obj);
+                DeleteObject(hbitmap);
+            }
+
+            DeleteDC(mem_dc);
+            ReleaseDC(0, screen_dc);
+
+            ShowWindow(hwnd, SW_SHOWNOACTIVATE);
+            SetWindowPos(
+                hwnd,
+                HWND_TOPMOST,
+                dst_x,
+                dst_y,
+                size,
+                size,
+                SWP_NOACTIVATE | SWP_NOOWNERZORDER | SWP_SHOWWINDOW,
+            );
+        }
+    }
+
+    unsafe extern "system" fn overlay_wnd_proc(
+        hwnd: isize,
+        msg: u32,
+        w_param: usize,
+        l_param: isize,
+    ) -> isize {
+        match msg {
+            WM_NCHITTEST => HTTRANSPARENT,
+            WM_MOUSEACTIVATE => MA_NOACTIVATE,
+            WM_APP_UPDATE_OVERLAY => {
+                render_and_present(hwnd);
+                0
+            }
+            WM_APP_HIDE_OVERLAY => {
+                unsafe {
+                    ShowWindow(hwnd, SW_HIDE);
+                }
+                0
+            }
+            WM_APP_DESTROY_OVERLAY => {
+                unsafe {
+                    DestroyWindow(hwnd);
+                }
+                0
+            }
+            WM_DISPLAYCHANGE => {
+                let is_visible = shared_state()
+                    .payload
+                    .lock()
+                    .map(|g| g.visible)
+                    .unwrap_or(false);
+                if is_visible {
+                    render_and_present(hwnd);
+                }
+                0
+            }
+            WM_TIMER => {
+                let state = shared_state();
+                let snapshot = state
+                    .payload
+                    .lock()
+                    .ok()
+                    .map(|g| (g.visible, g.monitor_index));
+                if let Some((true, mon_idx)) = snapshot {
+                    let cur_rect = get_target_monitor_rect(mon_idx);
+                    let changed = state
+                        .last_monitor_rect
+                        .lock()
+                        .ok()
+                        .map(|g| *g != Some(cur_rect))
+                        .unwrap_or(true);
+                    if changed {
+                        render_and_present(hwnd);
+                    } else {
+                        unsafe {
+                            let cur_ex = GetWindowLongW(hwnd, GWL_EXSTYLE) as u32;
+                            if (cur_ex & OVERLAY_EX_STYLE) != OVERLAY_EX_STYLE {
+                                SetWindowLongW(
+                                    hwnd,
+                                    GWL_EXSTYLE,
+                                    (cur_ex | OVERLAY_EX_STYLE) as i32,
+                                );
+                            }
+                            SetWindowPos(
+                                hwnd,
+                                HWND_TOPMOST,
+                                0,
+                                0,
+                                0,
+                                0,
+                                SWP_NOMOVE
+                                    | SWP_NOSIZE
+                                    | SWP_NOACTIVATE
+                                    | SWP_NOOWNERZORDER
+                                    | SWP_SHOWWINDOW,
+                            );
+                        }
+                    }
+                }
+                0
+            }
+            WM_DESTROY => {
+                shared_state().hwnd.store(0, Ordering::SeqCst);
+                unsafe {
+                    KillTimer(hwnd, TIMER_TOPMOST_ID);
+                    PostQuitMessage(0);
+                }
+                0
+            }
+            _ => unsafe { DefWindowProcW(hwnd, msg, w_param, l_param) },
+        }
+    }
+
+    fn ensure_started() -> Result<isize, String> {
+        let state = shared_state();
+        let existing = state.hwnd.load(Ordering::SeqCst);
+        if existing != 0 {
+            return Ok(existing);
+        }
+
+        let (tx, rx) = mpsc::sync_channel::<Result<isize, String>>(1);
+        std::thread::spawn(move || {
+            let class_name: Vec<u16> = "OmniDeskNativeCrosshairOverlay\0"
+                .encode_utf16()
+                .collect();
+            let window_title: Vec<u16> = "OmniDesk Crosshair Overlay\0"
+                .encode_utf16()
+                .collect();
+
+            let h_instance = unsafe { GetModuleHandleW(std::ptr::null()) };
+            let wc = WndClassExW {
+                cb_size: std::mem::size_of::<WndClassExW>() as u32,
+                style: 0,
+                lpfn_wnd_proc: Some(overlay_wnd_proc),
+                cb_cls_extra: 0,
+                cb_wnd_extra: 0,
+                h_instance,
+                h_icon: 0,
+                h_cursor: 0,
+                h_br_background: 0,
+                lpsz_menu_name: std::ptr::null(),
+                lpsz_class_name: class_name.as_ptr(),
+                h_icon_sm: 0,
+            };
+            unsafe {
+                RegisterClassExW(&wc);
+            }
+
+            let hwnd = unsafe {
+                CreateWindowExW(
+                    OVERLAY_EX_STYLE,
+                    class_name.as_ptr(),
+                    window_title.as_ptr(),
+                    WS_POPUP,
+                    0,
+                    0,
+                    240,
+                    240,
+                    0,
+                    0,
+                    h_instance,
+                    std::ptr::null_mut(),
+                )
+            };
+
+            if hwnd == 0 {
+                let _ = tx.send(Err(
+                    "Failed to create native Win32 layered crosshair overlay window.".to_string(),
+                ));
+                return;
+            }
+
+            shared_state().hwnd.store(hwnd, Ordering::SeqCst);
+            unsafe {
+                SetTimer(hwnd, TIMER_TOPMOST_ID, 120, 0);
+            }
+            let _ = tx.send(Ok(hwnd));
+
+            let mut msg = Msg::default();
+            while unsafe { GetMessageW(&mut msg, 0, 0, 0) } > 0 {
+                unsafe {
+                    TranslateMessage(&msg);
+                    DispatchMessageW(&msg);
+                }
+            }
+            shared_state().hwnd.store(0, Ordering::SeqCst);
+        });
+
+        rx.recv()
+            .map_err(|_| "Native crosshair overlay thread terminated unexpectedly.".to_string())?
+    }
+
+    pub fn show_or_update(
+        config_json: Option<&str>,
+        monitor_index: usize,
+        offset_x: i32,
+        offset_y: i32,
+        dpi_scale: f64,
+    ) -> Result<(), String> {
+        let hwnd = ensure_started()?;
+        let state = shared_state();
+        if let Ok(mut guard) = state.payload.lock() {
+            if let Some(raw) = config_json {
+                if let Ok(parsed) = serde_json::from_str::<NativeCrosshairConfig>(raw) {
+                    guard.config = parsed;
+                }
+            }
+            guard.visible = true;
+            guard.monitor_index = monitor_index;
+            guard.offset_x = offset_x.clamp(-400, 400);
+            guard.offset_y = offset_y.clamp(-400, 400);
+            guard.dpi_scale = dpi_scale.clamp(0.5, 4.0);
+        }
+        unsafe {
+            PostMessageW(hwnd, WM_APP_UPDATE_OVERLAY, 0, 0);
+        }
+        Ok(())
+    }
+
+    pub fn hide() {
+        let state = shared_state();
+        if let Ok(mut guard) = state.payload.lock() {
+            guard.visible = false;
+        }
+        let hwnd = state.hwnd.load(Ordering::SeqCst);
+        if hwnd != 0 {
+            unsafe {
+                PostMessageW(hwnd, WM_APP_HIDE_OVERLAY, 0, 0);
+            }
+        }
+    }
+
+    pub fn shutdown() {
+        let state = shared_state();
+        if let Ok(mut guard) = state.payload.lock() {
+            guard.visible = false;
+        }
+        let hwnd = state.hwnd.load(Ordering::SeqCst);
+        if hwnd != 0 {
+            unsafe {
+                PostMessageW(hwnd, WM_APP_DESTROY_OVERLAY, 0, 0);
+            }
         }
     }
 }
@@ -1818,6 +2668,8 @@ pub fn shutdown_desktop_workers(app: &AppHandle) {
     if let Some(ch) = app.try_state::<CrosshairOverlayState>() {
         ch.0.active.store(false, Ordering::SeqCst);
     }
+    #[cfg(target_os = "windows")]
+    win32_crosshair_overlay::shutdown();
     if let Some(overlay) = app.get_webview_window(CROSSHAIR_WINDOW_LABEL) {
         let _ = overlay.close();
     }
@@ -1882,6 +2734,7 @@ impl Default for CrosshairOverlayState {
     }
 }
 
+#[cfg(not(target_os = "windows"))]
 fn position_crosshair_window(
     app: &AppHandle,
     win: &tauri::WebviewWindow,
@@ -1909,6 +2762,7 @@ fn position_crosshair_window(
     }
 }
 
+#[cfg(not(target_os = "windows"))]
 fn target_monitor_geometry(
     app: &AppHandle,
     monitor_index: usize,
@@ -1919,6 +2773,19 @@ fn target_monitor_geometry(
     let size = mon.size();
     let scale_x100 = (mon.scale_factor().max(0.5) * 100.0).round() as i32;
     Some((pos.x, pos.y, size.width, size.height, scale_x100))
+}
+
+#[cfg(target_os = "windows")]
+fn target_monitor_scale(app: &AppHandle, monitor_index: usize) -> f64 {
+    app.available_monitors()
+        .ok()
+        .and_then(|list| {
+            list.get(monitor_index)
+                .or_else(|| list.first())
+                .map(|m| m.scale_factor())
+        })
+        .unwrap_or(1.0)
+        .clamp(0.5, 4.0)
 }
 
 fn build_crosshair_status(inner: &CrosshairOverlayInner) -> CrosshairOverlayStatus {
@@ -1979,41 +2846,50 @@ fn show_or_update_crosshair_internal(
     let oy = inner.offset_y.lock().map(|g| *g).unwrap_or(0);
     let current_cfg = inner.config_json.lock().ok().and_then(|g| g.clone());
 
-    let win = if let Some(existing) = app.get_webview_window(CROSSHAIR_WINDOW_LABEL) {
-        existing
-    } else {
-        let created = tauri::WebviewWindowBuilder::new(
-            app,
-            CROSSHAIR_WINDOW_LABEL,
-            tauri::WebviewUrl::App("index.html?window=crosshair-overlay".into()),
-        )
-        .title("OmniDesk Crosshair Overlay")
-        .inner_size(CROSSHAIR_OVERLAY_LOGICAL_SIZE, CROSSHAIR_OVERLAY_LOGICAL_SIZE)
-        .decorations(false)
-        .transparent(true)
-        .always_on_top(true)
-        .visible_on_all_workspaces(true)
-        .skip_taskbar(true)
-        .shadow(false)
-        .resizable(false)
-        .focusable(false)
-        .visible(false)
-        .build()
-        .map_err(|e| format!("Failed to create crosshair overlay window: {}", e))?;
-        let _ = created.set_ignore_cursor_events(true);
-        created
-    };
+    #[cfg(target_os = "windows")]
+    {
+        let scale = target_monitor_scale(app, mon_idx);
+        win32_crosshair_overlay::show_or_update(current_cfg.as_deref(), mon_idx, ox, oy, scale)?;
+    }
 
-    position_crosshair_window(app, &win, mon_idx, ox, oy);
-    let _ = win.set_visible_on_all_workspaces(true);
-    let _ = win.set_always_on_top(true);
-    let _ = win.set_ignore_cursor_events(true);
-    let _ = win.show();
-    platform_native::enforce_overlay_window_topmost(app, &win, true);
+    #[cfg(not(target_os = "windows"))]
+    {
+        let win = if let Some(existing) = app.get_webview_window(CROSSHAIR_WINDOW_LABEL) {
+            existing
+        } else {
+            let created = tauri::WebviewWindowBuilder::new(
+                app,
+                CROSSHAIR_WINDOW_LABEL,
+                tauri::WebviewUrl::App("index.html?window=crosshair-overlay".into()),
+            )
+            .title("OmniDesk Crosshair Overlay")
+            .inner_size(CROSSHAIR_OVERLAY_LOGICAL_SIZE, CROSSHAIR_OVERLAY_LOGICAL_SIZE)
+            .decorations(false)
+            .transparent(true)
+            .always_on_top(true)
+            .visible_on_all_workspaces(true)
+            .skip_taskbar(true)
+            .shadow(false)
+            .resizable(false)
+            .focusable(false)
+            .visible(false)
+            .build()
+            .map_err(|e| format!("Failed to create crosshair overlay window: {}", e))?;
+            let _ = created.set_ignore_cursor_events(true);
+            created
+        };
 
-    if let Some(cfg) = current_cfg {
-        use tauri::Emitter;
-        let _ = app.emit_to(CROSSHAIR_WINDOW_LABEL, "omnidesk:crosshair-config", cfg);
+        position_crosshair_window(app, &win, mon_idx, ox, oy);
+        let _ = win.set_visible_on_all_workspaces(true);
+        let _ = win.set_always_on_top(true);
+        let _ = win.set_ignore_cursor_events(true);
+        let _ = win.show();
+        platform_native::enforce_overlay_window_topmost(app, &win, true);
+
+        if let Some(cfg) = current_cfg {
+            use tauri::Emitter;
+            let _ = app.emit_to(CROSSHAIR_WINDOW_LABEL, "omnidesk:crosshair-config", cfg);
+        }
     }
 
     inner.active.store(true, Ordering::SeqCst);
@@ -2058,10 +2934,24 @@ fn update_crosshair_internal(
     if inner.active.load(Ordering::SeqCst) {
         let _op_guard = inner.op_lock.lock();
         if inner.active.load(Ordering::SeqCst) {
+            let mon_idx = inner.monitor_index.lock().map(|g| *g).unwrap_or(0);
+            let ox = inner.offset_x.lock().map(|g| *g).unwrap_or(0);
+            let oy = inner.offset_y.lock().map(|g| *g).unwrap_or(0);
+
+            #[cfg(target_os = "windows")]
+            {
+                let scale = target_monitor_scale(app, mon_idx);
+                let _ = win32_crosshair_overlay::show_or_update(
+                    Some(&config_json),
+                    mon_idx,
+                    ox,
+                    oy,
+                    scale,
+                );
+            }
+
+            #[cfg(not(target_os = "windows"))]
             if let Some(win) = app.get_webview_window(CROSSHAIR_WINDOW_LABEL) {
-                let mon_idx = inner.monitor_index.lock().map(|g| *g).unwrap_or(0);
-                let ox = inner.offset_x.lock().map(|g| *g).unwrap_or(0);
-                let oy = inner.offset_y.lock().map(|g| *g).unwrap_or(0);
                 position_crosshair_window(app, &win, mon_idx, ox, oy);
                 let _ = win.set_always_on_top(true);
                 let _ = win.set_ignore_cursor_events(true);
@@ -2078,6 +2968,9 @@ fn update_crosshair_internal(
 fn hide_crosshair_internal(app: &AppHandle, inner: &CrosshairOverlayInner) -> CrosshairOverlayStatus {
     let _op_guard = inner.op_lock.lock();
     inner.active.store(false, Ordering::SeqCst);
+    #[cfg(target_os = "windows")]
+    win32_crosshair_overlay::hide();
+    #[cfg(not(target_os = "windows"))]
     if let Some(win) = app.get_webview_window(CROSSHAIR_WINDOW_LABEL) {
         let _ = win.hide();
         if win.destroy().is_err() {
@@ -2130,7 +3023,9 @@ pub fn spawn_crosshair_hotkey_watcher(app: AppHandle, inner: Arc<CrosshairOverla
     let hotkey_supported = platform_native::global_hotkey_supported();
     std::thread::spawn(move || {
         let mut was_down = false;
+        #[cfg(not(target_os = "windows"))]
         let mut ticks_since_enforce: u8 = 0;
+        #[cfg(not(target_os = "windows"))]
         let mut last_mon_geom: Option<(i32, i32, u32, u32, i32)> = None;
 
         loop {
@@ -2143,7 +3038,10 @@ pub fn spawn_crosshair_hotkey_watcher(app: AppHandle, inner: Arc<CrosshairOverla
                 if is_down && !was_down {
                     if inner.active.load(Ordering::SeqCst) {
                         let _ = hide_crosshair_internal(&app, &inner);
-                        last_mon_geom = None;
+                        #[cfg(not(target_os = "windows"))]
+                        {
+                            last_mon_geom = None;
+                        }
                     } else {
                         let _ =
                             show_or_update_crosshair_internal(&app, &inner, None, None, None, None);
@@ -2152,6 +3050,7 @@ pub fn spawn_crosshair_hotkey_watcher(app: AppHandle, inner: Arc<CrosshairOverla
                 was_down = is_down;
             }
 
+            #[cfg(not(target_os = "windows"))]
             if inner.active.load(Ordering::SeqCst) {
                 ticks_since_enforce = ticks_since_enforce.saturating_add(1);
                 if !hotkey_supported || ticks_since_enforce >= 5 {

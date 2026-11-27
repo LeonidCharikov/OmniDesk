@@ -4775,7 +4775,7 @@
   "xh_raise_btn": "In Vordergrund",
   "xh_raise_title": "Neu zentrieren und Overlay wieder in den Vordergrund bringen",
   "xh_raised_toast": "Fadenkreuz neu zentriert & in den Vordergrund geholt",
-  "xh_fullscreen_note": "Auto-Topmost und automatisches Neuzentrieren halten das Overlay über Borderless- und Windows-Flip-Model-Vollbildspielen sichtbar. Klassischer Exklusiver Vollbildmodus umgeht Desktop-Overlays systembedingt (ohne DLL-Injektion, daher 100 % Anti-Cheat-sicher).",
+  "xh_fullscreen_note": "Nutzt ein natives Win32-Layered-Overlay mit Auto-Topmost & Neuzentrierung (ohne DLL-Injektion, 100 % Anti-Cheat-sicher). In CS2 / Stalzone noch unsichtbar? 1) Spiel-Anzeigemodus auf Vollbild im Fenster / Rahmenlos stellen (Exklusiver Vollbildmodus umgeht Windows DWM). 2) Läuft das Spiel als Administrator, OmniDesk ebenfalls als Administrator starten.",
   "xh_tab_presets": "Presets",
   "xh_tab_editor": "Editor",
   "xh_tab_saved": "Gespeichert",

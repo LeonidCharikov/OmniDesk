@@ -751,7 +751,7 @@ export const CrosshairOverlayTool: React.FC = () => {
               <p className="text-slate-500">
                 {t(
                   'xh_fullscreen_note',
-                  'Auto-topmost & resolution re-centering keep the overlay visible over Borderless & Windows Flip-Model Fullscreen games. Legacy Exclusive Fullscreen bypasses desktop overlays by OS design (no DLL injection is used, keeping anti-cheat safe).'
+                  'Uses a native Win32 layered overlay with auto-topmost & resolution re-centering (no DLL injection, 100% anti-cheat safe). Still hidden in CS2 / Stalzone? 1) Set game Display Mode to Fullscreen Windowed / Borderless (Exclusive Fullscreen bypasses Windows DWM). 2) If the game runs as Administrator, run OmniDesk as Administrator too.'
                 )}
               </p>
             </div>

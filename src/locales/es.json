@@ -4775,7 +4775,7 @@
   "xh_raise_btn": "Traer al frente",
   "xh_raise_title": "Recentrar y forzar la mira de nuevo encima",
   "xh_raised_toast": "Mira recentrada y traída al frente",
-  "xh_fullscreen_note": "El modo siempre visible automático y el recentrado por resolución mantienen la mira sobre juegos en Ventana sin bordes y Pantalla completa Flip-Model de Windows. La Pantalla completa exclusiva heredada omite overlays de escritorio por diseño del sistema (sin inyección de DLL, seguro para anti-cheat).",
+  "xh_fullscreen_note": "Usa un overlay nativo Win32 por capas con auto-siempre-visible y recentrado por resolución (sin inyección de DLL, 100 % seguro para anti-cheat). ¿Sigue oculto en CS2 / Stalzone? 1) Cambia el modo de pantalla del juego a Ventana sin bordes / Pantalla completa en ventana (la Pantalla completa exclusiva omite DWM de Windows). 2) Si el juego se ejecuta como Administrador, ejecuta OmniDesk también como Administrador.",
   "xh_tab_presets": "Presets",
   "xh_tab_editor": "Editor",
   "xh_tab_saved": "Guardados",

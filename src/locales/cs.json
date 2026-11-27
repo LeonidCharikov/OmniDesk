@@ -4775,7 +4775,7 @@
   "xh_raise_btn": "Do popředí",
   "xh_raise_title": "Vycentrovat a znovu vynutit zobrazení navrchu",
   "xh_raised_toast": "Zaměřovač vycentrován a přesunut do popředí",
-  "xh_fullscreen_note": "Automatické udržování navrchu a centrování při změně rozlišení udržuje overlay nad hrami v režimu Borderless a Windows Flip-Model Fullscreen. Starší režim Exclusive Fullscreen obchází desktopové overlaye z návrhu OS (nepoužíváme DLL injekci, takže zůstává 100% bezpečné pro anti-cheat).",
+  "xh_fullscreen_note": "Používá nativní Win32 vrstvený overlay s automatickým udržováním navrchu a centrováním při změně rozlišení (bez DLL injekce, 100% bezpečné pro anti-cheat). Stále není vidět v CS2 / Stalzone? 1) Přepněte režim zobrazení hry na Fullscreen Windowed / Borderless (Exclusive Fullscreen obchází Windows DWM). 2) Pokud hra běží jako správce, spusťte jako správce i OmniDesk.",
   "xh_tab_presets": "Presety",
   "xh_tab_editor": "Editor",
   "xh_tab_saved": "Uložené",
